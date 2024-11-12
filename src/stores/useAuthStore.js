@@ -33,7 +33,10 @@ export const useAuthStore = defineStore('auth', {
       console.log(code);      
       try {
         const response = await axios.get(`${import.meta.env.VITE_SYNCDAY_BACKEND_TOKEN_URI}?code=${code}`);
-        const { access_token } = response.data;
+        let access_token=null;
+        if(response.data.success){
+          access_token  = response.data.data;
+        }
         
         this.setAccessToken(access_token);
         await this.fetchUserInfo();
