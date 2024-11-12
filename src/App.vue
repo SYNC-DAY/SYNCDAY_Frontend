@@ -50,7 +50,7 @@
   
 	  const loginWithGitHub = () => {
 		const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
-		const redirectUri = 'http://localhost:5000/oauth/callback';
+		const redirectUri = import.meta.env.VITE_GITHUB_REDIRECT_URI;
 		window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}`;
 	  };
   
@@ -109,7 +109,7 @@
 		
 		if (code) {
 		  axios
-			.get(`http://localhost:5000/oauth/callback?code=${code}`)
+			.get(import.meta.env.VITE_GITHUB_REDIRECT_URI)
 			.then((response) => {
 			  accessToken.value = response.data;
 			  isLoggedIn.value = true;
