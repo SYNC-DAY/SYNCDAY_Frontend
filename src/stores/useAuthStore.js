@@ -32,7 +32,7 @@ export const useAuthStore = defineStore('auth', {
       this.error = null;
       console.log(code);      
       try {
-        const response = await axios.get(`http://localhost:5000/api/user/oauth2/github/access_token?code=${code}`);
+        const response = await axios.get(`${import.meta.env.VITE_SYNCDAY_BACKEND_TOKEN_URI}?code=${code}`);
         const { access_token } = response.data;
         
         this.setAccessToken(access_token);
