@@ -1,15 +1,17 @@
 <template>
     <div class="flex h-screen">
-      <ChatRoomList 
+      <!-- 채팅방 목록 -->
+      <ChatList 
         :rooms="chatRooms"
         :selectedRoom="selectedRoom"
         @select-room="selectRoom"
       />
-      
+  
+      <!-- 채팅방 상세 보기 -->
       <ChatRoomDetail
         v-if="selectedRoom"
         :room="selectedRoom"
-        @close="selectedRoom = null"
+        @close="closeRoom"
         @send-message="handleSendMessage"
       />
     </div>
@@ -17,8 +19,8 @@
   
   <script setup>
   import { ref } from 'vue'
-  import ChatRoomList from './components/ChatRoomList.vue'
-  import ChatRoomDetail from './components/ChatRoomDetail.vue'
+  import ChatList from './ChatList.vue'
+  import ChatRoomDetail from './ChatRoomDetail.vue'
   
   const chatRooms = ref([
     {
@@ -30,19 +32,26 @@
       unreadCount: 10,
       messages: []
     },
-    // ... 더 많은 채팅방 데이터
+    // 추가적인 채팅방 데이터
   ])
   
   const selectedRoom = ref(null)
   
+  // 채팅방 선택 핸들러
   const selectRoom = (room) => {
     selectedRoom.value = room
   }
   
+  // 채팅방 닫기 핸들러
+  const closeRoom = () => {
+    selectedRoom.value = null
+  }
+  
+  // 메시지 전송 핸들러
   const handleSendMessage = (roomId, messageContent) => {
     const room = chatRooms.value.find(r => r.id === roomId)
     if (!room) return
-    
+  
     const message = {
       id: Date.now(),
       content: messageContent,
@@ -50,7 +59,7 @@
       isMine: true,
       avatar: '/my-avatar.jpg'
     }
-    
+  
     room.messages.push(message)
     room.lastMessage = messageContent
     room.lastMessageTime = message.time
@@ -58,6 +67,6 @@
   </script>
   
   <style scoped>
-  /* 필요에 따라 스타일 추가 */
+  /* 스타일 정의 */
   </style>
   

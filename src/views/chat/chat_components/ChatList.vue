@@ -20,7 +20,7 @@
   <script setup>
   import { defineProps, defineEmits } from 'vue'
   import ChatRoomHeader from './ChatRoomHeader.vue'
-  import ChatRoomItem from './ChatRoomItem.vue'
+  import ChatInfoItem from './ChatInfoItem.vue'
   
   defineProps({
     rooms: {
@@ -36,5 +36,5 @@
   defineEmits(['select-room'])
   </script>
 
-  <style>
+  <style scoped>
 </style>

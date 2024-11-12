@@ -37,4 +37,7 @@
   
   defineEmits(['click'])
   </script>
+
+  <style scoped>
+</style>
   
