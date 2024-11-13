@@ -24,7 +24,7 @@ export const useAuthStore = defineStore('auth', {
       const redirectUri = import.meta.env.VITE_GITHUB_REDIRECT_URI;
       const scope = 'repo user';
       
-      window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}`;
+      window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
     },
 
     async handleAuthCallback(code) {
@@ -33,16 +33,26 @@ export const useAuthStore = defineStore('auth', {
       console.log(code);      
       try {
         const response = await axios.get(`${import.meta.env.VITE_SYNCDAY_BACKEND_URI}/api/user/oauth2/github/access_token?code=${code}`);
-        let access_token=null;
-        if(response.data.success){
-          access_token  = response.data.data;
-        }
         
-        this.setAccessToken(access_token);
-        await this.fetchUserInfo();
+        if(response.data.success){
+          const access_token = response.data.data;
+          console.log('Access Token:', access_token);
+          
+          // Set the token first
+          this.setAccessToken(access_token);
+          
+          // Fetch user info
+          await this.fetchUserInfo();
+          
+          // Only redirect after everything is complete
+          // window.location.href = import.meta.env.VITE_API_BASE_URL;
+        } else {
+          throw new Error('Failed to get access token');
+        }
         
         return true;
       } catch (error) {
+        console.error('Auth error:', error);
         this.error = error.message || 'Authentication failed';
         throw error;
       } finally {
@@ -51,15 +61,18 @@ export const useAuthStore = defineStore('auth', {
     },
 
     setAccessToken(token) {
+      console.log(token)
       this.accessToken = token;
       localStorage.setItem('github_token', token);
     },
 
     async fetchUserInfo() {
+      console.log('fetchUserInfo');
       if (!this.accessToken) {
+        console.log("No Access Token");
         throw new Error('No access token available');
       }
-
+      
       this.isLoading = true;
       
       try {
@@ -69,13 +82,18 @@ export const useAuthStore = defineStore('auth', {
             'Accept': 'application/vnd.github.v3+json'
           }
         });
-        
+
+        // GitHub API returns data directly
         this.userInfo = response.data;
-        return this.userInfo;
+        console.log(this.userInfo); // Fixed variable reference
+        return this.userInfo;    
+
       } catch (error) {
+        console.log(error.message);
         this.error = error.message || 'Failed to fetch user info';
         throw error;
       } finally {
+        console.log("finally clause");
         this.isLoading = false;
       }
     },
