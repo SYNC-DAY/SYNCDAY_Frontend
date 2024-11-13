@@ -1,8 +1,8 @@
-// stores/useAuthStore.js
+// stores/useGithubAuthStore.js
 import { defineStore } from 'pinia';
 import axios from 'axios';
 
-export const useAuthStore = defineStore('auth', {
+export const useGithubAuthStore = defineStore('githubAuth', {
   state: () => ({
     accessToken: localStorage.getItem('github_token'),
     userInfo: null,
@@ -14,7 +14,6 @@ export const useAuthStore = defineStore('auth', {
     isAuthenticated: (state) => !!state.accessToken,
     username: (state) => state.userInfo?.login,
     avatarUrl: (state) => state.userInfo?.avatar_url,
-    userRepos: (state) => state.userInfo?.public_repos,
     hasError: (state) => !!state.error
   },
 
@@ -30,27 +29,20 @@ export const useAuthStore = defineStore('auth', {
     async handleAuthCallback(code) {
       this.isLoading = true;
       this.error = null;
-      console.log(code);      
+      
       try {
-        const response = await axios.get(`${import.meta.env.VITE_SYNCDAY_BACKEND_URI}/api/user/oauth2/github/access_token?code=${code}`);
+        const response = await axios.get(
+          `${import.meta.env.VITE_SYNCDAY_BACKEND_URI}/api/user/oauth2/github/access_token?code=${code}`
+        );
         
-        if(response.data.success){
-          const access_token = response.data.data;
-          console.log('Access Token:', access_token);
-          
-          // Set the token first
-          this.setAccessToken(access_token);
-          
-          // Fetch user info
+        if (response.data.success) {
+          const accessToken = response.data.data;
+          this.setAccessToken(accessToken);
           await this.fetchUserInfo();
-          
-          // Only redirect after everything is complete
-          // window.location.href = import.meta.env.VITE_API_BASE_URL;
+          return true;
         } else {
           throw new Error('Failed to get access token');
         }
-        
-        return true;
       } catch (error) {
         console.error('Auth error:', error);
         this.error = error.message || 'Authentication failed';
@@ -61,15 +53,12 @@ export const useAuthStore = defineStore('auth', {
     },
 
     setAccessToken(token) {
-      console.log(token)
       this.accessToken = token;
       localStorage.setItem('github_token', token);
     },
 
     async fetchUserInfo() {
-      console.log('fetchUserInfo');
       if (!this.accessToken) {
-        console.log("No Access Token");
         throw new Error('No access token available');
       }
       
@@ -83,39 +72,12 @@ export const useAuthStore = defineStore('auth', {
           }
         });
 
-        // GitHub API returns data directly
         this.userInfo = response.data;
-        console.log(this.userInfo); // Fixed variable reference
         return this.userInfo;    
 
       } catch (error) {
-        console.log(error.message);
-        this.error = error.message || 'Failed to fetch user info';
-        throw error;
-      } finally {
-        console.log("finally clause");
-        this.isLoading = false;
-      }
-    },
-
-    async fetchUserRepos() {
-      if (!this.accessToken) {
-        throw new Error('No access token available');
-      }
-
-      this.isLoading = true;
-      
-      try {
-        const response = await axios.get('https://api.github.com/user/repos', {
-          headers: {
-            'Authorization': `Bearer ${this.accessToken}`,
-            'Accept': 'application/vnd.github.v3+json'
-          }
-        });
-        
-        return response.data;
-      } catch (error) {
-        this.error = error.message || 'Failed to fetch repositories';
+        console.error('Error fetching user info:', error);
+        this.error = error.response?.data?.message || error.message;
         throw error;
       } finally {
         this.isLoading = false;

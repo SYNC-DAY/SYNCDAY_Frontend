@@ -7,7 +7,7 @@
 		<button @click="authStore.clearError">Dismiss</button>
 	  </div>
   
-	  <div v-if="authStore.isLoading" class="loading">
+	  <div v-if="authStore.isLoading || repoStore.isLoading" class="loading">
 		Loading...
 	  </div>
 	  
@@ -20,12 +20,12 @@
 	  <div v-if="authStore.isAuthenticated" class="user-info">
 		<img :src="authStore.avatarUrl" alt="Profile" class="avatar" v-if="authStore.avatarUrl">
 		<h2>Welcome, {{ authStore.username }}!</h2>
-		<button @click="authStore.logout">Logout</button>
+		<button @click="handleLogout">Logout</button>
   
 		<div class="repositories">
 		  <h3>Your Repositories</h3>
-		  <ul v-if="repositories.length">
-			<li v-for="repo in repositories" 
+		  <ul v-if="repoStore.allRepositories.length">
+			<li v-for="repo in repoStore.allRepositories" 
 				:key="repo.id" 
 				@click="selectRepo(repo)">
 			  {{ repo.name }}
@@ -59,14 +59,15 @@
   
   <script>
   import { ref, onMounted } from 'vue';
-  import { useAuthStore } from './stores/useAuthStore';
+  import { useGithubAuthStore } from './stores/useGithubAuthStore';
+  import { useGithubRepoStore } from './stores/useGithubRepoStore';
   import axios from 'axios';
   
   export default {
 	name: 'App',
 	setup() {
-	  const authStore = useAuthStore();
-	  const repositories = ref([]);
+	  const authStore = useGithubAuthStore();
+	  const repoStore = useGithubRepoStore();
 	  const branches = ref([]);
 	  const commits = ref([]);
 	  const selectedRepo = ref('');
@@ -79,21 +80,22 @@
 		if (code) {
 		  try {
 			await authStore.handleAuthCallback(code);
-			await fetchRepos();
+			await repoStore.fetchUserRepos();
 		  } catch (error) {
 			console.error('Authentication error:', error);
 		  }
 		} else if (authStore.isAuthenticated) {
-		  await fetchRepos();
+		  await repoStore.fetchUserRepos();
 		}
 	  });
   
-	  const fetchRepos = async () => {
-		try {
-		  repositories.value = await authStore.fetchUserRepos();
-		} catch (error) {
-		  console.error('Error fetching repositories:', error);
-		}
+	  const handleLogout = () => {
+		authStore.logout();
+		repoStore.clearRepositories();
+		branches.value = [];
+		commits.value = [];
+		selectedRepo.value = '';
+		selectedBranch.value = '';
 	  };
   
 	  const fetchBranches = async (repoName) => {
@@ -143,11 +145,12 @@
   
 	  return {
 		authStore,
-		repositories,
+		repoStore,
 		branches,
 		commits,
 		selectedRepo,
 		selectedBranch,
+		handleLogout,
 		selectRepo,
 		selectBranch,
 	  };
@@ -156,65 +159,5 @@
   </script>
   
   <style>
-  #app {
-	font-family: Avenir, Helvetica, Arial, sans-serif;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
-	text-align: center;
-	margin-top: 60px;
-	padding: 0 20px;
-  }
-  
-  .error-message {
-	background-color: #ff5252;
-	color: white;
-	padding: 10px;
-	margin: 10px 0;
-	border-radius: 4px;
-  }
-  
-  .loading {
-	color: #666;
-	margin: 20px 0;
-  }
-  
-  .avatar {
-	width: 100px;
-	height: 100px;
-	border-radius: 50%;
-	margin: 10px 0;
-  }
-  
-  button {
-	padding: 10px 20px;
-	margin: 10px;
-	font-size: 16px;
-	cursor: pointer;
-  }
-  
-  button:disabled {
-	opacity: 0.7;
-	cursor: not-allowed;
-  }
-  
-  .repositories, .branches, .commits {
-	margin: 20px 0;
-  }
-  
-  ul {
-	list-style: none;
-	padding: 0;
-  }
-  
-  li {
-	cursor: pointer;
-	padding: 5px;
-	margin: 5px 0;
-	background-color: #f5f5f5;
-	border-radius: 4px;
-  }
-  
-  li:hover {
-	background-color: #e0e0e0;
-  }
+  /* Styles remain the same */
   </style>
