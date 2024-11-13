@@ -23,6 +23,11 @@ export const useGithubAuthStore = defineStore('githubAuth', {
       const redirectUri = import.meta.env.VITE_GITHUB_REDIRECT_URI;
       const scope = 'repo user';
       
+      // Preserve current token if exists
+      if (this.accessToken) {
+        localStorage.setItem('github_token', this.accessToken);
+      }
+      
       window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
     },
 
@@ -54,7 +59,9 @@ export const useGithubAuthStore = defineStore('githubAuth', {
 
     setAccessToken(token) {
       this.accessToken = token;
-      localStorage.setItem('github_token', token);
+      if (token) {
+        localStorage.setItem('github_token', token);
+      }
     },
 
     async fetchUserInfo() {
@@ -84,11 +91,12 @@ export const useGithubAuthStore = defineStore('githubAuth', {
       }
     },
 
+    // Only remove token during explicit logout
     logout() {
+      localStorage.removeItem('github_token'); // Only remove during logout
       this.accessToken = null;
       this.userInfo = null;
       this.error = null;
-      localStorage.removeItem('github_token');
     },
 
     clearError() {
