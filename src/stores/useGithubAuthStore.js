@@ -21,7 +21,7 @@ export const useGithubAuthStore = defineStore('githubAuth', {
     loginWithGithub() {
       const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
       const redirectUri = import.meta.env.VITE_GITHUB_REDIRECT_URI;
-      const scope = 'repo user';
+      const scope = 'read:user read:repo read:org';
       
       // Preserve current token if exists
       if (this.accessToken) {
