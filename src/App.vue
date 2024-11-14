@@ -53,8 +53,18 @@
 		<div v-if="commitStore.allCommits.length" class="commits">
 		  <h3>Commits for {{ branchStore.currentBranch }} in {{ branchStore.currentRepo?.name }}</h3>
 		  <ul>
-			<li v-for="commit in commitStore.allCommits" :key="commit.sha">
-			  {{ commit.commit.message }}
+			<li 
+			  v-for="commit in commitStore.allCommits" 
+			  :key="commit.sha"
+			  @click="handleCommitClick(commit)"
+			  class="commit-item"
+			>
+			  <div class="commit-message">{{ commit.commit.message }}</div>
+			  <div class="commit-details">
+				<span class="commit-author">{{ commit.commit.author.name }}</span>
+				<span class="commit-date">{{ formatDate(commit.commit.author.date) }}</span>
+				<span class="commit-sha">{{ commit.sha.slice(0, 7) }}</span>
+			  </div>
 			</li>
 		  </ul>
 		</div>
@@ -123,11 +133,68 @@
 	await commitStore.fetchCommits(branchStore.currentRepo, branch.name)
   }
   
+  const handleCommitClick = (commit) => {
+	if (commit.html_url) {
+	  window.open(commit.html_url, '_blank')
+	}
+  }
+  
+  const formatDate = (dateString) => {
+	return new Date(dateString).toLocaleDateString('en-US', {
+	  year: 'numeric',
+	  month: 'short',
+	  day: 'numeric',
+	})
+  }
+  
   // Lifecycle hooks
   onMounted(initializeApp)
   </script>
   
   <style scoped>
+  /* Previous styles remain the same */
+  
+  .commit-item {
+	text-align: left;
+	cursor: pointer;
+	padding: 15px;
+	margin: 8px 0;
+	background-color: #f5f5f5;
+	border-radius: 4px;
+	transition: background-color 0.2s;
+  }
+  
+  .commit-item:hover {
+	background-color: #e0e0e0;
+  }
+  
+  .commit-message {
+	font-weight: 500;
+	margin-bottom: 8px;
+	line-height: 1.4;
+  }
+  
+  .commit-details {
+	font-size: 0.9em;
+	color: #666;
+	display: flex;
+	gap: 15px;
+  }
+  
+  .commit-author {
+	font-weight: 500;
+  }
+  
+  .commit-date {
+	color: #888;
+  }
+  
+  .commit-sha {
+	font-family: monospace;
+	color: #444;
+  }
+  
+  /* Keep all previous styles */
   #app {
 	font-family: Avenir, Helvetica, Arial, sans-serif;
 	-webkit-font-smoothing: antialiased;
