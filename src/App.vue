@@ -51,23 +51,30 @@
   
 		<!-- Commits List -->
 		<div v-if="commitStore.allCommits.length" class="commits">
-		  <h3>Commits for {{ branchStore.currentBranch }} in {{ branchStore.currentRepo?.name }}</h3>
-		  <ul>
-			<li 
-			  v-for="commit in commitStore.allCommits" 
-			  :key="commit.sha"
-			  @click="handleCommitClick(commit)"
-			  class="commit-item"
-			>
-			  <div class="commit-message">{{ commit.commit.message }}</div>
-			  <div class="commit-details">
-				<span class="commit-author">{{ commit.commit.author.name }}</span>
-				<span class="commit-date">{{ formatDate(commit.commit.author.date) }}</span>
-				<span class="commit-sha">{{ commit.sha.slice(0, 7) }}</span>
-			  </div>
-			</li>
-		  </ul>
-		</div>
+        <h3>Commits for {{ branchStore.currentBranch }} in {{ branchStore.currentRepo?.name }}</h3>
+        <ul>
+          <li 
+            v-for="commit in commitStore.allCommits" 
+            :key="commit.sha"
+            @click="handleCommitClick(commit)"
+            class="commit-item"
+          >
+            <img 
+              :src="commit.author?.avatar_url || commit.committer?.avatar_url || '/default-avatar.png'" 
+              :alt="commit.commit.author.name"
+              class="commit-author-avatar"
+            >
+            <div class="commit-content">
+              <div class="commit-message">{{ commit.commit.message }}</div>
+              <div class="commit-details">
+                <span class="commit-author">{{ commit.commit.author.name }}</span>
+                <span class="commit-date">{{ formatDate(commit.commit.author.date) }}</span>
+                <span class="commit-sha">{{ commit.sha.slice(0, 7) }}</span>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
 	  </div>
 	</div>
   </template>
@@ -163,7 +170,17 @@
 	border-radius: 4px;
 	transition: background-color 0.2s;
   }
-  
+
+  .commit-author-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.commit-content {
+  flex: 1;
+  min-width: 0; /* Prevents flex item from overflowing */
+}
   .commit-item:hover {
 	background-color: #e0e0e0;
   }
