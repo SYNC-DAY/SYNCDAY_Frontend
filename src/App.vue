@@ -1,7 +1,7 @@
 <template>
 	<div id="app">
 	  <h1>GitHub OAuth Example</h1>
-	  
+  
 	  <!-- Error Display -->
 	  <div v-if="authStore.hasError" class="error-message">
 		{{ authStore.error }}
@@ -9,28 +9,20 @@
 	  </div>
   
 	  <!-- Loading State -->
-	  <div v-if="authStore.isLoading || repoStore.isLoading" class="loading">
+	  <div v-if="authStore.isLoading || repoStore.isLoading || branchStore.isLoading || commitStore.isLoading"
+		class="loading">
 		Loading...
 	  </div>
-	  
+  
 	  <!-- Login Button -->
-	  <button 
-		v-if="!authStore.isAuthenticated" 
-		@click="authStore.loginWithGithub"
-		:disabled="authStore.isLoading"
-	  >
+	  <button v-if="!authStore.isAuthenticated" @click="authStore.loginWithGithub" :disabled="authStore.isLoading">
 		Login with GitHub
 	  </button>
   
 	  <!-- User Info and Data -->
 	  <div v-if="authStore.isAuthenticated" class="user-info">
 		<!-- User Profile -->
-		<img 
-		  v-if="authStore.avatarUrl" 
-		  :src="authStore.avatarUrl" 
-		  alt="Profile" 
-		  class="avatar"
-		>
+		<img v-if="authStore.avatarUrl" :src="authStore.avatarUrl" alt="Profile" class="avatar">
 		<h2>Welcome, {{ authStore.username }}!</h2>
 		<button @click="handleLogout">Logout</button>
   
@@ -38,12 +30,8 @@
 		<div class="repositories">
 		  <h3>Your Repositories</h3>
 		  <ul v-if="repoStore.allRepositories.length">
-			<li 
-			  v-for="repo in repoStore.allRepositories" 
-			  :key="repo.id" 
-			  @click="handleRepoSelect(repo)"
-			  :class="{ active: selectedRepo === repo.name }"
-			>
+			<li v-for="repo in repoStore.allRepositories" :key="repo.id" @click="handleRepoSelect(repo)"
+			  :class="{ active: branchStore.currentRepo?.name === repo.name }">
 			  {{ repo.name }}
 			</li>
 		  </ul>
@@ -51,25 +39,21 @@
 		</div>
   
 		<!-- Branches List -->
-		<div v-if="branches.length" class="branches">
-		  <h3>Branches for {{ selectedRepo }}</h3>
+		<div v-if="branchStore.allBranches.length" class="branches">
+		  <h3>Branches for {{ branchStore.currentRepo?.name }}</h3>
 		  <ul>
-			<li 
-			  v-for="branch in branches" 
-			  :key="branch.name"
-			  @click="handleBranchSelect(branch)"
-			  :class="{ active: selectedBranch === branch.name }"
-			>
+			<li v-for="branch in branchStore.allBranches" :key="branch.name" @click="handleBranchSelect(branch)"
+			  :class="{ active: branchStore.currentBranch === branch.name }">
 			  {{ branch.name }}
 			</li>
 		  </ul>
 		</div>
   
 		<!-- Commits List -->
-		<div v-if="commits.length" class="commits">
-		  <h3>Commits for {{ selectedBranch }} in {{ selectedRepo }}</h3>
+		<div v-if="commitStore.allCommits.length" class="commits">
+		  <h3>Commits for {{ branchStore.currentBranch }} in {{ branchStore.currentRepo?.name }}</h3>
 		  <ul>
-			<li v-for="commit in commits" :key="commit.sha">
+			<li v-for="commit in commitStore.allCommits" :key="commit.sha">
 			  {{ commit.commit.message }}
 			</li>
 		  </ul>
@@ -79,27 +63,24 @@
   </template>
   
   <script setup>
-  import { ref, onMounted } from 'vue'
+  import { onMounted } from 'vue'
   import { useGithubAuthStore } from './stores/useGithubAuthStore'
   import { useGithubRepoStore } from './stores/useGithubRepoStore'
-  import axios from 'axios'
+  import { useGithubBranchStore } from './stores/useGithubBranchStore'
+  import { useGithubCommitStore } from './stores/useGithubCommitStore'
   
   // Store initialization
   const authStore = useGithubAuthStore()
   const repoStore = useGithubRepoStore()
-  
-  // State declarations
-  const branches = ref([])
-  const commits = ref([])
-  const selectedRepo = ref('')
-  const selectedBranch = ref('')
+  const branchStore = useGithubBranchStore()
+  const commitStore = useGithubCommitStore()
   
   // Methods
   const initializeApp = async () => {
 	const urlParams = new URLSearchParams(window.location.search)
 	const code = urlParams.get('code')
 	const token = localStorage.getItem('github_token')
-	
+  
 	try {
 	  if (code) {
 		// Handle OAuth callback
@@ -110,7 +91,7 @@
 		// Handle existing session
 		authStore.setAccessToken(token)
 		await authStore.fetchUserInfo()
-		
+  
 		// Check for cached repositories
 		const cachedRepos = localStorage.getItem('github_repositories')
 		if (cachedRepos) {
@@ -128,63 +109,18 @@
   const handleLogout = () => {
 	authStore.logout()
 	repoStore.clearRepositories()
-	clearLocalState()
-  }
-  
-  const clearLocalState = () => {
-	branches.value = []
-	commits.value = []
-	selectedRepo.value = ''
-	selectedBranch.value = ''
-  }
-  
-  const fetchBranches = async (repoName) => {
-	try {
-	  const response = await axios.get(
-		`https://api.github.com/repos/${authStore.username}/${repoName}/branches`,
-		{
-		  headers: { 
-			Authorization: `Bearer ${authStore.accessToken}`,
-			Accept: 'application/vnd.github.v3+json'
-		  }
-		}
-	  )
-	  branches.value = response.data
-	} catch (error) {
-	  console.error('Error fetching branches:', error)
-	  authStore.error = error.message
-	}
-  }
-  
-  const fetchCommits = async (repoName, branchName) => {
-	try {
-	  const response = await axios.get(
-		`https://api.github.com/repos/${authStore.username}/${repoName}/commits`,
-		{
-		  params: { sha: branchName },
-		  headers: { 
-			Authorization: `Bearer ${authStore.accessToken}`,
-			Accept: 'application/vnd.github.v3+json'
-		  }
-		}
-	  )
-	  commits.value = response.data
-	} catch (error) {
-	  console.error('Error fetching commits:', error)
-	  authStore.error = error.message
-	}
+	branchStore.clearState()
+	commitStore.clearState()
   }
   
   const handleRepoSelect = (repo) => {
-	selectedRepo.value = repo.name
-	selectedBranch.value = ''
-	commits.value = []
-	fetchBranches(repo.name)
+	branchStore.setSelectedRepo(repo)
+	commitStore.clearState()
   }
   
-  const handleBranchSelect = (branch) => {
-	selectedBranch.value = branch.name
-	fetchCommits(selectedRepo.value, branch.name)
+  const handleBranchSelect = async (branch) => {
+	branchStore.setSelectedBranch(branch.name)
+	await commitStore.fetchCommits(branchStore.currentRepo, branch.name)
   }
   
   // Lifecycle hooks
@@ -233,7 +169,9 @@
 	cursor: not-allowed;
   }
   
-  .repositories, .branches, .commits {
+  .repositories,
+  .branches,
+  .commits {
 	margin: 20px 0;
   }
   
