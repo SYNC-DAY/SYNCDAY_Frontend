@@ -1,46 +1,51 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore} from "../stores/auth.js";
+import { useAuthStore } from "../stores/auth.js"
+
+// 각 도메인별 라우트 import
+import userRoutes from './user'
+import mainRoutes from './main'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    {
-      path: "/login",
-      name: 'Login',
-      component: () => import('@/views/user/LoginPage.vue'),
-      meta: { requiresAuth: false } // login page는 인증 필요 x
-    },
-    {
-      path: "/",
-      name: "Home",
-      component: () => import('@/views/main.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
-      path: "/mypage",
-      name: "MyPage",
-      component: () => import('@/views/user/Mypage.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
-      path: "/password-change",
-      name: "PwdChange",
-      component: () => import('@/views/user/PassWordChange.vue'),
-      meta: { requiresAuth: true }
-    }
+    ...mainRoutes,
+    ...userRoutes,
   ],
 })
-
-router.beforeEach((to, from, next) => {
+// router/index.js
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
-  
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    next({ path: '/login', query: { redirect: to.fullPath } })
-  } else if (authStore.isAuthenticated && to.path === '/login') {
-    next({ path: '/' })  // 이미 로그인된 상태에서 로그인 페이지 접근 시 메인으로
-  } else {
+
+  // 이미 인증된 상태에서 로그인 페이지 접근 시
+  if (to.path === '/login' && authStore.isAuthenticated) {
+    next('/')
+    return
+  }
+
+  try {
+    // 인증이 필요한 페이지이고 초기화가 안 된 경우
+    if (to.meta.requiresAuth) {
+      const isAuthenticated = await authStore.initializeAuth()
+
+      if (!isAuthenticated) {
+        // 현재 시도하려던 페이지 정보를 저장
+        next({
+          path: '/login',
+          query: { redirect: to.fullPath }
+        })
+        return
+      }
+      // 인증 성공 후 원래 가려던 페이지로 이동
+      if (isAuthenticated && to.path === '/login' && to.query.redirect) {
+        next(to.query.redirect)
+        return
+      }
+    }
+
     next()
+  } catch (error) {
+    console.error('Auth check failed:', error)
+    next('/login')
   }
 })
-
 export default router
