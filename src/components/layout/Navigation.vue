@@ -1,62 +1,57 @@
 <template>
-    <nav class="navigation-bar">
-      <div class="nav-left">
-        <RouterLink to="/" class="logo">
-          <span>SyncDay</span>
+  <nav class="navigation-bar">
+    <div class="nav-left">
+      <RouterLink to="/" class="logo">
+        <span>SyncDay</span>
+      </RouterLink>
+      <ul class="nav-links">
+        <li>
+          <RouterLink to="/calendar">캘린더</RouterLink>
+        </li>
+        <li>
+          <RouterLink to="/team">팀</RouterLink>
+        </li>
+        <li>
+          <RouterLink to="/project">프로젝트</RouterLink>
+        </li>
+      </ul>
+    </div>
+    <div class="nav-right">
+      <input type="search" placeholder="검색어를 입력하세요" class="search-input">
+      <div class="icons">
+        <RouterLink to="/meetingroom">
+          <img src="@/assets/images/meetingroom.svg" alt="회의실 예약" class="icon-img" />
         </RouterLink>
-        <ul class="nav-links">
-          <li>
-            <RouterLink to="/calendar">캘린더</RouterLink>
-          </li>
-          <li>
-            <RouterLink to="/team">팀</RouterLink>
-          </li>
-          <li>
-            <RouterLink to="/project">프로젝트</RouterLink>
-          </li>
-        </ul>
+        <RouterLink to="chat">
+          <img src="@/assets/images/dm.svg" alt="채팅" class="icon-img" />
+        </RouterLink>
+        <RouterLink to="alarm">
+          <img src="@/assets/images/alarm.svg" alt="알림" class="icon-img" />
+        </RouterLink>
       </div>
-      <div class="nav-right">
-        <input type="search" placeholder="검색어를 입력하세요" class="search-input">
-        <div class="icons">
-          <RouterLink to="/meetingroom">
-            <img src="@/assets/images/meetingroom.svg" alt="회의실 예약" class="icon-img" />
-          </RouterLink>
-          <RouterLink to="chat">  
-            <img src="@/assets/images/dm.svg" alt="채팅" class="icon-img" />
-          </RouterLink>
-          <RouterLink to="alarm">
-            <img src="@/assets/images/alarm.svg" alt="알림" class="icon-img" />
+      <div class="user-profile">
+        <div class="profile-image-container">
+          <RouterLink to="/mypage">
+            <img
+                :src="authStore.user?.profilephoto || '/default-avatar.png'"
+                alt="User Profile"
+                class="profile-image"
+            />
           </RouterLink>
         </div>
-        <div class="user-profile">
-          <div class="profile-image-container">
-            <RouterLink to="mypage">
-              <img :src="profileImageUrl" alt="User Profile" class="profile-image" />
-            </RouterLink>  
-          </div>
-          <RouterLink to="mypage">
-            <span class="user-name">{{ userName }}님 ▼</span>
-          </RouterLink>
-          </div>
+        <RouterLink to="/mypage">
+          <span class="user-name">{{ authStore.user?.username }}님 ▼</span>
+        </RouterLink>
       </div>
-    </nav>
+    </div>
+  </nav>
 </template>
 
 <script setup>
-import { defineProps } from 'vue';
 import { RouterLink } from 'vue-router';
+import { useAuthStore } from '@/stores/auth.js';
 
-const props = defineProps({
-  userName: {
-    type: String,
-    required: true
-  },
-  profileImageUrl: {
-    type: String,
-    required: true
-  }
-});
+const authStore = useAuthStore();
 </script>
 
 <style scoped>
