@@ -17,6 +17,7 @@
           <p class="info-item">이메일: {{ user.email }}</p>
           <p class="info-item">이름: {{ user.userName }}</p>
           <p class="info-item">직책: {{ user.position }}</p>
+          <p class="info-item">내선 번호: {{ user.phoneNumber }}</p>
           <p class="info-item">입사년도: {{ user.joinYear }}</p>
           <p class="info-item">마지막 접속 시간: {{ user.lastAccessTime }}</p>
           <button @click="goToPasswordChange" class="edit-button">
@@ -32,25 +33,24 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import {useAuthStore} from "@/stores/auth.js";
 
 const router = useRouter()
-const user = ref({
-  userId: '',
-  userName: '',
-  email: '',
-  profilePhoto: '',
-  position: '',
-  joinYear: '',
-  lastAccessTime: '',
-  teamId: null
-})
+const user = ref({})
+const authStore = useAuthStore()
+const loading = ref(true)
 
 onMounted(async () => {
   try {
-    const response = await axios.get('/user/profile')
-    user.value = response.data.data
+    // authStore.isAuthenticated가 true라면 이미 profile 데이터가 있는 상태
+    if (authStore.isAuthenticated) {
+      const response = await axios.get('/user/profile')
+      user.value = response.data.data
+    }
   } catch (error) {
     console.error('Failed to fetch user data:', error)
+  } finally {
+    loading.value = false
   }
 })
 

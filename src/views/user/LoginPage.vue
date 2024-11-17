@@ -1,84 +1,42 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50">
-    <div class="max-w-md w-full px-6 py-8 bg-white rounded-lg shadow-md">
-      <!-- 로고 및 타이틀 -->
-      <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">SyncDay</h1>
-        <p class="text-gray-600">서비스를 이용하기 위해 로그인해주세요.</p>
+  <div class="login-container">
+    <div class="login-content">
+      <!-- 왼쪽: 환영 메시지와 로고 -->
+      <div class="login-welcome">
+        <h1>당신의<br>일정을 편리하게<br>관리하세요</h1>
+        <img src="@/assets/images/syncdaylogo.svg" alt="SyncDay Logo" class="logo">
       </div>
 
-      <!-- 로그인 폼 -->
-      <form @submit.prevent="handleLogin" class="space-y-6">
-        <!-- 이메일 입력 -->
-        <div>
-          <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
-            이메일
-          </label>
-          <input
-              id="email"
-              type="email"
-              v-model="email"
-              required
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="example@company.com"
-          />
-        </div>
-
-        <!-- 비밀번호 입력 -->
-        <div>
-          <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
-            비밀번호
-          </label>
-          <input
-              id="password"
-              type="password"
-              v-model="password"
-              required
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="비밀번호를 입력하세요"
-          />
-        </div>
-
-        <!-- 옵션 영역 (비밀번호 찾기 등) -->
-        <div class="flex items-center justify-between">
-          <div class="flex items-center">
+      <!-- 오른쪽: 로그인 폼 -->
+      <div class="login-form-container">
+        <h2>로그인</h2>
+        <form @submit.prevent="handleLogin" class="login-form">
+          <div class="form-group">
+            <label>이메일</label>
             <input
-                id="remember-me"
-                type="checkbox"
-                class="h-4 w-4 text-blue-500 border-gray-300 rounded focus:ring-blue-500"
-            />
-            <label for="remember-me" class="ml-2 block text-sm text-gray-700">
-              로그인 상태 유지
-            </label>
+                type="email"
+                v-model="email"
+                placeholder="example@hanhwa.com"
+                required
+            >
           </div>
-          <div class="text-sm">
-            <a href="#" class="text-blue-500 hover:text-blue-600">
-              비밀번호 찾기
-            </a>
+
+          <div class="form-group">
+            <label>비밀번호</label>
+            <input
+                type="password"
+                v-model="password"
+                required
+            >
           </div>
-        </div>
 
-        <!-- 로그인 버튼 -->
-        <div>
-          <button
-              type="submit"
-              class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            로그인
-          </button>
-        </div>
+          <button type="submit" class="login-button">로그인</button>
 
-        <!-- 회원가입 링크 -->
-        <div class="text-center text-sm">
-          <span class="text-gray-600">계정이 없으신가요?</span>
-          <router-link
-              to="/signup"
-              class="ml-1 text-blue-500 hover:text-blue-600 font-medium"
-          >
-            회원가입
-          </router-link>
-        </div>
-      </form>
+          <div class="forgot-password">
+            <a href="#" @click.prevent="alert('준비 중인 기능입니다.')">비밀번호 찾기</a>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </template>
@@ -106,9 +64,104 @@ const handleLogin = async () => {
 }
 </script>
 
-<style scoped>
-/* 추가적인 스타일이 필요한 경우 여기에 작성 */
-.min-h-screen {
+<<style scoped>
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.login-content {
+  display: flex;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  width: 1000px;
+  height: 600px;
+}
+
+.login-welcome {
+  flex: 1;
+  padding: 40px;
+  background-color: white;
+}
+
+.login-welcome h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 30px;
+  line-height: 1.4;
+}
+
+.logo {
+  max-width: 300px;
+  margin-top: -40px;
+}
+
+.login-form-container {
+  flex: 1;
+  padding: 40px;
+  border-left: 1px solid #eee;
+}
+
+.login-form-container h2 {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+  font-weight: 500;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.login-button {
+  width: 100%;
+  padding: 12px;
+  background-color: #1a237e;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.login-button:hover {
+  background-color: #0d1b60;
+}
+
+.forgot-password {
+  text-align: right;
+  margin-top: 15px;
+}
+
+.forgot-password a {
+  color: #666;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.forgot-password a:hover {
+  color: #333;
 }
 </style>

@@ -1,67 +1,61 @@
 <template>
   <div class="app-container">
-    <AppHeader 
-      :userName="authStore.user?.userName || ''" 
-      :profileImageUrl="authStore.user?.profilePhoto || 'https://via.placeholder.com/32'" 
-    />
-    <div class="main-container" v-if="authStore.isAuthenticated">
-      <SideBar :menuItems="currentMenuItems" />
-      <main class="content">
-        <router-view />
-      </main>
-    </div>
-    <div v-else>
+    <!-- 로그인 페이지가 아닐 때만 헤더와 메인 컨텐츠 표시 -->
+    <template v-if="!isLoginPage">
+      <AppHeader />
+      <div class="main-container">
+        <template v-if="authStore.isAuthenticated">
+          <SideBar :menuItems="currentMenuItems" />
+          <main class="content">
+            <router-view />
+          </main>
+        </template>
+      </div>
+    </template>
+
+    <!-- 로그인 페이지일 때는 router-view만 표시 -->
+    <template v-else>
       <router-view />
-    </div>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import AppHeader from './components/layout/AppHeader.vue';
 import SideBar from './components/layout/SideBar.vue';
 import { useAuthStore } from "@/stores/auth.js";
-import { useRouter } from 'vue-router';
 
+const route = useRoute();
 const authStore = useAuthStore();
-const router = useRouter();
 
-const userSidebars = {
-  project: ['Proj 1', 'Proj 2', 'Proj 3', 'Proj 4'],
-  calendar: ['Cal 1', 'Cal 2', 'Cal 3'],
-}
+const currentMenuItems = ref([
+  'Project',
+  'Calendar',
+  'Team'
+  // 필요한 메뉴 아이템들 추가
+]);
 
-const currentMenuItems = ref(userSidebars.project);
-
-// 로그인 상태 체크
-onMounted(async () => {
-  try {
-    // 저장된 토큰이 있다면 사용자 정보 가져오기
-    if (authStore.accessToken) {
-      await authStore.fetchUserInfo();
-    }
-  } catch (error) {
-    console.error('Failed to fetch user info:', error);
-    router.push('/login');
-  }
-});
+// 현재 페이지가 로그인 페이지인지 확인
+const isLoginPage = computed(() => route.path === '/login');
 </script>
 
 <style scoped>
 .app-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100vh;
 }
 
 .main-container {
   display: flex;
-  flex-direction: row;
-  flex-grow: 1;
+  flex: 1;
 }
 
 .content {
-  flex-grow: 1;
+  flex: 1;
   padding: 1rem;
+  background-color: #f5f5f5;
 }
 </style>

@@ -112,6 +112,7 @@
   import { ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { EyeIcon, EyeOffIcon } from 'lucide-vue-next'
+  import { useAuthStore } from '@/stores/auth.js'
   import axios from 'axios'
   
   const router = useRouter()
@@ -121,7 +122,11 @@
   const showCurrentPwd = ref(true)
   const showNewPwdA = ref(true)
   const showNewPwdB = ref(true)
-  
+
+  const authStore = useAuthStore();
+  const user = ref(authStore.user || {});
+
+
   const editForm = ref({
     currentPwd: '',
     newPwdA: '',
@@ -144,24 +149,29 @@
       isPasswordValid.value = false
     }
   }
-  
+
   const handleSubmit = async () => {
     if (!isPasswordValid.value) return
-  
+
     try {
       const requestData = {
         currentPwd: editForm.value.currentPwd,
         newPwd: editForm.value.newPwdA
       }
-      
-      await axios.put(`/user/password`, requestData)
+
+      const response = await axios.put(`/user/password/${user.value.userId}`, requestData)
+      console.log("response", response)
       alert('비밀번호가 성공적으로 변경되었습니다.')
       router.push('/mypage')
     } catch (error) {
+      console.error('Password change error:', error.response);
+
       if (error.response?.data?.error?.message) {
-        alert(error.response.data.error.message)
+        // 검증 에러 메시지 표시
+        const errorMessages = error.response.data.error.message;
+        alert(errorMessages)
       } else {
-        alert('비밀번호 변경에 실패했습니다. 다시 시도해주세요.')
+        alert('비밀번호 변경에 실패했습니다. 다시 시도해주세요.');
       }
     }
   }
@@ -234,8 +244,8 @@
   }
   
   .gradient-box {
-    width: 100%;         /* 353px에서 100%로 변경 */
-    max-width: 353px;    /* 최대 너비 설정 */
+    width: 100%;
+    max-width: 353px;
     height: 652px;
     background: linear-gradient(rgba(254, 93, 134, 1), rgba(254, 119, 134, 1), rgba(255, 157, 133, 1), rgba(255, 157, 133, 1));
     border-radius: 30px;
@@ -250,10 +260,10 @@
     font-size: 8rem;
     color: white;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-    position: absolute; /* 추가 */
-    left: 52%;         /* 추가 */
-    top: 35%;          /* 추가 */
-    transform: translate(-50%, -50%) rotate(-14deg); /* 수정 */
+    position: absolute;
+    left: 50%;
+    top: 35%;
+    transform: translate(-50%, -50%) rotate(-14deg);
 }
   
   .form-section {
@@ -280,7 +290,6 @@
     flex-direction: column;
   }
   
-  /* form-group도 중앙 정렬을 위해 수정 */
 .form-group {
     display: flex;
     flex-direction: column;
@@ -292,7 +301,7 @@
     font-size: 1rem;
     font-weight: 500;
     color: #666;
-    width: 150px; /* input container와 동일한 너비 */
+    width: 150px;
 }
   
   .password-input-container {
@@ -323,7 +332,7 @@
     align-items: center;
     justify-content: center;
     padding-bottom: 20px;
-    height: 100%;  /* 추가: 부모 높이만큼 설정 */
+    height: 100%;
     top: 0;  
   }
   
