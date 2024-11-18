@@ -4,7 +4,14 @@ import { useAuthStore } from "../stores/auth.js"
 // 각 도메인별 라우트 import
 import userRoutes from './user'
 import mainRoutes from './main'
-// import chatRoutes from './chat'
+
+const routes = [
+  {
+    path: '/chat',
+    name: 'Chat',
+    component: () => import('@/views/chat/ChatList.vue') 
+  },
+];
 
 const router = createRouter({
   history: createWebHistory(),
@@ -14,7 +21,6 @@ const router = createRouter({
       path:'/',
       redirect:''
     }
-    // ...chatRoutes,
   ],
 
 })

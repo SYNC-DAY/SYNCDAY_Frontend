@@ -35,33 +35,33 @@
 				<RouterLink to="/meetingroom">
 					<img src="@/assets/images/meetingroom.svg" alt="회의실 예약" class="icon-img" />
 				</RouterLink>
-				<RouterLink to="chat">
-					<img src="@/assets/images/dm.svg" alt="채팅" class="icon-img" />
+				<RouterLink to="/chat">
+					<img src="@/assets/images/dm.svg" alt="채팅" class="icon-img" @click="toggleChatPop"/>
 				</RouterLink>
 				<RouterLink to="alarm">
 					<img src="@/assets/images/alarm.svg" alt="알림" class="icon-img" />
 				</RouterLink>
 			</div>
+<!-- profile -->
+<div class="profile" @click="toggleDropdown" ref="profileRef">
+  <div class="profile-image-container">
+    <RouterLink to="/mypage">
+      <img :src="userInfo.profilePhoto || '/default-avatar.png'" alt="User Profile"
+      class="profile-image" />
+    </RouterLink>
+  </div>
+  <div class="user-menu">
+    <span class="user-name">{{ userInfo.userName }}님 ▼</span>
+    <!-- 드롭다운 메뉴 -->
+    <div v-show="isDropdownOpen" class="dropdown-menu">
+      <RouterLink to="/mypage" class="dropdown-item">마이페이지</RouterLink>
+      <button @click="handleLogout" class="dropdown-item">로그아웃</button>
+    </div>
+  </div>
+</div>
 
-			<!-- profile -->
-			<div class="profile" @click="toggleDropdown" ref="profileRef">
-				<div class="profile-image-container">
-					<RouterLink to="/mypage">
-						<img :src="userInfo.profilePhoto || '/default-avatar.png'" alt="User Profile"
-							class="profile-image" />
-					</RouterLink>
-				</div>
-				<div class="user-menu">
-					<span class="user-name">{{ userInfo.userName }}님 ▼</span>
-					<!-- 드롭다운 메뉴 -->
-					<div v-show="isDropdownOpen" class="dropdown-menu">
-						<RouterLink to="/mypage" class="dropdown-item">마이페이지</RouterLink>
-						<button @click="handleLogout" class="dropdown-item">로그아웃</button>
-					</div>
-				</div>
-			</div>
-
-		</div>
+</div>
+<ChatPop :isVisible="isPopupVisible" @update:isVisible="isPopupVisible = $event" />
 	</nav>
 </template>
 
@@ -69,6 +69,7 @@
 import { RouterLink, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth.js';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import ChatPop from '@/views/chat/ChatList.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -83,6 +84,11 @@ console.log("추출한 userInfo", userInfo);
 // 드롭다운 토글
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
+};
+
+// 채팅 팝업
+const toggleChatPop = () => {
+  isPopupVisible.value = !isPopupVisible.value;
 };
 
 // 드롭다운 외부 클릭 시 닫기
