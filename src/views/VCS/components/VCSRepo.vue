@@ -81,10 +81,10 @@
   
   <script setup>
   import { onMounted } from 'vue'
-  import { useGithubAuthStore } from '@/stores/useGithubAuthStore';
-  import { useGithubRepoStore } from '@/stores/useGithubRepoStore'
-  import { useGithubBranchStore } from '@/stores/useGithubBranchStore'
-  import { useGithubCommitStore } from '@/stores/useGithubCommitStore'
+  import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
+  import { useGithubRepoStore } from '@/stores/github/useGithubRepoStore'
+  import { useGithubBranchStore } from '@/stores/github/useGithubBranchStore'
+  import { useGithubCommitStore } from '@/stores/github/useGithubCommitStore'
   
   // Store initialization
   const authStore = useGithubAuthStore()
