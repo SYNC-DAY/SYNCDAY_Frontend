@@ -6,10 +6,13 @@ import userRoutes from './user'
 import mainRoutes from './main'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(),
   routes: [
     ...mainRoutes,
-    ...userRoutes,
+    ...userRoutes,{
+      path:'/',
+      redirect:''
+    }
   ],
 })
 // router/index.js

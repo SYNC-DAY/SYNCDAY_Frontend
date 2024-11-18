@@ -1,5 +1,5 @@
 <template>  
-<div :class="['sidebar', { collapsed: isCollapsed }]" :style="{ height: sidebarHeight }">
+<aside :class="['sidebar', { collapsed: isCollapsed }]" :style="{ height: sidebarHeight }">
     <button @click="toggleSidebar" class="toggle-button">
       {{ isCollapsed ? '>' : '<' }}
     </button>
@@ -13,7 +13,7 @@
         {{ item }}
       </div>
     </div>
-  </div>
+  </aside>
 </template>
 
 <script setup>
@@ -45,15 +45,15 @@ const sidebarHeight = computed(() => {
 </script>
 
 <style scoped>
-.sidebar {
-  width: 200px;
+aside {
+  width: 25rem;
   border-right: 1px solid #ccc;
   border-bottom: 1px solid #ccc;
   transition: width 0.3s ease-in-out;
   position: relative;
 }
 
-.sidebar.collapsed {
+aside.collapsed {
   width: 0.01vw;
   padding: 0.5rem;
 }
