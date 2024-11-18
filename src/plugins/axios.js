@@ -1,7 +1,6 @@
 // plugins/axios.js
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
-import router from '@/router'
 
 axios.defaults.baseURL = '/api'
 axios.defaults.withCredentials = true  // 쿠키 전송을 위해 필수
@@ -12,6 +11,7 @@ export function setupAxiosInterceptors() {
         config => {
             const authStore = useAuthStore()
             if (authStore.accessToken) {
+                console.log("현재 요청의 헤더: ", config.headers['Authorization'])
                 config.headers['Authorization'] = `Bearer ${authStore.accessToken}`
             }
             return config
@@ -37,26 +37,16 @@ export function setupAxiosInterceptors() {
             return response
         },
         async error => {
-            // (만료된 at를 들고 요청을 한 경우)
             const originalRequest = error.config
-            console.log("at가 없어서 재요청을 하는 경우의 시작 로그")
-            // 401 에러 && 재시도하지 않은 요청
-            if (error.response?.status === 401 && !originalRequest._retry) {
-                originalRequest._retry = true
+            // 에러 응답에서도 새로운 토큰이 있는지 확인
+            const newAccessToken = error.response?.headers['authorization']?.replace('Bearer ', '')
+            console.log("at가 만료되어 없는 경우 새로 발급받은 at: ", newAccessToken)
+            if (newAccessToken) {
                 const authStore = useAuthStore()
-                console.log("재정의된 accessToken: ",authStore.accessToken)
-
-                try {
-                    // 원래 요청을 그대로 재시도
-                    // 필터에서 RT를 확인하고 새 AT를 발급
-                    const response = await axios(originalRequest)
-                    return response
-                } catch (refreshError) {
-                    console.error('Token refresh failed:', refreshError)
-                    await authStore.logout()
-                    router.push('/login')
-                    return Promise.reject(refreshError)
-                }
+                authStore.setAccessToken(newAccessToken)
+                // 새로운 토큰으로 원래 요청 재시도
+                originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`
+                return axios(originalRequest)
             }
 
             return Promise.reject(error)
