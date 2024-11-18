@@ -114,6 +114,7 @@
   import { EyeIcon, EyeOffIcon } from 'lucide-vue-next'
   import { useAuthStore } from '@/stores/auth.js'
   import axios from 'axios'
+  import Swal from 'sweetalert2'
   
   const router = useRouter()
   const passwordError = ref('')
@@ -125,7 +126,7 @@
 
   const authStore = useAuthStore();
   const user = ref(authStore.user || {});
-
+  console.log("user.value: " ,user.value)
 
   const editForm = ref({
     currentPwd: '',
@@ -161,7 +162,17 @@
 
       const response = await axios.put(`/user/password/${user.value.userId}`, requestData)
       console.log("response", response)
-      alert('비밀번호가 성공적으로 변경되었습니다.')
+
+      // 성공 알림
+      await Swal.fire({
+        icon: 'success',
+        title: '성공!',
+        text: '비밀번호가 성공적으로 변경되었습니다.',
+        confirmButtonText: '확인',
+        confirmButtonColor: '#3085d6',
+        timer: 1500,  // 1.5초 후 자동으로 닫힘
+      })
+
       router.push('/mypage')
     } catch (error) {
       console.error('Password change error:', error.response);
@@ -169,9 +180,21 @@
       if (error.response?.data?.error?.message) {
         // 검증 에러 메시지 표시
         const errorMessages = error.response.data.error.message;
-        alert(errorMessages)
+        await Swal.fire({
+          icon: 'error',
+          title: '오류',
+          text: errorMessages,
+          confirmButtonText: '확인',
+          confirmButtonColor: '#d33',
+        })
       } else {
-        alert('비밀번호 변경에 실패했습니다. 다시 시도해주세요.');
+        await Swal.fire({
+          icon: 'error',
+          title: '오류',
+          text: '비밀번호 변경에 실패했습니다. 다시 시도해주세요.',
+          confirmButtonText: '확인',
+          confirmButtonColor: '#d33',
+        })
       }
     }
   }
@@ -204,7 +227,6 @@
     color: #333;
     width: 100%;          /* 추가 */
     max-width: 900px;     /* password-card와 동일한 max-width */
-    padding: 0 8px;       /* 추가: 좌우 여백 */
 }
 
   
@@ -215,9 +237,9 @@
     min-height: 100vh;
     display: flex;          /* 추가 */
     flex-direction: column; /* 추가 */
-    align-items: center; 
+    align-items: center;
   }
-  
+
   .password-card {
     background: white;
     border-radius: 30px;
@@ -227,7 +249,7 @@
     width: 100%;          /* 980px에서 100%로 변경 */
     max-width: 900px;     /* 최대 너비 설정 */
     max-height: 900px;
-    margin: 0 auto;  
+    margin: 0 auto;
 }
   
   .split-container {
