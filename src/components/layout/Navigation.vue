@@ -22,8 +22,10 @@
         <RouterLink to="/meetingroom">
           <img src="@/assets/images/meetingroom.svg" alt="회의실 예약" class="icon-img" />
         </RouterLink>
-        <RouterLink to="chat">
-          <img src="@/assets/images/dm.svg" alt="채팅" class="icon-img" />
+        <RouterLink to="/chatlist">
+                    <!-- class="banner-link"
+                    :class=" { active: currentRoute.startsWith('/chatlist')}"> -->
+          <img src="@/assets/images/dm.svg" alt="채팅" class="icon-img" @click.prevent="toggleChatPopup"/>
         </RouterLink>
         <RouterLink to="alarm">
           <img src="@/assets/images/alarm.svg" alt="알림" class="icon-img" />
