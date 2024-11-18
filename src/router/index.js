@@ -4,19 +4,16 @@ import { useAuthStore } from "../stores/auth.js"
 // 각 도메인별 라우트 import
 import userRoutes from './user'
 import mainRoutes from './main'
+// import chatRoutes from './chat'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     ...mainRoutes,
     ...userRoutes,
+    // ...chatRoutes,
   ],
 
-    {
-      path: '/chat',
-      name: 'ChatList',
-      component: () => import('@/views/chat/ChatList.vue'),
-      meta: { requiresAuth: true }
 })
 // router/index.js
 router.beforeEach(async (to, from, next) => {
