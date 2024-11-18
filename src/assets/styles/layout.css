@@ -2,9 +2,19 @@ body, html{
 	margin:0;
 	padding: 0;
 }
-
+ul,
+li,
+dl,
+dt,
+dd,
+p,
+span {
+  margin: 0;
+  padding: 0;
+}
 a {
 	text-decoration: none;
+	color: black;
 }
 ul{
 	margin: 0;

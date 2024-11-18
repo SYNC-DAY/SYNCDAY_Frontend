@@ -160,7 +160,7 @@ input[type=search]{
 	width: 100%;
 	height: 6rem;
 	font-size: 2rem;
-	border-radius: 1rem;
+	border-radius: 2rem;
 }
 
 .nav-right{
