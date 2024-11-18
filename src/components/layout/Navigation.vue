@@ -63,7 +63,7 @@ const isDropdownOpen = ref(false);
 const profileRef = ref(null);
 console.log("authStore.user: ", authStore.user);
 const userInfo = computed(() => ({
-  userName: authStore.user?.username || '',
+  userName: authStore.user?.userName || '',
   profilePhoto: authStore.user?.profilePhoto || '/default-avatar.png'
 }));
 console.log("추출한 userInfo", userInfo);

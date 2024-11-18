@@ -227,7 +227,6 @@
     color: #333;
     width: 100%;          /* 추가 */
     max-width: 900px;     /* password-card와 동일한 max-width */
-    padding: 0 8px;       /* 추가: 좌우 여백 */
 }
 
   
@@ -238,9 +237,9 @@
     min-height: 100vh;
     display: flex;          /* 추가 */
     flex-direction: column; /* 추가 */
-    align-items: center; 
+    align-items: center;
   }
-  
+
   .password-card {
     background: white;
     border-radius: 30px;
@@ -250,7 +249,7 @@
     width: 100%;          /* 980px에서 100%로 변경 */
     max-width: 900px;     /* 최대 너비 설정 */
     max-height: 900px;
-    margin: 0 auto;  
+    margin: 0 auto;
 }
   
   .split-container {
