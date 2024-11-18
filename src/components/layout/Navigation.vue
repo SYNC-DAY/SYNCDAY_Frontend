@@ -71,6 +71,7 @@ import { useAuthStore } from '@/stores/auth.js';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import ChatPop from '@/views/chat/ChatList.vue';
 
+const isPopupVisible = ref(false);
 const router = useRouter();
 const authStore = useAuthStore();
 const isDropdownOpen = ref(false);

@@ -23,6 +23,59 @@
 
 <script setup>
 import { onMounted, ref } from 'vue';
+import SockJS from 'sockjs-client';
+import { Stomp } from '@stomp/stompjs';
+
+const connectionStatus = ref('웹소켓에 연결 중...')
+const socket = new SockJS('http://localhost:8080/ws');
+console.log('SockJS 인스턴스 생성됨')
+const stompClient = ref(null)
+// const stompClient = Stomp.over(socket);
+
+
+stompClient.value = new Stomp({
+    webSocketFactory: () => socket,
+    reconnectDelay: 5000,
+    heartbeatIncoming: 4000,
+    heartbeatOutgoing: 4000,
+    debug: function (str) {
+      console.log(str)
+    },
+    onConnect: frame => {
+      console.log('STOMP 연결됨: ' + frame)
+      isConnected.value = true
+      connectionStatus.value = '연결됨'
+      subscribeToRoom(currentRoom.value)
+    },
+    onStompError: frame => {
+      console.error('STOMP 오류:', frame)
+      handleConnectionFailure('STOMP 오류: ' + frame.headers['message'])
+    },
+    onDisconnect: () => {
+      console.log('STOMP 연결 끊김')
+      isConnected.value = false
+      connectionStatus.value = '연결 끊김'
+    },
+    onWebSocketError: (event) => {
+      console.error('WebSocket 오류 발생:', event)
+      handleConnectionFailure('WebSocket 오류: ' + JSON.stringify(event))
+    },
+    onWebSocketClose: (event) => {
+      console.log('WebSocket 연결 종료됨:', event)
+    }
+  })
+
+
+stompClient.connect({}, () => {
+  console.log('웹소켓 연결 완료!');
+  stompClient.subscribe('/topic/chatroom', (message) => {
+    console.log('Received message:', message.body);
+  });
+  stompClient.send('/app/message', {}, JSON.stringify({
+        sender: 'User',
+        content: 'Hello!',
+    }));
+});
 
 const isVisible = ref(false);
 const emit = defineEmits();
