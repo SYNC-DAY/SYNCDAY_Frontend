@@ -6,6 +6,7 @@
       <div class="main-container">
         <template v-if="authStore.isAuthenticated">
           <SideBar :menuItems="currentMenuItems" />
+          <!-- <SideBar/> -->
           <main class="content">
             <router-view />
           </main>

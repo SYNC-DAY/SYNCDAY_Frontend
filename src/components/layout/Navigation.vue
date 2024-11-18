@@ -1,57 +1,68 @@
 <template>
-  <nav class="navigation-bar">
-    <div class="nav-left">
-      <RouterLink to="/" class="logo">
-        <span>SyncDay</span>
-      </RouterLink>
-      <ul class="nav-links">
-        <li>
-          <RouterLink to="/calendar">캘린더</RouterLink>
-        </li>
-        <li>
-          <RouterLink to="/team">팀</RouterLink>
-        </li>
-        <li>
-          <RouterLink to="/project">프로젝트</RouterLink>
-        </li>
-      </ul>
-    </div>
-    <div class="nav-right">
-      <input type="search" placeholder="검색어를 입력하세요" class="search-input">
-      <div class="icons">
-        <RouterLink to="/meetingroom">
-          <img src="@/assets/images/meetingroom.svg" alt="회의실 예약" class="icon-img" />
-        </RouterLink>
-        <RouterLink to="/chatlist">
-                    <!-- class="banner-link"
-                    :class=" { active: currentRoute.startsWith('/chatlist')}"> -->
-          <img src="@/assets/images/dm.svg" alt="채팅" class="icon-img" @click.prevent="toggleChatPopup"/>
-        </RouterLink>
-        <RouterLink to="alarm">
-          <img src="@/assets/images/alarm.svg" alt="알림" class="icon-img" />
-        </RouterLink>
-      </div>
-      <div class="user-profile" @click="toggleDropdown" ref="profileRef">
-        <div class="profile-image-container">
-          <RouterLink to="/mypage">
-            <img
-                :src="userInfo.profilePhoto || '/default-avatar.png'"
-                alt="User Profile"
-                class="profile-image"
-            />
-          </RouterLink>
-        </div>
-        <div class="user-menu">
-          <span class="user-name">{{ userInfo.userName }}님 ▼</span>
-          <!-- 드롭다운 메뉴 -->
-          <div v-show="isDropdownOpen" class="dropdown-menu">
-            <RouterLink to="/mypage" class="dropdown-item">마이페이지</RouterLink>
-            <button @click="handleLogout" class="dropdown-item">로그아웃</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </nav>
+	<nav class="nav-top">
+
+		<!-- logo -->
+		<div class="nav-logo">
+			<RouterLink to="/">
+				<span>SyncDay</span>
+			</RouterLink>
+		</div>
+
+		<!-- tabs -->
+		<div class="nav-tabs">
+			<ul>
+				<li>
+					<RouterLink to="/calendar">캘린더</RouterLink>
+				</li>
+				<li>
+					<RouterLink to="/team">팀</RouterLink>
+				</li>
+				<li>
+					<RouterLink to="/project">프로젝트</RouterLink>
+				</li>
+			</ul>
+		</div>
+
+		<!-- search -->
+		<div class="nav-search">
+			<input type="search" placeholder="검색어를 입력하세요">
+		</div>
+
+		<!-- icon,profile -->
+		<div class="nav-right">
+			<!-- icons -->
+			<div class="icons">
+				<RouterLink to="/meetingroom">
+					<img src="@/assets/images/meetingroom.svg" alt="회의실 예약" class="icon-img" />
+				</RouterLink>
+				<RouterLink to="chat">
+					<img src="@/assets/images/dm.svg" alt="채팅" class="icon-img" />
+				</RouterLink>
+				<RouterLink to="alarm">
+					<img src="@/assets/images/alarm.svg" alt="알림" class="icon-img" />
+				</RouterLink>
+			</div>
+
+			<!-- profile -->
+			<div class="profile" @click="toggleDropdown" ref="profileRef">
+				<div class="profile-image-container">
+					<RouterLink to="/mypage">
+						<img :src="userInfo.profilePhoto || '/default-avatar.png'" alt="User Profile"
+							class="profile-image" />
+					</RouterLink>
+				</div>
+				<div class="user-menu">
+					<span class="user-name">{{ userInfo.userName }}님 ▼</span>
+					<!-- 드롭다운 메뉴 -->
+					<div v-show="isDropdownOpen" class="dropdown-menu">
+						<RouterLink to="/mypage" class="dropdown-item">마이페이지</RouterLink>
+						<button @click="handleLogout" class="dropdown-item">로그아웃</button>
+					</div>
+				</div>
+			</div>
+
+		</div>
+	</nav>
 </template>
 
 <script setup>
@@ -100,83 +111,85 @@ onUnmounted(() => {
 });
 </script>
 
+
 <style scoped>
-* {
-  text-decoration: none;
-}
-.navigation-bar {
-  display: flex;
-  width: 96vw;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 1.5rem;
-  border-bottom: 1px solid #ccc;
+.nav-top {
+	width: 100%;
+	height: 10vh;
+	background-color: white;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
 }
 
-.nav-left {
-  display: flex;
-  align-items: center;
-}
-
-.logo {
-  margin-right: 5rem; 
-}
-
-.logo span {
-  font-size: 1.8rem;
-  font-weight: bold;
-  color: black;
-}
-
-.nav-links {
-  display: flex;
-  list-style: none;
-  padding: 0;
-  margin: 0; 
-  margin-left: 1rem;
-}
-
-.nav-links li {
-  margin-right: 6rem;
-}
-
-.nav-links li a {
-  text-decoration: none;
-  color: inherit;
-}
-
-.nav-right {
-  display: flex;
-  align-items: center;
-}
-
-.search-input {
-  padding: 0.25rem 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 10rem;
-  width: 20vw;
-  height: 5vh;
-  margin-right: 8rem;
-}
-
+.nav-top > div,
+.nav-top 
+ul,
 .icons {
-  display: flex;
-  align-items: center;
-  margin-right: 1.5rem; 
+	height: 100%;
+	background-color: white;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-around;
+	align-items: center;
 }
 
-.icon-img {
-  width: 24px;
-  height: 24px;
-  margin-right: 3rem; 
+.nav-top ul{
+	width: 100%;
 }
 
-.user-profile {
-  display: flex;
-  align-items: center;
-  flex-direction: column; 
+.nav-logo {
+	flex: 2;
+	font-weight: 700;
+}
+.nav-logo span{
+	font-size: 6rem;
+}
+.nav-tabs{
+	flex: 5;
+}
+.nav-top 
+a,
+span{
+	text-decoration: none;
+	font-size: 4rem;
+}
+.nav-search{
+	flex: 2;
+  	padding: 1rem;
 }
 
+input[type=search]{
+	width: 100%;
+	height: 6rem;
+	font-size: 2rem;
+	border-color: var(--muted-text);
+	border-radius: 2rem;
+  padding-left: 0.5rem;
+}
+
+.nav-right{
+	flex: 2;
+	display: flex;
+	flex-direction: row;
+}
+
+.icons{
+	flex: 1;
+
+}
+.icons img{
+	height: 3rem;
+}
+
+.profile{
+	flex: 1;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
 .profile-image-container {
   width: 50px;
   height: 50px;
@@ -196,4 +209,5 @@ onUnmounted(() => {
   text-align: center;
   color: black;
 }
+
 </style>
