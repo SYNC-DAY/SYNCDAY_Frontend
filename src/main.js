@@ -8,6 +8,7 @@ import { setupAxiosInterceptors } from '../src/plugins/axios.js'
 const app = createApp(App)
 const pinia = createPinia()
 
+
 app.use(pinia)
 app.use(router)
 

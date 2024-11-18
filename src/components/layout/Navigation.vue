@@ -61,13 +61,12 @@ const router = useRouter();
 const authStore = useAuthStore();
 const isDropdownOpen = ref(false);
 const profileRef = ref(null);
-
-// computed를 사용하여 user 정보 관리
+console.log("authStore.user: ", authStore.user);
 const userInfo = computed(() => ({
-  userName: authStore.user?.userName || '',
-  profilePhoto: authStore.user?.profilePhoto || ''
+  userName: authStore.user?.username || '',
+  profilePhoto: authStore.user?.profilePhoto || '/default-avatar.png'
 }));
-console.log("user: ", userInfo.value)
+console.log("추출한 userInfo", userInfo);
 // 드롭다운 토글
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
