@@ -131,7 +131,8 @@ onUnmounted(() => {
 	align-items: center;
 }
 
-.nav-top > div,
+.nav-top > 
+div,
 .nav-top 
 ul,
 .icons {
@@ -153,7 +154,7 @@ ul,
 }
 
 .nav-logo span{
-	font-size: 3rem;
+	font-size: 4rem;
 }
 .nav-tabs{
 	flex: 3;
@@ -165,7 +166,7 @@ span{
 	font-size: 2rem;
 }
 .nav-search{
-	flex: 3;
+	flex: 2;
   	padding: 1rem;
 }
 
@@ -174,11 +175,11 @@ input[type=search]{
 	height: 3rem;
 	font-size: 1.5rem;
 	border-radius: 4rem;
-  padding-left: 0.5rem;
+  	padding-left: 0.5rem;
 }
 
 .nav-right{
-	flex: 2;
+	flex: 3;
 	display: flex;
 	flex-direction: row;
 }
@@ -188,7 +189,7 @@ input[type=search]{
 
 }
 .icons img{
-	height: 3rem;
+	height: 2rem;
 }
 
 .profile{
@@ -199,16 +200,15 @@ input[type=search]{
 	align-items: center;
 }
 .profile-image-container {
-  width: 50px;
-  height: 50px;
+	width: 4rem;
+	height: 4rem;
   border-radius: 50%;
   overflow: hidden;
   margin-bottom: 0.25rem;
 }
 
 .profile-image {
-  width: 100%;
-  height: 100%;
+
   object-fit: cover;
 }
 
