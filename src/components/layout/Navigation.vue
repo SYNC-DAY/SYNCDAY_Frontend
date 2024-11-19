@@ -79,43 +79,43 @@ const user = ref({})
 
 console.log("authStore.user.user: ", authStore.user);
 onMounted(async () => {
-  try {
-    // authStore.isAuthenticated가 true라면 이미 profile 데이터가 있는 상태
-    if (authStore.isAuthenticated) {
-      user.value = authStore
-    }
-  } catch (error) {
-    console.error('Failed to fetch user data:', error)
-  }
+	try {
+		// authStore.isAuthenticated가 true라면 이미 profile 데이터가 있는 상태
+		if (authStore.isAuthenticated) {
+			user.value = authStore
+		}
+	} catch (error) {
+		console.error('Failed to fetch user data:', error)
+	}
 })
 // 드롭다운 토글
 const toggleDropdown = () => {
-  isDropdownOpen.value = !isDropdownOpen.value;
+	isDropdownOpen.value = !isDropdownOpen.value;
 };
 
 // 드롭다운 외부 클릭 시 닫기
 const handleClickOutside = (event) => {
-  if (profileRef.value && !profileRef.value.contains(event.target)) {
-    isDropdownOpen.value = false;
-  }
+	if (profileRef.value && !profileRef.value.contains(event.target)) {
+		isDropdownOpen.value = false;
+	}
 };
 
 // 로그아웃 처리
 const handleLogout = async () => {
-  try {
-    await authStore.logout();
-    router.push('/login');
-  } catch (error) {
-    console.error('Logout failed:', error);
-  }
+	try {
+		await authStore.logout();
+		router.push('/login');
+	} catch (error) {
+		console.error('Logout failed:', error);
+	}
 };
 
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside);
+	document.addEventListener('click', handleClickOutside);
 });
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside);
+	document.removeEventListener('click', handleClickOutside);
 });
 </script>
 
@@ -131,10 +131,8 @@ onUnmounted(() => {
 	align-items: center;
 }
 
-.nav-top > 
-div,
-.nav-top 
-ul,
+.nav-top>div,
+.nav-top ul,
 .icons {
 	height: 100%;
 	background-color: white;
@@ -144,7 +142,7 @@ ul,
 	align-items: center;
 }
 
-.nav-top ul{
+.nav-top ul {
 	width: 100%;
 }
 
@@ -152,67 +150,72 @@ ul,
 	flex: 2;
 	font-weight: 700;
 }
-.nav-logo span{
-	font-size: 3rem;
+
+.nav-logo span {
+	font-size: 2rem;
 }
-.nav-tabs{
+
+.nav-tabs {
 	flex: 3;
 }
-.nav-top a{
+
+.nav-top a {
 	text-decoration: none;
 	font-size: 1.5rem;
 }
-.nav-search{
-	flex: 2;
-  	padding: 1rem;
+
+.nav-search {
+	/* flex: 2; */
+	padding: 1rem;
 }
 
-input[type=search]{
+input[type=search] {
 	width: 100%;
 	height: 3rem;
 	font-size: 1.5rem;
 	border-radius: 4rem;
-  	padding-left: 0.5rem;
+	padding-left: 0.5rem;
 }
 
-.nav-right{
+.nav-right {
 	flex: 3;
 	display: flex;
 	flex-direction: row;
 }
 
-.icons{
+.icons {
 	flex: 1;
 
 }
-.icons img{
-	height: 2rem;
+
+.icons img {
+	height: 1.5rem;
 }
 
-.profile{
+.profile {
 	flex: 1;
 	height: 100%;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 }
+
 .profile-image-container {
 	width: 4rem;
 	height: 4rem;
-  border-radius: 50%;
-  overflow: hidden;
-  margin-bottom: 0.25rem;
+	border-radius: 50%;
+	overflow: hidden;
+	margin-bottom: 0.25rem;
 }
 
 .profile-image {
 
-  object-fit: cover;
+	object-fit: cover;
 }
 
 .user-name {
-  font-size: 1rem;
-  text-align: center;
-  color: black;
+	font-size: 1rem;
+	text-align: center;
+	color: black;
 }
-
 </style>

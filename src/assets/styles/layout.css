@@ -54,11 +54,11 @@ p, a, span {
 }
 
 :root{
-	font-size: 10px;
+	font-size: 16px;
 }
 @media screen and (max-width: 1600px) {
   :root {
-	font-size: 10px;
+	font-size: 12px;
   }
 }
 
@@ -67,6 +67,6 @@ p, a, span {
 /* 스크린 반 접은 상태일 때 */
 @media screen and (max-width: 800px) {
   :root {
-	font-size: 6px;
+	font-size: 10px;
   }
 }
