@@ -44,23 +44,24 @@
 					<img src="@/assets/images/alarm.svg" alt="알림" class="icon-img" />
 				</RouterLink>
 			</div>
-<!-- profile -->
-<div class="profile" @click="toggleDropdown" ref="profileRef">
-  <div class="profile-image-container">
-    <RouterLink to="/mypage">
-      <img :src="userInfo.profilePhoto || '/default-avatar.png'" alt="User Profile"
-      class="profile-image" />
-    </RouterLink>
-  </div>
-  <div class="user-menu">
-    <span class="user-name">{{ userInfo.userName }}님 ▼</span>
-    <!-- 드롭다운 메뉴 -->
-    <div v-show="isDropdownOpen" class="dropdown-menu">
-      <RouterLink to="/mypage" class="dropdown-item">마이페이지</RouterLink>
-      <button @click="handleLogout" class="dropdown-item">로그아웃</button>
-    </div>
-  </div>
-</div>
+
+			<!-- profile -->
+			<div class="profile" @click="toggleDropdown" ref="profileRef">
+				<div class="profile-image-container">
+					<RouterLink to="/mypage">
+						<img :src="user.profilePhoto || '/default-avatar.png'" alt="User Profile"
+							class="profile-image" />
+					</RouterLink>
+				</div>
+				<div class="user-menu">
+					<span class="user-name">{{ user.userName }}님 ▼</span>
+					<!-- 드롭다운 메뉴 -->
+					<div v-show="isDropdownOpen" class="dropdown-menu">
+						<RouterLink to="/mypage" class="dropdown-item">마이페이지</RouterLink>
+						<button @click="handleLogout" class="dropdown-item">로그아웃</button>
+					</div>
+				</div>
+			</div>
 
 </div>
 <ChatPop :isVisible="isPopupVisible" @update:isVisible="isPopupVisible = $event" />
@@ -71,6 +72,8 @@
 import { RouterLink, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth.js';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import axios from "axios";
+
 import ChatPop from '@/views/chat/ChatList.vue';
 import AppHeader from './AppHeader.vue';
 
@@ -89,12 +92,19 @@ const router = useRouter();
 const authStore = useAuthStore();
 const isDropdownOpen = ref(false);
 const profileRef = ref(null);
-console.log("authStore.user: ", authStore.user);
-const userInfo = computed(() => ({
-  userName: authStore.user?.userName || '',
-  profilePhoto: authStore.user?.profilePhoto || '/default-avatar.png'
-}));
-console.log("추출한 userInfo", userInfo);
+const user = ref({})
+
+console.log("authStore.user.user: ", authStore.user);
+onMounted(async () => {
+  try {
+    // authStore.isAuthenticated가 true라면 이미 profile 데이터가 있는 상태
+    if (authStore.isAuthenticated) {
+      user.value = authStore
+    }
+  } catch (error) {
+    console.error('Failed to fetch user data:', error)
+  }
+})
 // 드롭다운 토글
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
@@ -173,7 +183,7 @@ ul,
 a,
 span{
 	text-decoration: none;
-	font-size: 4rem;
+	font-size: 2rem;
 }
 .nav-search{
 	flex: 2;
@@ -184,7 +194,6 @@ input[type=search]{
 	width: 100%;
 	height: 6rem;
 	font-size: 2rem;
-	border-color: var(--muted-text);
 	border-radius: 2rem;
   padding-left: 0.5rem;
 }
@@ -225,7 +234,7 @@ input[type=search]{
 }
 
 .user-name {
-  font-size: 0.875rem;
+  font-size: 1.8rem;
   text-align: center;
   color: black;
 }
