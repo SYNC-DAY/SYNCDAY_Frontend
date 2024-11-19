@@ -4,12 +4,14 @@ import { useAuthStore } from "../stores/auth.js"
 // 각 도메인별 라우트 import
 import userRoutes from './user'
 import mainRoutes from './main'
+import calendarRoutes from './calendar'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     ...mainRoutes,
     ...userRoutes,
+    ...calendarRoutes,
   ],
 })
 // router/index.js

@@ -5,7 +5,7 @@ export default [
         redirect: {path:"/calendar/view"},        // 이 부분 나중에 바꾸기!!!!!
         children: [
             {
-                path: 'view/:userId',
+                path: 'view',
                 component: () => import('@/views/calendar/CalendarView.vue'),
             },
             // {
