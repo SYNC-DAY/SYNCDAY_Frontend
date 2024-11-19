@@ -123,7 +123,7 @@ onUnmounted(() => {
 <style scoped>
 .nav-top {
 	width: 100%;
-	height: 10vh;
+	height: 8rem;
 	background-color: white;
 	display: flex;
 	flex-direction: row;
@@ -152,18 +152,15 @@ ul,
 	flex: 2;
 	font-weight: 700;
 }
-
 .nav-logo span{
 	font-size: 4rem;
 }
 .nav-tabs{
 	flex: 3;
 }
-.nav-top 
-a,
-span{
+.nav-top a{
 	text-decoration: none;
-	font-size: 2rem;
+	font-size: 1.5rem;
 }
 .nav-search{
 	flex: 2;
