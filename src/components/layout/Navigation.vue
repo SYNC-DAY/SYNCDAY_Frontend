@@ -178,7 +178,7 @@ input[type=search] {
 }
 
 .nav-right {
-	flex: 3;
+	flex: 2;
 	display: flex;
 	flex-direction: row;
 }
