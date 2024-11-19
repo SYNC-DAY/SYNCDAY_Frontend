@@ -46,8 +46,8 @@ const sidebarHeight = computed(() => {
 
 <style scoped>
 aside {
-  width: 25rem;
-  height: calc(100vh - 6rem); /* nav바 높이를 빼줍니다 */
+  width: 20rem;
+  height: calc(100vh - 8rem); /* nav바 높이를 빼줍니다 */
   background: #fff;
   border-right: 1px solid #ccc;
   border-bottom: 1px solid #ccc;
@@ -57,7 +57,7 @@ aside {
 }
 
 aside.collapsed {
-  width: 0.01vw;
+  width: 0.00vw;
   padding: 0.5rem;
 }
 
