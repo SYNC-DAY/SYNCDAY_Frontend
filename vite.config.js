@@ -16,7 +16,7 @@ export default defineConfig({
   server: {
     proxy: {
       '^/api': {                        // '^' 추가하여 정확한 경로 매칭
-        target: 'http://localhost:8080',
+        target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,                   // SSL 관련 검증 비활성화
         configure: (proxy, options) => {
