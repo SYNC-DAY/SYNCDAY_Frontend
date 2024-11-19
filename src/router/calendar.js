@@ -2,7 +2,7 @@ export default [
     {
         path: '/calendar',
         component: () => import('@/views/calendar/CalendarRoot.vue'),
-        redirect: {path:"/calendar/view"},        // 이 부분 나중에 바꾸기!!!!!
+        redirect: {path:"/calendar/view"},
         meta: { requiresAuth: true },
         children: [
             {
