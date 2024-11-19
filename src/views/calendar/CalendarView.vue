@@ -6,30 +6,39 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import axios from 'axios';
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid'; // DayGrid 보기 플러그인
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction'; // 클릭/드래그 기능
 
 import { useAuthStore } from '@/stores/auth';
-const user = ref({})
-const authStore = useAuthStore()
-const loading = ref(true)
-
-console.log(user);
+const user = ref({});
+const authStore = useAuthStore();
+const loading = ref(true);
 
 // 이벤트 데이터
-const events = ref([
-    { title: 'Event 1', start: '2024-11-20', end: '2024-11-22' },
-    { title: 'Event 2', start: '2024-11-25' },
-]);
+const events = ref([]);
 
 const calendarOptions = ref({
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
     initialView: 'dayGridMonth',
+    headerToolbar: {
+        left: 'title prev next today',
+        right: 'dayGridMonth,timeGridWeek +'
+    },
+    views: {
+        dayGridMonth: {
+            buttonText: '월'
+        },
+        timeGridWeek: {
+            buttonText: '주'
+        },
+    },
     selectable: true, // 드래그로 날짜 선택 가능
     editable: true, // 이벤트 편집 가능 (드래그 앤 드롭 활성화)
     droppable: true, // 이벤트 드래그 앤 드롭 활성화
+    locale: 'ko',
     dateClick: (info) => {
         alert(`Date clicked: ${info.dateStr}`);
     },
@@ -39,12 +48,45 @@ const calendarOptions = ref({
     events: events,
 });
 
+// GET으로 조회!!!
+const fetchSchedules = async () => {
+    try {
+        const response = await fetch(`http://localhost:8080/api/schedule?userId=${user.value.userId}`,
+            {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+        if (!response.ok) {
+            throw new Error('Failed to fetch schedules');
+        }
+        const data = await response.json();
+
+        events.value = data.map(schedule => ({
+            title: schedule.value.title,
+            start: new Date(schedule.value.start_time).toISOString().split('T')[0],
+            end: schedule.vale.end_time ? new Date(schedule.value.end_time).toISOString().split('T')[0] : undefined,
+        }));
+
+        console.log('Fetched Events:', events.value);
+    } catch (error) {
+        console.error('Error fetching schedules:', error);
+    }
+};
+
 onMounted(async () => {
     try {
         // authStore.isAuthenticated가 true라면 이미 profile 데이터가 있는 상태
         if (authStore.isAuthenticated) {
             const response = await axios.get('/user/profile');
             user.value = response.data.data;
+            console.log(user.value.userId);
+
+            if (user.value.userId) {
+                await fetchSchedules();
+            }
         }
     } catch (error) {
         console.error('Failed to fetch user data:', error);
