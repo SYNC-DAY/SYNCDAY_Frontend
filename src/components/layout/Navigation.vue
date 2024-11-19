@@ -47,12 +47,12 @@
 			<div class="profile" @click="toggleDropdown" ref="profileRef">
 				<div class="profile-image-container">
 					<RouterLink to="/mypage">
-						<img :src="userInfo.profilePhoto || '/default-avatar.png'" alt="User Profile"
+						<img :src="user.profilePhoto || '/default-avatar.png'" alt="User Profile"
 							class="profile-image" />
 					</RouterLink>
 				</div>
 				<div class="user-menu">
-					<span class="user-name">{{ userInfo.userName }}님 ▼</span>
+					<span class="user-name">{{ user.userName }}님 ▼</span>
 					<!-- 드롭다운 메뉴 -->
 					<div v-show="isDropdownOpen" class="dropdown-menu">
 						<RouterLink to="/mypage" class="dropdown-item">마이페이지</RouterLink>
@@ -69,17 +69,25 @@
 import { RouterLink, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth.js';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import axios from "axios";
 
 const router = useRouter();
 const authStore = useAuthStore();
 const isDropdownOpen = ref(false);
 const profileRef = ref(null);
-console.log("authStore.user: ", authStore.user);
-const userInfo = computed(() => ({
-  userName: authStore.user?.userName || '',
-  profilePhoto: authStore.user?.profilePhoto || '/default-avatar.png'
-}));
-console.log("추출한 userInfo", userInfo);
+const user = ref({})
+
+console.log("authStore.user.user: ", authStore.user);
+onMounted(async () => {
+  try {
+    // authStore.isAuthenticated가 true라면 이미 profile 데이터가 있는 상태
+    if (authStore.isAuthenticated) {
+      user.value = authStore
+    }
+  } catch (error) {
+    console.error('Failed to fetch user data:', error)
+  }
+})
 // 드롭다운 토글
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
