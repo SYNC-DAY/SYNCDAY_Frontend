@@ -18,6 +18,7 @@ export const useAuthStore = defineStore('auth', {
             this.accessToken = token
             if (token) {
                 axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+                console.log("설정된 기본 헤더: ", axios.defaults.headers.common['Authorization'])
             } else {
                 delete axios.defaults.headers.common['Authorization']
             }
@@ -25,6 +26,7 @@ export const useAuthStore = defineStore('auth', {
 
         async login(email, password) {
             try {
+                console.log("login을 시작합니다.")
                 const response = await axios.post('/user/login', {
                     email,
                     password

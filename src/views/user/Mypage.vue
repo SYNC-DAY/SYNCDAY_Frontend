@@ -27,8 +27,8 @@
             <div class="github-info">
               <img src="@/assets/images/github-icon.svg" alt="GitHub" class="github-icon" />
               <span class="github-id">mojeeeong</span>
+              <button class="edit-btn">계정 교체</button>
             </div>
-            <button class="edit-btn">계정 교체</button>
           </div>
           <div class="contact-info">회선 번호 : {{ user.phoneNumber || '031-1111-1111' }}</div>
           <div class="contact-info">Email : {{ user.email || 'momo94@threeping.co.kr' }}</div>
@@ -55,6 +55,7 @@ import {useAuthStore} from "@/stores/auth.js";
 
 const router = useRouter()
 const user = ref({})
+
 const authStore = useAuthStore()
 const loading = ref(true)
 
@@ -63,6 +64,7 @@ onMounted(async () => {
     // authStore.isAuthenticated가 true라면 이미 profile 데이터가 있는 상태
     if (authStore.isAuthenticated) {
       const response = await axios.get('/user/profile')
+      console.log('API 응답:', response.data)
       user.value = response.data.data
     }
   } catch (error) {
@@ -72,6 +74,9 @@ onMounted(async () => {
   }
 })
 
+console.log("user.value.userId: ", user.value.userId);
+
+
 const goToPasswordChange = () => {
   router.push('/password-change')
 }
@@ -80,9 +85,9 @@ const goToPasswordChange = () => {
 <style scoped>
 
 .profile-page {
-  max-width: 1200px;
+  max-width: 112rem;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 0 2rem;
   min-height: 200vh;
   display: flex;          /* 추가 */
   flex-direction: column; /* 추가 */
@@ -90,16 +95,17 @@ const goToPasswordChange = () => {
 }
 
 .my-page-title {
-  font-size: 2rem;
+  margin: 1rem 0;
+  font-size: 4rem;
   font-weight: bold;
   color: #333;
   width: 100%;          /* 추가 */
-  max-width: 800px;     /* password-card와 동일한 max-width */
+  max-width: 133rem;     /* password-card와 동일한 max-width */
 }
 
 .profile-card {
-  max-width: 800px;
-  height: 569px;
+  max-width: 130rem;
+  height: 90rem;
   width: 100%;
   background: white;
   border-radius: 20px;
@@ -108,66 +114,72 @@ const goToPasswordChange = () => {
 }
 
 .gradient-banner {
-  height: 200px;
+  height: 35rem;
   background: linear-gradient(to right, #FFD5B8, #FF8FB3);
 }
 
 .profile-content {
   position: relative;
-  margin-top: -100px;
+  margin-top: -13rem;
   display: flex;
-  padding-right: 20px;
+  padding: 0 3rem;
 }
 
 .left-section {
   flex: 1;
-  max-width: 270px;
+  max-width: 40rem;
   text-align: center;
 }
 
 .right-section {
-  max-width: 350px;
+  max-width: 60rem;
   flex: 2;
-  padding-top: 8rem;
+  padding-top: 18rem;
+  place-items: center;
 }
 
 .photo-section {
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
 }
 
 .profile-photo {
-  width: 150px;
-  height: 150px;
+  width: 25rem;
+  height: 25rem;
   border-radius: 50%;
-  border: 5px solid white;
+  border: 0.7rem solid white;
   object-fit: cover;
 }
 
 .username {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin: 0.5rem 0;
-}
-
-.tag {
-  display: flex;
-  gap: 5px;
-}
-
-.role {
-  color: #A7A7A7;
-  font-size: 1rem;
+  font-size: 3.5rem;
   font-weight: bold;
   margin-bottom: 1rem;
 }
 
+.tag {
+  display: flex;
+  gap: 0.7rem;
+}
+
+.role {
+  color: #A7A7A7;
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 1.7rem;
+}
+
+.role-img {
+  width: 3rem;
+  height: 3rem;
+}
+
 .edit-button {
-  border: 3px solid #000;
+  border: 0.5rem solid #000;
   border-radius: 18px;
-  padding: 0.5rem 1rem;
+  padding: 1rem 2rem;
   background: white;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 1.8rem;
   font-weight: bold;
   transition: all 0.2s;
 }
@@ -178,73 +190,81 @@ const goToPasswordChange = () => {
 }
 
 .github-section {
-  border: 2px solid #D1D1D1;
-  max-width: 300px;
-  padding: 0.4rem 1rem;
-  border-radius: 10px;
+  border: 0.4rem solid #D1D1D1;
+  max-width: 53rem;
+  width: 80%;
+  height: 8rem;
+  border-radius: 3rem;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: center;
   margin-bottom: 1rem;
 }
 
 .github-info {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1rem;
 }
 
 .github-icon {
-  width: 40px;
-  height: 40px;
+  width: 5rem;
+  height: 5rem;
 }
 
 .github-id {
-  font-size: x-large;
+  font-size: large;
   font-weight: bold;
 }
 
 .edit-btn {
-  padding: 0.3rem 0.8rem;
+  display: flex;
+  padding: 1rem 2.5rem;
   background: #000;
   color: white;
   border: none;
-  border-radius: 18px;
-  font-size: 0.8rem;
+  border-radius: 2rem;
+  font-size: 1.5rem;
   cursor: pointer;
+  margin-left: 7rem;
 }
 
 .contact-info {
-  border: 2px solid #D1D1D1;
+  display: flex;
+  align-items: center;
+  font-size: medium;
+  border: 0.4rem solid #D1D1D1;
   font-weight: bold;
-  max-width: 300px;
-  padding: 1rem;
-  border-radius: 10px;
+  max-width: 53rem;
+  height: 8rem;
+  width: 80%;
+  border-radius: 3rem;
   margin-bottom: 1rem;
+  padding-left: 2rem;
 }
 
 .role-tag {
-  max-width: 165px;
+  max-width: 22rem;
   width: 100%;
   display: flex;
   align-items: center;
   flex-direction: column;
-  gap: 10px;
-  padding-top: 8rem;
+  gap: 2rem;
+  padding-top: 18rem;
+  padding-right: 1rem;
 }
 
 .job-title-label {
-  font-weight: 500;
+  font-weight: normal;
   color: #666;
-  margin-top: 4px;
+  margin-top: 0.2rem;
 }
 
 .job-title {
   color: #666;
-  font-size: 0.9rem;
+  font-size: 2rem;
   background: #F5F5F5;
-  padding: 0.5rem 1rem;
-  border-radius: 18px;
+  padding: 1rem 2rem;
+  border-radius: 5rem;
   font-weight: bold;
 }
 </style>
