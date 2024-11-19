@@ -13,9 +13,9 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction'; // 클릭/드래그 기능
 
 import { useAuthStore } from '@/stores/auth';
-const user = ref({});
 const authStore = useAuthStore();
-const loading = ref(true);
+// const user = ref({});
+// const loading = ref(true);
 
 // 이벤트 데이터
 const events = ref([]);
@@ -25,14 +25,14 @@ const calendarOptions = ref({
     initialView: 'dayGridMonth',
     headerToolbar: {
         left: 'title prev next today',
-        right: 'dayGridMonth,timeGridWeek +'
+        right: 'dayGridMonth,timeGridWeek',
     },
     views: {
         dayGridMonth: {
-            buttonText: '월'
+            buttonText: '월간',
         },
         timeGridWeek: {
-            buttonText: '주'
+            buttonText: '주간',
         },
     },
     selectable: true, // 드래그로 날짜 선택 가능
@@ -50,18 +50,38 @@ const calendarOptions = ref({
 
 // GET으로 조회!!!
 const fetchSchedules = async () => {
-    console.log("" ,user.value.userId);
     try {
-        const response = await axios.get(`/schedule/my?userId=${user.value.userId}`);
+        const response = await axios.get(`/schedule/my?userId=${authStore.user.userId}`);
         console.log(response);
         const data = response.data.data;
         console.log(data);
-        
-        events.value = data.map(schedule => ({
-            title: schedule.title,
-            start: new Date(schedule.start_time).toISOString().split('T')[0],
-            end: schedule.end_time ? new Date(schedule.end_time).toISOString().split('T')[0] : undefined,
-        }));
+
+        events.value = data.map((schedule) => {
+            const startDate = new Date(schedule.start_time);
+            const endDate = new Date(schedule.end_time);
+
+            // 날짜가 같으면 시간까지 포함
+            const isSameDate = startDate.toISOString().split('T')[0] === endDate.toISOString().split('T')[0];
+
+            // 날짜가 다르면 endDate에 1일 추가
+            if (!isSameDate) {
+                endDate.setDate(endDate.getDate() + 1); // 날짜가 다르면 1일 추가
+            }
+
+            return {
+                id: schedule.schedule_id,
+                title: schedule.title,
+                // 날짜가 같으면 시간까지 포함하고, 다르면 날짜만 표시
+                start: isSameDate ? startDate.toISOString() : startDate.toISOString().split('T')[0],
+                end: isSameDate ? endDate.toISOString() : endDate.toISOString().split('T')[0],
+                backgroundColor: '#FF9D85',
+                borderColor: '#FF9D85',
+                extendedProps: {
+                    content: schedule.content,
+                    // 필요하면 더 추가
+                },
+            };
+        });
 
         console.log('Fetched Events:', events.value);
     } catch (error) {
@@ -70,23 +90,9 @@ const fetchSchedules = async () => {
 };
 
 onMounted(async () => {
-    try {
-        // authStore.isAuthenticated가 true라면 이미 profile 데이터가 있는 상태
-        if (authStore.isAuthenticated) {
-            const response = await axios.get('/user/profile');
-            user.value = response.data.data;
-            console.log(user.value.userId);
-
-            if (user.value.userId) {
-                await fetchSchedules();
-            }
-        }
-    } catch (error) {
-        console.error('Failed to fetch user data:', error);
-    } finally {
-        loading.value = false;
-    }
+    await fetchSchedules();
 });
+
 </script>
 
 <style scoped>
