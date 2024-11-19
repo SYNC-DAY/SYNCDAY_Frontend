@@ -153,7 +153,7 @@ ul,
 a,
 span{
 	text-decoration: none;
-	font-size: 4rem;
+	font-size: 2rem;
 }
 .nav-search{
 	flex: 2;
@@ -164,7 +164,6 @@ input[type=search]{
 	width: 100%;
 	height: 6rem;
 	font-size: 2rem;
-	border-color: var(--muted-text);
 	border-radius: 2rem;
   padding-left: 0.5rem;
 }
@@ -205,7 +204,7 @@ input[type=search]{
 }
 
 .user-name {
-  font-size: 0.875rem;
+  font-size: 1.8rem;
   text-align: center;
   color: black;
 }

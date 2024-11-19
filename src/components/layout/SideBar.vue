@@ -47,10 +47,13 @@ const sidebarHeight = computed(() => {
 <style scoped>
 aside {
   width: 25rem;
+  height: calc(100vh - 6rem); /* nav바 높이를 빼줍니다 */
+  background: #fff;
   border-right: 1px solid #ccc;
   border-bottom: 1px solid #ccc;
   transition: width 0.3s ease-in-out;
   position: relative;
+  z-index: 10;
 }
 
 aside.collapsed {
@@ -67,10 +70,6 @@ aside.collapsed {
   border: 1px solid #ccc;
   padding: 0.25rem 0.5rem;
   cursor: pointer;
-}
-
-.menu-items {
-  margin-top: 2.5rem;
 }
 
 .sidebar-item {
@@ -111,6 +110,7 @@ aside.collapsed {
 }
 
 .menu-items .sidebar-item {
+  font-size: large;
   position: relative;
   margin-bottom: 0.5rem; 
 }
