@@ -5,13 +5,16 @@ import { useAuthStore } from "../stores/auth.js"
 import userRoutes from './user'
 import mainRoutes from './main'
 import projectRoutes from './project'
+import scheduleRepeatRoutes from './schedule-repeat.js'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     ...mainRoutes,
     ...userRoutes,
-    ...projectRoutes,{
+    ...projectRoutes,
+    ...scheduleRepeatRoutes,
+    {
       path:'/',
       redirect:''
     }
