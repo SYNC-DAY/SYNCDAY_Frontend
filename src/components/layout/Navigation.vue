@@ -143,11 +143,12 @@ ul,
 	flex: 2;
 	font-weight: 700;
 }
+
 .nav-logo span{
-	font-size: 6rem;
+	font-size: 3rem;
 }
 .nav-tabs{
-	flex: 5;
+	flex: 3;
 }
 .nav-top 
 a,
@@ -156,15 +157,15 @@ span{
 	font-size: 2rem;
 }
 .nav-search{
-	flex: 2;
+	flex: 3;
   	padding: 1rem;
 }
 
 input[type=search]{
 	width: 100%;
-	height: 6rem;
-	font-size: 2rem;
-	border-radius: 2rem;
+	height: 3rem;
+	font-size: 1.5rem;
+	border-radius: 4rem;
   padding-left: 0.5rem;
 }
 
