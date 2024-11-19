@@ -26,12 +26,12 @@ import { onMounted, ref } from 'vue';
 import SockJS from 'sockjs-client';
 import { Stomp } from '@stomp/stompjs';
 
+
 const connectionStatus = ref('웹소켓에 연결 중...')
 const socket = new SockJS('http://localhost:8080/ws');
 console.log('SockJS 인스턴스 생성됨')
-const stompClient = ref(null)
-// const stompClient = Stomp.over(socket);
-
+// const stompClient = ref(null)
+const stompClient = Stomp.over(socket);
 
 stompClient.value = new Stomp({
     webSocketFactory: () => socket,
@@ -66,16 +66,19 @@ stompClient.value = new Stomp({
   })
 
 
-stompClient.connect({}, () => {
-  console.log('웹소켓 연결 완료!');
+stompClient.connect({}, (frame) => {
+  console.log('웹소켓 연결 완료!: ', frame);
   stompClient.subscribe('/topic/chatroom', (message) => {
-    console.log('Received message:', message.body);
+    console.log('새 메세지:', message.body);
   });
-  stompClient.send('/app/message', {}, JSON.stringify({
-        sender: 'User',
-        content: 'Hello!',
-    }));
+}, (error) => {
+  console.log('STOMP 연결 실패: ', error);
 });
+  // stompClient.send('/app/message', {}, JSON.stringify({
+  //       sender: 'User',
+  //       content: 'Hello!',
+  //   }));
+
 
 const isVisible = ref(false);
 const emit = defineEmits();
@@ -105,6 +108,10 @@ const fetchChatList = async () => {
 onMounted(() => {
   fetchChatList();
 });
+
+socket.onclose= () => {
+  console.log('웹소켓 연결이 종료되었습니다.');
+};
 </script>
 
 <style scoped>

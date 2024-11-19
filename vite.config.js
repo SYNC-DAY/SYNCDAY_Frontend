@@ -8,10 +8,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+            // SockJS를 위한 별칭 추가
+            'sockjs-client': 'sockjs-client/dist/sockjs.min.js',
     },
-    define: {
-      global: 'window',
-    },
+
   },
   server: {
     proxy: {
