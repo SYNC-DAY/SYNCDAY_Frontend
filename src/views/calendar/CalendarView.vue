@@ -50,24 +50,17 @@ const calendarOptions = ref({
 
 // GET으로 조회!!!
 const fetchSchedules = async () => {
+    console.log("" ,user.value.userId);
     try {
-        const response = await fetch(`http://localhost:8080/api/schedule?userId=${user.value.userId}`,
-            {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            }
-        );
-        if (!response.ok) {
-            throw new Error('Failed to fetch schedules');
-        }
-        const data = await response.json();
-
+        const response = await axios.get(`/schedule/my?userId=${user.value.userId}`);
+        console.log(response);
+        const data = response.data.data;
+        console.log(data);
+        
         events.value = data.map(schedule => ({
-            title: schedule.value.title,
-            start: new Date(schedule.value.start_time).toISOString().split('T')[0],
-            end: schedule.vale.end_time ? new Date(schedule.value.end_time).toISOString().split('T')[0] : undefined,
+            title: schedule.title,
+            start: new Date(schedule.start_time).toISOString().split('T')[0],
+            end: schedule.end_time ? new Date(schedule.end_time).toISOString().split('T')[0] : undefined,
         }));
 
         console.log('Fetched Events:', events.value);
