@@ -29,12 +29,10 @@
                 required
             >
           </div>
-
-          <button type="submit" class="login-button">로그인</button>
-
           <div class="forgot-password">
             <a href="#" @click.prevent="alert('준비 중인 기능입니다.')">비밀번호 찾기</a>
           </div>
+          <button type="submit" class="login-button">로그인</button>
         </form>
       </div>
     </div>
@@ -85,7 +83,7 @@ const handleLogin = async () => {
 
 .login-welcome {
   flex: 1;
-  padding: 40px;
+  padding: 15rem 5rem 0 5rem;
   background-color: white;
 }
 
@@ -104,61 +102,56 @@ const handleLogin = async () => {
 
 .login-form-container {
   flex: 1;
-  padding: 40px;
+  padding: 15rem 5rem 0 5rem;
   border-left: 1px solid #eee;
 }
 
 .login-form-container h2 {
-  font-size: 1.8rem;
+  font-size: 4rem;
   font-weight: bold;
   color: #333;
 }
 
-.form-group {
-  margin-bottom: 20px;
-}
-
 .form-group label {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 1rem;
+  font-size: large;
   color: #333;
   font-weight: 500;
 }
 
 .form-group input {
   width: 100%;
-  padding: 12px;
+  padding: 2rem 1rem;
   border: 1px solid #ddd;
   border-radius: 5px;
-  font-size: 1rem;
+  font-size: 3rem;
 }
 
 .login-button {
   width: 100%;
-  padding: 12px;
+  padding: 3rem;
   background-color: #1a237e;
   color: white;
   border: none;
-  border-radius: 5px;
-  font-size: 1rem;
+  border-radius: 1rem;
+  font-size: 2.5rem;
   font-weight: 500;
-  cursor: pointer;
-  margin-top: 20px;
-}
+  cursor: pointer;}
 
 .login-button:hover {
   background-color: #0d1b60;
 }
 
 .forgot-password {
+  padding: 2rem 1rem;
   text-align: right;
-  margin-top: 15px;
 }
 
 .forgot-password a {
   color: #666;
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 1.9rem;
 }
 
 .forgot-password a:hover {
