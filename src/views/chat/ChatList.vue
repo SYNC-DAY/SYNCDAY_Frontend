@@ -8,16 +8,15 @@
           <button class="new-chat">새 채팅</button>
           </div>
           <div class= "chatlist">
-            <ui>
+            <ul>
               <li v-for="chat in chatlist" :key="chat.id" @click="openChatRoom(chat.id)" class="chat-room">
                 <h4>{{ chat.name }}</h4>
                 <p>{{ chat.lastMessage }}</p>
               </li>
-            </ui>
+            </ul>
           </div>
         </div>
       </div>
-
   </div>
 </template>
 
@@ -32,9 +31,11 @@ const socket = new SockJS('http://localhost:8080/ws');
 console.log('SockJS 인스턴스 생성됨')
 // const stompClient = ref(null)
 const stompClient = Stomp.over(socket);
+// const stompClient = Stomp.stompClient(socket);
 
 stompClient.value = new Stomp({
     webSocketFactory: () => socket,
+    brokerURL: 'ws://localhost:8080/ws',
     reconnectDelay: 5000,
     heartbeatIncoming: 4000,
     heartbeatOutgoing: 4000,
@@ -66,7 +67,9 @@ stompClient.value = new Stomp({
   })
 
 
-stompClient.connect({}, (frame) => {
+stompClient.connect(
+  // {Authorization: `Bearer ${authToken}`}, // JWT 토큰 등 인증 정보 추가
+   (frame) => {
   console.log('웹소켓 연결 완료!: ', frame);
   stompClient.subscribe('/topic/chatroom', (message) => {
     console.log('새 메세지:', message.body);
@@ -133,6 +136,10 @@ socket.onclose= () => {
 .popup-content {
   padding: 20px;
   overflow-y: auto; /* 내용이 길어지면 스크롤 */
+}
+
+.popup-content p {
+  font-size: 4rem;
 }
 
 .close-button {

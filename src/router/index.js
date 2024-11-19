@@ -20,8 +20,15 @@ const router = createRouter({
     ...userRoutes,{
       path:'/',
       redirect:''
+    },
+    { path: '/chat',
+      name: 'Chat',     
+      component: () => import('@/views/chat/ChatList.vue'),
+       meta: {
+        requiresAuth: true
+       }
     }
-  ],
+  ]
 
 })
 // router/index.js

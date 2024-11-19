@@ -1,4 +1,6 @@
 <template>
+	<AppHeader :userName="userName" :profileImageUrl="profileImageUrl" />
+
 	<nav class="nav-top">
 
 		<!-- logo -->
@@ -70,7 +72,18 @@ import { RouterLink, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth.js';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import ChatPop from '@/views/chat/ChatList.vue';
+import AppHeader from './AppHeader.vue';
 
+const props = defineProps({
+    userName: {
+      type: String,
+      required: true
+    },
+    profileImageUrl: {
+      type: String,
+      required: true
+    }
+  });
 const isPopupVisible = ref(false);
 const router = useRouter();
 const authStore = useAuthStore();
