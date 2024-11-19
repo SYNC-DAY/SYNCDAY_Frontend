@@ -7,10 +7,13 @@ import mainRoutes from './main'
 import calendarRoutes from './calendar'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(),
   routes: [
     ...mainRoutes,
-    ...userRoutes,
+    ...userRoutes,{
+      path:'/',
+      redirect:''
+    },
     ...calendarRoutes,
   ],
 })
