@@ -43,6 +43,8 @@ export function setupAxiosInterceptors() {
             console.log("at가 만료되어 없는 경우 새로 발급받은 at: ", newAccessToken)
             if (newAccessToken) {
                 const authStore = useAuthStore()
+                // user정보까지 들고 오는 걸로 확인
+                console.log("at만료되고 다시 요청이 돌아오면 auth가 유지되는지 아니면 토큰만 들고오는지 확인(authStore): ", authStore)
                 authStore.setAccessToken(newAccessToken)
                 // 새로운 토큰으로 원래 요청 재시도
                 originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`
