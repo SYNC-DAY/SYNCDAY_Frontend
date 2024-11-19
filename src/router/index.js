@@ -10,11 +10,11 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     ...mainRoutes,
-    ...userRoutes,{
+    ...userRoutes,
+    ...calendarRoutes,{
       path:'/',
       redirect:''
     },
-    ...calendarRoutes,
   ],
 })
 // router/index.js

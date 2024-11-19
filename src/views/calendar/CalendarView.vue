@@ -1,6 +1,7 @@
 <template>
-    <div>
+    <div style="height: 100%; width: 100%">
         <FullCalendar :options="calendarOptions" />
+        <p>dddddd</p>
     </div>
 </template>
 
@@ -22,7 +23,6 @@ const calendarOptions = ref({
         alert(`Selected from ${info.startStr} to ${info.endStr}`);
     },
     events: events,
-    
 });
 
 // 이벤트 데이터
@@ -31,7 +31,20 @@ const events = ref([
     { title: 'Event 2', start: '2024-11-25' },
 ]);
 
-onMounted();
+// onMounted();
 </script>
 
-<style scoped></style>
+<style scoped>
+html,
+body,
+#app {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+div {
+    height: 100%; /* 캘린더 컨테이너에 높이 100% 설정 */
+    width: 100%; /* 캘린더 컨테이너에 너비 100% 설정 */
+}
+</style>

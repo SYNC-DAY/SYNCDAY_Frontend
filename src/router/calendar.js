@@ -3,10 +3,12 @@ export default [
         path: '/calendar',
         component: () => import('@/views/calendar/CalendarRoot.vue'),
         redirect: {path:"/calendar/view"},        // 이 부분 나중에 바꾸기!!!!!
+        meta: { requiresAuth: true },
         children: [
             {
                 path: 'view',
                 component: () => import('@/views/calendar/CalendarView.vue'),
+                meta: { requiresAuth: true }
             },
             // {
             //     path: 'view/:musicalId/:reviewId',  // :id는 동적 라우트 매개변수
