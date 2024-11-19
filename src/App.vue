@@ -2,7 +2,7 @@
   <div class="app-container">
     <!-- 로그인 페이지가 아닐 때만 헤더와 메인 컨텐츠 표시 -->
     <template v-if="!isLoginPage">
-      <AppHeader />
+      <Navigation />
       <div class="main-container">
         <template v-if="authStore.isAuthenticated">
           <main class="content">
@@ -21,8 +21,8 @@
 <script setup>
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
-import AppHeader from './components/layout/AppHeader.vue';
 import { useAuthStore } from "@/stores/auth.js";
+import Navigation from "@/components/layout/Navigation.vue";
 
 const route = useRoute();
 const authStore = useAuthStore();

@@ -20,13 +20,11 @@ const router = createRouter({
 // router/index.js
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
-
   // 이미 인증된 상태에서 로그인 페이지 접근 시
   if (to.path === '/login' && authStore.isAuthenticated) {
     next('/')
     return
   }
-
   try {
     // 인증이 필요한 페이지이고 초기화가 안 된 경우
     if (to.meta.requiresAuth) {
@@ -46,7 +44,6 @@ router.beforeEach(async (to, from, next) => {
         return
       }
     }
-
     next()
   } catch (error) {
     console.error('Auth check failed:', error)
