@@ -153,7 +153,7 @@ ul,
 	font-weight: 700;
 }
 .nav-logo span{
-	font-size: 4rem;
+	font-size: 3rem;
 }
 .nav-tabs{
 	flex: 3;
@@ -210,7 +210,7 @@ input[type=search]{
 }
 
 .user-name {
-  font-size: 1.8rem;
+  font-size: 1rem;
   text-align: center;
   color: black;
 }
