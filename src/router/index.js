@@ -4,6 +4,7 @@ import { useAuthStore } from "../stores/auth.js"
 // 각 도메인별 라우트 import
 import userRoutes from './user'
 import mainRoutes from './main'
+import projectRoutes from './project'
 import calendarRoutes from './calendar'
 
 const router = createRouter({
@@ -11,7 +12,8 @@ const router = createRouter({
   routes: [
     ...mainRoutes,
     ...userRoutes,
-    ...calendarRoutes,{
+    ...calendarRoutes,
+    ...projectRoutes,{
       path:'/',
       redirect:''
     },
