@@ -123,19 +123,20 @@ onUnmounted(() => {
 <style scoped>
 .nav-top {
 	width: 100%;
-	height: 8rem;
-	background-color: white;
+	height: 10vh;
+/* 	background-color: white; */
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
 	align-items: center;
+	padding: 0.5rem;
 }
 
-.nav-top>div,
+.nav-top > div,
 .nav-top ul,
 .icons {
 	height: 100%;
-	background-color: white;
+/* 	background-color: white; */
 	display: flex;
 	flex-direction: row;
 	justify-content: space-around;
@@ -156,25 +157,25 @@ onUnmounted(() => {
 }
 
 .nav-tabs {
-	flex: 3;
+	flex: 2.5;
 }
 
 .nav-top a {
 	text-decoration: none;
-	font-size: 1.5rem;
+	font-size: 1.2rem;
 }
 
 .nav-search {
-	/* flex: 2; */
-	padding: 1rem;
+	flex: 2.5;
+	padding: 0.5rem;
 }
 
 input[type=search] {
-	width: 100%;
-	height: 3rem;
-	font-size: 1.5rem;
-	border-radius: 4rem;
-	padding-left: 0.5rem;
+	width: 15rem;
+	height: 2.4rem;
+	font-size: 1.2rem;
+	border-radius: 1.2rem;
+	padding: 0 1rem;
 }
 
 .nav-right {

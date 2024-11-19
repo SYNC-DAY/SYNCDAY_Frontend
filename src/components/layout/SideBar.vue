@@ -46,11 +46,8 @@ const sidebarHeight = computed(() => {
 
 <style scoped>
 aside {
-  width: 15rem;
-  height: calc(100vh - 8rem); /* nav바 높이를 빼줍니다 */
-  background: #fff;
-  border-right: 1px solid #ccc;
-  border-bottom: 1px solid #ccc;
+  width: 12rem;
+  height: calc(100vh - 10vh); /* nav바 높이를 빼줍니다 */
   transition: width 0.3s ease-in-out;
   position: relative;
   z-index: 10;
@@ -58,7 +55,7 @@ aside {
 
 aside.collapsed {
   width: 0.00vw;
-  padding: 0.5rem;
+  padding: 0rem;
 }
 
 .toggle-button {
@@ -75,7 +72,6 @@ aside.collapsed {
 .sidebar-item {
   padding: 1rem;
   margin-bottom: 0.5rem;
-  border-radius: 4px;
   cursor: pointer;
   text-align: center;
   font-weight: bold;
@@ -83,13 +79,13 @@ aside.collapsed {
 }
 
 .sidebar-item:hover {
-  background-color: #f0f0f0;
+  background-color: var(--background-gray);
 }
 
 .sidebar-item.active {
   position: relative;
   color: inherit;
-  background-color: white; 
+ 
 }
 
 .sidebar-item.active::before {
@@ -97,11 +93,9 @@ aside.collapsed {
   position: absolute;
   top: 0;
   left: 0;
-  width: 10px; 
+  width: 1.5rem; 
   height: 100%;
-  background: linear-gradient(to bottom, #ff7e5f, #feb47b);
-  border-top-left-radius: 4px;
-  border-bottom-left-radius: 4px;
+  background: linear-gradient(to bottom, var(--pink-color), var(--apricot-color));
   z-index: 1; 
 }
 
@@ -110,7 +104,7 @@ aside.collapsed {
 }
 
 .menu-items .sidebar-item {
-  font-size: large;
+  font-size: 2rem;
   position: relative;
   margin-bottom: 0.5rem; 
 }
@@ -122,6 +116,6 @@ aside.collapsed {
   left: 0;
   width: 100%;
   height: 1px;
-  background-color: #ccc; 
+  /* background-color: #ccc;  */
 }
 </style>
