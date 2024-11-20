@@ -10,6 +10,13 @@ export default [
             name:"ScheduleRepeatView",
             meta: { requiresAuth: true },
             component: () => import('@/views/schedule-repeat/ScheduleRepeatView.vue')
-        }]
+        },
+        {
+            path:"invitation",
+            name:"ScheduleRepeatInvitation",
+            meta: {requiresAuth: true},
+            component: () => import('@/views/schedule-repeat/ScheduleRepeatInvitation.vue')
+        }
+    ]
     }
 ]
