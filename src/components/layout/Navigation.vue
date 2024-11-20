@@ -71,11 +71,10 @@
 <script setup>
 import { RouterLink, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth.js';
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import axios from "axios";
+import { ref, onMounted, onUnmounted } from 'vue';
 
 import ChatPop from '@/views/chat/ChatList.vue';
-import AppHeader from './AppHeader.vue';
+
 
 const props = defineProps({
     userName: {
@@ -87,6 +86,7 @@ const props = defineProps({
       required: true
     }
   });
+
 const isPopupVisible = ref(false);
 const router = useRouter();
 const authStore = useAuthStore();
