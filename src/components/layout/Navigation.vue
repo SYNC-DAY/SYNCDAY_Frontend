@@ -130,6 +130,7 @@ onUnmounted(() => {
 	justify-content: space-between;
 	align-items: center;
 	padding: 0.5rem;
+	border-bottom: 1px solid var(--background-gray);
 }
 
 .nav-top > div,
