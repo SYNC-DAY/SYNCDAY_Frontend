@@ -55,6 +55,7 @@ import {useAuthStore} from "@/stores/auth.js";
 
 const router = useRouter()
 const user = ref({})
+
 const authStore = useAuthStore()
 const loading = ref(true)
 
@@ -63,6 +64,7 @@ onMounted(async () => {
     // authStore.isAuthenticated가 true라면 이미 profile 데이터가 있는 상태
     if (authStore.isAuthenticated) {
       const response = await axios.get('/user/profile')
+      console.log('API 응답:', response.data)
       user.value = response.data.data
     }
   } catch (error) {
@@ -71,6 +73,9 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+console.log("user.value.userId: ", user.value.userId);
+
 
 const goToPasswordChange = () => {
   router.push('/password-change')
@@ -226,7 +231,7 @@ const goToPasswordChange = () => {
 .contact-info {
   display: flex;
   align-items: center;
-  font-size: small;
+  font-size: medium;
   border: 0.4rem solid #D1D1D1;
   font-weight: bold;
   max-width: 53rem;
