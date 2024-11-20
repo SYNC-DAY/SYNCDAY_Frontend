@@ -9,12 +9,12 @@
         <div class="left-section">
           <div class="photo-section">
             <img
-                :src="user.profilePhoto || '/default-avatar.png'"
+                :src="authStore.user.profilePhoto || '/default-avatar.png'"
                 class="profile-photo"
                 alt="Profile photo"
             />
           </div>
-          <h2 class="username">{{ user.userName }}</h2>
+          <h2 class="username">{{ authStore.user.userName }}</h2>
           <p class="role">인사 1팀</p>
           <button @click="goToPasswordChange" class="edit-button">
             비밀번호 변경
@@ -30,9 +30,9 @@
               <button class="edit-btn">계정 교체</button>
             </div>
           </div>
-          <div class="contact-info">회선 번호 : {{ user.phoneNumber || '031-1111-1111' }}</div>
-          <div class="contact-info">Email : {{ user.email || 'momo94@threeping.co.kr' }}</div>
-          <div class="contact-info">입사연도 : {{ user.joinYear || '2023' }}</div>
+          <div class="contact-info">회선 번호 : {{ authStore.user.phoneNumber || '031-1111-1111' }}</div>
+          <div class="contact-info">Email : {{ authStore.user.email || 'momo94@threeping.co.kr' }}</div>
+          <div class="contact-info">입사연도 : {{ authStore.user.joinYear || '2023' }}</div>
         </div>
         <!-- 직책 정보 -->
         <div class="role-tag">
@@ -48,38 +48,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
-import {useAuthStore} from "@/stores/auth.js";
-
 const router = useRouter()
-const user = ref({})
-
+import {useAuthStore} from "@/stores/auth.js";
 const authStore = useAuthStore()
-const loading = ref(true)
-
-onMounted(async () => {
-  try {
-    // authStore.isAuthenticated가 true라면 이미 profile 데이터가 있는 상태
-    if (authStore.isAuthenticated) {
-      const response = await axios.get('/user/profile')
-      console.log('API 응답:', response.data)
-      user.value = response.data.data
-    }
-  } catch (error) {
-    console.error('Failed to fetch user data:', error)
-  } finally {
-    loading.value = false
-  }
-})
-
-console.log("user.value.userId: ", user.value.userId);
-
-
 const goToPasswordChange = () => {
   router.push('/password-change')
 }
+console.log("mypage에서 조회된 useAuthStore.user: ",authStore.user)
+console.log("mypage에서 httponly cookie 확인하기: ", document.cookie)
 </script>
 
 <style scoped>
