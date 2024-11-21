@@ -132,7 +132,7 @@
 	border: none;
 	padding: 0.25rem;
 	cursor: pointer;
-	color: var(--background-active);
+	color: var(--background-inactive);
 	transition: color 0.2s;
   }
   

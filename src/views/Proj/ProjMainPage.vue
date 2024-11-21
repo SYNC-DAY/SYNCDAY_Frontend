@@ -1,6 +1,6 @@
 <!-- ProjMainPage.vue -->
 <template>
-  <div class="flex">
+
     <SideBar>
       <template v-for="proj in projects" :key="proj.proj_id">
         <ProjItem 
@@ -8,7 +8,6 @@
           :isActive="activeProject === proj.proj_id"
           :initialBookmarked="proj.bookmark_status === 'BOOKMARKED'"
           :progress="proj.progress_status"
-          :isExpanded="expandedProjects.has(proj.proj_id)"
           @toggle="toggleProject(proj.proj_id)"
           @bookmark-changed="handleBookmarkChange(proj.proj_id, $event)"
         >
@@ -26,7 +25,7 @@
       </template>
     </SideBar>
 
-    <div class="proj-main p-6 flex-1">
+    <div class="proj-main">
       <div v-if="selectedProject" class="max-w-4xl">
         <div class="mb-6">
           <h1 class="text-2xl font-semibold mb-2">{{ selectedProject.proj_name }}</h1>
@@ -84,7 +83,7 @@
         프로젝트를 선택해주세요
       </div>
     </div>
-  </div>
+
 </template>
 
 <script setup>
@@ -102,7 +101,6 @@ const { user } = storeToRefs(authStore)
 const projects = ref([])
 const activeWorkspace = ref(null)
 const activeProject = ref(null)
-const expandedProjects = ref(new Set())
 
 const selectedProject = computed(() => 
   projects.value.find(proj => proj.proj_id === activeProject.value)
@@ -123,11 +121,6 @@ const selectWorkspace = (workspaceId, projId) => {
 }
 
 const toggleProject = (projId) => {
-  if (expandedProjects.value.has(projId)) {
-    expandedProjects.value.delete(projId)
-  } else {
-    expandedProjects.value.add(projId)
-  }
   activeProject.value = projId
 }
 
@@ -150,6 +143,7 @@ const handleWorkspaceBookmark = async (workspaceId, isBookmarked) => {
     await axios.put(`/workspaces/${workspaceId}/bookmark`, {
       bookmark_status: isBookmarked ? 'BOOKMARKED' : 'UNBOOKMARKED'
     })
+    // Update local state
     projects.value.forEach(proj => {
       const workspace = proj.workspaces.find(ws => ws.workspace_id === workspaceId)
       if (workspace) {
@@ -181,7 +175,9 @@ onMounted(() => {
 
 <style scoped>
 .proj-main {
-  height: 100vh;
+  height: calc(100%-10vh);
+  flex: 1;
+  display: inline-block;
   overflow-y: auto;
   background-color: #f9fafb;
 }
