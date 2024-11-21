@@ -1,36 +1,31 @@
-
-// ProjSideBarItem.vue
+<!-- ProjSideBarItem.vue -->
 <template>
-  <div class="proj-sidebar-group">
+  <div class="sidebar-item">
     <div 
-      class="proj-header" 
-      @click="toggleExpand"
+      class="item-header"
       :class="{ 'active': isActive }"
+      @click="toggleExpand"
     >
-      <div class="proj-title">
-        {{ title }}
+      <div class="title-section">
         <span class="expand-icon">{{ isExpanded ? '▼' : '▶' }}</span>
+        {{ title }}
       </div>
-      <div class="proj-actions">
-        <button 
-          class="bookmark-btn"
-          @click.stop="toggleBookmark"
-        >
-          <span class="star-icon" :class="{ 'bookmarked': isBookmarked }">
-            ★
-          </span>
-        </button>
-      </div>
+      <button 
+        class="bookmark-btn"
+        @click.stop="toggleBookmark"
+      >
+        <span :class="['star-icon', { 'bookmarked': isBookmarked }]">★</span>
+      </button>
     </div>
     
-    <div v-if="isExpanded" class="proj-content">
+    <div v-show="isExpanded" class="item-content">
       <slot></slot>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref } from 'vue'
 
 const props = defineProps({
   title: {
@@ -41,94 +36,87 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  initialBookmarked: {
+  initialExpanded: {
     type: Boolean,
     default: false
   }
-});
+})
 
-const isExpanded = ref(false);
-const isBookmarked = ref(props.initialBookmarked);
+const isExpanded = ref(props.initialExpanded)
+const isBookmarked = ref(false)
 
 const toggleExpand = () => {
-  isExpanded.value = !isExpanded.value;
-};
+  isExpanded.value = !isExpanded.value
+}
 
 const toggleBookmark = () => {
-  isBookmarked.value = !isBookmarked.value;
-};
+  isBookmarked.value = !isBookmarked.value
+}
 </script>
 
 <style scoped>
-.proj-sidebar-group {
-  margin-bottom: 0.5rem;
+.sidebar-item {
+  margin-bottom: 1px;
 }
 
-.proj-header {
+.item-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   cursor: pointer;
   position: relative;
-  font-size: 1.2rem;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s;
 }
 
-.proj-header.active {
-  position: relative;
+.item-header:hover {
+  background-color: var(--hover-color, #f5f5f5);
 }
 
-.proj-header.active::before {
+.item-header.active {
+  background-color: var(--active-color, #f0f0f0);
+}
+
+.item-header.active::before {
   content: '';
   position: absolute;
   left: 0;
   top: 0;
   height: 100%;
-  width: 0.25rem;
-  background: linear-gradient(to bottom, var(--pink-color), var(--apricot-color));
+  width: 3px;
+  background: linear-gradient(to bottom, #ff7eb3, #ff9f7d);
 }
 
-.proj-title {
-  flex-grow: 1;
+.title-section {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-weight: 500;
 }
 
 .expand-icon {
-  font-size: 0.8rem;
-  transition: transform 0.3s ease;
-}
-
-.proj-actions {
-  display: flex;
-  align-items: center;
+  font-size: 0.75rem;
+  transition: transform 0.2s;
 }
 
 .bookmark-btn {
   background: none;
   border: none;
-  cursor: pointer;
   padding: 0.25rem;
-  font-size: 1.2rem;
-  color: var(--background-gray);
-  transition: color 0.2s ease;
+  cursor: pointer;
+  color: #ccc;
+  transition: color 0.2s;
 }
 
 .star-icon {
-  transition: color 0.2s ease;
+  font-size: 1rem;
 }
 
 .star-icon.bookmarked {
-  color: var(--apricot-color);
+  color: #ff9f7d;
 }
 
-.proj-content {
-  padding: 0.5rem 1rem 0.5rem 2rem;
-}
-
-.proj-header:hover {
-  background-color: var(--background-gray);
+.item-content {
+  padding: 0.5rem 0 0.5rem 2rem;
 }
 </style>

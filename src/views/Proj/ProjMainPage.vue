@@ -1,42 +1,23 @@
+<!-- App.vue 또는 다른 부모 컴포넌트 -->
 <template>
-  <div class="project-container">
-    <div class="content-wrapper">
-
-      <div class="main-content">
-        <h1>Project</h1>
-        <!-- 메인 콘텐츠가 들어갈 자리 -->
-      </div>
-    </div>
+  <div class="app">
+    <SideBar>
+      <ProjSideBarItem 
+        title="MUDIUM" 
+        :isActive="true"
+      >
+        <ProjSideBarItem title="Frontend" />
+        <ProjSideBarItem title="Backend" />
+      </ProjSideBarItem>
+      
+      <ProjSideBarItem title="Mudium_Backend" />
+      <ProjSideBarItem title="Mudium_Frontend" />
+      <ProjSideBarItem title="Mudium_DB" />
+    </SideBar>
   </div>
 </template>
 
 <script setup>
-import SideBar from "@/components/layout/SideBar.vue";
-// currentItems 데이터 정의 필요
-const currentItems = ['메뉴1', '메뉴2', '메뉴3']; // 예시
+import SideBar from '@/components/layout/SideBar.vue';
+import ProjSideBarItem from './components/ProjSideBarItem.vue';
 </script>
-
-<style scoped>
-.project-container {
-  width: 100%;
-  height: 100vh;
-  min-height: calc(100vh - 6rem);
-  display: flex;
-  flex-direction: column;
-}
-
-.project-header h1 {
-  margin: 0;
-}
-
-.content-wrapper {
-  flex: 1;
-  display: flex;
-  width: 100%;
-}
-
-.main-content {
-  flex: 1;
-  padding: 2rem;
-}
-</style>
