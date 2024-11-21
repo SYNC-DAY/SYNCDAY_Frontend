@@ -7,8 +7,7 @@
         :isActive="activeProject === proj.proj_id"
         :initialBookmarked="proj.bookmark_status === 'BOOKMARKED'"
         :progress="proj.progress_status"
-        :vcsInfo="{ type: proj.vcs_type, url: proj.vcs_proj_url }"
-        @click="selectProject(proj.proj_id)"
+        @toggle="toggleProject(proj.proj_id)"
         @bookmark-changed="handleBookmarkChange(proj.proj_id, $event)"
       >
         <template v-for="workspace in proj.workspaces" :key="workspace.workspace_id">
@@ -16,15 +15,20 @@
             :title="workspace.workspace_name"
             :isActive="activeWorkspace === workspace.workspace_id"
             :progress="workspace.progress_status"
-            :vcsInfo="{ type: workspace.vcs_type, url: workspace.vcs_repo_url }"
             :initialBookmarked="workspace.bookmark_status === 'BOOKMARKED'"
-            @select="selectWorkspace(workspace.workspace_id)"
+            @select="selectWorkspace(workspace.workspace_id, proj.proj_id)"
             @bookmark-changed="handleWorkspaceBookmark(workspace.workspace_id, $event)"
           />
         </template>
       </ProjItem>
     </template>
   </SideBar>
+
+  <div class="proj-main">
+    
+    <!-- 프로젝트 정보 표시 -->
+  </div>
+
 </template>
 
 <script setup>
@@ -43,11 +47,12 @@ const projects = ref([])
 const activeWorkspace = ref(null)
 const activeProject = ref(null)
 
-const selectWorkspace = (workspaceId) => {
+const selectWorkspace = (workspaceId, projId) => {
   activeWorkspace.value = workspaceId
+  activeProject.value = projId
 }
 
-const selectProject = (projId) => {
+const toggleProject = (projId) => {
   activeProject.value = projId
 }
 

@@ -7,25 +7,23 @@
 		@click="$emit('select')"
 	  >
 		<div class="workspace-info">
-		  <span class="title">{{ title }}</span>
-		  <span v-if="vcsInfo.type" class="vcs-badge" :title="vcsInfo.url">
-			{{ vcsInfo.type }}
-		  </span>
-		</div>
-		<div class="workspace-actions">
-		  <div class="progress-bar" :title="`Progress: ${progress}%`">
-			<div 
-			  class="progress-fill"
-			  :style="{ width: `${progress}%` }"
-			></div>
+		  <div class="title">{{ title }}</div>
+		  <div class="progress-info">
+			<div class="progress-bar" :title="`Progress: ${progress}%`">
+			  <div 
+				class="progress-fill"
+				:style="{ width: `${progress}%` }"
+			  ></div>
+			</div>
+			<span class="progress-text">{{ progress }}%</span>
 		  </div>
-		  <button 
-			class="bookmark-btn"
-			@click.stop="toggleBookmark"
-		  >
-			<span :class="['star-icon', { 'bookmarked': isBookmarked }]">★</span>
-		  </button>
 		</div>
+		<button 
+		  class="bookmark-btn"
+		  @click.stop="toggleBookmark"
+		>
+		  <span :class="['star-icon', { 'bookmarked': isBookmarked }]">★</span>
+		</button>
 	  </div>
 	</div>
   </template>
@@ -49,10 +47,6 @@
 	progress: {
 	  type: Number,
 	  default: 0
-	},
-	vcsInfo: {
-	  type: Object,
-	  default: () => ({ type: null, url: null })
 	}
   })
   
@@ -74,7 +68,7 @@
   .workspace-header {
 	display: flex;
 	justify-content: space-between;
-	align-items: center;
+	align-items: flex-start;
 	padding: 0.75rem 1rem;
 	cursor: pointer;
 	transition: background-color 0.2s;
@@ -99,27 +93,23 @@
   }
   
   .workspace-info {
+	flex-grow: 1;
+	margin-right: 0.75rem;
+  }
+  
+  .title {
+	font-weight: 400;
+	margin-bottom: 0.5rem;
+  }
+  
+  .progress-info {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
   }
   
-  .vcs-badge {
-	font-size: 0.75rem;
-	padding: 0.125rem 0.375rem;
-	background-color: var(--outline-gray);
-	border-radius: 0.25rem;
-	color: var(--text-secondary);
-  }
-  
-  .workspace-actions {
-	display: flex;
-	align-items: center;
-	gap: 0.75rem;
-  }
-  
   .progress-bar {
-	width: 60px;
+	width: 100px;
 	height: 4px;
 	background-color: var(--outline-gray);
 	border-radius: 2px;
@@ -132,8 +122,9 @@
 	transition: width 0.3s ease;
   }
   
-  .title {
-	font-weight: 400;
+  .progress-text {
+	font-size: 0.75rem;
+	color: var(--text-secondary);
   }
   
   .bookmark-btn {

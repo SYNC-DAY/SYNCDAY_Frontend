@@ -1,33 +1,32 @@
-
 <!-- ProjItem.vue -->
 <template>
 	<div class="proj-item">
 	  <div 
 		class="proj-header"
 		:class="{ 'active': isActive }"
-		@click="$emit('click')"
+		@click="handleClick"
 	  >
-		<div class="proj-title">
-		  <span class="expand-icon">{{ isExpanded ? '▼' : '▶' }}</span>
-		  {{ title }}
-		  <span v-if="vcsInfo.type" class="vcs-badge" :title="vcsInfo.url">
-			{{ vcsInfo.type }}
-		  </span>
-		</div>
-		<div class="proj-actions">
-		  <div class="progress-bar" :title="`Progress: ${progress}%`">
-			<div 
-			  class="progress-fill"
-			  :style="{ width: `${progress}%` }"
-			></div>
+		<div class="proj-info">
+		  <div class="proj-title">
+			<span class="expand-icon">{{ isExpanded ? '▼' : '▶' }}</span>
+			{{ title }}
 		  </div>
-		  <button 
-			class="bookmark-btn"
-			@click.stop="toggleBookmark"
-		  >
-			<span :class="['star-icon', { 'bookmarked': isBookmarked }]">★</span>
-		  </button>
+		  <div class="progress-info">
+			<div class="progress-bar" :title="`Progress: ${progress}%`">
+			  <div 
+				class="progress-fill"
+				:style="{ width: `${progress}%` }"
+			  ></div>
+			</div>
+			<span class="progress-text">{{ progress }}%</span>
+		  </div>
 		</div>
+		<button 
+		  class="bookmark-btn"
+		  @click.stop="toggleBookmark"
+		>
+		  <span :class="['star-icon', { 'bookmarked': isBookmarked }]">★</span>
+		</button>
 	  </div>
 	  
 	  <div v-show="isExpanded" class="proj-content">
@@ -37,7 +36,7 @@
   </template>
   
   <script setup>
-  import { ref, watch } from 'vue'
+  import { ref } from 'vue'
   
   const props = defineProps({
 	title: {
@@ -59,24 +58,17 @@
 	progress: {
 	  type: Number,
 	  default: 0
-	},
-	vcsInfo: {
-	  type: Object,
-	  default: () => ({ type: null, url: null })
 	}
   })
   
-  const emit = defineEmits(['click', 'bookmark-changed'])
+  const emit = defineEmits(['toggle', 'bookmark-changed'])
   
   const isExpanded = ref(props.initialExpanded)
   const isBookmarked = ref(props.initialBookmarked)
   
-  watch(() => props.isActive, (newVal) => {
-	if (newVal) isExpanded.value = true
-  })
-  
-  const toggleExpand = () => {
+  const handleClick = () => {
 	isExpanded.value = !isExpanded.value
+	emit('toggle')
   }
   
   const toggleBookmark = () => {
@@ -84,7 +76,6 @@
 	emit('bookmark-changed', isBookmarked.value)
   }
   </script>
-  
   <style scoped>
   .proj-item {
 	margin-bottom: 0.25rem;
@@ -93,7 +84,7 @@
   .proj-header {
 	display: flex;
 	justify-content: space-between;
-	align-items: center;
+	align-items: flex-start;
 	padding: 0.75rem 1rem;
 	cursor: pointer;
 	position: relative;
@@ -114,29 +105,27 @@
 	background: linear-gradient(to bottom, #ff7eb3, #ff9f7d);
   }
   
+  .proj-info {
+	flex-grow: 1;
+	margin-right: 0.75rem;
+  }
+  
   .proj-title {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
 	font-weight: 500;
+	margin-bottom: 0.5rem;
   }
   
-  .vcs-badge {
-	font-size: 0.75rem;
-	padding: 0.125rem 0.375rem;
-	background-color: var(--outline-gray);
-	border-radius: 0.25rem;
-	color: var(--text-secondary);
-  }
-  
-  .proj-actions {
+  .progress-info {
 	display: flex;
 	align-items: center;
-	gap: 0.75rem;
+	gap: 0.5rem;
   }
   
   .progress-bar {
-	width: 60px;
+	width: 100px;
 	height: 4px;
 	background-color: var(--outline-gray);
 	border-radius: 2px;
@@ -147,6 +136,11 @@
 	height: 100%;
 	background: linear-gradient(to right, #ff7eb3, #ff9f7d);
 	transition: width 0.3s ease;
+  }
+  
+  .progress-text {
+	font-size: 0.75rem;
+	color: var(--text-secondary);
   }
   
   .expand-icon {
@@ -175,4 +169,3 @@
 	padding: 0.5rem 0 0.5rem 1.5rem;
   }
   </style>
-  
