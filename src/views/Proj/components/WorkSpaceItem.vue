@@ -1,8 +1,8 @@
-<!-- WorkSpaceItem.vue -->
+<!-- WorkspaceItem.vue -->
 <template>
-	<div class="workspace-item" :class="{ 'active': isActive }">
+	<div class="Workspace-item" :class="{ 'active': isActive }">
 	  <div 
-		class="workspace-header"
+		class="Workspace-header"
 		@click="$emit('select')"
 	  >
 		<span class="title">{{ title }}</span>
@@ -40,11 +40,11 @@
   </script>
   
   <style scoped>
-  .workspace-item {
+  .Workspace-item {
 	position: relative;
   }
   
-  .workspace-header {
+  .Workspace-header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -53,15 +53,15 @@
 	transition: background-color 0.2s;
   }
   
-  .workspace-header:hover {
+  .Workspace-header:hover {
 	background-color: var(--hover-color, #f5f5f5);
   }
   
-  .workspace-item.active .workspace-header {
+  .Workspace-item.active .Workspace-header {
 	background-color: var(--background-active);
   }
   
-  .workspace-item.active::before {
+  .Workspace-item.active::before {
 	content: '';
 	position: absolute;
 	left: 0;
