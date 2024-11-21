@@ -8,7 +8,9 @@
           :isActive="activeProject === proj.proj_id"
           :initialBookmarked="proj.bookmark_status === 'BOOKMARKED'"
           :progress="proj.progress_status"
-          @toggle="toggleProject(proj.proj_id)"
+          :isExpanded="expandedProjects.includes(proj.proj_id)"
+          @toggle-expansion="toggleProjectExpansion(proj.proj_id)"
+          @select="selectProject(proj.proj_id)"
           @bookmark-changed="handleBookmarkChange(proj.proj_id, $event)"
         >
           <template v-for="workspace in proj.workspaces" :key="workspace.workspace_id">
@@ -101,6 +103,7 @@ const { user } = storeToRefs(authStore)
 const projects = ref([])
 const activeWorkspace = ref(null)
 const activeProject = ref(null)
+const expandedProjects=ref([])
 
 const selectedProject = computed(() => 
   projects.value.find(proj => proj.proj_id === activeProject.value)
@@ -119,10 +122,16 @@ const selectWorkspace = (workspaceId, projId) => {
   activeWorkspace.value = workspaceId
   activeProject.value = projId
 }
-
-const toggleProject = (projId) => {
+const selectProject = (projId) => {
   activeProject.value = projId
 }
+const toggleProjectExpansion = (projId) => {
+  const index = expandedProjects.value.indexOf(projId)
+  if (index === -1) {
+    expandedProjects.value.push(projId)
+  } else {
+    expandedProjects.value.splice(index, 1)
+  }}
 
 const handleBookmarkChange = async (projId, isBookmarked) => {
   try {
@@ -177,6 +186,7 @@ onMounted(() => {
 .proj-main {
   height: calc(100%-10vh);
   flex: 1;
+  padding-left: 1rem;
   display: inline-block;
   overflow-y: auto;
   background-color: #f9fafb;

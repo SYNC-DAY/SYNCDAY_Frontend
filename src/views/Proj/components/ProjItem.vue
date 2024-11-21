@@ -4,12 +4,11 @@
 	  <div 
 		class="proj-header"
 		:class="{ 'active': isActive }"
-		@click="handleClick"
 	  >
 		<div class="proj-info">
 		  <div class="proj-title">
-			<span class="expand-icon">{{ isExpanded ? '▼' : '▶' }}</span>
-			{{ title }}
+			<span class="expand-icon" @click="handleExpand">{{ isExpanded ? '▼' : '▶' }}</span>
+			<span @click="handleSelect">{{ title }}</span>
 		  </div>
 		  <div class="progress-info">
 			<div class="progress-bar" :title="`Progress: ${progress}%`">
@@ -47,7 +46,7 @@
 	  type: Boolean,
 	  default: false
 	},
-	initialExpanded: {
+	isExpanded: {  // Changed from initialExpanded
 	  type: Boolean,
 	  default: false
 	},
@@ -61,14 +60,16 @@
 	}
   })
   
-  const emit = defineEmits(['toggle', 'bookmark-changed'])
+  const emit = defineEmits(['toggle-expansion', 'select', 'bookmark-changed'])
   
-  const isExpanded = ref(props.initialExpanded)
   const isBookmarked = ref(props.initialBookmarked)
   
-  const handleClick = () => {
-	isExpanded.value = !isExpanded.value
-	emit('toggle')
+  const handleExpand = () => {
+	emit('toggle-expansion')
+  }
+  
+  const handleSelect = () => {
+	emit('select')
   }
   
   const toggleBookmark = () => {
@@ -116,6 +117,10 @@
 	gap: 0.5rem;
 	font-weight: 500;
 	margin-bottom: 0.5rem;
+  }
+
+  .proj-title span {
+	cursor: pointer;
   }
   
   .progress-info {
