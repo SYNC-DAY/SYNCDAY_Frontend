@@ -1,7 +1,7 @@
 <template>
   <div class="project-container">
     <div class="content-wrapper">
-      <SideBar :menu-items="currentItems"/>
+
       <div class="main-content">
         <h1>Project</h1>
         <!-- 메인 콘텐츠가 들어갈 자리 -->
