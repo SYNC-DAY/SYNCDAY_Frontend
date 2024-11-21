@@ -51,6 +51,7 @@ aside {
   transition: width 0.3s ease-in-out;
   position: relative;
   z-index: 10;
+  border-right: 1px solid var(--background-gray)
 }
 
 aside.collapsed {

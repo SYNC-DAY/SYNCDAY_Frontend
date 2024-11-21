@@ -1,6 +1,5 @@
 <template>
 	<nav class="nav-top">
-
 		<!-- logo -->
 		<div class="nav-logo">
 			<RouterLink to="/">
@@ -12,13 +11,22 @@
 		<div class="nav-tabs">
 			<ul>
 				<li>
-					<RouterLink to="/calendar">캘린더</RouterLink>
+					<RouterLink to="/calendar" class="nav-link" :class="{ 'active': currentRoute === '/calendar' }">
+						캘린더
+						<div class="underbar"></div>
+					</RouterLink>
 				</li>
 				<li>
-					<RouterLink to="/team">팀</RouterLink>
+					<RouterLink to="/team" class="nav-link" :class="{ 'active': currentRoute === '/team' }">
+						팀
+						<div class="underbar"></div>
+					</RouterLink>
 				</li>
 				<li>
-					<RouterLink to="/project">프로젝트</RouterLink>
+					<RouterLink to="/project" class="nav-link" :class="{ 'active': currentRoute === '/project' }">
+						프로젝트
+						<div class="underbar"></div>
+					</RouterLink>
 				</li>
 			</ul>
 		</div>
@@ -60,21 +68,24 @@
 					</div>
 				</div>
 			</div>
-
 		</div>
 	</nav>
 </template>
 
 <script setup>
-import { RouterLink, useRouter } from 'vue-router';
+import { RouterLink, useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth.js';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 
 const router = useRouter();
+const route = useRoute();
 const isDropdownOpen = ref(false);
 const profileRef = ref(null);
-const authStore = useAuthStore()
-console.log("nav에서 조회된 authStore.user: ", authStore.user);
+const authStore = useAuthStore();
+
+// 현재 라우트 경로 계산
+const currentRoute = computed(() => route.path);
+
 // 드롭다운 토글
 const toggleDropdown = () => {
 	isDropdownOpen.value = !isDropdownOpen.value;
@@ -106,12 +117,10 @@ onUnmounted(() => {
 });
 </script>
 
-
 <style scoped>
 .nav-top {
 	width: 100%;
 	height: 10vh;
-/* 	background-color: white; */
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
@@ -124,7 +133,6 @@ onUnmounted(() => {
 .nav-top ul,
 .icons {
 	height: 100%;
-/* 	background-color: white; */
 	display: flex;
 	flex-direction: row;
 	justify-content: space-around;
@@ -148,9 +156,40 @@ onUnmounted(() => {
 	flex: 2.5;
 }
 
-.nav-top a {
+.nav-tabs ul {
+	width: 100%;
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
+	height: auto;
+}
+
+.nav-link {
 	text-decoration: none;
 	font-size: 1.2rem;
+	padding: 0.5rem 1rem;
+	position: relative;
+	display: inline-block;
+}
+
+/* 언더바 스타일 */
+.underbar {
+	position: absolute;
+	bottom: -0.5rem;
+	left: 0;
+	width: 0;
+	height: 0.2rem;
+	background: linear-gradient(90deg, var(--pink-color), var(--apricot-color));
+	transition: width 0.3s ease;
+}
+
+.nav-link.active .underbar {
+	width: 100%;
+}
+
+.nav-tabs li {
+	position: relative;
+	height: auto;
 }
 
 .nav-search {
@@ -174,7 +213,6 @@ input[type=search] {
 
 .icons {
 	flex: 1;
-
 }
 
 .icons img {
@@ -187,6 +225,7 @@ input[type=search] {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	position: relative;
 }
 
 .profile-image-container {
@@ -198,13 +237,48 @@ input[type=search] {
 }
 
 .profile-image {
-
+	width: 100%;
+	height: 100%;
 	object-fit: cover;
+}
+
+.user-menu {
+	position: relative;
 }
 
 .user-name {
 	font-size: 1rem;
 	text-align: center;
 	color: black;
+	cursor: pointer;
+}
+
+.dropdown-menu {
+	position: absolute;
+	top: 100%;
+	right: 0;
+	background: white;
+	border: 1px solid var(--background-gray);
+	border-radius: 0.5rem;
+	padding: 0.5rem;
+	z-index: 1000;
+}
+
+.dropdown-item {
+	display: block;
+	padding: 0.5rem 1rem;
+	text-decoration: none;
+	color: black;
+	white-space: nowrap;
+	cursor: pointer;
+	border: none;
+	background: none;
+	width: 100%;
+	text-align: left;
+	font-size: 1rem;
+}
+
+.dropdown-item:hover {
+	background-color: var(--background-gray);
 }
 </style>
