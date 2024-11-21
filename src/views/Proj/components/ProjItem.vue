@@ -1,10 +1,9 @@
-<!-- ProjItem.vue -->
 <template>
 	<div class="proj-item">
 	  <div 
 		class="proj-header"
 		:class="{ 'active': isActive }"
-		@click="toggleExpand"
+		@click="$emit('click')"
 	  >
 		<div class="proj-title">
 		  <span class="expand-icon">{{ isExpanded ? '▼' : '▶' }}</span>
@@ -39,11 +38,17 @@
 	initialExpanded: {
 	  type: Boolean,
 	  default: false
+	},
+	initialBookmarked: {
+	  type: Boolean,
+	  default: false
 	}
   })
   
+  const emit = defineEmits(['click', 'bookmark-changed'])
+  
   const isExpanded = ref(props.initialExpanded)
-  const isBookmarked = ref(false)
+  const isBookmarked = ref(props.initialBookmarked)
   
   const toggleExpand = () => {
 	isExpanded.value = !isExpanded.value
@@ -51,9 +56,13 @@
   
   const toggleBookmark = () => {
 	isBookmarked.value = !isBookmarked.value
+	emit('bookmark-changed', isBookmarked.value)
   }
   </script>
   
+  <style scoped>
+  /* 기존 스타일 유지 */
+  </style>
   <style scoped>
   .proj-item {
 	margin-bottom: 0.25rem;
