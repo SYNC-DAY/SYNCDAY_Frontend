@@ -32,7 +32,7 @@ const toggleCollapse = () => {
   width: 15rem;
   height: calc(100%-10vh);
   background-color: white;
-  border-right: 1px solid var(--background-gray);
+  border-right: 1px solid var(--outline-gray);
   transition: width 0.3s ease;
 }
 
@@ -62,22 +62,7 @@ const toggleCollapse = () => {
   padding: 1rem 0;
 }
 
-.project-search {
-  padding: 0 1rem 1rem 1rem;
-}
 
-.search-input {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid var(--border-color, #eee);
-  border-radius: 4px;
-  font-size: 0.875rem;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: var(--primary-color, #ff9f7d);
-}
 
 .sidebar.collapsed .sidebar-content {
   display: none;

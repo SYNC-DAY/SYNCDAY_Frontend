@@ -126,7 +126,7 @@ onUnmounted(() => {
 	justify-content: space-between;
 	align-items: center;
 	padding: 0.5rem;
-	border-bottom: 1px solid var(--background-gray);
+	border-bottom: 1px solid var(--outline-gray);
 }
 
 .nav-top > div,
@@ -258,7 +258,7 @@ input[type=search] {
 	top: 100%;
 	right: 0;
 	background: white;
-	border: 1px solid var(--background-gray);
+	border: 1px solid var(--outline-gray);
 	border-radius: 0.5rem;
 	padding: 0.5rem;
 	z-index: 1000;
@@ -279,6 +279,6 @@ input[type=search] {
 }
 
 .dropdown-item:hover {
-	background-color: var(--background-gray);
+	background-color: var(--outline-gray);
 }
 </style>

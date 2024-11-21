@@ -58,7 +58,7 @@
   }
   
   .workspace-item.active .workspace-header {
-	background-color: var(--active-color, #f0f0f0);
+	background-color: var(--background-active);
   }
   
   .workspace-item.active::before {
@@ -80,7 +80,7 @@
 	border: none;
 	padding: 0.25rem;
 	cursor: pointer;
-	color: #ccc;
+	color: var(--background-active);
 	transition: color 0.2s;
   }
   
@@ -89,6 +89,6 @@
   }
   
   .star-icon.bookmarked {
-	color: #ff9f7d;
+	color: var(--apricot-color);
   }
   </style>

@@ -70,12 +70,10 @@
   }
   
   .proj-header:hover {
-	background-color: var(--hover-color, #f5f5f5);
+	background-color: var(--outline-gray);
   }
   
-  .proj-header.active {
-	background-color: var(--active-color, #f0f0f0);
-  }
+ 
   
   .proj-header.active::before {
 	content: '';
