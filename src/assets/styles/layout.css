@@ -73,7 +73,7 @@ p, a, span {
 }
 
 /* 스크린 반 접고 개발자도구 */
-@media screen and (max-width: 520px) {
+@media screen and (max-width: 540px) {
 	:root{
 		font-size: 8px;
 	}
