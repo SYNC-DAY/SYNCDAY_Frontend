@@ -1,6 +1,7 @@
 body, html{
 	margin:0;
 	padding: 0;
+	background-color: white;
 }
 ul,
 li,
@@ -26,19 +27,19 @@ li {
 
 
 h1 {
-	font-size:5rem;
-}
-
-h2 {
-	font-size: 4rem;
-}
-
-h3 {
 	font-size: 3rem;
 }
 
-p, a, span{
+h2 {
+	font-size: 2.5rem;
+}
+
+h3 {
 	font-size: 2rem;
+}
+
+p, a, span {
+	font-size: 1rem;
 }
 
 
@@ -50,59 +51,30 @@ p, a, span{
   box-sizing: border-box;
 
   /* 레이아웃 확인용 */
-  border: 1px solid #D9D9D9;
-}
-:root{
-	font-size: 10px;
-	font-family: "Noto Sans";
+  /* border: 1px solid #D9D9D9; */
 }
 
-@media screen and (max-width: 1683px) {
-	:root {
-	  font-size: 8px;
-	}
+:root{
+	font-size: 15px;
+}
+@media screen and (max-width: 1600px) {
+  :root {
+	font-size: 15px;
   }
-  
-  @media screen and (max-width: 1439px) {
-	:root {
-	  font-size: 7px;
-	}
+}
+
+
+
+/* 스크린 반 접은 상태일 때 */
+@media screen and (max-width: 800px) {
+  :root {
+	font-size: 12px;
   }
-  
-  /* 태블릿 */
-  @media screen and (max-width: 1023px) {
-	:root {
-	  font-size: 6px;
+}
+
+/* 스크린 반 접고 개발자도구 */
+@media screen and (max-width: 520px) {
+	:root{
+		font-size: 8px;
 	}
-  }
-  
-  /* 모바일 */
-  @media screen and (max-width: 767px) {
-	:root {
-	  font-size: 4.5px;
-	}
-  }
-  
-  @media screen and (max-width: 600px) {
-	:root {
-	  font-size: 3.2px;
-	}
-  }
-  
-  @media screen and (max-width: 424px) {
-	:root {
-	  font-size: 2.5px;
-	}
-  }
-  
-  @media screen and (max-width: 374px) {
-	:root {
-	  font-size: 2px;
-	}
-  }
-  
-  @media screen and (max-width: 319px) {
-	:root {
-	  font-size: 1.8px;
-	}
-  }
+}

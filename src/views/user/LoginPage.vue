@@ -74,7 +74,7 @@ const handleLogin = async () => {
 }
 </script>
 
-<<style scoped>
+<style scoped>
 .login-container {
   display: flex;
   justify-content: center;
@@ -114,12 +114,12 @@ const handleLogin = async () => {
 
 .login-form-container {
   flex: 1;
-  padding: 15rem 5rem 0 5rem;
+  padding:  5rem 0 5rem;
   border-left: 1px solid #eee;
 }
 
 .login-form-container h2 {
-  font-size: 4rem;
+  font-size: 2rem;
   font-weight: bold;
   color: #333;
 }
@@ -137,12 +137,12 @@ const handleLogin = async () => {
   padding: 2rem 1rem;
   border: 1px solid #ddd;
   border-radius: 5px;
-  font-size: 3rem;
+  font-size: 2rem;
 }
 
 .login-button {
   width: 100%;
-  padding: 3rem;
+  padding: 2rem;
   background-color: #1a237e;
   color: white;
   border: none;
