@@ -2,18 +2,26 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
-import router from './router'
+import { setupRouter } from './router'  // 이름 변경
 import { setupAxiosInterceptors } from '../src/plugins/axios.js'
 import '@/assets/styles/main.css'
 
-const app = createApp(App)
-const pinia = createPinia()
+async function setupApp() {
+    const app = createApp(App)
+    const pinia = createPinia()
 
+    // 1. Pinia 설정
+    app.use(pinia)
 
-app.use(pinia)
-app.use(router)
+    // 2. Axios 인터셉터 설정
+    setupAxiosInterceptors()
 
-// axios 인터셉터 설정 적용
-setupAxiosInterceptors()
+    // 3. Router 설정 (비동기로 처리)
+    const router = await setupRouter()
+    app.use(router)
 
-app.mount('#app')
+    // 4. 앱 마운트
+    app.mount('#app')
+}
+
+setupApp()
