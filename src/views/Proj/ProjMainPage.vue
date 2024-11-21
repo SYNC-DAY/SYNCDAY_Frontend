@@ -1,6 +1,5 @@
 <!-- App.vue 또는 다른 부모 컴포넌트 -->
 <template>
-  <div class="app">
     <SideBar>
       <ProjItem title="MUDIUM" :isActive="true">
         <WorkSpaceItem 
@@ -39,7 +38,6 @@
         />
       </ProjItem>
     </SideBar>
-  </div>
 </template>
 
 <script setup>
