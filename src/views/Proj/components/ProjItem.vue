@@ -1,3 +1,5 @@
+
+<!-- ProjItem.vue -->
 <template>
 	<div class="proj-item">
 	  <div 
@@ -8,13 +10,24 @@
 		<div class="proj-title">
 		  <span class="expand-icon">{{ isExpanded ? '▼' : '▶' }}</span>
 		  {{ title }}
+		  <span v-if="vcsInfo.type" class="vcs-badge" :title="vcsInfo.url">
+			{{ vcsInfo.type }}
+		  </span>
 		</div>
-		<button 
-		  class="bookmark-btn"
-		  @click.stop="toggleBookmark"
-		>
-		  <span :class="['star-icon', { 'bookmarked': isBookmarked }]">★</span>
-		</button>
+		<div class="proj-actions">
+		  <div class="progress-bar" :title="`Progress: ${progress}%`">
+			<div 
+			  class="progress-fill"
+			  :style="{ width: `${progress}%` }"
+			></div>
+		  </div>
+		  <button 
+			class="bookmark-btn"
+			@click.stop="toggleBookmark"
+		  >
+			<span :class="['star-icon', { 'bookmarked': isBookmarked }]">★</span>
+		  </button>
+		</div>
 	  </div>
 	  
 	  <div v-show="isExpanded" class="proj-content">
@@ -24,7 +37,7 @@
   </template>
   
   <script setup>
-  import { ref } from 'vue'
+  import { ref, watch } from 'vue'
   
   const props = defineProps({
 	title: {
@@ -42,6 +55,14 @@
 	initialBookmarked: {
 	  type: Boolean,
 	  default: false
+	},
+	progress: {
+	  type: Number,
+	  default: 0
+	},
+	vcsInfo: {
+	  type: Object,
+	  default: () => ({ type: null, url: null })
 	}
   })
   
@@ -49,6 +70,10 @@
   
   const isExpanded = ref(props.initialExpanded)
   const isBookmarked = ref(props.initialBookmarked)
+  
+  watch(() => props.isActive, (newVal) => {
+	if (newVal) isExpanded.value = true
+  })
   
   const toggleExpand = () => {
 	isExpanded.value = !isExpanded.value
@@ -60,9 +85,6 @@
   }
   </script>
   
-  <style scoped>
-  /* 기존 스타일 유지 */
-  </style>
   <style scoped>
   .proj-item {
 	margin-bottom: 0.25rem;
@@ -82,8 +104,6 @@
 	background-color: var(--outline-gray);
   }
   
- 
-  
   .proj-header.active::before {
 	content: '';
 	position: absolute;
@@ -99,6 +119,34 @@
 	align-items: center;
 	gap: 0.5rem;
 	font-weight: 500;
+  }
+  
+  .vcs-badge {
+	font-size: 0.75rem;
+	padding: 0.125rem 0.375rem;
+	background-color: var(--outline-gray);
+	border-radius: 0.25rem;
+	color: var(--text-secondary);
+  }
+  
+  .proj-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+  }
+  
+  .progress-bar {
+	width: 60px;
+	height: 4px;
+	background-color: var(--outline-gray);
+	border-radius: 2px;
+	overflow: hidden;
+  }
+  
+  .progress-fill {
+	height: 100%;
+	background: linear-gradient(to right, #ff7eb3, #ff9f7d);
+	transition: width 0.3s ease;
   }
   
   .expand-icon {
@@ -127,3 +175,4 @@
 	padding: 0.5rem 0 0.5rem 1.5rem;
   }
   </style>
+  
