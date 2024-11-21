@@ -100,8 +100,8 @@ const router = useRouter()
 
 
 import SideBar from '@/components/layout/SideBar.vue'
-import ProjItem from './components/ProjItem.vue'
-import WorkspaceItem from './components/WorkspaceItem.vue'
+import ProjItem from './components/SideBar/ProjItem.vue'
+import WorkspaceItem from './components/SideBar/WorkspaceItem.vue'
 
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)
