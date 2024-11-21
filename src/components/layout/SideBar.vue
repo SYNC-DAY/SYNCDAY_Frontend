@@ -1,57 +1,82 @@
-// SideBar.vue
+<!-- SideBar.vue -->
 <template>
-  <aside :class="['sidebar', { collapsed: isCollapsed }]">
-    <button @click="toggleSidebar" class="toggle-button">
+  <aside :class="['sidebar', { 'collapsed': isCollapsed }]">
+    <button 
+      @click="toggleCollapse" 
+      class="collapse-btn"
+      :title="isCollapsed ? '사이드바 열기' : '사이드바 접기'"
+    >
       {{ isCollapsed ? '>' : '<' }}
     </button>
-    <div v-if="!isCollapsed" class="sidebar-content">
+    
+    <div v-show="!isCollapsed" class="sidebar-content">
       <slot></slot>
     </div>
   </aside>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref } from 'vue'
 
-const isCollapsed = ref(false);
+const isCollapsed = ref(false)
+const searchQuery = ref('')
 
-const toggleSidebar = () => {
-  isCollapsed.value = !isCollapsed.value;
-};
+const toggleCollapse = () => {
+  isCollapsed.value = !isCollapsed.value
+}
 </script>
 
 <style scoped>
 .sidebar {
-  width: 12rem;
-  height: calc(100vh - 10vh);
-  transition: width 0.3s ease-in-out;
   position: relative;
-  z-index: 10;
-  border-right: 1px solid var(--background-gray);
+  width: 280px;
+  height: 100vh;
   background-color: white;
+  border-right: 1px solid var(--border-color, #eee);
+  transition: width 0.3s ease;
 }
 
 .sidebar.collapsed {
   width: 0;
-  padding: 0;
 }
 
-.toggle-button {
+.collapse-btn {
   position: absolute;
   top: 1rem;
   right: -1.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
   background-color: white;
-  border-radius: 0 0.5rem 0.5rem 0;
-  border: 1px solid var(--background-gray);
-  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border-color, #eee);
+  border-radius: 0 4px 4px 0;
   cursor: pointer;
-  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
 }
 
 .sidebar-content {
   height: 100%;
   overflow-y: auto;
   padding: 1rem 0;
+}
+
+.project-search {
+  padding: 0 1rem 1rem 1rem;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border-color, #eee);
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary-color, #ff9f7d);
 }
 
 .sidebar.collapsed .sidebar-content {

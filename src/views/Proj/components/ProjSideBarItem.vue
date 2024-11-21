@@ -113,7 +113,7 @@ const toggleBookmark = () => {
 }
 
 .star-icon.bookmarked {
-  color: #ff9f7d;
+  color: var(--apricot-color);
 }
 
 .item-content {
