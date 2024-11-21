@@ -15,6 +15,8 @@
         >
           <template v-for="workspace in proj.workspaces" :key="workspace.workspace_id">
             <WorkspaceItem 
+              :workspaceId="workspace.workspace_id"
+              :projId="proj.proj_id"
               :title="workspace.workspace_name"
               :isActive="activeWorkspace === workspace.workspace_id"
               :progress="workspace.progress_status"
@@ -90,12 +92,16 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useAuthStore } from "@/stores/auth.js"
+import { storeToRefs } from "pinia"
 import axios from 'axios'
+import {useRouter} from 'vue-router'
+const router = useRouter()
+
+
 import SideBar from '@/components/layout/SideBar.vue'
 import ProjItem from './components/ProjItem.vue'
 import WorkspaceItem from './components/WorkspaceItem.vue'
-import { useAuthStore } from "@/stores/auth.js"
-import { storeToRefs } from "pinia"
 
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)

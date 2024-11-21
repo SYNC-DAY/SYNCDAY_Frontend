@@ -1,7 +1,9 @@
 
 <!-- WorkspaceItem.vue -->
 <template>
-	<div class="workspace-item" :class="{ 'active': isActive }">
+	<div class="workspace-item" 
+	:class="{ 'active': isActive }"
+	@click="navigateToWorkspace">
 	  <div 
 		class="workspace-header"
 		@click="$emit('select')"
@@ -30,7 +32,10 @@
   
   <script setup>
   import { ref } from 'vue'
-  
+  import {useRouter} from 'vue-router'
+
+  const router = useRouter()
+
   const props = defineProps({
 	title: {
 	  type: String,
@@ -47,6 +52,10 @@
 	progress: {
 	  type: Number,
 	  default: 0
+	},
+	workspaceId:{
+		type:Number,
+		required:true
 	}
   })
   
@@ -58,6 +67,17 @@
 	isBookmarked.value = !isBookmarked.value
 	emit('bookmark-changed', isBookmarked.value)
   }
+
+  const navigateToWorkspace = () => {
+	router.push({
+		name: 'Workspace',
+		params: {
+			workspaceId: props.workspaceId,
+		}
+	})
+	emit('select')
+  }
+
   </script>
   
   <style scoped>
