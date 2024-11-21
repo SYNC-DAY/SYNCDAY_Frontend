@@ -113,6 +113,7 @@
   import { useRouter } from 'vue-router'
   import { EyeIcon, EyeOffIcon } from 'lucide-vue-next'
   import { useAuthStore } from '@/stores/auth.js'
+  import {storeToRefs} from "pinia";
   import axios from 'axios'
   import Swal from 'sweetalert2'
 
@@ -124,8 +125,8 @@
   const showNewPwdA = ref(true)
   const showNewPwdB = ref(true)
 
-  const authStore = useAuthStore();
-  const user = ref(authStore.user || {});
+  const authStore = useAuthStore()
+  const { user } = storeToRefs(authStore)
   console.log("user.value: " ,user.value)
 
   const editForm = ref({

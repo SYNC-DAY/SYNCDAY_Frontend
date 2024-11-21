@@ -53,9 +53,21 @@ const password = ref('')
 
 const handleLogin = async () => {
   try {
-    await authStore.login(email.value, password.value)
-    const redirectPath = route.query.redirect || '/'
-    router.push(redirectPath)
+    console.log("로그인 시도 시작")
+    const success = await authStore.login(email.value, password.value)
+    console.log("로그인 결과:", success)
+    console.log("현재 인증 상태:", authStore.isAuthenticated)
+    if (success) {
+      const redirectPath = route.query.redirect || '/'
+      console.log("리다이렉트 시도:", redirectPath)
+
+      try {
+        await router.push(redirectPath)
+        console.log("리다이렉트 성공")
+      } catch (e) {
+        console.error("라우터 이동 실패:", e)
+      }
+    }
   } catch (error) {
     console.error('Login failed:', error)
   }
