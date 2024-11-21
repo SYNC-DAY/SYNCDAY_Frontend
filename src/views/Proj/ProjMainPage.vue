@@ -93,7 +93,7 @@ import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import SideBar from '@/components/layout/SideBar.vue'
 import ProjItem from './components/ProjItem.vue'
-import WorkspaceItem from './components/WorkSpaceItem.vue'
+import WorkspaceItem from './components/WorkspaceItem.vue'
 import { useAuthStore } from "@/stores/auth.js"
 import { storeToRefs } from "pinia"
 
