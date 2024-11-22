@@ -37,7 +37,7 @@
 				<RouterLink to="/meetingroom">
 					<img src="@/assets/images/meetingroom.svg" alt="회의실 예약" class="icon-img" />
 				</RouterLink>
-				<RouterLink to="/chat">
+				<RouterLink to="/chatlist">
 					<img src="@/assets/images/dm.svg" alt="채팅" class="icon-img" @click="toggleChatPop"/>
 				</RouterLink>
 				<RouterLink to="alarm">
@@ -73,7 +73,7 @@ import { RouterLink, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth.js';
 import { ref, onMounted, onUnmounted } from 'vue';
 
-import ChatPop from '@/views/chat/ChatList.vue';
+import ChatPop from '@/views/chat/ChatRoomList.vue';
 
 
 const props = defineProps({

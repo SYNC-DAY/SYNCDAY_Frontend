@@ -23,12 +23,14 @@
   <script setup>
   import { onUnmounted, onMounted, ref } from 'vue';
   import SockJS from 'sockjs-client';
-  import { Stomp } from '@stomp/stompjs';
+  import { Client } from '@stomp/stompjs';
   import { useAuthStore } from '@/stores/auth';
   
   const authStore = useAuthStore();
   const connectionStatus = ref('웹 소켓 시작')
-  
+  const isConnected = ref(false)
+  const stompClient = ref(null)
+
   const connectWebSocket = () => {
     console.log('웹소켓 연결 시도 중...')
     connectionStatus.value = '웹소켓에 연결 중...'
@@ -38,10 +40,10 @@
     // const socket = "ws://localhost:8080/ws";
     console.log('SockJS 인스턴스 생성됨')
     // const stompClient = ref(null)
-    const stompClient = Stomp.over(socket);
+   // stompClient.value = Stomp.over(socket);
     // const stompClient = Stomp.client(socket);
   
-    stompClient.value = new Stomp({
+    stompClient.value = new Client({
       webSocketFactory: () => socket,
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
@@ -53,7 +55,7 @@
         console.log('STOMP 연결됨(success!!!): ' + frame)
         isConnected.value = true
         connectionStatus.value = '연결됨'
-        subscribeToRoom(currentRoom.value)
+        //subscribeToRoom(currentRoom.value)
       },
       onStompError: frame => {
         console.error('STOMP 오류:', frame)
@@ -74,18 +76,24 @@
     })
     console.log('STOMP 클라이언트 활성화 중...')
     stompClient.value.activate()
+    wsConnect()
   }
   
-  // stompClient.connect(
-  //   {Authorization: `Bearer ${authStore.accessToken}`}, // JWT 토큰 등 인증 정보 추가
-  //    (frame) => {
-  //   console.log('웹소켓 연결 완료!: ', frame);
-  //   stompClient.subscribe(`/topic/room/${roomId}/message`, (message) => {
-  //     console.log('새 메세지:', message.body);
-  //   });
-  // }, (error) => {
-  //   console.log('STOMP 연결 실패: ', error);
-  // });
+  const wsConnect = () => {
+    console.log(stompClient.value)
+    stompClient.value.onConnect()
+  }
+  //stompClient.value.onConnect(
+//     {Authorization: `Bearer ${authStore.accessToken}`}, // JWT 토큰 등 인증 정보 추가
+//      (frame) => {
+//     console.log('웹소켓 연결 완료!: ', frame);
+//     stompClient.subscribe(`/topic/room/${roomId}/message`, (message) => {
+//       console.log('새 메세지:', message.body);
+//     });
+//   }, (error) => {
+//     console.log('STOMP 연결 실패: ', error);
+//   }
+//);
   
   // subscriptions.value[roomId] = stompClient.value.subscribe(`/topic/room/${roomId}/message`, message => {
   //     console.log('메시지 수신:', message)
@@ -126,7 +134,9 @@
   // };   fetch가 아닌 send로 보내져야 함.
   
   onMounted(() => {
+    console.log('onmount')
     connectWebSocket();
+    
   });
   
   // onUnmounted(() => {
