@@ -2,6 +2,13 @@
     <div style="height: 100%; width: 100%">
         <FullCalendar :options="calendarOptions" />
     </div>
+    <div>
+        <CalendarViewModal
+            v-if="showEventModal"
+            :schedule="selectedEvent"
+            @close="showEventModal = false"    
+        />
+    </div>
 </template>
 
 <script setup>
@@ -11,11 +18,15 @@ import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid'; // DayGrid 보기 플러그인
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction'; // 클릭/드래그 기능
+import CalendarViewModal from './component/CalendarViewModal.vue';
 
 import { useAuthStore } from '@/stores/auth';
 const authStore = useAuthStore();
 // const user = ref({});
 // const loading = ref(true);
+
+const showEventModal = ref(false);
+const selectedEvent = ref({});
 
 // 이벤트 데이터
 const events = ref([]);
@@ -44,6 +55,14 @@ const calendarOptions = ref({
     },
     select: (info) => {
         alert(`Selected from ${info.startStr} to ${info.endStr}`);
+    },
+    eventClick: async (info) => {
+        await fetchDetailSchedules(info.event.id, authStore.user.userId);
+        console.log('selectedEvent:', selectedEvent.value);
+
+        // 모달 열기
+        showEventModal.value = true;
+        console.log('showEventModal:', showEventModal.value);
     },
     events: events,
 });
@@ -89,10 +108,41 @@ const fetchSchedules = async () => {
     }
 };
 
-onMounted(async () => {
-    await fetchSchedules();
-});
+const fetchDetailSchedules = async (scheduleId, userId) => {
+    try {
+        const response = await axios.get(`/schedule/my/${scheduleId}?userId=${userId}`);
+        const data = response.data.data[0];
+        console.log('DetailSchedule!!:', data);
 
+        // selectedEvent를 가져온 데이터로 업데이트
+        selectedEvent.value = {
+            scheduleId: data.schedule_id,
+            title: data.title,
+            content: data.content,
+            startTime: data.start_time,
+            endTime: data.end_time,
+            updateTime: data.update_time,
+            publicStatus: data.public_status,
+            scheduleRepeatId: data.schedule_repeat_id,
+            repeatOrder: data.repeat_order,
+            meetingStatus: data.meeting_status,
+            meetingroomId: data.meetingroom_id,
+            userId: data.user_id,
+            username: data.username,
+            userInfo: data.user_info.map(user => ({
+                userId: user.user_id,
+                username: user.username,
+                participationStatus: user.participationStatus
+            }))
+        };
+    } catch (error) {
+        console.error('Error fetching schedules:', error);
+    }
+};
+
+onMounted(() => {
+    fetchSchedules();
+});
 </script>
 
 <style scoped>
