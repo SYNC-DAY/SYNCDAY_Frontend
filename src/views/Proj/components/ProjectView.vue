@@ -1,7 +1,27 @@
 <!-- ProjectView.vue -->
 <template>
 	<div class="proj-header">
-		<h2>{{ project.proj_name }}</h2>
+		<div class="proj-title-item">
+			<h3>{{ project.proj_name }}</h3>
+			<div class="member-role">
+				<p>역할</p>
+			</div>
+		</div>
+
+		<div class="proj-title-item">
+			<div>
+				<div>workspace |</div>
+				
+				<div>| members</div>
+
+			</div>
+
+			<div>VCS</div>
+		</div>
+	</div>
+
+	<div class="proj-content">
+		
 	</div>
   </template>
   
@@ -51,9 +71,27 @@
 		border-bottom: 1px solid var(--outline-gray);
 		display:flex;
 		flex-direction: row;
+		justify-content: space-around;
 	}
 
-	.proj-role{
+	.proj-title-item{
+		flex: 1;
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-around;
+	}
+	.proj-title-item div {
+		display: flex;
+		flex-direction: row;
+	}
+
+	.proj-content{
+		display: flex;
+		flex-direction: column;
+	}
+
+	.proj-content-top{
 		
 	}
 </style>

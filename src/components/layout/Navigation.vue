@@ -191,7 +191,7 @@ const isRouteActive = (routeName) => {
 /* 언더바 스타일 */
 .underbar {
 	position: absolute;
-	bottom: -0.5rem;
+	top: -0.3 rem;
 	left: 0;
 	width: 0;
 	height: 0.8rem;

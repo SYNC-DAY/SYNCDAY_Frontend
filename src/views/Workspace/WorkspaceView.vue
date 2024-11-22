@@ -14,7 +14,7 @@
 
     <template v-else-if="workspaceDetails">
       <div class="workspace-header">
-        <h1>{{ workspaceDetails.workspace_name }}</h1>
+        <h3>{{ workspaceDetails.workspace_name }}</h3>
       </div>
       <div class="workspace-content">
         <CardBoard 
