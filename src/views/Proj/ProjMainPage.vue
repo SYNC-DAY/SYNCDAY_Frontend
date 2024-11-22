@@ -63,7 +63,7 @@ const error = ref(null);
 // Methods
 const selectWorkspace = async (workspaceId, projId) => {
   console.log(workspaceId, projId);
-  console.log(projects.value);
+  // console.log(projects.value);
   isLoading.value = true;
   error.value = null;
 
@@ -155,7 +155,7 @@ const fetchProjs = async () => {
 };
 
 const updateProjects = (newProjects) => {
-  console.log(newProjects)
+  // console.log(newProjects)
 };
 
 // Lifecycle
