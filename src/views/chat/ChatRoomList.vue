@@ -24,12 +24,14 @@
   import { onUnmounted, onMounted, ref } from 'vue';
   import SockJS from 'sockjs-client';
   import { Client } from '@stomp/stompjs';
-  import { useAuthStore } from '@/stores/auth';
+  // import { useAuthStore } from '@/stores/auth';
   
-  const authStore = useAuthStore();
+  // const authStore = useAuthStore()
   const connectionStatus = ref('웹 소켓 시작')
   const isConnected = ref(false)
   const stompClient = ref(null)
+  // const subscriptions = ref({})
+
 
   const connectWebSocket = () => {
     console.log('웹소켓 연결 시도 중...')
@@ -37,11 +39,9 @@
   
     // const connectionStatus = ref('웹소켓에 연결 중...')
     const socket = new SockJS('http://localhost:8080/ws');
-    // const socket = "ws://localhost:8080/ws";
     console.log('SockJS 인스턴스 생성됨')
-    // const stompClient = ref(null)
-   // stompClient.value = Stomp.over(socket);
-    // const stompClient = Stomp.client(socket);
+  //  stompClient.value = Stomp.over(socket);
+    // stompClient.value = Stomp.client(socket);
   
     stompClient.value = new Client({
       webSocketFactory: () => socket,
@@ -118,9 +118,9 @@
   };
   
   // 채팅방 오픈
-  const openChatRoom = (roomId) => {
-    console.log(`Open chatRoom with ID: ${roomId}`);
-  };
+  // const openChatRoom = (roomId) => {
+  //   console.log(`Open chatRoom with ID: ${roomId}`);
+  // };
   
   // 백엔드에서 채팅방 목록 가져옴
   // const fetchChatList = async () => {
@@ -145,11 +145,8 @@
   //     Object.values(subscriptions.value).forEach(subscription => subscription.unsubscribe())
   //     stompClient.value.deactivate()
   //   }
-  // });
-  
-  // socket.onclose= () => {
-  //   console.log('웹소켓 연결이 종료되었습니다.');
-  // };
+  // })
+
   </script>
   
   <style scoped>
