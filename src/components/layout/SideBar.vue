@@ -34,6 +34,7 @@ const toggleCollapse = () => {
   background-color: white;
   border-right: 1px solid var(--outline-gray);
   transition: width 0.3s ease;
+  padding: 1rem;
 }
 
 .sidebar.collapsed {

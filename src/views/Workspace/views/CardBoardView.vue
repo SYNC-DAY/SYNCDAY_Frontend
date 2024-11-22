@@ -25,11 +25,10 @@ defineProps({
 
 <style scoped>
 .cardboard-view {
-  width: 100%;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   gap: 1rem;
-  overflow-x: auto;
+  overflow-x: scroll;
   padding: 1rem;
 }
 </style>

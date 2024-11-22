@@ -87,7 +87,7 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: flex-start;
-	padding: 0.75rem 1rem;
+	padding: 0.75rem;
 	cursor: pointer;
 	position: relative;
 	transition: background-color 0.2s;
@@ -172,6 +172,6 @@
   }
   
   .proj-content {
-	padding: 0.5rem 0 0.5rem 1.5rem;
+	padding: 0.5rem;
   }
   </style>
