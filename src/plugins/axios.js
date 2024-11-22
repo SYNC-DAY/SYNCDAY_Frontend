@@ -31,7 +31,6 @@ export function setupAxiosInterceptors() {
             if (newAccessToken) {
                 const authStore = useAuthStore()
                 authStore.setAccessToken(newAccessToken)
-                // console.log("새로 도착한 authStore:", authStore)
                 // console.log("새로 갱신받은 accessToken: ",newAccessToken)
             }
             return response

@@ -47,7 +47,13 @@ export const useAuthStore = defineStore('auth', {
         },
 
         async initializeAuth() {
-            if (this.isInitialized) return true;
+            // 로그인 페이지에서는 초기화하지 않음
+            if (window.location.pathname === '/login') {
+                return false;
+            }
+
+            if (this.isInitialized && this.user) return true;
+
             console.log("initializing auth 시작!")
             try {
                 const response = await axios.get('/user/profile', {
