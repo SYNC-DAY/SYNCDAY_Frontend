@@ -63,17 +63,20 @@ p, a, span {
   }
 }
 
+@media screen and (max-width: 860px) {
+	:root{font-size: 12px;}
+}
 
 
 /* 스크린 반 접은 상태일 때 */
-@media screen and (max-width: 800px) {
+@media screen and (max-width: 720px) {
   :root {
-	font-size: 12px;
+	font-size: 10px;
   }
 }
 
 /* 스크린 반 접고 개발자도구 */
-@media screen and (max-width: 540px) {
+@media screen and (max-width: 600px) {
 	:root{
 		font-size: 8px;
 	}
