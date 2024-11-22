@@ -56,6 +56,10 @@
 	workspaceId:{
 		type:Number,
 		required:true
+	},
+	projectId:{
+		type: Number,
+		required: true
 	}
   })
   
@@ -73,6 +77,7 @@
 		name: 'Workspace',
 		params: {
 			workspaceId: props.workspaceId,
+			projectId: props.projectId
 		}
 	})
 	emit('select')
