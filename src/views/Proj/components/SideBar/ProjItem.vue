@@ -80,7 +80,7 @@
   <style scoped>
   .proj-item {
 	margin-bottom: 0.25rem;
-	border-bottom: 1px solid var(--outline-gray)
+	border-bottom: 1px solid var(--outline-gray);
   }
   
   .proj-header {
