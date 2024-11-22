@@ -46,6 +46,7 @@ const isLoginPage = computed(() => route.path === '/login');
 .content {
   flex: 1;
   padding: 1rem;
+  display: flex;
 /*   background-color: #f5f5f5; */
 }
 </style>
