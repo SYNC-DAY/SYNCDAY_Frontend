@@ -94,7 +94,7 @@ const navigateToWorkspace = () => {
 }
 
 .workspace-item.active .workspace-header {
-  background-color: var(--background-active);
+  /* background-color: var(--background-active); */
 }
 
 .workspace-item.active::before {

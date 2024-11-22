@@ -2,7 +2,7 @@
 <template>
   <div class="workspace-container">
     <div class="workspace-header">
-      <h1>Workspace</h1>
+      <h1>{{ workspaceDetails.workspace_name }}</h1>
     </div>
     <div class="workspace-content">
       <CardBoard :cardboards="workspaceDetails?.cardboards || []"></CardBoard>

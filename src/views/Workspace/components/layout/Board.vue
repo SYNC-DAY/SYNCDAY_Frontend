@@ -41,8 +41,6 @@ defineProps({
 
 <style scoped>
 .board {
-  width: 320px;
-  min-width: 320px;
   background: #f5f5f5;
   border-radius: 8px;
   padding: 1rem;
