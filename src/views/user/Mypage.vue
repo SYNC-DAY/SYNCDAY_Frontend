@@ -30,9 +30,9 @@
               <button class="edit-btn">계정 교체</button>
             </div>
           </div>
-          <div class="contact-info">회선 번호 : {{ authStore.user.phoneNumber || '031-1111-1111' }}</div>
+          <div class="contact-info">회선 번호 : {{ userInfo.phoneNumber || '031-1111-1111' }}</div>
           <div class="contact-info">Email : {{ authStore.user.email || 'momo94@threeping.co.kr' }}</div>
-          <div class="contact-info">입사연도 : {{ authStore.user.joinYear || '2023' }}</div>
+          <div class="contact-info">입사연도 : {{ userInfo.joinYear || '2023' }}</div>
         </div>
         <!-- 직책 정보 -->
         <div class="role-tag">
@@ -51,20 +51,34 @@
 import { useRouter } from 'vue-router'
 const router = useRouter()
 import {useAuthStore} from "@/stores/auth.js";
+import {onMounted, ref} from "vue";
+import axios from "axios";
 const authStore = useAuthStore()
+const userInfo = ref({});
 const goToPasswordChange = () => {
   router.push('/password-change')
 }
-console.log("mypage에서 조회된 useAuthStore.user: ",authStore.user)
-console.log("mypage에서 httponly cookie 확인하기: ", document.cookie)
+const fetchUserInfo = async () => {
+  try {
+    const response = await axios.get('/user/profile')
+    userInfo.value = response.data.data
+  } catch (error) {
+    console.log("유저정보 fetch 실패" ,error)
+  }
+}
+
+
+onMounted(() => {
+  fetchUserInfo()
+})
 </script>
 
 <style scoped>
 
 .profile-page {
-  max-width: 112rem;
+  max-width: 120rem;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0rem 2rem;
   min-height: 200vh;
   display: flex;          /* 추가 */
   flex-direction: column; /* 추가 */
@@ -73,25 +87,25 @@ console.log("mypage에서 httponly cookie 확인하기: ", document.cookie)
 
 .my-page-title {
   margin: 1rem 0;
-  font-size: 4rem;
+  font-size: 3rem;
   font-weight: bold;
   color: #333;
   width: 100%;          /* 추가 */
-  max-width: 133rem;     /* password-card와 동일한 max-width */
+  max-width: 100rem;     /* password-card와 동일한 max-width */
 }
 
 .profile-card {
-  max-width: 130rem;
-  height: 90rem;
+  max-width: 100rem;
+  height: 70rem;
   width: 100%;
   background: white;
-  border-radius: 20px;
+  border-radius: 3rem;
   overflow: hidden;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .gradient-banner {
-  height: 35rem;
+  height: 25rem;
   background: linear-gradient(to right, #FFD5B8, #FF8FB3);
 }
 
@@ -99,38 +113,47 @@ console.log("mypage에서 httponly cookie 확인하기: ", document.cookie)
   position: relative;
   margin-top: -13rem;
   display: flex;
-  padding: 0 3rem;
+  padding: 0 4rem;
 }
 
 .left-section {
   flex: 1;
-  max-width: 40rem;
+  max-width: 30rem;
   text-align: center;
+  margin-top: 4rem;
 }
 
 .right-section {
-  max-width: 60rem;
+  width: 50rem;
   flex: 2;
-  padding-top: 18rem;
+  padding-top: 16rem;
   place-items: center;
 }
 
-.photo-section {
-  margin-bottom: 2rem;
+.role-tag {
+  max-width: 18rem;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 2rem;
+  padding-top: 16rem;
 }
 
 .profile-photo {
-  width: 25rem;
-  height: 25rem;
+  width: 18rem;
+  height: 18rem;
+  border: solid #D1D1D1 0.3rem;
   border-radius: 50%;
   border: 0.7rem solid white;
   object-fit: cover;
 }
 
 .username {
-  font-size: 3.5rem;
+  font-size: 2.3rem;
   font-weight: bold;
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
+  margin-top: 1rem;
 }
 
 .tag {
@@ -140,20 +163,20 @@ console.log("mypage에서 httponly cookie 확인하기: ", document.cookie)
 
 .role {
   color: #A7A7A7;
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: bold;
   margin-bottom: 1.7rem;
 }
 
 .role-img {
-  width: 3rem;
-  height: 3rem;
+  width: 2rem;
+  height: 2rem;
 }
 
 .edit-button {
-  border: 0.5rem solid #000;
-  border-radius: 18px;
-  padding: 1rem 2rem;
+  border: 0.3rem solid #000;
+  border-radius: 2rem;
+  padding: 1rem 1.5rem;
   background: white;
   cursor: pointer;
   font-size: 1.8rem;
@@ -167,11 +190,11 @@ console.log("mypage에서 httponly cookie 확인하기: ", document.cookie)
 }
 
 .github-section {
-  border: 0.4rem solid #D1D1D1;
+  border: 0.2rem solid #D1D1D1;
   max-width: 53rem;
-  width: 80%;
-  height: 8rem;
-  border-radius: 3rem;
+  width: 85%;
+  height: 7rem;
+  border-radius: 2rem;
   display: flex;
   justify-content: center;
   margin-bottom: 1rem;
@@ -189,17 +212,17 @@ console.log("mypage에서 httponly cookie 확인하기: ", document.cookie)
 }
 
 .github-id {
-  font-size: large;
+  font-size: x-large;
   font-weight: bold;
 }
 
 .edit-btn {
   display: flex;
-  padding: 1rem 2.5rem;
+  padding: 1rem 2rem;
   background: #000;
   color: white;
   border: none;
-  border-radius: 2rem;
+  border-radius: 1.3rem;
   font-size: 1.5rem;
   cursor: pointer;
   margin-left: 7rem;
@@ -208,37 +231,27 @@ console.log("mypage에서 httponly cookie 확인하기: ", document.cookie)
 .contact-info {
   display: flex;
   align-items: center;
-  font-size: medium;
-  border: 0.4rem solid #D1D1D1;
+  font-size: 1.8rem;
+  border: 0.2rem solid #D1D1D1;
   font-weight: bold;
   max-width: 53rem;
-  height: 8rem;
-  width: 80%;
-  border-radius: 3rem;
+  height: 7rem;
+  width: 85%;
+  border-radius: 2rem;
   margin-bottom: 1rem;
   padding-left: 2rem;
-}
-
-.role-tag {
-  max-width: 22rem;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  gap: 2rem;
-  padding-top: 18rem;
-  padding-right: 1rem;
 }
 
 .job-title-label {
   font-weight: normal;
   color: #666;
-  margin-top: 0.2rem;
+  margin-top: 0.3rem;
+  font-size: 1.3rem;
 }
 
 .job-title {
   color: #666;
-  font-size: 2rem;
+  font-size: 1.5rem;
   background: #F5F5F5;
   padding: 1rem 2rem;
   border-radius: 5rem;
