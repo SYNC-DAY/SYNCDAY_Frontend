@@ -11,19 +11,30 @@
 		<div class="nav-tabs">
 			<ul>
 				<li>
-					<RouterLink to="/calendar" class="nav-link" :class="{ 'active': currentRoute === '/calendar' }">
+					<RouterLink 
+					to="/calendar" 
+					class="nav-link" 
+					:class="{ 'active': isRouteActive('calendar') }">
 						캘린더
 						<div class="underbar"></div>
 					</RouterLink>
 				</li>
+
 				<li>
-					<RouterLink to="/team" class="nav-link" :class="{ 'active': currentRoute === '/team' }">
+					<RouterLink 
+					to="/team" 
+					class="nav-link" 
+					:class="{ 'active': isRouteActive('team') }">
 						팀
 						<div class="underbar"></div>
 					</RouterLink>
 				</li>
+
 				<li>
-					<RouterLink to="/project" class="nav-link" :class="{ 'active': currentRoute === '/project' }">
+					<RouterLink 
+					to="/project" 
+					class="nav-link" 
+					:class="{ 'active': isRouteActive('project') }">
 						프로젝트
 						<div class="underbar"></div>
 					</RouterLink>
@@ -115,6 +126,11 @@ onMounted(() => {
 onUnmounted(() => {
 	document.removeEventListener('click', handleClickOutside);
 });
+
+const isRouteActive = (routeName) => {
+  // 경로에 routeName이 포함되어 있는지 확인
+  return route.path.includes(`/${routeName}`);
+};
 </script>
 
 <style scoped>
@@ -167,7 +183,7 @@ onUnmounted(() => {
 .nav-link {
 	text-decoration: none;
 	font-size: 1.2rem;
-	padding: 0.5rem 1rem;
+	padding: 1rem 1rem;
 	position: relative;
 	display: inline-block;
 }
@@ -178,13 +194,13 @@ onUnmounted(() => {
 	bottom: -0.5rem;
 	left: 0;
 	width: 0;
-	height: 0.2rem;
+	height: 0.8rem;
 	background: linear-gradient(90deg, var(--pink-color), var(--apricot-color));
 	transition: width 0.3s ease;
 }
 
 .nav-link.active .underbar {
-	width: 100%;
+	width:100%;
 }
 
 .nav-tabs li {
