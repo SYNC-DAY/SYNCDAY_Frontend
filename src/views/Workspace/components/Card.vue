@@ -1,6 +1,6 @@
-// Card.vue
+// Card.vue (업데이트)
 <template>
-  <div class="card">
+  <div class="card" @click="openModal">
     <div class="card-header">
       <div 
         class="tag" 
@@ -25,16 +25,34 @@
       </div>
       <div class="team">{{ card.assignee_team_name }}</div>
     </div>
+
+    <CardModal 
+      :show="showModal" 
+      :card="card"
+      @close="closeModal"
+    />
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue';
+import CardModal from './layout/CardModal.vue';
 const props = defineProps({
   card: {
     type: Object,
     required: true
   }
 });
+
+const showModal = ref(false);
+
+const openModal = () => {
+  showModal.value = true;
+};
+
+const closeModal = () => {
+  showModal.value = false;
+};
 
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('ko-KR', {
@@ -50,7 +68,14 @@ const formatDate = (dateString) => {
   border-radius: 6px;
   padding: 1rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: box-shadow 0.2s ease;
 }
+
+.card:hover {
+  box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+}
+
 
 .card-header {
   display: flex;
