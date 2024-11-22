@@ -166,12 +166,12 @@ onMounted(() => {
 
 <style scoped>
 .proj-main {
-  height: calc(100vh - 64px);
+  height: calc(100vh - 10vh);
   flex: 1;
-  padding: 2rem;
+  padding: 1rem;
   display: inline-block;
   overflow-y: auto;
-  background-color: #f9fafb;
+
 }
 
 .error-message {
