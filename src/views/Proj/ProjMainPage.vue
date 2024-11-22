@@ -16,7 +16,6 @@
           <template v-for="workspace in proj.workspaces" :key="workspace.workspace_id">
             <WorkspaceItem 
               :workspaceId="workspace.workspace_id"
-              :projId="proj.proj_id"
               :title="workspace.workspace_name"
               :isActive="activeWorkspace === workspace.workspace_id"
               :progress="workspace.progress_status"

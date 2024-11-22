@@ -6,7 +6,7 @@
 	@click="navigateToWorkspace">
 	  <div 
 		class="workspace-header"
-		@click="$emit('select')"
+		@click="handleWorkspaceClick"
 	  >
 		<div class="workspace-info">
 		  <div class="title">{{ title }}</div>
@@ -77,6 +77,9 @@
 	})
 	emit('select')
   }
+  const handleWorkspaceClick = () => {
+  router.push(`/workspace/${props.workspaceId}`)
+}
 
   </script>
   
