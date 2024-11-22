@@ -59,7 +59,6 @@ const toggleCollapse = () => {
 .sidebar-content {
   height: 100%;
   overflow-y: auto;
-  padding: 1rem 0;
 }
 
 
