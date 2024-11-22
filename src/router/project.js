@@ -1,14 +1,28 @@
-export default [
-    {
-        path: "/project",
-        name: "Project",
-        component: () => import('@/views/Proj/ProjMainPage.vue'),
-        meta: { requiresAuth: true }
-    },
-    {
-        path:"/workspace/:workspaceId",
-        name:"Workspace",
-        component: ()=> import('@/views/Proj/components/WorkspaceContent.vue'),
+// router/index.js
+import { createRouter, createWebHistory } from 'vue-router'
+import ProjMainPage from '@/views/Proj/ProjMainPage.vue'
+import ProjectView from '@/views/Proj/components/ProjectView.vue'
+import WorkspaceView from '@/views/Proj/components/WorkspaceView.vue'
+
+const routes = [
+  {
+    path: '/project',
+    component: ProjMainPage,
+    children: [
+      {
+        path: ':projectId',
+        name: 'Project',
+        component: ProjectView,
         props: true
-    }
+      },
+      {
+        path: ':projectId/workspace/:workspaceId',
+        name: 'Workspace',
+        component: WorkspaceView,
+        props: true
+      }
+    ]
+  }
 ]
+
+export default routes;

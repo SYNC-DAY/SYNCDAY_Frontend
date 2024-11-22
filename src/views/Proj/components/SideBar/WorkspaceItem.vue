@@ -6,7 +6,7 @@
 	@click="navigateToWorkspace">
 	  <div 
 		class="workspace-header"
-		@click="handleWorkspaceClick"
+
 	  >
 		<div class="workspace-info">
 		  <div class="title">{{ title }}</div>
