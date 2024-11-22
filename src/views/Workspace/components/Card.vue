@@ -63,7 +63,7 @@ const formatDate = (dateString) => {
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   font-size: 0.75rem;
-  color: white;
+  color: black;
 }
 
 .dates {
