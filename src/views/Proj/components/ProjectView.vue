@@ -1,8 +1,7 @@
-<!-- ProjectView.vue -->
 <template>
 	<div class="proj-header">
 	  <div class="proj-title-item">
-		<h3>{{ project.proj_name }}</h3>
+		<h3>{{ project?.proj_name }}</h3>
 		<div class="member-role">
 		  <p>역할</p>
 		</div>
@@ -40,30 +39,57 @@
 			  ></div>
 			</div>
 		  </div>
+  
+		  <!-- New Workspace Creation Section -->
+		  <div v-if="showNewWorkspaceInput" class="workspace-item new-workspace-input-container">
+			<input
+			  v-model="newWorkspaceName"
+			  @keyup.enter="createWorkspace"
+			  @keyup.esc="cancelNewWorkspace"
+			  placeholder="Enter workspace name..."
+			  ref="newWorkspaceInput"
+			  class="new-workspace-input"
+			/>
+		  </div>
+  
+		  <!-- Add Workspace Button -->
+		  <button 
+			v-if="!showNewWorkspaceInput"
+			@click="showNewWorkspaceInput = true"
+			class="add-workspace-btn"
+		  >
+			+ New Workspace
+		  </button>
 		</div>
 	  </div>
 	</div>
   </template>
   
   <script setup>
-  import { computed } from 'vue'
+  import { computed, ref, watch, nextTick, inject } from 'vue'
   import { useRouter } from 'vue-router'
+  import axios from 'axios'
   
   const props = defineProps({
 	projectId: {
 	  type: [String, Number],
-	  required: true
-	},
-	projects: {
-	  type: Array,
 	  required: true
 	}
   })
   
   const router = useRouter()
   
+  // Inject shared refs
+  const projects = inject('projects')
+  const workspaces = inject('workspaces')
+  
+  // New refs for workspace creation
+  const showNewWorkspaceInput = ref(false)
+  const newWorkspaceName = ref('')
+  const newWorkspaceInput = ref(null)
+  
   const project = computed(() => 
-	props.projects.find(p => p.proj_id === parseInt(props.projectId))
+	projects.value.find(p => p.proj_id === parseInt(props.projectId))
   )
   
   const formatDate = (dateString) => {
@@ -84,9 +110,77 @@
 	  }
 	})
   }
+  
+  // New methods for workspace creation
+  const createWorkspace = async () => {
+	if (!newWorkspaceName.value.trim()) return
+  
+	try {
+	  const response = await axios.post('/workspaces', {
+		workspace_name: newWorkspaceName.value.trim(),
+		proj_id: props.projectId
+	  })
+  
+	  if (response.data.success) {
+		// Create new workspace object with default values
+		const newWorkspace = {
+		  workspace_id: response.data.data.workspace_id,
+		  workspace_name: response.data.data.workspace_name,
+		  project_id: parseInt(props.projectId),
+		  progress_status: 0,
+		  bookmark_status: 'UNBOOKMARKED',
+		  ...response.data.data
+		}
+  
+		// Update workspaces ref
+		workspaces.value = [...workspaces.value, newWorkspace]
+  
+		// Update projects ref
+		const projectIndex = projects.value.findIndex(p => p.proj_id === parseInt(props.projectId))
+		if (projectIndex !== -1) {
+		  const updatedProject = {
+			...projects.value[projectIndex],
+			workspaces: [...projects.value[projectIndex].workspaces, newWorkspace]
+		  }
+		  projects.value = [
+			...projects.value.slice(0, projectIndex),
+			updatedProject,
+			...projects.value.slice(projectIndex + 1)
+		  ]
+		}
+  
+		// Reset input state
+		newWorkspaceName.value = ''
+		showNewWorkspaceInput.value = false
+  
+		// Navigate to new workspace
+		await navigateToWorkspace(newWorkspace.workspace_id)
+	  }
+	} catch (err) {
+	  console.error('Failed to create workspace:', err)
+	  // You might want to add error handling UI here
+	}
+  }
+  
+  const cancelNewWorkspace = () => {
+	showNewWorkspaceInput.value = false
+	newWorkspaceName.value = ''
+  }
+  
+  // Watch for input visibility changes to focus input
+  watch(showNewWorkspaceInput, async (newVal) => {
+	if (newVal) {
+	  await nextTick()
+	  newWorkspaceInput.value?.focus()
+	}
+  })
   </script>
   
   <style scoped>
+  /* 스타일은 변경 없음 */
+  </style>
+<style scoped>
+  /* Existing styles remain the same */
   .proj-header {
 	border-bottom: 1px solid var(--outline-gray);
 	display: flex;
@@ -168,5 +262,43 @@
 	border-radius: 4px;
 	background: linear-gradient(90deg, #FF6B6B 0%, #FFA07A 100%);
 	transition: width 0.3s ease;
+  }
+  
+  /* New styles for workspace creation */
+  .add-workspace-btn {
+	width: 100%;
+	padding: 1rem;
+	text-align: center;
+	color: #6b7280;
+	background-color: #f9fafb;
+	border: 2px dashed #e5e7eb;
+	border-radius: 0.5rem;
+	transition: all 0.2s ease;
+	cursor: pointer;
+  }
+  
+  .add-workspace-btn:hover {
+	color: #374151;
+	background-color: #f3f4f6;
+	border-color: #d1d5db;
+  }
+  
+  .new-workspace-input-container {
+	cursor: default;
+  }
+  
+  .new-workspace-input {
+	width: 100%;
+	padding: 0.5rem;
+	border: 1px solid #e5e7eb;
+	border-radius: 0.375rem;
+	font-size: 0.875rem;
+	outline: none;
+	transition: border-color 0.2s;
+  }
+  
+  .new-workspace-input:focus {
+	border-color: #3b82f6;
+	box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
   }
   </style>
