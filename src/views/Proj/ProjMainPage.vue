@@ -51,13 +51,12 @@
   <div class="proj-main">
     <router-view 
       :projects="projects"
-      @update:projects="updateProjects"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted, nextTick } from 'vue';
+import { ref, onMounted, nextTick, watch } from 'vue';
 import { useAuthStore } from "@/stores/auth.js";
 import { storeToRefs } from "pinia";
 import { useRouter } from 'vue-router';
@@ -71,7 +70,7 @@ const router = useRouter();
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
 
-// Existing state
+// State
 const projects = ref([]);
 const activeWorkspace = ref(null);
 const activeProject = ref(null);
@@ -84,6 +83,98 @@ const showNewProjectInput = ref(false);
 const newProjectName = ref('');
 const newProjectInput = ref(null);
 
+// Methods
+const selectWorkspace = async (workspaceId, projId) => {
+  isLoading.value = true;
+  error.value = null;
+
+  try {
+    activeWorkspace.value = workspaceId;
+    activeProject.value = projId;
+    
+    await router.push({
+      name: 'Workspace',
+      params: { 
+        projectId: projId,
+        workspaceId: workspaceId 
+      }
+    });
+  } catch (err) {
+    error.value = 'Navigation failed';
+    console.error('Navigation failed:', err);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const selectProject = async (projId) => {
+  try {
+    activeProject.value = projId;
+    activeWorkspace.value = null;
+    await router.push({
+      name: 'Project',
+      params: { projectId: projId }
+    });
+  } catch (err) {
+    console.error('Project navigation failed:', err);
+  }
+};
+
+const toggleProjectExpansion = (projId) => {
+  const index = expandedProjects.value.indexOf(projId);
+  if (index === -1) {
+    expandedProjects.value.push(projId);
+  } else {
+    expandedProjects.value.splice(index, 1);
+  }
+};
+
+const handleBookmarkChange = async (projId, isBookmarked) => {
+  try {
+    await axios.put(`/proj-members/${projId}/bookmark`, {
+      bookmark_status: isBookmarked ? 'BOOKMARKED' : 'UNBOOKMARKED'
+    });
+    
+    const proj = projects.value.find(p => p.proj_id === projId);
+    if (proj) {
+      proj.bookmark_status = isBookmarked ? 'BOOKMARKED' : 'UNBOOKMARKED';
+    }
+  } catch (err) {
+    console.error('Failed to update bookmark status:', err);
+  }
+};
+
+const handleWorkspaceBookmark = async (workspaceId, isBookmarked) => {
+  try {
+    await axios.put(`/workspaces/${workspaceId}/bookmark`, {
+      bookmark_status: isBookmarked ? 'BOOKMARKED' : 'UNBOOKMARKED'
+    });
+    
+    projects.value.forEach(proj => {
+      const workspace = proj.workspaces.find(ws => ws.workspace_id === workspaceId);
+      if (workspace) {
+        workspace.bookmark_status = isBookmarked ? 'BOOKMARKED' : 'UNBOOKMARKED';
+      }
+    });
+  } catch (err) {
+    console.error('Failed to update workspace bookmark:', err);
+  }
+};
+
+const fetchProjs = async () => {
+  try {
+    const response = await axios.get(`/projs/users/${user.value.userId}`);
+    if (response.data.success) {
+      projects.value = response.data.data;
+    } else {
+      throw new Error(response.data.error || 'Failed to fetch Projects');
+    }
+  } catch (err) {
+    console.error('Failed to fetch projects:', err);
+    error.value = 'Failed to load projects';
+  }
+};
+
 // New method for project creation
 const createProject = async () => {
   if (!newProjectName.value.trim()) {
@@ -91,17 +182,34 @@ const createProject = async () => {
   }
 
   try {
-    const response = await axios.post('/projs/', {
+    const response = await axios.post('/projs', {
       proj_name: newProjectName.value.trim(),
       user_id: user.value.userId
     });
 
     if (response.data.success) {
-      // Add the new project to the list
-      projects.value.push(response.data.data);
-      // Reset the input
+      // Create a properly structured new project object
+      const newProject = {
+        proj_id: response.data.data.proj_id,
+        proj_name: response.data.data.proj_name,
+        bookmark_status: 'UNBOOKMARKED',
+        progress_status: 'NOT_STARTED',
+        workspaces: [],
+        ...response.data.data  // Preserve any additional fields from the response
+      };
+
+      // Add the new project while preserving existing projects
+      projects.value = [...projects.value, newProject];
+      
+      // Reset the input state
       newProjectName.value = '';
       showNewProjectInput.value = false;
+
+      // Optionally expand the new project
+      expandedProjects.value.push(newProject.proj_id);
+      
+      // Optionally select the new project
+      await selectProject(newProject.proj_id);
     } else {
       throw new Error(response.data.error || 'Failed to create project');
     }
@@ -111,10 +219,15 @@ const createProject = async () => {
   }
 };
 
-// Method to cancel project creation
 const cancelNewProject = () => {
   showNewProjectInput.value = false;
   newProjectName.value = '';
+};
+
+const updateProjects = (newProjects) => {
+  if (Array.isArray(newProjects)) {
+    projects.value = newProjects;
+  }
 };
 
 // Watch for showNewProjectInput changes to focus the input
@@ -125,13 +238,13 @@ watch(showNewProjectInput, async (newVal) => {
   }
 });
 
-// Existing methods remain the same...
-// [Previous methods remain unchanged]
-
+// Lifecycle
+onMounted(() => {
+  fetchProjs();
+});
 </script>
 
 <style scoped>
-/* Existing styles remain the same */
 .proj-main {
   height: calc(100vh - 10vh);
   flex: 1;
@@ -156,7 +269,6 @@ watch(showNewProjectInput, async (newVal) => {
   height: 100%;
 }
 
-/* New styles for project creation */
 .new-project-section {
   padding: 0.75rem;
   border-top: 1px solid #e5e7eb;
