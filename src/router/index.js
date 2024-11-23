@@ -8,7 +8,7 @@ import projectRoutes from './project'
 
 const routes = [
   {
-    path: '/chat',
+    path: '/chatlist',
     name: 'Chat',
     component: () => import('@/views/chat/ChatList.vue') 
   },
@@ -23,7 +23,7 @@ const router = createRouter({
       path:'/',
       redirect:''
     },
-    { path: '/chat',
+    { path: '/chatlist',
       name: 'Chat',     
       component: () => import('@/views/chat/ChatList.vue'),
        meta: {
