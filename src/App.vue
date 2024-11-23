@@ -39,6 +39,7 @@ const isLoginPage = computed(() => route.path === '/login');
 }
 
 .main-container {
+  width: 100vw;
   display: flex;
   flex: 1;
 }

@@ -80,13 +80,14 @@
   <style scoped>
   .proj-item {
 	margin-bottom: 0.25rem;
+	border-bottom: 1px solid var(--outline-gray);
   }
   
   .proj-header {
 	display: flex;
 	justify-content: space-between;
 	align-items: flex-start;
-	padding: 0.75rem 1rem;
+	padding: 0.75rem;
 	cursor: pointer;
 	position: relative;
 	transition: background-color 0.2s;
@@ -167,10 +168,10 @@
   }
   
   .star-icon.bookmarked {
-	color: #ff9f7d;
+	color: var(--apricot-color);
   }
   
   .proj-content {
-	padding: 0.5rem 0 0.5rem 1.5rem;
+	padding: 0.5rem;
   }
   </style>
