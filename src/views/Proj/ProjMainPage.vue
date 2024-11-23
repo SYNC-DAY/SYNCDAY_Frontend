@@ -1,5 +1,3 @@
-
-// ProjMainPage.vue
 <template>
   <SideBar>
     <template v-for="proj in projects" :key="proj.proj_id">
@@ -27,18 +25,38 @@
         </template>
       </ProjItem>
     </template>
+
+    <!-- Add New Project Section -->
+    <div class="new-project-section">
+      <button 
+        class="new-project-btn"
+        @click="showNewProjectInput = true"
+        v-if="!showNewProjectInput"
+      >
+        + New Project
+      </button>
+      <div v-if="showNewProjectInput" class="new-project-input-container">
+        <input
+          v-model="newProjectName"
+          @keyup.enter="createProject"
+          @keyup.esc="cancelNewProject"
+          placeholder="Enter project name..."
+          ref="newProjectInput"
+          class="new-project-input"
+        />
+      </div>
+    </div>
   </SideBar>
 
   <div class="proj-main">
     <router-view 
       :projects="projects"
-      @update:projects="updateProjects"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, nextTick, watch } from 'vue';
 import { useAuthStore } from "@/stores/auth.js";
 import { storeToRefs } from "pinia";
 import { useRouter } from 'vue-router';
@@ -60,10 +78,13 @@ const expandedProjects = ref([]);
 const isLoading = ref(false);
 const error = ref(null);
 
+// New state for project creation
+const showNewProjectInput = ref(false);
+const newProjectName = ref('');
+const newProjectInput = ref(null);
+
 // Methods
 const selectWorkspace = async (workspaceId, projId) => {
-  console.log(workspaceId, projId);
-  // console.log(projects.value);
   isLoading.value = true;
   error.value = null;
 
@@ -154,9 +175,68 @@ const fetchProjs = async () => {
   }
 };
 
-const updateProjects = (newProjects) => {
-  // console.log(newProjects)
+// New method for project creation
+const createProject = async () => {
+  if (!newProjectName.value.trim()) {
+    return;
+  }
+
+  try {
+    const response = await axios.post('/projs', {
+      proj_name: newProjectName.value.trim(),
+      user_id: user.value.userId
+    });
+
+    if (response.data.success) {
+      // Create a properly structured new project object
+      const newProject = {
+        proj_id: response.data.data.proj_id,
+        proj_name: response.data.data.proj_name,
+        bookmark_status: 'UNBOOKMARKED',
+        progress_status: 'NOT_STARTED',
+        workspaces: [],
+        ...response.data.data  // Preserve any additional fields from the response
+      };
+
+      // Add the new project while preserving existing projects
+      projects.value = [...projects.value, newProject];
+      
+      // Reset the input state
+      newProjectName.value = '';
+      showNewProjectInput.value = false;
+
+      // Optionally expand the new project
+      expandedProjects.value.push(newProject.proj_id);
+      
+      // Optionally select the new project
+      await selectProject(newProject.proj_id);
+    } else {
+      throw new Error(response.data.error || 'Failed to create project');
+    }
+  } catch (err) {
+    console.error('Failed to create project:', err);
+    error.value = 'Failed to create project';
+  }
 };
+
+const cancelNewProject = () => {
+  showNewProjectInput.value = false;
+  newProjectName.value = '';
+};
+
+const updateProjects = (newProjects) => {
+  if (Array.isArray(newProjects)) {
+    projects.value = newProjects;
+  }
+};
+
+// Watch for showNewProjectInput changes to focus the input
+watch(showNewProjectInput, async (newVal) => {
+  if (newVal) {
+    await nextTick();
+    newProjectInput.value?.focus();
+  }
+});
 
 // Lifecycle
 onMounted(() => {
@@ -171,7 +251,6 @@ onMounted(() => {
   padding: 1rem;
   display: inline-block;
   overflow-y: auto;
-
 }
 
 .error-message {
@@ -188,5 +267,43 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   height: 100%;
+}
+
+.new-project-section {
+  padding: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.new-project-btn {
+  width: 100%;
+  padding: 0.5rem;
+  text-align: left;
+  color: #6b7280;
+  border-radius: 0.375rem;
+  transition: all 0.2s;
+}
+
+.new-project-btn:hover {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.new-project-input-container {
+  padding: 0.25rem 0;
+}
+
+.new-project-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.new-project-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 </style>
