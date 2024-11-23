@@ -51,6 +51,7 @@
   <div class="proj-main">
     <router-view 
       :projects="projects"
+      @update:projects=""
     />
   </div>
 </template>
