@@ -1,7 +1,7 @@
 <template>
 	<div class="proj-header">
 	  <div class="proj-title-item">
-		<h3>{{ project.proj_name }}</h3>
+		<h3>{{ project?.proj_name }}</h3>
 		<div class="member-role">
 		  <p>역할</p>
 		</div>
@@ -66,7 +66,7 @@
   </template>
   
   <script setup>
-  import { computed, ref, watch, nextTick } from 'vue'
+  import { computed, ref, watch, nextTick, inject } from 'vue'
   import { useRouter } from 'vue-router'
   import axios from 'axios'
   
@@ -74,16 +74,14 @@
 	projectId: {
 	  type: [String, Number],
 	  required: true
-	},
-	projects: {
-	  type: Array,
-	  required: true
 	}
   })
   
-  const emit = defineEmits(['update:projects'])
-  
   const router = useRouter()
+  
+  // Inject shared refs
+  const projects = inject('projects')
+  const workspaces = inject('workspaces')
   
   // New refs for workspace creation
   const showNewWorkspaceInput = ref(false)
@@ -91,7 +89,7 @@
   const newWorkspaceInput = ref(null)
   
   const project = computed(() => 
-	props.projects.find(p => p.proj_id === parseInt(props.projectId))
+	projects.value.find(p => p.proj_id === parseInt(props.projectId))
   )
   
   const formatDate = (dateString) => {
@@ -107,7 +105,7 @@
 	router.push({
 	  name: 'Workspace',
 	  params: {
-		projId: props.projectId,
+		projectId: props.projectId,
 		workspaceId
 	  }
 	})
@@ -118,9 +116,9 @@
 	if (!newWorkspaceName.value.trim()) return
   
 	try {
-	  const response = await axios.post('workspaces', {
+	  const response = await axios.post('/workspaces', {
 		workspace_name: newWorkspaceName.value.trim(),
-		proj_id:props.projectId
+		proj_id: props.projectId
 	  })
   
 	  if (response.data.success) {
@@ -128,24 +126,28 @@
 		const newWorkspace = {
 		  workspace_id: response.data.data.workspace_id,
 		  workspace_name: response.data.data.workspace_name,
+		  project_id: parseInt(props.projectId),
 		  progress_status: 0,
 		  bookmark_status: 'UNBOOKMARKED',
 		  ...response.data.data
 		}
   
-		// Update projects array with new workspace
-		const updatedProjects = props.projects.map(p => {
-		  if (p.proj_id === parseInt(props.projectId)) {
-			return {
-			  ...p,
-			  workspaces: [...(p.workspaces || []), newWorkspace]
-			}
-		  }
-		  return p
-		})
+		// Update workspaces ref
+		workspaces.value = [...workspaces.value, newWorkspace]
   
-		// Emit update to parent
-		emit('update:projects', updatedProjects)
+		// Update projects ref
+		const projectIndex = projects.value.findIndex(p => p.proj_id === parseInt(props.projectId))
+		if (projectIndex !== -1) {
+		  const updatedProject = {
+			...projects.value[projectIndex],
+			workspaces: [...projects.value[projectIndex].workspaces, newWorkspace]
+		  }
+		  projects.value = [
+			...projects.value.slice(0, projectIndex),
+			updatedProject,
+			...projects.value.slice(projectIndex + 1)
+		  ]
+		}
   
 		// Reset input state
 		newWorkspaceName.value = ''
@@ -175,6 +177,9 @@
   </script>
   
   <style scoped>
+  /* 스타일은 변경 없음 */
+  </style>
+<style scoped>
   /* Existing styles remain the same */
   .proj-header {
 	border-bottom: 1px solid var(--outline-gray);
