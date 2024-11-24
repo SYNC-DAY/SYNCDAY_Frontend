@@ -10,7 +10,7 @@ const routes = [
   {
     path: '/chatlist',
     name: 'Chat',
-    component: () => import('@/views/chat/ChatList.vue') 
+    component: () => import('@/views/chat/ChatRoomList.vue') 
   },
 ];
 
@@ -25,7 +25,7 @@ const router = createRouter({
     },
     { path: '/chatlist',
       name: 'Chat',     
-      component: () => import('@/views/chat/ChatList.vue'),
+      component: () => import('@/views/chat/ChatRoomList.vue'),
        meta: {
         requiresAuth: true
        }

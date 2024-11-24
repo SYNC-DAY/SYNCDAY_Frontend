@@ -1,31 +1,29 @@
 <template>
-  <div>
 
-  </div>
+
 </template>
 
 <script setup>
 import { onUnmounted, onMounted, ref } from 'vue';
 import SockJS from 'sockjs-client';
-import { Stomp } from '@stomp/stompjs';
-import { useAuthStore } from '@/stores/auth';
+import { Client } from '@stomp/stompjs';
+// import { useAuthStore } from '@/stores/auth';
 
-const authStore = useAuthStore();
+// const authStore = useAuthStore()
 const connectionStatus = ref('웹 소켓 시작')
+const isConnected = ref(false)
+const stompClient = ref(null)
+// const subscriptions = ref({}) 토픽 구독 채팅방 연결
+
 
 const connectWebSocket = () => {
   console.log('웹소켓 연결 시도 중...')
   connectionStatus.value = '웹소켓에 연결 중...'
 
-  // const connectionStatus = ref('웹소켓에 연결 중...')
-  const socket = new SockJS('http://localhost:8080/ws');
+  const socket = new SockJS('http://localhost:5000/ws');
   console.log('SockJS 인스턴스 생성됨')
-  // const stompClient = ref(null)
-  // const stompClient = Stomp.over(socket);
-  let stompClient = Stomp.over(socket); // var로도 수정해볼 것
-  // const stompClient = Stomp.client(socket);
 
-  stompClient.value = new Stomp({
+  stompClient.value = new Client({
     webSocketFactory: () => socket,
     reconnectDelay: 5000,
     heartbeatIncoming: 4000,
@@ -33,11 +31,12 @@ const connectWebSocket = () => {
     debug: function (str) {
       console.log(str)
     },
-    onConnect: frame => {
+    onConnect: frame => { // 연결 이벤트 핸들러
+      console.log(frame)
       console.log('STOMP 연결됨(success!!!): ' + frame)
       isConnected.value = true
       connectionStatus.value = '연결됨'
-      subscribeToRoom(currentRoom.value)
+      //subscribeToRoom(currentRoom.value)
     },
     onStompError: frame => {
       console.error('STOMP 오류:', frame)
@@ -57,19 +56,26 @@ const connectWebSocket = () => {
     }
   })
   console.log('STOMP 클라이언트 활성화 중...')
+  console.log('STOMP 클라이언트 상태:', stompClient.value)
   stompClient.value.activate()
+  wsConnect()
 }
 
-// stompClient.connect(
-//   {Authorization: `Bearer ${authStore.accessToken}`}, // JWT 토큰 등 인증 정보 추가
-//    (frame) => {
-//   console.log('웹소켓 연결 완료!: ', frame);
-//   stompClient.subscribe(`/topic/room/${roomId}/message`, (message) => {
-//     console.log('새 메세지:', message.body);
-//   });
-// }, (error) => {
-//   console.log('STOMP 연결 실패: ', error);
-// });
+const wsConnect = () => {
+  console.log(stompClient.value)
+}
+
+//   stompClient.value.onConnect(
+//     {Authorization: `Bearer ${authStore.accessToken}`}, // JWT 토큰 등 인증 정보 추가
+//      (frame) => {
+//     console.log('웹소켓 연결 완료!: ', frame);
+//     stompClient.subscribe(`/topic/room/${roomId}/message`, (message) => {
+//       console.log('새 메세지:', message.body);
+//     });
+//   }, (error) => {
+//     console.log('STOMP 연결 실패: ', error);
+//   }
+// );
 
 // subscriptions.value[roomId] = stompClient.value.subscribe(`/topic/room/${roomId}/message`, message => {
 //     console.log('메시지 수신:', message)
@@ -86,17 +92,16 @@ const connectWebSocket = () => {
 
 const isVisible = ref(false);
 const emit = defineEmits();
-const chatlist = ref([]);
 
 
-const closePopup = () => {
-  emit('update:isVisible', false);
-};
+// const closePopup = () => {
+//   emit('update:isVisible', false);
+// };
 
 // 채팅방 오픈
-const openChatRoom = (roomId) => {
-  console.log(`Open chatRoom with ID: ${roomId}`);
-};
+// const openChatRoom = (roomId) => {
+//   console.log(`Open chatRoom with ID: ${roomId}`);
+// };
 
 // 백엔드에서 채팅방 목록 가져옴
 // const fetchChatList = async () => {
@@ -108,22 +113,26 @@ const openChatRoom = (roomId) => {
 //     console.error("채팅방 연결 실패: ", error);
 //   }
 // };   fetch가 아닌 send로 보내져야 함.
-
-onMounted(() => {
-  connectWebSocket();
-});
-
-// onUnmounted(() => {
-//   if (stompClient.value) {
-//     console.log('STOMP 클라이언트 비활성화 중...')
-//     Object.values(subscriptions.value).forEach(subscription => subscription.unsubscribe())
-//     stompClient.value.deactivate()
+//   onMounted(() => {
+//   console.log('onMounted 실행');
+//   if (!stompClient.value) {
+//     connectWebSocket();
+//   } else {
+//     console.log('stompClient가 이미 초기화되었습니다.');
 //   }
 // });
+onMounted(() => {
+console.log('onMounted 실행');
+connectWebSocket()
+})
 
-// socket.onclose= () => {
-//   console.log('웹소켓 연결이 종료되었습니다.');
-// };
+onUnmounted(() => {
+if (stompClient.value) {
+  console.log('STOMP 클라이언트 비활성화 중...')
+  // Object.values(subscriptions.value).forEach(subscription => subscription.unsubscribe())
+  stompClient.value.deactivate()
+}
+})
 </script>
 
 <style scoped>
@@ -169,10 +178,6 @@ onMounted(() => {
 
 .new-chat {
   color: #FF9D85;
-}
-
-.chatlist {
-  margin-top: 20px;
 }
 
 .chat-room {

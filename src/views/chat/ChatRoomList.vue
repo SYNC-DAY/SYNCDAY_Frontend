@@ -5,7 +5,10 @@
         <div class="popup-content">
           <p>채팅</p>
           <div class="newchat">
-            <button class="new-chat">새 채팅</button>
+            <button class="new-chat" @click="createNewChatRoom">새 채팅</button>
+            </div>
+            <div >
+              <input class="chat-search" type="text" placeholder="이름, 채팅방 명 검색 " @input="searchChat($event)"/>
             </div>
             <!-- <div class= "chatlist">
               <ul>
@@ -17,148 +20,70 @@
             </div> -->
           </div>
         </div>
+        <NewChatRoom v-if="isPopupVisible" @close="closeNewChatRoom"/>
     </div>
   </template>
   
   <script setup>
-  import { onUnmounted, onMounted, ref } from 'vue';
-  import SockJS from 'sockjs-client';
-  import { Client } from '@stomp/stompjs';
-  // import { useAuthStore } from '@/stores/auth';
-  
-  // const authStore = useAuthStore()
-  const connectionStatus = ref('웹 소켓 시작')
-  const isConnected = ref(false)
-  const stompClient = ref(null)
-  // const subscriptions = ref({}) 토픽 구독 채팅방 연결
+  import { ref, onMounted } from 'vue';
+  import axios from 'axios';
+  import NewChatRoom from '@/views/chat/chat_components/NewChatRoom.vue';
 
+  // 상태 관리
+const isVisible = ref(true); // 팝업창 가시성 상태
+const chatList = ref([]);   // 채팅방 목록
+const searchQuery = ref(''); // 검색어 상태
+const isPopupVisible = ref(false);
 
-  const connectWebSocket = () => {
-    console.log('웹소켓 연결 시도 중...')
-    connectionStatus.value = '웹소켓에 연결 중...'
-  
-    const socket = new SockJS('http://localhost:8080/ws');
-    console.log('SockJS 인스턴스 생성됨')
-  
-    stompClient.value = new Client({
-      webSocketFactory: () => socket,
-      reconnectDelay: 5000,
-      heartbeatIncoming: 4000,
-      heartbeatOutgoing: 4000,
-      debug: function (str) {
-        console.log(str)
-      },
-      onConnect: frame => { // 연결 이벤트 핸들러
-        console.log(frame)
-        console.log('STOMP 연결됨(success!!!): ' + frame)
-        isConnected.value = true
-        connectionStatus.value = '연결됨'
-        //subscribeToRoom(currentRoom.value)
-      },
-      onStompError: frame => {
-        console.error('STOMP 오류:', frame)
-        handleConnectionFailure('STOMP 오류: ' + frame.headers['message'])
-      },
-      onDisconnect: () => {
-        console.log('STOMP 연결 끊김')
-        isConnected.value = false
-        connectionStatus.value = '연결 끊김'
-      },
-      onWebSocketError: (event) => {
-        console.error('WebSocket 오류 발생:', event)
-        handleConnectionFailure('WebSocket 오류: ' + JSON.stringify(event))
-      },
-      onWebSocketClose: (event) => {
-        console.log('WebSocket 연결 종료됨:', event)
-      }
-    })
-    console.log('STOMP 클라이언트 활성화 중...')
-    console.log('STOMP 클라이언트 상태:', stompClient.value)
-    stompClient.value.activate()
-    wsConnect()
+// 팝업 닫기
+const closePopup = () => {
+  isVisible.value = false;
+};
+
+// 새채팅 모달
+const createNewChatRoom = () => {
+  console.log('새 채팅방 생성 모달!');
+  isPopupVisible.value = true
+}
+const closeNewChatRoom = () => {
+  console.log('새채팅 모달 종료')
+  isPopupVisible.value = false;
+}
+
+// 채팅방 데이터 가져오기
+const fetchChatRooms = async () => {
+  try {
+    const response = await axios.get('http://localhost:5000/api/chat/room');
+    chatList.value = response.data;
+  } catch (error) {
+    console.error('채팅방 목록을 가져오는 중 오류 발생:', error);
   }
-  
-  const wsConnect = () => {
-    console.log(stompClient.value)
-  }
+};
 
-//   stompClient.value.onConnect(
-//     {Authorization: `Bearer ${authStore.accessToken}`}, // JWT 토큰 등 인증 정보 추가
-//      (frame) => {
-//     console.log('웹소켓 연결 완료!: ', frame);
-//     stompClient.subscribe(`/topic/room/${roomId}/message`, (message) => {
-//       console.log('새 메세지:', message.body);
-//     });
-//   }, (error) => {
-//     console.log('STOMP 연결 실패: ', error);
-//   }
-// );
-  
-  // subscriptions.value[roomId] = stompClient.value.subscribe(`/topic/room/${roomId}/message`, message => {
-  //     console.log('메시지 수신:', message)
-  //     if (!messagesPerRoom.value[roomId]) {
-  //       messagesPerRoom.value[roomId] = []
-  //     }
-  //     messagesPerRoom.value[roomId].push(JSON.parse(message.body))
-  //   })
-  //   stompClient.send(`/app/room/${roomId}/message`, {}, JSON.stringify({
-  //         sender: 'User',
-  //         content: 'Hello!',
-  //     }));
-  
-  
-  const isVisible = ref(false);
-  const emit = defineEmits();
-  
-  
-  // const closePopup = () => {
-  //   emit('update:isVisible', false);
-  // };
-  
-  // 채팅방 오픈
-  // const openChatRoom = (roomId) => {
-  //   console.log(`Open chatRoom with ID: ${roomId}`);
-  // };
-  
-  // 백엔드에서 채팅방 목록 가져옴
-  // const fetchChatList = async () => {
-  //   try {
-  //     const response = await axios.get('/chatroom');
-  //     // const data = await response.json();
-  //     chatlist.value = response.data.data;  // 채팅방 목록 업데이트
-  //   } catch (error){
-  //     console.error("채팅방 연결 실패: ", error);
-  //   }
-  // };   fetch가 아닌 send로 보내져야 함.
-//   onMounted(() => {
-//   console.log('onMounted 실행');
-//   if (!stompClient.value) {
-//     connectWebSocket();
-//   } else {
-//     console.log('stompClient가 이미 초기화되었습니다.');
-//   }
-// });
-  onMounted(() => {
-  console.log('onMounted 실행');
-  connectWebSocket()
-})
+// 채팅방 클릭 시 실행될 로직
+const openChatRoom = (roomId) => {
+  console.log(`${roomId}번 채팅방 열기`); // 실제 동작을 API와 연동 필요
+};
 
-onUnmounted(() => {
-  if (stompClient.value) {
-    console.log('STOMP 클라이언트 비활성화 중...')
-    // Object.values(subscriptions.value).forEach(subscription => subscription.unsubscribe())
-    stompClient.value.deactivate()
-  }
-})
+// 검색 필터링
+const searchChat = (event) => {
+  searchQuery.value = event.target.value.toLowerCase();
+};
+
+// 컴포넌트가 로드될 때 데이터 가져오기
+onMounted(() => {
+  fetchChatRooms();
+});
+
   </script>
   
   <style scoped>
   .popup {
     position: absolute;
     top: 50px; /* 아이콘 아래로 50px */
-    right: 0%;
+    left: 85%;
     transform: translateX(-50%);
-    width: 30%;
+    width: 40rem;
     height: 70%;
     background-color: #fff;
     border: 1px solid #ddd;
@@ -174,28 +99,40 @@ onUnmounted(() => {
   }
   
   .popup-content p {
-    font-size: 4rem;
+    font-size: 2rem;
+    font-weight: bold;
   }
   
+  .closePopup {
+    size: 2rem;
+  }
   .close-button {
     position: absolute;
     top: 10px;
     right: 10px;
     background: none;
     border: none;
-    font-size: 18px;
-    font-weight: bold;
+    font-size: 1rem;
     cursor: pointer;
-    color: #333;
+    color: #c7c5c5;
   }
   
   .close-button:hover {
-    color: #000000;
+    color: #686666;
   }
   
   .new-chat {
-    color: #FF9D85;
-  }
+  background-color: #ff9d85;
+  border-radius: 3px;
+  font-size: 1.5rem;
+  color: rgb(43, 43, 43);
+  border: none;
+  cursor: pointer;
+}
+
+.new-chat:hover {
+  background-color: #fc8d71;
+}
 
   .chat-room {
     border-bottom: 1px solid #ddd;
@@ -215,7 +152,14 @@ onUnmounted(() => {
   
   .chat-room p {
     margin: 5px 0 0;
-    font-size: 14px;
+    font-size: 5%;
     color: #666;
+  }
+  
+  .chat-search {
+    border-radius: 7px;
+    background-color: #d6d5d5 ;
+    font-size: 1rem;
+    width: 100%;
   }
   </style>
