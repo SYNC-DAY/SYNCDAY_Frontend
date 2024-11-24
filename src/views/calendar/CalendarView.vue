@@ -1,8 +1,6 @@
 <template>
     <div style="height: 100%; width: 100%">
         <FullCalendar :options="calendarOptions" />
-    </div>
-    <div>
         <CalendarViewModal
             v-if="showEventModal"
             :schedule="selectedEvent"
