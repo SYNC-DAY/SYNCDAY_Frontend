@@ -1,4 +1,4 @@
-// stores/useGithubAuthStore.js
+// stores/github/useGithubAuthStore.js
 import { defineStore } from 'pinia';
 import axios from 'axios';
 
@@ -28,6 +28,9 @@ export const useGithubAuthStore = defineStore('githubAuth', {
         localStorage.setItem('github_token', this.accessToken);
       }
       
+      localStorage.setItem('github_return_path', window.location.pathname);
+      console.log(window.location.pathname)
+      
       window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
     },
 
@@ -37,7 +40,7 @@ export const useGithubAuthStore = defineStore('githubAuth', {
       
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_SYNCDAY_BACKEND_URI}/api/user/oauth2/github/access_token?code=${code}`
+          `user/oauth2/github/access_token?code=${code}`
         );
         
         if (response.data.success) {

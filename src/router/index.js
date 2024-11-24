@@ -26,6 +26,21 @@ export async function setupRouter() {
     // console.log('라우터 가드 시작 - 이동할 경로:', to.path)
     // console.log('현재 인증 상태:', authStore.isAuthenticated)
 
+    console.log('🚦 Router Navigation Start:', {
+      to: {
+        path: to.path,
+        name: to.name,
+        params: to.params,
+        query: to.query
+      },
+      from: {
+        path: from.path,
+        name: from.name,
+        params: from.params,
+        query: from.query
+      }
+    });
+
     // 로그인 페이지인 경우
     if (to.path === '/login') {
       if (authStore.isAuthenticated) {
@@ -66,6 +81,24 @@ export async function setupRouter() {
     // 그 외의 경우
     next()
   })
+
+  router.afterEach((to, from) => {
+    console.log('✅ Router Navigation Complete:', {
+      currentRoute: {
+        path: to.path,
+        name: to.name,
+        params: to.params,
+        query: to.query
+      }
+    });
+  });
+  
+  router.onError((error) => {
+    console.error('❌ Router Navigation Error:', {
+      error: error.message,
+      stack: error.stack
+    });
+  });
 
   return router
 }
