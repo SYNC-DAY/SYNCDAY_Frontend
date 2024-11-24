@@ -1,5 +1,4 @@
 <template>
-	<AppHeader :userName="userName" :profileImageUrl="profileImageUrl" />
 
 	<nav class="nav-top">
 
@@ -37,9 +36,9 @@
 				<RouterLink to="/meetingroom">
 					<img src="@/assets/images/meetingroom.svg" alt="회의실 예약" class="icon-img" />
 				</RouterLink>
-				<RouterLink to="/chatlist">
-					<img src="@/assets/images/dm.svg" alt="채팅" class="icon-img" @click="toggleChatPop"/>
-				</RouterLink>
+				<button class="icon-button" @click="toggleChatPop">
+					<img src="@/assets/images/dm.svg" alt="채팅" class="icon-img" />
+				</button>
 				<RouterLink to="alarm">
 					<img src="@/assets/images/alarm.svg" alt="알림" class="icon-img" />
 				</RouterLink>
@@ -75,17 +74,6 @@ import { ref, onMounted, onUnmounted } from 'vue';
 
 import ChatPop from '@/views/chat/ChatRoomList.vue';
 
-
-const props = defineProps({
-    userName: {
-      type: String,
-      required: true
-    },
-    profileImageUrl: {
-      type: String,
-      required: true
-    }
-  });
 
 const isPopupVisible = ref(false);
 const router = useRouter();
@@ -131,6 +119,9 @@ const handleLogout = async () => {
     console.error('Logout failed:', error);
   }
 };
+onMounted(() => {
+	isPopupVisible.value = false;
+});
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
@@ -212,6 +203,16 @@ input[type=search]{
 	height: 3rem;
 }
 
+.icon-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.icon-button img {
+  height: 3rem;
+}
 .profile{
 	flex: 1;
 	height: 100%;

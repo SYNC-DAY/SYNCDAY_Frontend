@@ -7,11 +7,7 @@ import mainRoutes from './main'
 import projectRoutes from './project'
 
 const routes = [
-  {
-    path: '/chatlist',
-    name: 'Chat',
-    component: () => import('@/views/chat/ChatRoomList.vue') 
-  },
+
 ];
 
 const router = createRouter({
@@ -23,13 +19,7 @@ const router = createRouter({
       path:'/',
       redirect:''
     },
-    { path: '/chatlist',
-      name: 'Chat',     
-      component: () => import('@/views/chat/ChatRoomList.vue'),
-       meta: {
-        requiresAuth: true
-       }
-    }
+
   ]
 
 })

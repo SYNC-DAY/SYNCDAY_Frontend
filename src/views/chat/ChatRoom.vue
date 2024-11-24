@@ -1,18 +1,53 @@
 <template>
-
+  <div v-if="isVisible" class="popup">
+    <button class="close-button" @click="closeRoom">X</button>
+    <div class="popup-content">
+      <h2>{{ currentRoom?.chatRoomName }}</h2>
+      <div class="chat-messages">
+        <div v-for="(message, index) in messages" :key="index" class="message">
+          {{ message.content }}
+        </div>
+      </div>
+      <div class="chat-input">
+        <input 
+          v-model="newMessage" 
+          type="text" 
+          placeholder="메시지를 입력하세요"
+          @keyup.enter="sendMessage"
+        />
+        <button @click="sendMessage">전송</button>
+      </div>
+    </div>
+  </div>
 
 </template>
 
 <script setup>
-import { onUnmounted, onMounted, ref } from 'vue';
+import { onUnmounted, onMounted, ref, defineProps, defineEmits, watch } from 'vue';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 // import { useAuthStore } from '@/stores/auth';
+
+const props = defineProps({
+  roomId: {
+    type: String,
+    required: true
+  },
+  roomInfo: {
+    type: Object,
+    required: true
+  }
+});
 
 // const authStore = useAuthStore()
 const connectionStatus = ref('웹 소켓 시작')
 const isConnected = ref(false)
 const stompClient = ref(null)
+const emit = defineEmits(['close']);
+const isVisible = ref(true);
+const messages = ref([]);
+const newMessage = ref('');
+const currentRoom = ref(props.roomInfo);
 // const subscriptions = ref({}) 토픽 구독 채팅방 연결
 
 
@@ -36,7 +71,8 @@ const connectWebSocket = () => {
       console.log('STOMP 연결됨(success!!!): ' + frame)
       isConnected.value = true
       connectionStatus.value = '연결됨'
-      //subscribeToRoom(currentRoom.value)
+      // subscribeToRoom(currentRoom.value)
+      subscribeToRoom()
     },
     onStompError: frame => {
       console.error('STOMP 오류:', frame)
@@ -58,12 +94,12 @@ const connectWebSocket = () => {
   console.log('STOMP 클라이언트 활성화 중...')
   console.log('STOMP 클라이언트 상태:', stompClient.value)
   stompClient.value.activate()
-  wsConnect()
+  // wsConnect()
 }
 
-const wsConnect = () => {
-  console.log(stompClient.value)
-}
+// const wsConnect = () => {
+//   console.log(stompClient.value)
+// }
 
 //   stompClient.value.onConnect(
 //     {Authorization: `Bearer ${authStore.accessToken}`}, // JWT 토큰 등 인증 정보 추가
@@ -89,10 +125,14 @@ const wsConnect = () => {
 //         content: 'Hello!',
 //     }));
 
-
-const isVisible = ref(false);
-const emit = defineEmits();
-
+const subscribeToRoom = () => {
+  if(stompClient.value&&isConnected.value) {
+    stompClient.value.subscribe(`/topic/room/${props.roomId}/message`, message => {
+      console.log('메시지 수신:', message);
+      messages.value.push(JSON.parse(message.body));
+    });
+  }
+};
 
 // const closePopup = () => {
 //   emit('update:isVisible', false);

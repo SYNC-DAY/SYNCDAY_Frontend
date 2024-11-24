@@ -17,7 +17,7 @@
   left: 85%;
   transform: translate(-50%, -50%);
   background-color: white;
-  padding: 20px;
+  padding: 10px;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   z-index: 2000;
@@ -36,11 +36,15 @@
 }
 .close-button {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    color: #c7c5c5;
+}
+.close-button:hover {
+    color: #686666;
 }
 </style>

@@ -10,14 +10,14 @@
             <div >
               <input class="chat-search" type="text" placeholder="이름, 채팅방 명 검색 " @input="searchChat($event)"/>
             </div>
-            <!-- <div class= "chatlist">
+            <div class= "chatlist">
               <ul>
-                <li v-for="chat in chatlist" :key="chat.id" @click="openChatRoom(chat.id)" class="chat-room">
-                  <h4>{{ chat.name }}</h4>
-                  <p>{{ chat.lastMessage }}</p>
+                <li v-for="chat in filteredChatList" :key="chat.roomId" @click="openChatRoom(chat.roomId)" class="chat-room">
+                  <h4>{{ chat.chatRoomName }}</h4>
+                  <p>{{ chat.lastMessage || '메시지가 없습니다' }}</p>
                 </li>
               </ul>
-            </div> -->
+            </div>
           </div>
         </div>
         <NewChatRoom v-if="isPopupVisible" @close="closeNewChatRoom"/>
@@ -25,14 +25,14 @@
   </template>
   
   <script setup>
-  import { ref, onMounted } from 'vue';
+  import { ref, onMounted, computed } from 'vue';
   import axios from 'axios';
   import NewChatRoom from '@/views/chat/chat_components/NewChatRoom.vue';
 
   // 상태 관리
-const isVisible = ref(true); // 팝업창 가시성 상태
-const chatList = ref([]);   // 채팅방 목록
-const searchQuery = ref(''); // 검색어 상태
+const isVisible = ref(true); 
+const chatList = ref([]);   
+const searchQuery = ref(''); 
 const isPopupVisible = ref(false);
 
 // 팝업 닫기
@@ -53,12 +53,22 @@ const closeNewChatRoom = () => {
 // 채팅방 데이터 가져오기
 const fetchChatRooms = async () => {
   try {
-    const response = await axios.get('http://localhost:5000/api/chat/room');
+    const response = await axios.get('/chat/room');
+    console.log('API 요청 URL: ', axios.defaults.baseURL + '/chat/room');
+    console.log('응답데이터: ', response.data)
     chatList.value = response.data;
   } catch (error) {
     console.error('채팅방 목록을 가져오는 중 오류 발생:', error);
   }
 };
+
+// 채팅방 필터링
+const filteredChatList = computed(() => {
+  return chatList.value.filter((chat) =>
+    chat.chatRoomName.toLowerCase().includes(searchQuery.value.toLowerCase())
+  );
+});
+
 
 // 채팅방 클릭 시 실행될 로직
 const openChatRoom = (roomId) => {
@@ -94,7 +104,7 @@ onMounted(() => {
   
   /* 팝업 콘텐츠 */
   .popup-content {
-    padding: 20px;
+    padding: 10px;
     overflow-y: auto; /* 내용이 길어지면 스크롤 */
   }
   
@@ -128,6 +138,9 @@ onMounted(() => {
   color: rgb(43, 43, 43);
   border: none;
   cursor: pointer;
+  margin-top: 0.8rem;
+  margin-bottom: 0.5rem;
+  margin-left: 29rem;
 }
 
 .new-chat:hover {
@@ -162,4 +175,18 @@ onMounted(() => {
     font-size: 1rem;
     width: 100%;
   }
+  .chatlist {
+  margin-top: 1rem;
+}
+  .chatlist h4 {
+  /* margin-top: 0.5rem; */
+  font-size: 1.5rem;
+}
+
+.chatlist ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.5rem;
+}
   </style>
