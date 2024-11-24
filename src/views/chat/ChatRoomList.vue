@@ -12,7 +12,7 @@
             </div>
             <div class= "chatlist">
               <ul>
-                <li v-for="chat in filteredChatList" :key="chat.roomId" @click="openChatRoom(chat.roomId)" class="chat-room">
+                <li v-for="chat in filteredChatList" :key="chat.roomId" @click="openChatRoom(chat)" class="chat-room">
                   <h4>{{ chat.chatRoomName }}</h4>
                   <p>{{ chat.lastMessage || '메시지가 없습니다' }}</p>
                 </li>
@@ -21,6 +21,9 @@
           </div>
         </div>
         <NewChatRoom v-if="isPopupVisible" @close="closeNewChatRoom"/>
+        <ChatRoom  v-if="selectedRoom" :roomId="selectedRoom.roomId"
+         :roomInfo="selectedRoom"  @close="closeChatRoom"
+    />
     </div>
   </template>
   
@@ -28,14 +31,15 @@
   import { ref, onMounted, computed } from 'vue';
   import axios from 'axios';
   import NewChatRoom from '@/views/chat/chat_components/NewChatRoom.vue';
+  import ChatRoom from './ChatRoom.vue';
 
-  // 상태 관리
 const isVisible = ref(true); 
 const chatList = ref([]);   
 const searchQuery = ref(''); 
 const isPopupVisible = ref(false);
+const selectedRoom = ref(null);
 
-// 팝업 닫기
+// 채팅방 목록 닫기
 const closePopup = () => {
   isVisible.value = false;
 };
@@ -49,7 +53,16 @@ const closeNewChatRoom = () => {
   console.log('새채팅 모달 종료')
   isPopupVisible.value = false;
 }
+// 채팅방 열기
+const openChatRoom = (chat) => {
+  console.log(`${chat.roomId}번 채팅방 열기`);
+  selectedRoom.value = chat;
+};
 
+// 채팅방 닫기
+const closeChatRoom = () => {
+  selectedRoom.value = null;
+};
 // 채팅방 데이터 가져오기
 const fetchChatRooms = async () => {
   try {
@@ -69,11 +82,6 @@ const filteredChatList = computed(() => {
   );
 });
 
-
-// 채팅방 클릭 시 실행될 로직
-const openChatRoom = (roomId) => {
-  console.log(`${roomId}번 채팅방 열기`); // 실제 동작을 API와 연동 필요
-};
 
 // 검색 필터링
 const searchChat = (event) => {
@@ -179,7 +187,6 @@ onMounted(() => {
   margin-top: 1rem;
 }
   .chatlist h4 {
-  /* margin-top: 0.5rem; */
   font-size: 1.5rem;
 }
 

@@ -134,33 +134,26 @@ const subscribeToRoom = () => {
   }
 };
 
-// const closePopup = () => {
-//   emit('update:isVisible', false);
-// };
+const sendMessage = () => {
+  if (newMessage.value.trim() && stompClient.value && isConnected.value) {
+    stompClient.value.publish({
+      destination: `/app/room/${props.roomId}/message`,
+      body: JSON.stringify({
+        roomId: props.roomId,
+        content: newMessage.value,
+        sender: 'User' // 실제 사용자 정보로 변경 필요
+      })
+    });
+    newMessage.value = '';
+  }
+};
 
-// 채팅방 오픈
-// const openChatRoom = (roomId) => {
-//   console.log(`Open chatRoom with ID: ${roomId}`);
-// };
+const closeRoom = () => {
+  isVisible.value = false;
+  emit('close');
+};
 
-// 백엔드에서 채팅방 목록 가져옴
-// const fetchChatList = async () => {
-//   try {
-//     const response = await axios.get('/chatroom');
-//     // const data = await response.json();
-//     chatlist.value = response.data.data;  // 채팅방 목록 업데이트
-//   } catch (error){
-//     console.error("채팅방 연결 실패: ", error);
-//   }
-// };   fetch가 아닌 send로 보내져야 함.
-//   onMounted(() => {
-//   console.log('onMounted 실행');
-//   if (!stompClient.value) {
-//     connectWebSocket();
-//   } else {
-//     console.log('stompClient가 이미 초기화되었습니다.');
-//   }
-// });
+
 onMounted(() => {
 console.log('onMounted 실행');
 connectWebSocket()
@@ -172,7 +165,7 @@ if (stompClient.value) {
   // Object.values(subscriptions.value).forEach(subscription => subscription.unsubscribe())
   stompClient.value.deactivate()
 }
-})
+});
 </script>
 
 <style scoped>
@@ -191,54 +184,89 @@ if (stompClient.value) {
 }
 
 /* 팝업 콘텐츠 */
-.popup-content {
-  padding: 20px;
-  overflow-y: auto; /* 내용이 길어지면 스크롤 */
+.popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  height: 600px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
 }
 
-.popup-content p {
-  font-size: 4rem;
+.popup-content {
+  padding: 20px;
+  display: flex; 
+  overflow-y: auto; /* 내용이 길어지면 스크롤 */
+  flex-direction: column;
+  height: 100%;
+}
+
+h2 {
+  margin: 0 0 20px 0;
+  font-size: 1.5rem;
+}
+
+.chat-messages {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 10px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.message {
+  background-color: white;
+  padding: 8px;
+  margin: 8px 0;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.chat-input {
+  display: flex;
+  gap: 10px;
+}
+
+.chat-input input {
+  flex-grow: 1;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.chat-input button {
+  padding: 8px 16px;
+  background-color: #ff9d85;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.chat-input button:hover {
+  background-color: #fc8d71;
 }
 
 .close-button {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
-  border: none;
-  font-size: 18px;
-  font-weight: bold;
-  cursor: pointer;
-  color: #333;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    color: #c7c5c5;
 }
 
 .close-button:hover {
-  color: #000000;
-}
-
-.new-chat {
-  color: #FF9D85;
-}
-
-.chat-room {
-  border-bottom: 1px solid #ddd;
-  padding: 10px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.chat-room:hover {
-  background-color: #f5f5f5;
-}
-
-.chat-room h4 {
-  margin: 0;
-  font-size: 16px;
-}
-
-.chat-room p {
-  margin: 5px 0 0;
-  font-size: 14px;
-  color: #666;
+  color: #333;
 }
 </style>
