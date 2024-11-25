@@ -37,11 +37,14 @@
   
 		  <!-- Repository Selection -->
 		  <div v-else>
-			<!-- User Info -->
+			<!-- Enhanced User Info -->
 			<div class="user-info">
 			  <img :src="authStore.avatarUrl" :alt="authStore.username" class="avatar">
-			  <div>
-				<p>Connected as {{ authStore.username }}</p>
+			  <div class="user-details">
+				<p class="user-name">{{ authStore.fullName }}</p>
+				<p class="user-username">@{{ authStore.username }}</p>
+				<p v-if="authStore.email" class="user-email">{{ authStore.email }}</p>
+				<p v-if="authStore.bio" class="user-bio">{{ authStore.bio }}</p>
 				<button class="text-button" @click="handleLogout">Switch Account</button>
 			  </div>
 			</div>
@@ -68,9 +71,9 @@
 				<div class="repo-name">{{ repo.name }}</div>
 				<div class="repo-description">{{ repo.description || 'No description' }}</div>
 				<div class="repo-meta">
-				  <span>{{ repo.private ? 'Private' : 'Public' }}</span>
-				  <span>•</span>
-				  <span>Updated {{ formatDate(repo.updated_at) }}</span>
+				  <span class="repo-visibility">{{ repo.private ? 'Private' : 'Public' }}</span>
+				  <span class="repo-separator">•</span>
+				  <span class="repo-updated">Updated {{ formatDate(repo.updated_at) }}</span>
 				</div>
 			  </div>
 			</div>
@@ -90,8 +93,8 @@
 		</div>
 	  </div>
 	</div>
-</template>
-  
+  </template>
+
 <script setup>
   import { ref, computed, onMounted } from 'vue'
   import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore'

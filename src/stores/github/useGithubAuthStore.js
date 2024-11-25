@@ -36,8 +36,7 @@ export const useGithubAuthStore = defineStore('githubAuth', {
       this.error = null;
       
       try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_SYNCDAY_BACKEND_URI}/api/user/oauth2/github/access_token?code=${code}`
+        const response = await axios.get(`user/oauth2/github/access_token?code=${code}`
         );
         
         if (response.data.success) {
@@ -79,8 +78,11 @@ export const useGithubAuthStore = defineStore('githubAuth', {
           }
         });
 
-        this.userInfo = response.data;
-        return this.userInfo;    
+        const userData = await response.json();
+        console.log(userData)
+        this.userInfo = userData;
+        localStorage.setItem('github_user_info', JSON.stringify(userData));
+        return userData;
 
       } catch (error) {
         console.error('Error fetching user info:', error);
