@@ -1,7 +1,6 @@
 // stores/useGithubRepoStore.js
 import { defineStore } from 'pinia';
 import { useGithubAuthStore } from './useGithubAuthStore';
-import axios from 'axios';
 
 export const useGithubRepoStore = defineStore('githubRepo', {
   state: () => ({
@@ -26,19 +25,24 @@ export const useGithubRepoStore = defineStore('githubRepo', {
       this.isLoading = true;
       
       try {
-        const response = await axios.get('https://api.github.com/user/repos', {
+        const response = await fetch('https://api.github.com/user/repos', {
           headers: {
             'Authorization': `Bearer ${authStore.accessToken}`,
             'Accept': 'application/vnd.github.v3+json'
           }
         });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to fetch repositories');
+        }
         
-        this.repositories = response.data;
+        this.repositories = await response.json();
         this.saveToLocalStorage();
         return this.repositories;
       } catch (error) {
         console.error('Error fetching repositories:', error);
-        this.error = error.response?.data?.message || error.message;
+        this.error = error.message || 'An error occurred while fetching repositories';
         throw error;
       } finally {
         this.isLoading = false;

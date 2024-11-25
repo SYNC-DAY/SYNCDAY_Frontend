@@ -14,7 +14,17 @@ export const useGithubAuthStore = defineStore('githubAuth', {
     isAuthenticated: (state) => !!state.accessToken,
     username: (state) => state.userInfo?.login,
     avatarUrl: (state) => state.userInfo?.avatar_url,
-    hasError: (state) => !!state.error
+    hasError: (state) => !!state.error,
+    // getter to return accessToken
+    getAccessToken: (state) => {
+      if (!state.accessToken) {
+        const storedToken = localStorage.getItem('github_token');
+        if (storedToken) {
+          state.accessToken = storedToken;
+        }
+      }
+      return state.accessToken;
+    }
   },
 
   actions: {
