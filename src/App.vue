@@ -83,12 +83,12 @@ const handleOAuthCallback = async () => {
     // Get return path from state or default to /project
     let returnPath = '/project';
     if (state) {
-      try {
-        const stateData = JSON.parse(decodeURIComponent(state));
-        returnPath = stateData.returnPath || '/project';
-      } catch (e) {
-        console.error('Failed to parse state:', e);
-      }
+      returnPath = localStorage.getItem('github_return_path') || '/project';
+
+    }
+    else {
+      returnPath = '/project';
+
     }
 
     router.push(returnPath);

@@ -28,8 +28,8 @@ export const useGithubAuthStore = defineStore('githubAuth', {
         localStorage.setItem('github_token', this.accessToken);
       }
       
-      localStorage.setItem('github_return_path', window.location.pathname);
-      console.log(window.location.pathname)
+      const currentPath = window.location.pathname;
+      localStorage.setItem('github_return_path', currentPath);
       
       window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
     },

@@ -160,11 +160,15 @@ const selectRepository = (repo) => {
 	selectedRepo.value = repo
   }
   
+// Fixed code
 const handleClose = () => {
-	selectedRepo.value = null
-	searchQuery.value = ''
-	emit('close')
-  }
+  // Reset all state
+  selectedRepo.value = null;
+  searchQuery.value = '';
+  isConnecting.value = false;
+  authStore.clearError();
+  emit('close');
+}
   
 const formatDate = (dateString) => {
 	const date = new Date(dateString)
