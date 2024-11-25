@@ -10,7 +10,7 @@
     transition: left var(--layout-section-transition-duration);
     display: flex;
     align-items: center;
-
+    justify-content: space-between;
     .layout-topbar-logo-container {
         width: 20rem;
         display: flex;
@@ -33,6 +33,13 @@
         &:focus-visible {
             @include focused();
         }
+    }
+
+    .layout-topbar-tabs {
+        display: inline-flex;
+        justify-content: space-around;
+        gap: 3rem;
+        align-items: center;
     }
 
     .layout-topbar-action {
@@ -79,7 +86,7 @@
     }
 
     .layout-topbar-actions {
-        margin-left: auto;
+        // margin-left: auto;
         display: flex;
         gap: 1rem;
     }

@@ -1,20 +1,3 @@
-<script setup>
-import { useLayout } from '@/layout/composables/layout';
-import { computed } from 'vue';
-import { RouterLink, useRoute, useRouter } from 'vue-router';
-import AppConfigurator from './AppConfigurator.vue';
-
-const router = useRouter();
-const route = useRoute();
-
-const currentRoute = computed(() => route.path);
-const { onMenuToggle, toggleDarkMode, isDarkTheme } = useLayout();
-
-const isRouteActive = (routeName) => {
-    return route.path.includes(`/${routeName}`);
-};
-</script>
-
 <template>
     <div class="layout-topbar">
         <!-- Nav - Left -->
@@ -27,7 +10,6 @@ const isRouteActive = (routeName) => {
             <!-- Logo -->
             <RouterLink to="/" class="layout-topbar-logo">
                 <span>SYNCDAY</span>
-                <div class="underbar"></div>
             </RouterLink>
         </div>
 
@@ -44,6 +26,11 @@ const isRouteActive = (routeName) => {
             <RouterLink to="/project" class="tab-link" :class="{ active: isRouteActive('project') }">
                 <span>프로젝트</span>
             </RouterLink>
+        </div>
+
+        <!-- search -->
+        <div>
+            <InputText placeholder="Search" type="text" :model="searchInput" />
         </div>
 
         <div class="layout-topbar-actions">
@@ -89,3 +76,24 @@ const isRouteActive = (routeName) => {
         </div>
     </div>
 </template>
+
+<script setup>
+import { useLayout } from '@/layout/composables/layout';
+import InputText from 'primevue/inputtext';
+import { computed, ref } from 'vue';
+import { RouterLink, useRoute, useRouter } from 'vue-router';
+import AppConfigurator from './AppConfigurator.vue';
+
+const searchInput = ref('');
+
+const router = useRouter();
+const route = useRoute();
+
+const currentRoute = computed(() => route.path);
+const { onMenuToggle, toggleDarkMode, isDarkTheme } = useLayout();
+
+const isRouteActive = (routeName) => {
+    return route.path.includes(`/${routeName}`);
+};
+</script>
+<style scoped></style>
