@@ -1,4 +1,4 @@
-// stores/github/useGithubAuthStore.js
+// stores/useGithubAuthStore.js
 import { defineStore } from 'pinia';
 import axios from 'axios';
 
@@ -28,9 +28,6 @@ export const useGithubAuthStore = defineStore('githubAuth', {
         localStorage.setItem('github_token', this.accessToken);
       }
       
-      const currentPath = window.location.pathname;
-      localStorage.setItem('github_return_path', currentPath);
-      
       window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
     },
 
@@ -40,7 +37,7 @@ export const useGithubAuthStore = defineStore('githubAuth', {
       
       try {
         const response = await axios.get(
-          `user/oauth2/github/access_token?code=${code}`
+          `${import.meta.env.VITE_SYNCDAY_BACKEND_URI}/api/user/oauth2/github/access_token?code=${code}`
         );
         
         if (response.data.success) {
@@ -75,7 +72,7 @@ export const useGithubAuthStore = defineStore('githubAuth', {
       this.isLoading = true;
       
       try {
-        const response = await axios.get('https://api.github.com/user', {
+        const response = await fetch('https://api.github.com/user', {
           headers: {
             'Authorization': `Bearer ${this.accessToken}`,
             'Accept': 'application/vnd.github.v3+json'
