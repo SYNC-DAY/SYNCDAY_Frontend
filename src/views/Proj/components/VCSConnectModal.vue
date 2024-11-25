@@ -134,10 +134,13 @@ const emit = defineEmits(['close', 'update:project'])
   const authStore = useGithubAuthStore()
   const orgStore = useGithubOrgStore();
   const repoStore = useGithubRepoStore();
+  
   // State
-  const searchQuery = ref('')
-  const selectedRepo = ref(null)
-  const isConnecting = ref(false)
+// State
+const searchQuery = ref('');
+const selectedOrg = ref(null);
+const selectedRepo = ref(null);
+const isConnecting = ref(false);
   
 // Computed
 const filteredRepositories = computed(() => {
