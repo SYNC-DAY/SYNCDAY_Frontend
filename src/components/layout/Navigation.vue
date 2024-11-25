@@ -63,7 +63,7 @@
 			</div>
 
 </div>
-<ChatPop :isVisible="isPopupVisible" @update:isVisible="isPopupVisible = $event" />
+<ChatPop :key="isPopupVisible" :isVisible="isPopupVisible" @update:isVisible="isPopupVisible = $event" />
 	</nav>
 </template>
 

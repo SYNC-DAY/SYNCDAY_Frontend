@@ -29,6 +29,7 @@
   
   <script setup>
   import { ref, onMounted, computed } from 'vue';
+  import { useAuthStore } from '@/stores/auth';
   import axios from 'axios';
   import NewChatRoom from '@/views/chat/chat_components/NewChatRoom.vue';
   import ChatRoom from './ChatRoom.vue';
@@ -38,7 +39,7 @@ const chatList = ref([]);
 const searchQuery = ref(''); 
 const isPopupVisible = ref(false);
 const selectedRoom = ref(null);
-
+const authStore = useAuthStore();
 // 채팅방 목록 닫기
 const closePopup = () => {
   isVisible.value = false;
@@ -65,8 +66,10 @@ const closeChatRoom = () => {
 };
 // 채팅방 데이터 가져오기
 const fetchChatRooms = async () => {
+  
   try {
-    const response = await axios.get('/chat/room');
+    console.log('authStore.user.userId:', authStore.user.userId); 
+    const response = await axios.get('/chat/room',{params: { userId: authStore.user.userId }});
     console.log('API 요청 URL: ', axios.defaults.baseURL + '/chat/room');
     console.log('응답데이터: ', response.data)
     chatList.value = response.data;
@@ -90,6 +93,7 @@ const searchChat = (event) => {
 
 // 컴포넌트가 로드될 때 데이터 가져오기
 onMounted(() => {
+  console.log("sfs", authStore.user.userId)
   fetchChatRooms();
 });
 
@@ -102,7 +106,7 @@ onMounted(() => {
     left: 85%;
     transform: translateX(-50%);
     width: 40rem;
-    height: 70%;
+    height: 60%;
     background-color: #fff;
     border: 1px solid #ddd;
     border-radius: 8px;

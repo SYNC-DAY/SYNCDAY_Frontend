@@ -1,6 +1,7 @@
 <template>
   <div v-if="isVisible" class="popup">
     <button class="close-button" @click="closeRoom">X</button>
+    <button class="leave-chat" @click="leaveChat">채팅방 나가기</button>
     <div class="popup-content">
       <h2>{{ currentRoom?.chatRoomName }}</h2>
       <div class="chat-messages">
@@ -13,12 +14,14 @@
           v-model="newMessage" 
           type="text" 
           placeholder="메시지를 입력하세요"
-          @keyup.enter="sendMessage"
+          @keyup.enter="sendMessage" 
         />
-        <button @click="sendMessage">전송</button>
+      <button @click="sendMessage" :disabled="!isConnected">전송</button>
+      <!-- <p>연결 상태: {{ connectionStatus }}</p> -->
+    </div>
       </div>
     </div>
-  </div>
+  
 
 </template>
 
@@ -125,32 +128,79 @@ const connectWebSocket = () => {
 //         content: 'Hello!',
 //     }));
 
-const subscribeToRoom = () => {
-  if(stompClient.value&&isConnected.value) {
-    stompClient.value.subscribe(`/topic/room/${props.roomId}/message`, message => {
-      console.log('메시지 수신:', message);
-      messages.value.push(JSON.parse(message.body));
-    });
+// const subscribeToRoom = () => {
+//   if(stompClient.value&&isConnected.value) {
+//     stompClient.value.subscribe(`/topic/room/message/${props.roomId}`, message => {
+//       console.log('메시지 수신:', message);
+//       messages.value.push(JSON.parse(message.body));
+//     });
+//   }
+// };
+const subscribeToRoom = (roomId) => {
+  if (subscriptions.value[roomId]) {
+    console.log(`Already subscribed to room ${roomId}`)
+    return
   }
-};
 
+  subscriptions.value[roomId] = stompClient.value.subscribe(`/topic/messages/${roomId}`, message => {
+    console.log('메시지 수신:', message)
+    if (!messagesPerRoom.value[roomId]) {
+      messagesPerRoom.value[roomId] = []
+    }
+    messagesPerRoom.value[roomId].push(JSON.parse(message.body))
+  })
+}
+
+const changeRoom = () => {
+  if (stompClient.value && stompClient.value.connected) {
+    subscribeToRoom(currentRoom.value)
+  }
+}
+
+const handleConnectionFailure = (reason) => {
+  console.error(`연결 실패: ${reason}`)
+  isConnected.value = false
+  connectionStatus.value = '연결 실패'
+}
 const sendMessage = () => {
-  if (newMessage.value.trim() && stompClient.value && isConnected.value) {
+  if (newMessage.value && isConnected.value) {
+    const chatMessage = {
+      type: 'CHAT',
+      roomId: currentRoom.value,
+      sender: 'User1', // 실제 사용자 이름으로 변경 필요
+      message: newMessage.value
+    }
+    
+    console.log('메시지 전송:', chatMessage)
     stompClient.value.publish({
-      destination: `/app/room/${props.roomId}/message`,
-      body: JSON.stringify({
-        roomId: props.roomId,
-        content: newMessage.value,
-        sender: 'User' // 실제 사용자 정보로 변경 필요
-      })
-    });
-    newMessage.value = '';
+      destination: `/app//room/message/${roomId}`,
+      body: JSON.stringify(chatMessage)
+    })
+    newMessage.value = ''
+  } else if (!isConnected.value) {
+    console.error('웹소켓에 연결되지 않았습니다')
+    connectionStatus.value = '메시지를 보낼 수 없습니다. 연결 중...'
   }
 };
 
 const closeRoom = () => {
   isVisible.value = false;
   emit('close');
+};
+
+const leaveChat = async () => {
+  try {
+    const response = await axios.post(`/api/chat/room/${props.roomId}/leave`, null, {
+      params: {
+        userId: userId, // 실제 userId를 전달
+      },
+    });
+    console.log('API 요청 URL: ', axios.defaults.baseURL + `/api/chat/room/${props.roomId}/leave`);
+    console.log('응답 데이터: ', response.data);
+    // 필요 시 추가 동작 (e.g., 채팅방 목록 갱신)
+  } catch (error) {
+    console.error('채팅방 나가는 중 오류 발생:', error);
+  }
 };
 
 
@@ -191,13 +241,26 @@ if (stompClient.value) {
   transform: translate(-50%, -50%);
   width: 400px;
   height: 600px;
-  background-color: #fff;
+  background-color: #ffffff;
   border: 1px solid #ddd;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   z-index: 1000;
   display: flex;
   flex-direction: column;
+}
+
+.leave-chat {
+  position: absolute;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+    top: 15px;
+    right: 10px;
+    background: none;
+    border-radius: 20rem;
+    font-size: 1rem;
+    cursor: pointer;
+    color: #c7c5c5;
 }
 
 .popup-content {
@@ -230,25 +293,24 @@ h2 {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
+.newMessage {
+  font-size: 0.5rem;
+}
 .chat-input {
   display: flex;
-  gap: 10px;
-}
-
-.chat-input input {
-  flex-grow: 1;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  gap: 1px;
+  height: 3rem;
+  justify-content: space-between;
 }
 
 .chat-input button {
-  padding: 8px 16px;
+  /* padding: 8px 16px; */
   background-color: #ff9d85;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  font-size: 1.5rem;
 }
 
 .chat-input button:hover {

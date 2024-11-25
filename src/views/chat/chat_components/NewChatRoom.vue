@@ -3,6 +3,7 @@
     <div class="modal-content">
       <button class="close-button" @click="$emit('close')">X</button>
       <h2>새 채팅방 생성</h2>
+      <button class="create-new" @click="createNewChat">생성</button>
     </div>
   </div>
 </template>
