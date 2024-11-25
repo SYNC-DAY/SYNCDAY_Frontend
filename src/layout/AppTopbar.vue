@@ -36,9 +36,10 @@
         <!-- 아이콘, 프로필 -->
         <div class="layout-topbar-actions">
             <div class="layout-config-menu">
-                <button type="button" class="layout-topbar-action" @click="toggleDarkMode">
+                <!-- 라이트 모드, 다크모드 조절 -->
+                <!-- <button type="button" class="layout-topbar-action" @click="toggleDarkMode">
                     <i :class="['pi', { 'pi-moon': isDarkTheme, 'pi-sun': !isDarkTheme }]"></i>
-                </button>
+                </button> -->
 
                 <!-- 회의실 예약 -->
                 <button type="button" class="layout-topbar-action">
