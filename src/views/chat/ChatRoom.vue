@@ -11,11 +11,7 @@
       </div>
       <div class="chat-input">
         <input 
-          v-model="newMessage" 
-          type="text" 
-          placeholder="메시지를 입력하세요"
-          @keyup.enter="sendMessage" 
-        />
+          v-model="newMessage"   type="text"   placeholder="메시지를 입력하세요"  @keyup.enter="sendMessage" />
       <button @click="sendMessage" :disabled="!isConnected">전송</button>
       <!-- <p>연결 상태: {{ connectionStatus }}</p> -->
     </div>
@@ -29,20 +25,20 @@
 import { onUnmounted, onMounted, ref, defineProps, defineEmits, watch } from 'vue';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
-// import { useAuthStore } from '@/stores/auth';
+import { useAuthStore } from '@/stores/auth';
 
 const props = defineProps({
   roomId: {
     type: String,
     required: true
   },
-  roomInfo: {
-    type: Object,
+  chatRoomName: {
+    type: String,
     required: true
   }
 });
 
-// const authStore = useAuthStore()
+const authStore = useAuthStore()
 const connectionStatus = ref('웹 소켓 시작')
 const isConnected = ref(false)
 const stompClient = ref(null)
@@ -52,32 +48,27 @@ const messages = ref([]);
 const newMessage = ref('');
 const currentRoom = ref(props.roomInfo);
 // const subscriptions = ref({}) 토픽 구독 채팅방 연결
-
-
 const connectWebSocket = () => {
   console.log('웹소켓 연결 시도 중...')
-  connectionStatus.value = '웹소켓에 연결 중...'
 
+  // 환경변수나 설정에서 URL을 가져오는 것이 좋습니다
   const socket = new SockJS('http://localhost:5000/ws');
-  console.log('SockJS 인스턴스 생성됨')
 
   stompClient.value = new Client({
     webSocketFactory: () => socket,
-    reconnectDelay: 5000,
+    reconnectDelay: 5000, // 재연결 시간 줄임
     heartbeatIncoming: 4000,
     heartbeatOutgoing: 4000,
     debug: function (str) {
-      console.log(str)
+      console.log('연결 ...',str)
     },
-    onConnect: frame => { // 연결 이벤트 핸들러
-      console.log(frame)
+    onConnect: (frame) => {
       console.log('STOMP 연결됨(success!!!): ' + frame)
       isConnected.value = true
       connectionStatus.value = '연결됨'
-      // subscribeToRoom(currentRoom.value)
-      subscribeToRoom()
+      subscribeToRoom() // 연결 성공 시 구독 실행
     },
-    onStompError: frame => {
+    onStompError: (frame) => {
       console.error('STOMP 오류:', frame)
       handleConnectionFailure('STOMP 오류: ' + frame.headers['message'])
     },
@@ -85,24 +76,55 @@ const connectWebSocket = () => {
       console.log('STOMP 연결 끊김')
       isConnected.value = false
       connectionStatus.value = '연결 끊김'
-    },
-    onWebSocketError: (event) => {
-      console.error('WebSocket 오류 발생:', event)
-      handleConnectionFailure('WebSocket 오류: ' + JSON.stringify(event))
-    },
-    onWebSocketClose: (event) => {
-      console.log('WebSocket 연결 종료됨:', event)
+      // 재연결 시도
+      setTimeout(() => {
+        if (!isConnected.value) {
+          connectWebSocket()
+        }
+      }, 5000)
     }
   })
-  console.log('STOMP 클라이언트 활성화 중...')
-  console.log('STOMP 클라이언트 상태:', stompClient.value)
-  stompClient.value.activate()
-  // wsConnect()
+
+  try {
+    stompClient.value.activate()
+  } catch (error) {
+    console.error('STOMP 클라이언트 활성화 실패:', error)
+    handleConnectionFailure('활성화 실패')
+  }
 }
 
-// const wsConnect = () => {
-//   console.log(stompClient.value)
-// }
+// 구독 로직 수정
+const subscribeToRoom = () => {   
+  if (!stompClient.value || !isConnected.value) {
+    console.error('STOMP 클라이언트가 준비되지 않았습니다')
+    return
+  }
+
+  try {
+    const subscription = stompClient.value.subscribe(
+      `/topic/room/message/${props.roomId}`,
+      (message) => {
+        console.log('메시지 수신:', message)
+        try {
+          const parsedMessage = JSON.parse(message.body)
+          messages.value.push(parsedMessage)
+        } catch (error) {
+          console.error('메시지 파싱 오류:', error)
+        }
+      },
+      {
+        // 추가 헤더가 필요한 경우
+        'Authorization': `Bearer ${authStore.accessToken}`
+      }
+    )
+
+    console.log('채팅방 구독 성공:', props.roomId)
+    return subscription
+  } catch (error) {
+    console.error('구독 중 오류 발생:', error)
+  }
+}
+
 
 //   stompClient.value.onConnect(
 //     {Authorization: `Bearer ${authStore.accessToken}`}, // JWT 토큰 등 인증 정보 추가
@@ -128,28 +150,6 @@ const connectWebSocket = () => {
 //         content: 'Hello!',
 //     }));
 
-// const subscribeToRoom = () => {
-//   if(stompClient.value&&isConnected.value) {
-//     stompClient.value.subscribe(`/topic/room/message/${props.roomId}`, message => {
-//       console.log('메시지 수신:', message);
-//       messages.value.push(JSON.parse(message.body));
-//     });
-//   }
-// };
-const subscribeToRoom = (roomId) => {
-  if (subscriptions.value[roomId]) {
-    console.log(`Already subscribed to room ${roomId}`)
-    return
-  }
-
-  subscriptions.value[roomId] = stompClient.value.subscribe(`/topic/messages/${roomId}`, message => {
-    console.log('메시지 수신:', message)
-    if (!messagesPerRoom.value[roomId]) {
-      messagesPerRoom.value[roomId] = []
-    }
-    messagesPerRoom.value[roomId].push(JSON.parse(message.body))
-  })
-}
 
 const changeRoom = () => {
   if (stompClient.value && stompClient.value.connected) {
@@ -163,23 +163,27 @@ const handleConnectionFailure = (reason) => {
   connectionStatus.value = '연결 실패'
 }
 const sendMessage = () => {
+  if (!isConnected.value) {
+    console.error('웹소켓에 연결되지 않았습니다. 연결을 시도합니다...');
+    connectWebSocket();
+    return;
+  }
+
   if (newMessage.value && isConnected.value) {
     const chatMessage = {
       type: 'CHAT',
-      roomId: currentRoom.value,
-      sender: 'User1', // 실제 사용자 이름으로 변경 필요
+      roomId: props.roomId,  // props에서 직접 참조
+      sender: useAuthStore().user.userId,  // authStore 활성화 필요
       message: newMessage.value
     }
     
-    console.log('메시지 전송:', chatMessage)
+    console.log('메시지 전송:', chatMessage);
     stompClient.value.publish({
-      destination: `/app//room/message/${roomId}`,
+      destination: `/app/room/message/${props.roomId}`,  // props에서 직접 참조
       body: JSON.stringify(chatMessage)
-    })
-    newMessage.value = ''
-  } else if (!isConnected.value) {
-    console.error('웹소켓에 연결되지 않았습니다')
-    connectionStatus.value = '메시지를 보낼 수 없습니다. 연결 중...'
+    });
+    
+    newMessage.value = '';
   }
 };
 
@@ -240,7 +244,7 @@ if (stompClient.value) {
   left: 50%;
   transform: translate(-50%, -50%);
   width: 400px;
-  height: 600px;
+  height: 00px;
   background-color: #ffffff;
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -300,7 +304,7 @@ h2 {
   display: flex;
   gap: 1px;
   height: 3rem;
-  justify-content: space-between;
+  /* justify-content: space-between; */
 }
 
 .chat-input button {

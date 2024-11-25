@@ -89,7 +89,7 @@
 <script setup>
 import { RouterLink, useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth.js';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 
 import ChatPop from '@/views/chat/ChatRoomList.vue';
 
@@ -258,7 +258,7 @@ input[type=search] {
 }
 
 .icon-button img {
-  height: 3rem;
+  height: 1.5rem;
 }
 .profile{
 	flex: 1;

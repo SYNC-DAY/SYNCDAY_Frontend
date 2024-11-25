@@ -21,9 +21,8 @@
           </div>
         </div>
         <NewChatRoom v-if="isPopupVisible" @close="closeNewChatRoom"/>
-        <ChatRoom  v-if="selectedRoom" :roomId="selectedRoom.roomId"
-         :roomInfo="selectedRoom"  @close="closeChatRoom"
-    />
+        <ChatRoom  v-if="selectedRoom" :roomId="chat.roomId"
+        :chatRoomName="room.chatRoomName"  @close="closeChatRoom"/>
     </div>
   </template>
   
@@ -105,7 +104,7 @@ onMounted(() => {
     top: 50px; /* 아이콘 아래로 50px */
     left: 85%;
     transform: translateX(-50%);
-    width: 40rem;
+    width: 30rem;
     height: 60%;
     background-color: #fff;
     border: 1px solid #ddd;
@@ -123,6 +122,8 @@ onMounted(() => {
   .popup-content p {
     font-size: 2rem;
     font-weight: bold;
+    margin: 1rem;
+    margin-bottom: 0rem;
   }
   
   .closePopup {
@@ -146,13 +147,12 @@ onMounted(() => {
   .new-chat {
   background-color: #ff9d85;
   border-radius: 3px;
-  font-size: 1.5rem;
+  font-size: 1rem;
   color: rgb(43, 43, 43);
   border: none;
   cursor: pointer;
-  margin-top: 0.8rem;
   margin-bottom: 0.5rem;
-  margin-left: 29rem;
+  margin-left: 22rem;
 }
 
 .new-chat:hover {
@@ -185,19 +185,19 @@ onMounted(() => {
     border-radius: 7px;
     background-color: #d6d5d5 ;
     font-size: 1rem;
-    width: 100%;
+    width: 80%;
+    margin-left: 2.5rem;
   }
   .chatlist {
   margin-top: 1rem;
 }
   .chatlist h4 {
-  font-size: 1.5rem;
+  font-size: 1rem;
 }
 
 .chatlist ul {
   list-style: none;
   padding: 0;
   margin: 0;
-  font-size: 0.5rem;
 }
   </style>
