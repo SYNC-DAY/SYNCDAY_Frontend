@@ -32,3 +32,4 @@ coverage
 # Environment Variables
 *.env
 *.env.*
+SyncDay_Front.iml
