@@ -21,8 +21,8 @@
           </div>
         </div>
         <NewChatRoom v-if="isPopupVisible" @close="closeNewChatRoom"/>
-        <ChatRoom  v-if="selectedRoom" :roomId="chat.roomId"
-        :chatRoomName="room.chatRoomName"  @close="closeChatRoom"/>
+        <ChatRoom  v-if="selectedRoom" :roomId="selectedRoom.roomId"
+        :chatRoomName="selectedRoom.chatRoomName"  @close="closeChatRoom"/>
     </div>
   </template>
   
@@ -55,9 +55,14 @@ const closeNewChatRoom = () => {
 }
 // 채팅방 열기
 const openChatRoom = (chat) => {
-  console.log(`${chat.roomId}번 채팅방 열기`);
-  selectedRoom.value = chat;
+  if (chat && chat.roomId) { // 방어적 코드를 추가
+    console.log(`${chat.roomId}번 채팅방 열기`);
+    selectedRoom.value = chat;
+  } else {
+    console.error("유효하지 않은 채팅 데이터:", chat);
+  }
 };
+
 
 // 채팅방 닫기
 const closeChatRoom = () => {
@@ -79,11 +84,14 @@ const fetchChatRooms = async () => {
 
 // 채팅방 필터링
 const filteredChatList = computed(() => {
+  if (!chatList.value || chatList.value.length === 0) {
+    return []; 
+  }
+
   return chatList.value.filter((chat) =>
-    chat.chatRoomName.toLowerCase().includes(searchQuery.value.toLowerCase())
+    chat.chatRoomName?.toLowerCase().includes(searchQuery.value.toLowerCase())
   );
 });
-
 
 // 검색 필터링
 const searchChat = (event) => {
