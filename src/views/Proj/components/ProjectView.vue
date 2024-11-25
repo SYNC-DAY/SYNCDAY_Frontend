@@ -24,7 +24,7 @@
 			@click="handleOpenVCSModal"
 			class="connect-github-btn"
 		  >
-			Connect GitHub
+			Connect VCS Organizations
 		  </button>
 		</div>
 	  </div>

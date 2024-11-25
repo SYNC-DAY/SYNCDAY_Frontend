@@ -2,18 +2,18 @@
 	<div v-if="isOpen" class="modal-overlay">
 	  <div class="modal-container">
 		<div class="modal-header">
-		  <h3>Connect Version Control System</h3>
+		  <h3>Connect Organization Repository</h3>
 		  <button class="close-button" @click="handleClose">×</button>
 		</div>
   
 		<!-- Error Display -->
-		<div v-if="authStore.hasError" class="error-message">
-		  {{ authStore.error }}
-		  <button class="dismiss-button" @click="authStore.clearError">Dismiss</button>
+		<div v-if="authStore.hasError || orgStore.hasError" class="error-message">
+		  {{ authStore.error || orgStore.error }}
+		  <button class="dismiss-button" @click="clearErrors">Dismiss</button>
 		</div>
   
 		<!-- Loading State -->
-		<div v-if="authStore.isLoading || repoStore.isLoading" class="modal-content-center">
+		<div v-if="authStore.isLoading || orgStore.isLoading" class="modal-content-center">
 		  <div class="loading-spinner"></div>
 		  <p>Loading...</p>
 		</div>
@@ -22,7 +22,7 @@
 		<div v-else class="modal-content">
 		  <!-- Login State -->
 		  <div v-if="!authStore.isAuthenticated">
-			<p class="description">Connect your GitHub account to get started</p>
+			<p class="description">Connect your GitHub account to access organization repositories</p>
 			<button 
 			  class="github-button"
 			  @click="authStore.loginWithGithub"
@@ -35,45 +35,62 @@
 			</button>
 		  </div>
   
-		  <!-- Repository Selection -->
+		  <!-- Organization and Repository Selection -->
 		  <div v-else>
-			<!-- Enhanced User Info -->
+			<!-- User Info -->
 			<div class="user-info">
 			  <img :src="authStore.avatarUrl" :alt="authStore.username" class="avatar">
 			  <div class="user-details">
-				<p class="user-name">{{ authStore.fullName }}</p>
-				<p class="user-username">@{{ authStore.username }}</p>
-				<p v-if="authStore.email" class="user-email">{{ authStore.email }}</p>
-				<p v-if="authStore.bio" class="user-bio">{{ authStore.bio }}</p>
+				<p class="user-name">{{ authStore.username }}</p>
 				<button class="text-button" @click="handleLogout">Switch Account</button>
 			  </div>
 			</div>
   
-			<!-- Repository Search -->
-			<div class="search-container">
-			  <input
-				type="text"
-				v-model="searchQuery"
-				placeholder="Search repositories..."
-				class="search-input"
-			  />
+			<!-- Organization Selection -->
+			<div class="section-title">Select Organization</div>
+			<div class="org-list">
+			  <div
+				v-for="org in orgStore.allOrganizations"
+				:key="org.id"
+				class="org-item"
+				:class="{ active: selectedOrg?.id === org.id }"
+				@click="selectOrganization(org)"
+			  >
+				<img :src="org.avatar_url" :alt="org.login" class="org-avatar">
+				<div class="org-details">
+				  <div class="org-name">{{ org.name || org.login }}</div>
+				  <div class="org-description">{{ org.description || 'No description' }}</div>
+				</div>
+			  </div>
 			</div>
   
-			<!-- Repository List -->
-			<div class="repo-list">
-			  <div
-				v-for="repo in filteredRepositories"
-				:key="repo.id"
-				class="repo-item"
-				:class="{ active: selectedRepo?.id === repo.id }"
-				@click="selectRepository(repo)"
-			  >
-				<div class="repo-name">{{ repo.name }}</div>
-				<div class="repo-description">{{ repo.description || 'No description' }}</div>
-				<div class="repo-meta">
-				  <span class="repo-visibility">{{ repo.private ? 'Private' : 'Public' }}</span>
-				  <span class="repo-separator">•</span>
-				  <span class="repo-updated">Updated {{ formatDate(repo.updated_at) }}</span>
+			<!-- Repository Selection -->
+			<div v-if="selectedOrg" class="repository-section">
+			  <div class="section-title">Select Repository</div>
+			  <div class="search-container">
+				<input
+				  type="text"
+				  v-model="searchQuery"
+				  placeholder="Search repositories..."
+				  class="search-input"
+				/>
+			  </div>
+  
+			  <div class="repo-list">
+				<div
+				  v-for="repo in filteredRepositories"
+				  :key="repo.id"
+				  class="repo-item"
+				  :class="{ active: selectedRepo?.id === repo.id }"
+				  @click="selectRepository(repo)"
+				>
+				  <div class="repo-name">{{ repo.name }}</div>
+				  <div class="repo-description">{{ repo.description || 'No description' }}</div>
+				  <div class="repo-meta">
+					<span class="repo-visibility">{{ repo.private ? 'Private' : 'Public' }}</span>
+					<span class="repo-separator">•</span>
+					<span class="repo-updated">Updated {{ formatDate(repo.updated_at) }}</span>
+				  </div>
 				</div>
 			  </div>
 			</div>
@@ -94,12 +111,14 @@
 	  </div>
 	</div>
   </template>
+  
 
 <script setup>
-  import { ref, computed, onMounted } from 'vue'
-  import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore'
-  import { useGithubRepoStore } from '@/stores/github/useGithubRepoStore'
-  import axios from 'axios'
+import { ref, computed, onMounted } from 'vue'
+import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore'
+import { useGithubRepoStore } from '@/stores/github/useGithubRepoStore'
+import { useGithubOrgStore } from '@/stores/github/useGithubOrgStore'; 
+import axios from 'axios'
   
 const props = defineProps({
 	isOpen: Boolean,
@@ -113,103 +132,165 @@ const emit = defineEmits(['close', 'update:project'])
   
   // Stores
   const authStore = useGithubAuthStore()
-  const repoStore = useGithubRepoStore()
-  
+  const orgStore = useGithubOrgStore();
+  const repoStore = useGithubRepoStore();
   // State
   const searchQuery = ref('')
   const selectedRepo = ref(null)
   const isConnecting = ref(false)
   
-  // Computed
+// Computed
 const filteredRepositories = computed(() => {
-	if (!searchQuery.value) return repoStore.allRepositories
-	const query = searchQuery.value.toLowerCase()
-	return repoStore.allRepositories.filter(repo => 
-	  repo.name.toLowerCase().includes(query) || 
-	  (repo.description && repo.description.toLowerCase().includes(query))
-	)
-  })
+  if (!selectedOrg.value) return [];
+  const repos = orgStore.getOrgRepositories(selectedOrg.value.login);
+  if (!searchQuery.value) return repos;
   
-  // Methods
-const initializeApp = async () => {
-	const urlParams = new URLSearchParams(window.location.search)
-	const code = urlParams.get('code')
-	const token = localStorage.getItem('github_token')
-  
-	try {
-	  if (code) {
-		console.log(`code: ${code}`)
-		await authStore.handleAuthCallback(code)
-		await authStore.fetchUserInfo()
-		await repoStore.fetchUserRepos()
-	  } else if (token && !repoStore.allRepositories.length) {
-		authStore.setAccessToken(token)
-		await authStore.fetchUserInfo()
-		await repoStore.fetchUserRepos()
-	  }
-	} catch (error) {
-	  console.error('Setup error:', error)
-	  authStore.error = error.message
-	}
-  }
-  
+  const query = searchQuery.value.toLowerCase();
+  return repos.filter(repo => 
+    repo.name.toLowerCase().includes(query) || 
+    (repo.description && repo.description.toLowerCase().includes(query))
+  );
+});
+
+// Methods
+const clearErrors = () => {
+  authStore.clearError();
+  orgStore.clearError();
+};
+
 const handleLogout = () => {
-	authStore.logout()
-	repoStore.clearRepositories()
-	selectedRepo.value = null
-  }
-  
+  authStore.logout();
+  orgStore.clearState();
+  selectedOrg.value = null;
+  selectedRepo.value = null;
+};
+
+const selectOrganization = async (org) => {
+  selectedOrg.value = org;
+  selectedRepo.value = null;
+  await orgStore.fetchOrgRepositories(org.login);
+};
+
 const selectRepository = (repo) => {
-	selectedRepo.value = repo
-  }
-  
-// Fixed code
+  selectedRepo.value = repo;
+};
+
 const handleClose = () => {
-  // Reset all state
+  selectedOrg.value = null;
   selectedRepo.value = null;
   searchQuery.value = '';
   isConnecting.value = false;
-  authStore.clearError();
+  clearErrors();
   emit('close');
-}
-  
+};
+
 const formatDate = (dateString) => {
-	const date = new Date(dateString)
-	const now = new Date()
-	const diffTime = Math.abs(now - date)
-	const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-  
-	if (diffDays === 1) return 'yesterday'
-	if (diffDays < 30) return `${diffDays} days ago`
-	if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`
-	return `${Math.floor(diffDays / 365)} years ago`
-  }
-  
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffTime = Math.abs(now - date);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 1) return 'yesterday';
+  if (diffDays < 30) return `${diffDays} days ago`;
+  if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+  return `${Math.floor(diffDays / 365)} years ago`;
+};
+
 const confirmSelection = async () => {
-	if (!selectedRepo.value) return
-  
-	try {
-	  isConnecting.value = true
-	  const response = await axios.patch(`/api/proj/${props.projectId}`, {
-		vcs_type: 'GITHUB',
-		vcs_proj_url: selectedRepo.value.html_url
-	  })
-  
-	  if (response.data.success) {
-		emit('update:project', response.data.data)
-		handleClose()
-	  }
-	} catch (error) {
-	  authStore.error = 'Failed to connect repository. Please try again.'
-	} finally {
-	  isConnecting.value = false
-	}
+  if (!selectedRepo.value) return;
+
+  try {
+    isConnecting.value = true;
+    const response = await axios.patch(`/api/proj/${props.projectId}`, {
+      vcs_type: 'GITHUB',
+      vcs_proj_url: selectedRepo.value.html_url
+    });
+
+    if (response.data.success) {
+      emit('update:project', response.data.data);
+      handleClose();
+    }
+  } catch (error) {
+    orgStore.error = 'Failed to connect repository. Please try again.';
+  } finally {
+    isConnecting.value = false;
   }
+};
+
+// Initialize
+onMounted(async () => {
+  if (authStore.isAuthenticated) {
+    try {
+      await orgStore.fetchOrganizations();
+    } catch (error) {
+      console.error('Failed to fetch organizations:', error);
+    }
+  }
+});
   
-//   onMounted(initializeApp)
 </script>
   
 <style scoped>
+.org-list {
+  margin-bottom: 1.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.org-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.org-item:hover {
+  background: #f9fafb;
+}
+
+.org-item.active {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.org-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  margin-right: 1rem;
+}
+
+.org-details {
+  flex: 1;
+}
+
+.org-name {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.org-description {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.section-title {
+  font-weight: 600;
+  margin: 1rem 0;
+  color: #374151;
+}
+
+.repository-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+
   .modal-overlay {
 	position: fixed;
 	top: 0;
