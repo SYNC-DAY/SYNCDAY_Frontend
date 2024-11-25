@@ -5,8 +5,7 @@ import App from './App.vue'
 import { setupRouter } from './router'  // 이름 변경
 import { setupAxiosInterceptors } from '../src/plugins/axios.js'
 import PrimeVue from 'primevue/config';
-
-
+import Aura from '@primevue/themes';
 import '@/assets/styles/main.css'
 
 async function setupApp() {
@@ -23,7 +22,12 @@ async function setupApp() {
     const router = await setupRouter()
     app.use(router)
 
-    app.use(PrimeVue);
+    /* Prime Vue */
+    app.use(PrimeVue, {
+        theme: {
+            preset: Aura
+        }
+    });
     // 4. 앱 마운트
     app.mount('#app')
 }
