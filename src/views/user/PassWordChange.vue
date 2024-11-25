@@ -272,16 +272,16 @@
 
   .my-page-title {
     margin: 1rem 0;
-    font-size: 4rem;
+    font-size: 3rem;
     font-weight: bold;
     color: #333;
     width: 100%;          /* 추가 */
-    max-width: 112rem;     /* password-card와 동일한 max-width */
+    max-width: 100rem;     /* password-card와 동일한 max-width */
 }
 
 
   .password-change-page {
-    max-width: 112rem;
+    max-width: 120rem;
     margin: 0 auto;
     padding: 0 2rem;
     min-height:200vh;
@@ -292,12 +292,13 @@
 
   .password-card {
     background: white;
-    border-radius: 5rem;
+    border: solid #D9D9D9 0.1rem;
+    border-radius: 3rem;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     width: 100%;          /* 980px에서 100%로 변경 */
-    max-width: 130rem;     /* 최대 너비 설정 */
-    height: 90rem;
+    max-width: 100rem;     /* 최대 너비 설정 */
+    height: 70rem;
 }
 
   .split-container {
@@ -311,14 +312,14 @@
     display: flex;
     align-items: center;
     padding: 1rem;
-    width: 100%;
+    width: 30rem;
   }
 
   .gradient-box {
     width: 100%;
-    height: 88rem;
+    height: 67rem;
     background: linear-gradient(rgba(254, 93, 134, 1), rgba(254, 119, 134, 1), rgba(255, 157, 133, 1), rgba(255, 157, 133, 1));
-    border-radius: 5rem;
+    border-radius: 3rem;
     position: relative;
     display: flex;
     justify-content: center;
@@ -327,29 +328,28 @@
 
 .logo-text {
     font-family: 'Inspiration', cursive;
-    font-size: 15rem;
+    font-size: 10rem;
     color: white;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
     position: absolute;
     left: 50%;
-    top: 35%;
+    top: 32%;
     transform: translate(-50%, -50%) rotate(-14deg);
 }
 
 .header-container {
-  margin-bottom: 7rem;
+  margin-bottom: 4rem;
 }
 
   .form-section {
     flex: 1;
     width: auto;
-    min-width: 70rem;
-    padding: 0 5rem;
+    padding-left: 5rem;
     padding-bottom: 5rem;
   }
 
   .page-title {
-    font-size: 3.5rem;
+    font-size: 2.5rem;
     font-weight: bold;
     color: #333;
     margin-bottom: 2rem;
@@ -370,11 +370,11 @@
     flex-direction: column;
     position: relative;
     width: 100%;
-    padding: 0 5rem;
+    padding: 0 6rem;
 }
 
 .form-label {
-    font-size: 1.8rem;
+    font-size: 1.3rem;
     font-weight: normal;
     color: #666;
     width: 150px;
@@ -389,11 +389,11 @@
 }
 
 .form-input {
-    width: 100%;
-    padding: 1.4rem 1.5rem;
+    width: 35rem;
+    padding: 1rem 4rem 1rem 1rem;
     border: 0.3rem solid #ddd;
     border-radius: 0.5rem;
-    font-size: 2.5rem;
+    font-size: 1.5rem;
     margin-bottom: 1rem;
 }
 
@@ -425,13 +425,13 @@
     font-size: 1.5rem;
     font-weight: 740;
     position: absolute;
-    bottom: -0.1rem;
+    bottom: -1.5rem;
   }
 
   .button-group {
     display: flex;
     justify-content: space-evenly;
-    margin-top: 2rem;
+    margin-top: 4rem;
     padding: 0 1rem;
   }
 
@@ -442,7 +442,7 @@
     border: solid #aaa8a8 0.5rem;
     color: white;
     border-radius: 2.5rem;
-    font-size: 2rem;
+    font-size: 1.5rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
@@ -456,12 +456,12 @@
 
   .submit-button {
     width: 30%;
-    padding: 1rem 2rem;
+    padding: 1rem;
     background-color: #ffffff;
     color: rgb(0, 0, 0);
     border: solid black 0.5rem;
     border-radius: 2.5rem;
-    font-size: 2rem;
+    font-size: 1.5rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;

@@ -25,8 +25,12 @@ export async function setupRouter() {
 
   router.beforeEach(async (to, from, next) => {
     const authStore = useAuthStore()
-    // console.log('라우터 가드 시작 - 이동할 경로:', to.path)
-    // console.log('현재 인증 상태:', authStore.isAuthenticated)
+    console.log('라우터 가드 시작 - 이동할 경로:', to.path)
+    console.log('현재 인증 상태:', authStore.isAuthenticated)
+
+    if (!authStore.isAuthenticated) {
+      await authStore.initializeAuth()
+    }
 
     // 로그인 페이지인 경우
     if (to.path === '/login') {
