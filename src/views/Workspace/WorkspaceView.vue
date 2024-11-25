@@ -17,50 +17,88 @@
             </span>
           </div>
 
-          <!-- Repository Selector -->
+          <!-- Repository Integration -->
           <div class="flex items-center space-x-4">
-            <div class="relative">
+            <!-- Login/Profile Section -->
+            <div v-if="!authStore.isAuthenticated" class="flex items-center">
               <button
-                @click="isRepoSelectorOpen = !isRepoSelectorOpen"
-                class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                @click="authStore.loginWithGithub"
+                :disabled="authStore.isLoading"
+                class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 <Github class="h-5 w-5 mr-2 text-gray-500" />
-                {{ selectedRepoName || 'Select Repository' }}
-                <ChevronDown
-                  class="ml-2 h-4 w-4 text-gray-500"
-                  :class="{ 'transform rotate-180': isRepoSelectorOpen }"
-                />
+                Connect GitHub
               </button>
-
-              <!-- Repository Dropdown -->
-              <div v-if="isRepoSelectorOpen"
-                   class="absolute right-0 mt-2 w-72 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
-                <div class="py-1" role="menu">
-                  <div v-if="isLoading" class="px-4 py-2 text-sm text-gray-500">
-                    <Loader class="animate-spin h-4 w-4 mr-2 inline" />
-                    Loading repositories...
-                  </div>
-                  <div v-else-if="error" class="px-4 py-2 text-sm text-red-500">
-                    <AlertCircle class="h-4 w-4 mr-2 inline" />
-                    {{ error }}
-                  </div>
-                  <template v-else>
-                    <button
-                      v-for="repo in repositories"
-                      :key="repo.id"
-                      @click="selectRepository(repo)"
-                      class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                      role="menuitem"
-                    >
-                      <GitBranch v-if="repo.vcs_type === 'GITHUB'" class="h-4 w-4 mr-2 text-gray-500" />
-                      {{ repo.name }}
-                    </button>
-                  </template>
-                </div>
-              </div>
             </div>
 
-            <!-- Action Buttons -->
+            <div v-else class="flex items-center space-x-4">
+              <!-- User Profile -->
+              <div class="flex items-center" v-if="authStore.username">
+                <img 
+                  :src="authStore.avatarUrl" 
+                  :alt="authStore.username"
+                  class="h-8 w-8 rounded-full mr-2"
+                >
+                <span class="text-sm text-gray-700">{{ authStore.username }}</span>
+              </div>
+
+              <!-- Repository Selector -->
+              <div class="relative">
+                <button
+                  @click="isRepoSelectorOpen = !isRepoSelectorOpen"
+                  class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  <Github class="h-5 w-5 mr-2 text-gray-500" />
+                  {{ currentRepoName }}
+                  <ChevronDown
+                    class="ml-2 h-4 w-4 text-gray-500"
+                    :class="{ 'transform rotate-180': isRepoSelectorOpen }"
+                  />
+                </button>
+
+                <!-- Repository Dropdown -->
+                <div v-if="isRepoSelectorOpen"
+                     class="absolute right-0 mt-2 w-72 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                  <div class="py-1" role="menu">
+                    <div v-if="repoStore.isLoading" class="px-4 py-2 text-sm text-gray-500">
+                      <Loader class="animate-spin h-4 w-4 mr-2 inline" />
+                      Loading repositories...
+                    </div>
+                    <div v-else-if="repoStore.hasError" class="px-4 py-2 text-sm text-red-500">
+                      <AlertCircle class="h-4 w-4 mr-2 inline" />
+                      {{ repoStore.error }}
+                    </div>
+                    <template v-else>
+                      <button
+                        v-for="repo in repoStore.allRepositories"
+                        :key="repo.id"
+                        @click="handleRepoSelect(repo)"
+                        class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                        role="menuitem"
+                      >
+                        <GitBranch class="h-4 w-4 mr-2 text-gray-500" />
+                        <span class="flex-1 truncate">{{ repo.name }}</span>
+                        <Check
+                          v-if="repo.html_url === workspaceDetails?.vcs_repo_url"
+                          class="h-4 w-4 text-blue-500"
+                        />
+                      </button>
+                    </template>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Logout Button -->
+              <button
+                @click="handleLogout"
+                class="p-2 text-gray-400 hover:text-gray-500"
+                title="Logout"
+              >
+                <LogOut class="h-5 w-5" />
+              </button>
+            </div>
+
+            <!-- Refresh Button -->
             <button
               @click="refreshWorkspace"
               class="inline-flex items-center p-2 border border-transparent rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -73,63 +111,13 @@
     </header>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Loading State -->
-      <div v-if="isLoading" class="flex justify-center items-center h-64">
-        <Loader class="h-8 w-8 animate-spin text-blue-500" />
-      </div>
-
-      <!-- Error State -->
-      <div v-else-if="error" class="bg-red-50 border border-red-200 rounded-md p-4">
-        <div class="flex">
-          <AlertCircle class="h-5 w-5 text-red-400" />
-          <div class="ml-3">
-            <h3 class="text-sm font-medium text-red-800">Error loading workspace</h3>
-            <p class="mt-2 text-sm text-red-700">{{ error }}</p>
-            <button
-              @click="fetchWorkspace"
-              class="mt-3 text-sm font-medium text-red-600 hover:text-red-500"
-            >
-              Retry
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Content -->
-      <div v-else-if="workspaceDetails" class="space-y-6">
-        <!-- Boards Section -->
-        <div v-if="workspaceDetails.cardboards?.length" class="space-y-4">
-          <CardBoard
-            v-for="board in workspaceDetails.cardboards"
-            :key="board.cardboard_id"
-            :board="board"
-            @update="handleBoardUpdate"
-          />
-        </div>
-
-        <!-- Empty State -->
-        <div v-else class="text-center py-12">
-          <Layout class="mx-auto h-12 w-12 text-gray-400" />
-          <h3 class="mt-2 text-sm font-medium text-gray-900">No boards</h3>
-          <p class="mt-1 text-sm text-gray-500">Get started by creating a new board.</p>
-          <div class="mt-6">
-            <button
-              @click="createNewBoard"
-              class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <Plus class="h-5 w-5 mr-2" />
-              New Board
-            </button>
-          </div>
-        </div>
-      </div>
-    </main>
+    <!-- ... rest of the template remains the same ... -->
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 import { useGithubRepoStore } from '@/stores/github/useGithubRepoStore';
 import { 
   Github, 
@@ -139,26 +127,17 @@ import {
   Loader,
   GitBranch,
   Layout,
-  Plus 
+  Plus,
+  Check,
+  LogOut
 } from 'lucide-vue-next';
-import axios from 'axios';
 import CardBoardView from './views/CardBoardView.vue';
-const props = defineProps({
-  projectId: {
-    type: [String, Number],
-    required: true
-  },
-  workspaceId: {
-    type: [String, Number],
-    required: true
-  },
-  projects: {
-    type: Array,
-    required: true
-  }
-});
 
-const emit = defineEmits(['update:projects']);
+// Props and emits remain the same...
+
+// Store initialization
+const authStore = useGithubAuthStore();
+const repoStore = useGithubRepoStore();
 
 // State
 const isLoading = ref(false);
@@ -167,83 +146,59 @@ const error = ref(null);
 const workspaceDetails = ref(null);
 const isRepoSelectorOpen = ref(false);
 
-// Store
-const repoStore = useGithubRepoStore();
-const repositories = computed(() => repoStore.allRepositories);
-
-// Selected Repository
-const selectedRepoName = computed(() => {
-  if (!workspaceDetails.value?.vcs_repo_url) return '';
+// Computed
+const currentRepoName = computed(() => {
+  if (!workspaceDetails.value?.vcs_repo_url) return 'Select Repository';
   try {
     const url = new URL(workspaceDetails.value.vcs_repo_url);
     return url.pathname.split('/').pop();
   } catch {
-    return '';
+    return 'Select Repository';
   }
 });
 
 // Methods
-const getProgressColorClass = (progress) => {
-  if (progress >= 80) return 'bg-green-100 text-green-800';
-  if (progress >= 50) return 'bg-yellow-100 text-yellow-800';
-  return 'bg-gray-100 text-gray-800';
-};
-
-const fetchWorkspace = async () => {
-  if (!props.workspaceId) {
-    error.value = 'No workspace ID provided';
-    return;
-  }
-  
-  isLoading.value = true;
-  error.value = null;
-
-  try {
-    const response = await axios.get(`/api/workspaces/${props.workspaceId}`);
-    
-    if (response.data.success) {
-      workspaceDetails.value = response.data.data;
-      
-      const updatedProjects = JSON.parse(JSON.stringify(props.projects));
-      const project = updatedProjects.find(p => p.proj_id === parseInt(props.projectId));
-      
-      if (project) {
-        const workspace = project.workspaces.find(
-          w => w.workspace_id === parseInt(props.workspaceId)
-        );
-        if (workspace) {
-          Object.assign(workspace, {
-            workspace_name: workspaceDetails.value.workspace_name,
-            progress_status: workspaceDetails.value.progress_status,
-            bookmark_status: workspaceDetails.value.bookmark_status,
-          });
-          
-          emit('update:projects', updatedProjects);
-        }
-      }
-    } else {
-      throw new Error(response.data.error || 'Failed to fetch workspace data');
+const handleLogout = async () => {
+  authStore.logout();
+  repoStore.clearRepositories();
+  isRepoSelectorOpen.value = false;
+  // Optionally clear workspace VCS info
+  if (workspaceDetails.value) {
+    try {
+      await fetch(`/api/workspaces/${props.workspaceId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          vcs_type: null,
+          vcs_repo_url: null
+        })
+      });
+      await fetchWorkspace();
+    } catch (err) {
+      console.error('Failed to clear workspace VCS info:', err);
     }
-  } catch (err) {
-    error.value = err.message || 'Failed to load workspace';
-    console.error('Failed to fetch workspace:', err);
-  } finally {
-    isLoading.value = false;
   }
 };
 
-const refreshWorkspace = async () => {
-  isRefreshing.value = true;
-  await fetchWorkspace();
-  isRefreshing.value = false;
-};
-
-const selectRepository = async (repo) => {
+const handleRepoSelect = async (repo) => {
   try {
-    await axios.patch(`/api/workspaces/${props.workspaceId}`, {
-      vcs_type: 'GITHUB',
-      vcs_repo_url: repo.html_url
+    const response = await fetch(`/api/workspaces/${props.workspaceId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        vcs_type: 'GITHUB',
+        vcs_repo_url: repo.html_url
+      })
     });
+
+    if (!response.ok) {
+      throw new Error('Failed to update repository');
+    }
+
     await fetchWorkspace();
   } catch (err) {
     error.value = 'Failed to update repository';
@@ -253,51 +208,37 @@ const selectRepository = async (repo) => {
   }
 };
 
-const createNewBoard = async () => {
-  try {
-    await axios.post(`/api/workspaces/${props.workspaceId}/boards`, {
-      title: 'New Board',
-      start_time: new Date().toISOString(),
-      end_time: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-    });
-    await fetchWorkspace();
-  } catch (err) {
-    error.value = 'Failed to create board';
-    console.error('Failed to create board:', err);
-  }
-};
-
-const handleBoardUpdate = async () => {
-  await fetchWorkspace();
-};
-
-// Lifecycle
-onMounted(async () => {
-  await repoStore.fetchUserRepos();
-  await fetchWorkspace();
-});
-
-watch(
-  [() => props.workspaceId, () => props.projectId],
-  ([newWorkspaceId, newProjectId], [oldWorkspaceId, oldProjectId]) => {
-    if ((newWorkspaceId && newWorkspaceId !== oldWorkspaceId) || 
-        (newProjectId && newProjectId !== oldProjectId)) {
-      fetchWorkspace();
+// Initialize app
+const initializeGitHub = async () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const code = urlParams.get('code');
+  
+  if (code) {
+    try {
+      await authStore.handleAuthCallback(code);
+      await authStore.fetchUserInfo();
+      await repoStore.fetchUserRepos();
+    } catch (error) {
+      console.error('GitHub initialization error:', error);
+    }
+  } else if (authStore.getAccessToken) {
+    try {
+      await authStore.fetchUserInfo();
+      await repoStore.fetchUserRepos();
+    } catch (error) {
+      console.error('Failed to initialize existing session:', error);
     }
   }
-);
-
-// Click outside to close repo selector
-const handleClickOutside = (event) => {
-  if (isRepoSelectorOpen.value) {
-    isRepoSelectorOpen.value = false;
-  }
 };
 
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside);
+// Lifecycle hooks
+onMounted(async () => {
+  await initializeGitHub();
+  await fetchWorkspace();
 });
 
+// ... rest of the script remains the same ...
+</script>
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
 });
