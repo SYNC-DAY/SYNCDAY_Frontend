@@ -9,6 +9,10 @@ const route = useRoute();
 
 const currentRoute = computed(() => route.path);
 const { onMenuToggle, toggleDarkMode, isDarkTheme } = useLayout();
+
+const isRouteActive = (routeName) => {
+    return route.path.includes(`/${routeName}`);
+};
 </script>
 
 <template>
@@ -29,7 +33,17 @@ const { onMenuToggle, toggleDarkMode, isDarkTheme } = useLayout();
 
         <!-- tabs -->
         <div class="layout-topbar-tabs">
-            <RouterLink to="/team" class="tab-link" :class="{ active: route.path.startsWith('/team') }" />
+            <RouterLink to="/calendar" class="tab-link" :class="{ active: isRouteActive('calendar') }">
+                <span>캘린더</span>
+            </RouterLink>
+
+            <RouterLink to="/team" class="tab-link" :class="{ active: isRouteActive('team') }">
+                <span>팀</span>
+            </RouterLink>
+
+            <RouterLink to="/project" class="tab-link" :class="{ active: isRouteActive('project') }">
+                <span>프로젝트</span>
+            </RouterLink>
         </div>
 
         <div class="layout-topbar-actions">
