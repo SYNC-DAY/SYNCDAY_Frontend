@@ -33,12 +33,29 @@
             <InputText placeholder="Search" type="text" :model="searchInput" />
         </div>
 
+        <!-- 아이콘, 프로필 -->
         <div class="layout-topbar-actions">
             <div class="layout-config-menu">
                 <button type="button" class="layout-topbar-action" @click="toggleDarkMode">
                     <i :class="['pi', { 'pi-moon': isDarkTheme, 'pi-sun': !isDarkTheme }]"></i>
                 </button>
-                <div class="relative">
+
+                <!-- 회의실 예약 -->
+                <button type="button" class="layout-topbar-action">
+                    <i class="pi pi-calendar"></i>
+                </button>
+
+                <!-- 디엠 -->
+                <button type="button" class="layout-topbar-action">
+                    <i class="pi pi-send"></i>
+                </button>
+
+                <!-- 알림 -->
+                <button type="button" class="layout-topbar-action">
+                    <i class="pi pi-inbox"></i>
+                </button>
+
+                <!-- <div class="relative">
                     <button
                         v-styleclass="{ selector: '@next', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: true }"
                         type="button"
@@ -47,19 +64,19 @@
                         <i class="pi pi-palette"></i>
                     </button>
                     <AppConfigurator />
-                </div>
+                </div> -->
             </div>
 
-            <button
+            <!-- <button
                 class="layout-topbar-menu-button layout-topbar-action"
                 v-styleclass="{ selector: '@next', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: true }"
             >
                 <i class="pi pi-ellipsis-v"></i>
-            </button>
+            </button> -->
 
             <div class="layout-topbar-menu hidden lg:block">
                 <div class="layout-topbar-menu-content">
-                    <button type="button" class="layout-topbar-action">
+                    <!-- <button type="button" class="layout-topbar-action">
                         <i class="pi pi-calendar"></i>
                         <span>Calendar</span>
                     </button>
@@ -70,7 +87,7 @@
                     <button type="button" class="layout-topbar-action">
                         <i class="pi pi-user"></i>
                         <span>Profile</span>
-                    </button>
+                    </button> -->
                 </div>
             </div>
         </div>
@@ -82,7 +99,6 @@ import { useLayout } from '@/layout/composables/layout';
 import InputText from 'primevue/inputtext';
 import { computed, ref } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
-import AppConfigurator from './AppConfigurator.vue';
 
 const searchInput = ref('');
 
