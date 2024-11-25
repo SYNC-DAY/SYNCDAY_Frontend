@@ -5,6 +5,7 @@ import { useAuthStore } from "../stores/auth.js"
 // 각 도메인별 라우트 import
 import userRoutes from './user.js'
 import projectRoutes from './project.js'
+import calendarRoutes from './calendar.js'
 
 export async function setupRouter() {
   const router = createRouter({
@@ -18,13 +19,18 @@ export async function setupRouter() {
       },
       ...userRoutes,
       ...projectRoutes,
+      ...calendarRoutes,
     ],
   })
 
   router.beforeEach(async (to, from, next) => {
     const authStore = useAuthStore()
-    // console.log('라우터 가드 시작 - 이동할 경로:', to.path)
-    // console.log('현재 인증 상태:', authStore.isAuthenticated)
+    console.log('라우터 가드 시작 - 이동할 경로:', to.path)
+    console.log('현재 인증 상태:', authStore.isAuthenticated)
+
+    if (!authStore.isAuthenticated) {
+      await authStore.initializeAuth()
+    }
 
     console.log('🚦 Router Navigation Start:', {
       to: {

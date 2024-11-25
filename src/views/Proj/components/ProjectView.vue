@@ -36,10 +36,6 @@
 	projectId: {
 	  type: [String, Number],
 	  required: true
-	},
-	projects: {
-	  type: Array,
-	  required: true
 	}
   });
   

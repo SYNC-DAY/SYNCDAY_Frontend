@@ -56,7 +56,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, watch } from 'vue';
+import { ref, onMounted, nextTick, watch, provide } from 'vue';
 import { useAuthStore } from "@/stores/auth.js";
 import { storeToRefs } from "pinia";
 import { useRouter } from 'vue-router';
@@ -72,6 +72,10 @@ const { user } = storeToRefs(authStore);
 
 // State
 const projects = ref([]);
+const workspaces = ref([]);
+provide('projects', projects);
+provide('workspaces', workspaces);
+
 const activeWorkspace = ref(null);
 const activeProject = ref(null);
 const expandedProjects = ref([]);
@@ -135,9 +139,12 @@ const handleBookmarkChange = async (projId, isBookmarked) => {
       bookmark_status: isBookmarked ? 'BOOKMARKED' : 'UNBOOKMARKED'
     });
     
-    const proj = projects.value.find(p => p.proj_id === projId);
-    if (proj) {
-      proj.bookmark_status = isBookmarked ? 'BOOKMARKED' : 'UNBOOKMARKED';
+    const projIndex = projects.value.findIndex(p => p.proj_id === projId);
+    if (projIndex !== -1) {
+      projects.value[projIndex] = {
+        ...projects.value[projIndex],
+        bookmark_status: isBookmarked ? 'BOOKMARKED' : 'UNBOOKMARKED'
+      };
     }
   } catch (err) {
     console.error('Failed to update bookmark status:', err);
@@ -150,14 +157,41 @@ const handleWorkspaceBookmark = async (workspaceId, isBookmarked) => {
       bookmark_status: isBookmarked ? 'BOOKMARKED' : 'UNBOOKMARKED'
     });
     
-    projects.value.forEach(proj => {
-      const workspace = proj.workspaces.find(ws => ws.workspace_id === workspaceId);
-      if (workspace) {
-        workspace.bookmark_status = isBookmarked ? 'BOOKMARKED' : 'UNBOOKMARKED';
-      }
-    });
+    // Update workspace in both workspaces ref and projects ref
+    const wsIndex = workspaces.value.findIndex(w => w.workspace_id === workspaceId);
+    if (wsIndex !== -1) {
+      workspaces.value[wsIndex] = {
+        ...workspaces.value[wsIndex],
+        bookmark_status: isBookmarked ? 'BOOKMARKED' : 'UNBOOKMARKED'
+      };
+    }
+
+    projects.value = projects.value.map(proj => ({
+      ...proj,
+      workspaces: proj.workspaces.map(ws => 
+        ws.workspace_id === workspaceId
+          ? { ...ws, bookmark_status: isBookmarked ? 'BOOKMARKED' : 'UNBOOKMARKED' }
+          : ws
+      )
+    }));
   } catch (err) {
     console.error('Failed to update workspace bookmark:', err);
+  }
+};
+
+const updateWorkspaces = (projectWorkspaces) => {
+  if (Array.isArray(projectWorkspaces)) {
+    // Update workspaces ref with the new workspace data
+    const updatedWorkspaces = [...workspaces.value];
+    projectWorkspaces.forEach(ws => {
+      const index = updatedWorkspaces.findIndex(w => w.workspace_id === ws.workspace_id);
+      if (index !== -1) {
+        updatedWorkspaces[index] = { ...ws };
+      } else {
+        updatedWorkspaces.push({ ...ws });
+      }
+    });
+    workspaces.value = updatedWorkspaces;
   }
 };
 
@@ -166,6 +200,14 @@ const fetchProjs = async () => {
     const response = await axios.get(`/projs/users/${user.value.userId}`);
     if (response.data.success) {
       projects.value = response.data.data;
+      // Extract and flatten all workspaces from projects
+      const allWorkspaces = projects.value.reduce((acc, proj) => {
+        return acc.concat(proj.workspaces.map(ws => ({
+          ...ws,
+          project_id: proj.proj_id
+        })));
+      }, []);
+      workspaces.value = allWorkspaces;
     } else {
       throw new Error(response.data.error || 'Failed to fetch Projects');
     }
@@ -175,7 +217,6 @@ const fetchProjs = async () => {
   }
 };
 
-// New method for project creation
 const createProject = async () => {
   if (!newProjectName.value.trim()) {
     return;
@@ -188,27 +229,19 @@ const createProject = async () => {
     });
 
     if (response.data.success) {
-      // Create a properly structured new project object
       const newProject = {
         proj_id: response.data.data.proj_id,
         proj_name: response.data.data.proj_name,
         bookmark_status: 'UNBOOKMARKED',
         progress_status: 'NOT_STARTED',
         workspaces: [],
-        ...response.data.data  // Preserve any additional fields from the response
+        ...response.data.data
       };
 
-      // Add the new project while preserving existing projects
       projects.value = [...projects.value, newProject];
-      
-      // Reset the input state
       newProjectName.value = '';
       showNewProjectInput.value = false;
-
-      // Optionally expand the new project
       expandedProjects.value.push(newProject.proj_id);
-      
-      // Optionally select the new project
       await selectProject(newProject.proj_id);
     } else {
       throw new Error(response.data.error || 'Failed to create project');
@@ -219,18 +252,49 @@ const createProject = async () => {
   }
 };
 
+const createWorkspace = async (projectId, workspaceName) => {
+  try {
+    const response = await axios.post('/workspaces', {
+      workspace_name: workspaceName.trim(),
+      proj_id: projectId
+    });
+
+    if (response.data.success) {
+      const newWorkspace = {
+        workspace_id: response.data.data.workspace_id,
+        workspace_name: response.data.data.workspace_name,
+        project_id: projectId,
+        progress_status: 0,
+        bookmark_status: 'UNBOOKMARKED',
+        ...response.data.data
+      };
+
+      // Update workspaces ref
+      workspaces.value = [...workspaces.value, newWorkspace];
+
+      // Update projects ref
+      const projectIndex = projects.value.findIndex(p => p.proj_id === projectId);
+      if (projectIndex !== -1) {
+        projects.value[projectIndex] = {
+          ...projects.value[projectIndex],
+          workspaces: [...projects.value[projectIndex].workspaces, newWorkspace]
+        };
+      }
+
+      return newWorkspace;
+    }
+    throw new Error(response.data.error || 'Failed to create workspace');
+  } catch (err) {
+    console.error('Failed to create workspace:', err);
+    throw err;
+  }
+};
+
 const cancelNewProject = () => {
   showNewProjectInput.value = false;
   newProjectName.value = '';
 };
 
-const updateProjects = (newProjects) => {
-  if (Array.isArray(newProjects)) {
-    projects.value = newProjects;
-  }
-};
-
-// Watch for showNewProjectInput changes to focus the input
 watch(showNewProjectInput, async (newVal) => {
   if (newVal) {
     await nextTick();
@@ -238,11 +302,11 @@ watch(showNewProjectInput, async (newVal) => {
   }
 });
 
-// Lifecycle
 onMounted(() => {
   fetchProjs();
 });
 </script>
+
 
 <style scoped>
 .proj-main {

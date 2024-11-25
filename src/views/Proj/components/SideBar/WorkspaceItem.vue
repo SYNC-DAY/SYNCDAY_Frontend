@@ -1,4 +1,3 @@
-// WorkspaceItem.vue
 <template>
   <div 
     class="workspace-item" 
@@ -55,7 +54,7 @@ const props = defineProps({
     type: Number,
     required: true
   },
-  projectId: {
+  projectId: {  // Changed from projId to projectId
     type: Number,
     required: true
   }
