@@ -31,25 +31,49 @@
 			</ul>
 		</div>
 
-		<!-- search -->
-		<div class="nav-search">
-			<input type="search" placeholder="검색어를 입력하세요">
-		</div>
+    <!-- search 부분 수정 -->
+    <div class="nav-search">
+      <input
+          type="text"
+          v-model="searchQuery"
+          @input="handleInput"
+          placeholder="검색어를 입력하세요"
+      >
+      <!-- 검색 결과 드롭다운 -->
+      <div v-if="searchResults.length > 0" class="search-results">
+        <div
+            v-for="user in searchResults"
+            :key="user.userId"
+            class="search-result-item"
+            @click="handleUserSelect(user)"
+        >
+          <img
+              :src="user.profileImage || '/default-avatar.png'"
+              alt="Profile"
+              class="search-result-profile"
+          >
+          <div class="search-result-info">
+            <span class="search-result-name">{{ user.name }}</span>
+            <span class="search-result-team">{{ user.teamName }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
-		<!-- icon,profile -->
+    <!-- icon,profile -->
 		<div class="nav-right">
 			<!-- icons -->
-			<div class="icons">
-				<RouterLink to="/meetingroom">
-					<img src="@/assets/images/meetingroom.svg" alt="회의실 예약" class="icon-img" />
-				</RouterLink>
-				<RouterLink to="chat">
-					<img src="@/assets/images/dm.svg" alt="채팅" class="icon-img" />
-				</RouterLink>
-				<RouterLink to="alarm">
-					<img src="@/assets/images/alarm.svg" alt="알림" class="icon-img" />
-				</RouterLink>
-			</div>
+      <div class="icons">
+        <RouterLink to="/meetingroom">
+          <img src="@/assets/images/meetingroom.svg" alt="회의실 예약" class="icon-img" />
+        </RouterLink>
+        <div @click="toggleChatList" class="icon-img">
+          <img src="@/assets/images/dm.svg" alt="채팅" />
+        </div>
+        <RouterLink to="alarm">
+          <img src="@/assets/images/alarm.svg" alt="알림" class="icon-img" />
+        </RouterLink>
+      </div>
 
 			<!-- profile -->
 			<div class="profile" @click="toggleDropdown" ref="profileRef">
@@ -68,7 +92,9 @@
 					</div>
 				</div>
 			</div>
-		</div>
+
+</div>
+    <ChatList v-if="isVisible" :isVisible="isVisible" @update:isVisible="isVisible = $event" />
 	</nav>
 </template>
 
@@ -76,11 +102,16 @@
 import { RouterLink, useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth.js';
 import { ref, onMounted, onUnmounted, computed } from 'vue';
-
+import { debounce } from 'lodash';  // debounce 사용을 위해 lodash 추가
+import ChatList from '@/views/chat/ChatList.vue';
+import axios from "axios";
+const isVisible = ref(false);
 const router = useRouter();
 const route = useRoute();
 const isDropdownOpen = ref(false);
 const profileRef = ref(null);
+const searchQuery = ref('');
+const searchResults = ref([]);
 const authStore = useAuthStore();
 
 // 현재 라우트 경로 계산
@@ -91,11 +122,9 @@ const toggleDropdown = () => {
 	isDropdownOpen.value = !isDropdownOpen.value;
 };
 
-// 드롭다운 외부 클릭 시 닫기
-const handleClickOutside = (event) => {
-	if (profileRef.value && !profileRef.value.contains(event.target)) {
-		isDropdownOpen.value = false;
-	}
+// 채팅 팝업
+const toggleChatList = () => {
+  isVisible.value = !isVisible.value;
 };
 
 // 로그아웃 처리
@@ -106,6 +135,43 @@ const handleLogout = async () => {
 	} catch (error) {
 		console.error('Logout failed:', error);
 	}
+};
+
+const fetchSearchResults = async (query) => {
+  if (!query.trim()) {
+    searchResults.value = [];
+    return;
+  }
+
+  try {
+    const response = await axios.get(`/user/search?keyword=${query}`);
+    searchResults.value = response.data.data;
+  } catch (error) {
+    console.error('Search failed:', error);
+    searchResults.value = [];
+  }
+};
+
+const debouncedFetchSearchResults = debounce(fetchSearchResults, 200);
+
+const handleInput = (event) => {
+  debouncedFetchSearchResults(event.target.value);
+};
+
+// 검색 결과 항목 클릭 핸들러
+const handleUserSelect = (user) => {
+  // 여기서 선택된 유저에 대한 처리
+  // 예: 채팅방으로 이동 또는 프로필 보기 등
+  searchQuery.value = '';  // 검색어 초기화
+  searchResults.value = [];  // 결과 목록 초기화
+};
+
+// 검색 결과 외부 클릭 시 닫기
+const handleClickOutside = (event) => {
+  const searchContainer = document.querySelector('.nav-search');
+  if (searchContainer && !searchContainer.contains(event.target)) {
+    searchResults.value = [];
+  }
 };
 
 onMounted(() => {

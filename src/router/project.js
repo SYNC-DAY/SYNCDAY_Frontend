@@ -1,5 +1,4 @@
 // router/index.js
-import { createRouter, createWebHistory } from 'vue-router'
 import ProjMainPage from '@/views/Proj/ProjMainPage.vue'
 import ProjectView from '@/views/Proj/components/ProjectView.vue'
 import WorkspaceView from '@/views/Proj/components/WorkspaceView.vue'

@@ -20,7 +20,6 @@ async function setupApp() {
     const router = await setupRouter()
     app.use(router)
 
-    // 4. 앱 마운트
     app.mount('#app')
 }
 

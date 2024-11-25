@@ -76,7 +76,7 @@ onMounted(() => {
 <style scoped>
 
 .profile-page {
-  max-width: 120rem;
+  max-width: 70rem;
   margin: 0 auto;
   padding: 0rem 2rem;
   min-height: 200vh;
@@ -87,16 +87,16 @@ onMounted(() => {
 
 .my-page-title {
   margin: 1rem 0;
-  font-size: 3rem;
+  font-size: 2.5rem;
   font-weight: bold;
   color: #333;
   width: 100%;          /* 추가 */
-  max-width: 100rem;     /* password-card와 동일한 max-width */
+  max-width: 70rem;     /* password-card와 동일한 max-width */
 }
 
 .profile-card {
   max-width: 100rem;
-  height: 70rem;
+  height: 50rem;
   width: 100%;
   background: white;
   border-radius: 3rem;
@@ -105,7 +105,7 @@ onMounted(() => {
 }
 
 .gradient-banner {
-  height: 25rem;
+  height: 17rem;
   background: linear-gradient(to right, #FFD5B8, #FF8FB3);
 }
 
@@ -118,9 +118,9 @@ onMounted(() => {
 
 .left-section {
   flex: 1;
-  max-width: 30rem;
+  max-width: 20rem;
   text-align: center;
-  margin-top: 4rem;
+  margin-top: 7rem;
 }
 
 .right-section {
@@ -131,7 +131,7 @@ onMounted(() => {
 }
 
 .role-tag {
-  max-width: 18rem;
+  max-width: 15rem;
   width: 100%;
   display: flex;
   align-items: center;
@@ -141,8 +141,8 @@ onMounted(() => {
 }
 
 .profile-photo {
-  width: 18rem;
-  height: 18rem;
+  width: 12rem;
+  height: 12rem;
   border: solid #D1D1D1 0.3rem;
   border-radius: 50%;
   border: 0.7rem solid white;
@@ -150,9 +150,8 @@ onMounted(() => {
 }
 
 .username {
-  font-size: 2.3rem;
+  font-size: 2rem;
   font-weight: bold;
-  margin-bottom: 2rem;
   margin-top: 1rem;
 }
 
@@ -163,7 +162,7 @@ onMounted(() => {
 
 .role {
   color: #A7A7A7;
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: bold;
   margin-bottom: 1.7rem;
 }
@@ -179,7 +178,7 @@ onMounted(() => {
   padding: 1rem 1.5rem;
   background: white;
   cursor: pointer;
-  font-size: 1.8rem;
+  font-size: 1.2rem;
   font-weight: bold;
   transition: all 0.2s;
 }
@@ -191,9 +190,9 @@ onMounted(() => {
 
 .github-section {
   border: 0.2rem solid #D1D1D1;
-  max-width: 53rem;
+  max-width: 50rem;
   width: 85%;
-  height: 7rem;
+  height: 5rem;
   border-radius: 2rem;
   display: flex;
   justify-content: center;
@@ -207,8 +206,8 @@ onMounted(() => {
 }
 
 .github-icon {
-  width: 5rem;
-  height: 5rem;
+  width: 3.5rem;
+  height: 3.5rem;
 }
 
 .github-id {
@@ -234,8 +233,8 @@ onMounted(() => {
   font-size: 1.8rem;
   border: 0.2rem solid #D1D1D1;
   font-weight: bold;
-  max-width: 53rem;
-  height: 7rem;
+  max-width: 50rem;
+  height: 5rem;
   width: 85%;
   border-radius: 2rem;
   margin-bottom: 1rem;

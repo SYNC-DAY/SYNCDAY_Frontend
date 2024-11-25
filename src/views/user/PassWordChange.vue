@@ -272,7 +272,7 @@
 
   .my-page-title {
     margin: 1rem 0;
-    font-size: 3rem;
+    font-size: 2.5rem;
     font-weight: bold;
     color: #333;
     width: 100%;          /* 추가 */
@@ -281,7 +281,7 @@
 
 
   .password-change-page {
-    max-width: 120rem;
+    max-width: 70rem;
     margin: 0 auto;
     padding: 0 2rem;
     min-height:200vh;
@@ -297,8 +297,8 @@
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     width: 100%;          /* 980px에서 100%로 변경 */
-    max-width: 100rem;     /* 최대 너비 설정 */
-    height: 70rem;
+    max-width: 70rem;     /* 최대 너비 설정 */
+    height: 50rem;
 }
 
   .split-container {
