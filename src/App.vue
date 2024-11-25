@@ -5,14 +5,13 @@
     <Navigation v-if="!isLoginPage && authStore.isInitialized && authStore.user" />
     
     <!-- VCS Modal at App level -->
-    <VCSConnectModal 
-      v-if="showVCSModal" 
-      :isOpen="showVCSModal"
-      :projectId="currentProjectId"
-      @close="closeVCSModal"
-      @update:project="handleProjectUpdate"
-    />
-
+    <!-- In your Project view -->
+    <VCSConnectModal
+  :is-open="showVCSModal"
+  :project-id="projectId"
+  @close="showVCSModal = false"
+  @update:project="handleProjectUpdate"
+/>
     <!-- OAuth Callback Handler -->
     <div v-if="isHandlingCallback" class="callback-overlay">
       Connecting to GitHub...

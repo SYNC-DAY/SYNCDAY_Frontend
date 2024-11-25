@@ -2,31 +2,31 @@
 	<div v-if="isOpen" class="modal-overlay">
 	  <div class="modal-container">
 		<div class="modal-header">
-		  <h3>Connect Organization Repository</h3>
+		  <h3>Connect GitHub Organization</h3>
 		  <button class="close-button" @click="handleClose">×</button>
 		</div>
   
 		<!-- Error Display -->
-		<div v-if="authStore.hasError || orgStore.hasError" class="error-message">
-		  {{ authStore.error || orgStore.error }}
-		  <button class="dismiss-button" @click="clearErrors">Dismiss</button>
+		<div v-if="error" class="error-message">
+		  {{ error }}
+		  <button class="dismiss-button" @click="error = null">Dismiss</button>
 		</div>
   
 		<!-- Loading State -->
-		<div v-if="authStore.isLoading || orgStore.isLoading" class="modal-content-center">
+		<div v-if="isLoading" class="modal-content-center">
 		  <div class="loading-spinner"></div>
-		  <p>Loading...</p>
+		  <p>Loading organizations...</p>
 		</div>
   
 		<!-- Main Content -->
 		<div v-else class="modal-content">
 		  <!-- Login State -->
 		  <div v-if="!authStore.isAuthenticated">
-			<p class="description">Connect your GitHub account to access organization repositories</p>
+			<p class="description">Connect your GitHub account to access organizations</p>
 			<button 
 			  class="github-button"
 			  @click="authStore.loginWithGithub"
-			  :disabled="authStore.isLoading"
+			  :disabled="isLoading"
 			>
 			  <svg height="20" viewBox="0 0 16 16" width="20" class="github-icon">
 				<path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" fill="currentColor"></path>
@@ -35,9 +35,8 @@
 			</button>
 		  </div>
   
-		  <!-- Organization and Repository Selection -->
+		  <!-- Organization Selection -->
 		  <div v-else>
-			<!-- User Info -->
 			<div class="user-info">
 			  <img :src="authStore.avatarUrl" :alt="authStore.username" class="avatar">
 			  <div class="user-details">
@@ -46,8 +45,6 @@
 			  </div>
 			</div>
   
-			<!-- Organization Selection -->
-			<div class="section-title">Select Organization</div>
 			<div class="org-list">
 			  <div
 				v-for="org in orgStore.allOrganizations"
@@ -58,39 +55,8 @@
 			  >
 				<img :src="org.avatar_url" :alt="org.login" class="org-avatar">
 				<div class="org-details">
-				  <div class="org-name">{{ org.name || org.login }}</div>
-				  <div class="org-description">{{ org.description || 'No description' }}</div>
-				</div>
-			  </div>
-			</div>
-  
-			<!-- Repository Selection -->
-			<div v-if="selectedOrg" class="repository-section">
-			  <div class="section-title">Select Repository</div>
-			  <div class="search-container">
-				<input
-				  type="text"
-				  v-model="searchQuery"
-				  placeholder="Search repositories..."
-				  class="search-input"
-				/>
-			  </div>
-  
-			  <div class="repo-list">
-				<div
-				  v-for="repo in filteredRepositories"
-				  :key="repo.id"
-				  class="repo-item"
-				  :class="{ active: selectedRepo?.id === repo.id }"
-				  @click="selectRepository(repo)"
-				>
-				  <div class="repo-name">{{ repo.name }}</div>
-				  <div class="repo-description">{{ repo.description || 'No description' }}</div>
-				  <div class="repo-meta">
-					<span class="repo-visibility">{{ repo.private ? 'Private' : 'Public' }}</span>
-					<span class="repo-separator">•</span>
-					<span class="repo-updated">Updated {{ formatDate(repo.updated_at) }}</span>
-				  </div>
+				  <div class="org-name">{{ org.login }}</div>
+				  <div class="org-description">{{ org.description || 'No description available' }}</div>
 				</div>
 			  </div>
 			</div>
@@ -101,199 +67,117 @@
 			  <button 
 				class="primary-button" 
 				@click="confirmSelection"
-				:disabled="!selectedRepo || isConnecting"
+				:disabled="!selectedOrg || isConnecting"
 			  >
-				{{ isConnecting ? 'Connecting...' : 'Connect Repository' }}
+				{{ isConnecting ? 'Connecting...' : 'Connect Organization' }}
 			  </button>
 			</div>
 		  </div>
 		</div>
 	  </div>
 	</div>
-  </template>
+</template>
   
-
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore'
-import { useGithubRepoStore } from '@/stores/github/useGithubRepoStore'
-import { useGithubOrgStore } from '@/stores/github/useGithubOrgStore'; 
-import axios from 'axios'
+  import { ref, onMounted } from 'vue';
+  import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
+  import { useGithubOrgStore } from '@/stores/github/useGithubOrgStore';
   
-const props = defineProps({
+  const props = defineProps({
 	isOpen: Boolean,
 	projectId: {
 	  type: [String, Number],
 	  required: true
 	}
-  })
+  });
   
-const emit = defineEmits(['close', 'update:project'])
+  const emit = defineEmits(['close', 'update:project']);
   
-  // Stores
-  const authStore = useGithubAuthStore()
+  const authStore = useGithubAuthStore();
   const orgStore = useGithubOrgStore();
-  const repoStore = useGithubRepoStore();
   
-  // State
-// State
-const searchQuery = ref('');
-const selectedOrg = ref(null);
-const selectedRepo = ref(null);
-const isConnecting = ref(false);
+  const selectedOrg = ref(null);
+  const error = ref(null);
+  const isConnecting = ref(false);
+  const isLoading = ref(false);
   
-// Computed
-const filteredRepositories = computed(() => {
-  if (!selectedOrg.value) return [];
-  const repos = orgStore.getOrgRepositories(selectedOrg.value.login);
-  if (!searchQuery.value) return repos;
+  const handleLogout = () => {
+	authStore.logout();
+	orgStore.clearState();
+	selectedOrg.value = null;
+  };
   
-  const query = searchQuery.value.toLowerCase();
-  return repos.filter(repo => 
-    repo.name.toLowerCase().includes(query) || 
-    (repo.description && repo.description.toLowerCase().includes(query))
-  );
-});
-
-// Methods
-const clearErrors = () => {
-  authStore.clearError();
-  orgStore.clearError();
-};
-
-const handleLogout = () => {
-  authStore.logout();
-  orgStore.clearState();
-  selectedOrg.value = null;
-  selectedRepo.value = null;
-};
-
-const selectOrganization = async (org) => {
-  selectedOrg.value = org;
-  selectedRepo.value = null;
-  await orgStore.fetchOrgRepositories(org.login);
-};
-
-const selectRepository = (repo) => {
-  selectedRepo.value = repo;
-};
-
-const handleClose = () => {
-  selectedOrg.value = null;
-  selectedRepo.value = null;
-  searchQuery.value = '';
-  isConnecting.value = false;
-  clearErrors();
-  emit('close');
-};
-
-const formatDate = (dateString) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffTime = Math.abs(now - date);
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 1) return 'yesterday';
-  if (diffDays < 30) return `${diffDays} days ago`;
-  if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-  return `${Math.floor(diffDays / 365)} years ago`;
-};
-
-const confirmSelection = async () => {
-  if (!selectedRepo.value) return;
-
-  try {
-    isConnecting.value = true;
-    const response = await axios.patch(`/api/proj/${props.projectId}`, {
-      vcs_type: 'GITHUB',
-      vcs_proj_url: selectedRepo.value.html_url
-    });
-
-    if (response.data.success) {
-      emit('update:project', response.data.data);
-      handleClose();
-    }
-  } catch (error) {
-    orgStore.error = 'Failed to connect repository. Please try again.';
-  } finally {
-    isConnecting.value = false;
-  }
-};
-
-// Initialize
-onMounted(async () => {
-  if (authStore.isAuthenticated) {
-    try {
-      await orgStore.fetchOrganizations();
-    } catch (error) {
-      console.error('Failed to fetch organizations:', error);
-    }
-  }
-});
+  const selectOrganization = (org) => {
+	selectedOrg.value = org;
+  };
   
+  const handleClose = () => {
+	selectedOrg.value = null;
+	error.value = null;
+	isConnecting.value = false;
+	emit('close');
+  };
+  
+  const confirmSelection = async () => {
+	if (!selectedOrg.value) return;
+  
+	try {
+	  isConnecting.value = true;
+	  const response = await fetch(`/api/proj/${props.projectId}`, {
+		method: 'PATCH',
+		headers: {
+		  'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({
+		  vcs_type: 'GITHUB',
+		  vcs_proj_url: `https://github.com/${selectedOrg.value.login}`
+		})
+	  });
+  
+	  if (!response.ok) {
+		throw new Error('Failed to update project');
+	  }
+  
+	  const data = await response.json();
+	  if (data.success) {
+		emit('update:project', data.data);
+		handleClose();
+	  }
+	} catch (err) {
+	  error.value = 'Failed to connect organization. Please try again.';
+	} finally {
+	  isConnecting.value = false;
+	}
+  };
+  
+  onMounted(async () => {
+	if (authStore.isAuthenticated) {
+	  try {
+		isLoading.value = true;
+		await orgStore.fetchOrganizations();
+	  } catch (err) {
+		error.value = 'Failed to fetch organizations';
+	  } finally {
+		isLoading.value = false;
+	  }
+	}
+  });
 </script>
+  <style scoped>
+  .recent-badge {
+	font-size: 0.75rem;
+	background: #3b82f6;
+	color: white;
+	padding: 0.125rem 0.375rem;
+	border-radius: 9999px;
+	margin-left: 0.5rem;
+	vertical-align: middle;
+  }
   
-<style scoped>
-.org-list {
-  margin-bottom: 1.5rem;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.org-item {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  margin-bottom: 0.5rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.org-item:hover {
-  background: #f9fafb;
-}
-
-.org-item.active {
-  border-color: #3b82f6;
-  background: #eff6ff;
-}
-
-.org-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 4px;
-  margin-right: 1rem;
-}
-
-.org-details {
-  flex: 1;
-}
-
-.org-name {
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-}
-
-.org-description {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.section-title {
-  font-weight: 600;
-  margin: 1rem 0;
-  color: #374151;
-}
-
-.repository-section {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #e5e7eb;
-}
-
-
+  .org-item.recently-used {
+	border-left: 3px solid #3b82f6;
+  }
+  
   .modal-overlay {
 	position: fixed;
 	top: 0;
@@ -347,6 +231,53 @@ onMounted(async () => {
 	border-radius: 50%;
   }
   
+  .org-list {
+	margin-bottom: 1.5rem;
+	max-height: 400px;
+	overflow-y: auto;
+  }
+  
+  .org-item {
+	display: flex;
+	align-items: center;
+	padding: 0.75rem;
+	border: 1px solid #e5e7eb;
+	border-radius: 6px;
+	margin-bottom: 0.5rem;
+	cursor: pointer;
+	transition: all 0.2s;
+  }
+  
+  .org-item:hover {
+	background: #f9fafb;
+  }
+  
+  .org-item.active {
+	border-color: #3b82f6;
+	background: #eff6ff;
+  }
+  
+  .org-avatar {
+	width: 32px;
+	height: 32px;
+	border-radius: 4px;
+	margin-right: 1rem;
+  }
+  
+  .org-details {
+	flex: 1;
+  }
+  
+  .org-name {
+	font-weight: 600;
+	margin-bottom: 0.25rem;
+  }
+  
+  .org-description {
+	font-size: 0.875rem;
+	color: #6b7280;
+  }
+  
   .github-button {
 	display: flex;
 	align-items: center;
@@ -360,58 +291,6 @@ onMounted(async () => {
 	border-radius: 6px;
 	cursor: pointer;
 	transition: background-color 0.2s;
-  }
-  
-  .github-button:hover {
-	background: #2c3137;
-  }
-  
-  .search-input {
-	width: 100%;
-	padding: 0.75rem;
-	border: 1px solid #e5e7eb;
-	border-radius: 6px;
-	margin-bottom: 1rem;
-  }
-  
-  .repo-list {
-	max-height: 300px;
-	overflow-y: auto;
-	margin-bottom: 1rem;
-  }
-  
-  .repo-item {
-	padding: 1rem;
-	border: 1px solid #e5e7eb;
-	border-radius: 6px;
-	margin-bottom: 0.5rem;
-	cursor: pointer;
-	transition: all 0.2s;
-  }
-  
-  .repo-item:hover {
-	background: #f9fafb;
-  }
-  
-  .repo-item.active {
-	border-color: #3b82f6;
-	background: #eff6ff;
-  }
-  
-  .repo-name {
-	font-weight: 600;
-	margin-bottom: 0.25rem;
-  }
-  
-  .repo-description {
-	color: #6b7280;
-	font-size: 0.875rem;
-	margin-bottom: 0.5rem;
-  }
-  
-  .repo-meta {
-	font-size: 0.75rem;
-	color: #9ca3af;
   }
   
   .modal-actions {
@@ -477,4 +356,4 @@ onMounted(async () => {
 	0% { transform: rotate(0deg); }
 	100% { transform: rotate(360deg); }
   }
-</style>
+  </style>

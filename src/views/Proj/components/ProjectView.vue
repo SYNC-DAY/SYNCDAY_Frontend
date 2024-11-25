@@ -53,12 +53,20 @@
 		</div>
 	  </div>
 	</div>
-  </template>
+
+	<!-- In your Project view -->
+<VCSConnectModal
+  :is-open="showVCSModal"
+  :project-id="projectId"
+  @close="showVCSModal = false"
+  @update:project="handleProjectUpdate"
+/>
+</template>
   
-  <script setup>
+<script setup>
   import { computed, getCurrentInstance } from 'vue';
   import { useRouter } from 'vue-router';
-  
+  import VCSConnectModal from './VCSConnectModal.vue';
   const props = defineProps({
 	projectId: {
 	  type: [String, Number],
@@ -94,9 +102,16 @@
   const goBack = () => {
 	router.back();
   };
-  </script>
+
+  // In your component
+const handleProjectUpdate = (updatedProject) => {
+  // Handle the updated project data
+  project.value = updatedProject;
+  showVCSModal.value = false;
+};
+</script>
   
-  <style scoped>
+<style scoped>
   .project-container {
 	padding: 20px;
   }
