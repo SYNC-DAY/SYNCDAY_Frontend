@@ -8,7 +8,7 @@
 			</div>
 			<div class="proj-right">
 				<div class="bookmark-section" @click.stop="toggleBookmark">
-					<i class="pi pi-bookmark" :class="{ 'boomarked': isBookmarked }"></i>
+					<i class="pi" :class="{ 'pi-bookmark': !isBookmarked, 'pi-bookmark-fill': isBookmarked }"></i>
 				</div>
 				<div class="chevron-section">
 					<i class="pi" :class="{ 'pi-chevron-down': !isExpanded, 'pi-chevron-up': isExpanded }"

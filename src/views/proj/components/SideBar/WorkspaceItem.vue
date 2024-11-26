@@ -4,7 +4,7 @@
       <span>{{ title }}</span>
     </div>
     <div class=workspace-right>
-      <i class="pi pi-star"></i>
+      <i class="pi" :class="{ 'pi-star': !initialBookmarked, 'pi-star-fill': initialBookmarked }"></i>
     </div>
   </div>
 </template>
@@ -75,5 +75,9 @@ const navigateToWorkspace = () => {
   flex-direction: row;
   align-items: center;
   justify-content: center;
+}
+
+.workspace-right i {
+  color: var(--apricot-color);
 }
 </style>
