@@ -144,8 +144,9 @@ const fetchSearchResults = async (query) => {
   }
 
   try {
-    const response = await axios.get(`/user/search?keyword=${query}`);
+    const response = await axios.get(`/projs/search?keyword=${query}`);
     searchResults.value = response.data.data;
+    console.log("searchResults", searchResults.value);
   } catch (error) {
     console.error('Search failed:', error);
     searchResults.value = [];
