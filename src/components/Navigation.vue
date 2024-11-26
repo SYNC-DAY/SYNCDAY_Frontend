@@ -39,7 +39,7 @@
 
 		<!-- search -->
 		<div class="nav-search">
-			<input type="search" placeholder="검색어를 입력하세요">
+			<InputText v-model="searchText" />
 		</div>
 
 		<!-- icon,profile -->
@@ -84,7 +84,7 @@
 import { RouterLink, useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth.js';
 import { ref, onMounted, onUnmounted, computed } from 'vue';
-
+import InputText from 'primevue/inputtext';
 import ChatPop from '@/views/chat/ChatRoomList.vue';
 
 
@@ -94,6 +94,7 @@ const route = useRoute();
 const isDropdownOpen = ref(false);
 const profileRef = ref(null);
 const authStore = useAuthStore();
+const searchText = ref("검색어를 입력하세요")
 
 // 현재 라우트 경로 계산
 const currentRoute = computed(() => route.path);
@@ -145,7 +146,7 @@ const isRouteActive = (routeName) => {
 <style scoped>
 .nav-top {
 	width: 100%;
-	height: 10vh;
+	height: 5rem;
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
@@ -265,7 +266,8 @@ input[type=search] {
 
 .profile {
 	flex: 1;
-	height: 100%;
+	width: 4rem;
+	height: 4rem;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -281,8 +283,8 @@ input[type=search] {
 }
 
 .profile-image {
-	width: 4rem;
-	height: 4rem;
+	width: 3rem;
+	height: 3rem;
 	object-fit: cover;
 }
 
@@ -291,7 +293,7 @@ input[type=search] {
 }
 
 .user-name {
-	font-size: 1rem;
+	font-size: 0.8rem;
 	text-align: center;
 	color: black;
 	cursor: pointer;

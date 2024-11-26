@@ -38,7 +38,7 @@ import { storeToRefs } from "pinia";
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 
-import SideBar from '@/components/layout/SideBar.vue';
+import SideBar from '@/components/SideBar.vue';
 import ProjItem from './components/SideBar/ProjItem.vue';
 import WorkspaceItem from './components/SideBar/WorkspaceItem.vue';
 
