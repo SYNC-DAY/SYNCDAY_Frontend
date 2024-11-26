@@ -96,7 +96,9 @@ const toggleBookmark = () => {
 	position: absolute;
 	top: -3px;
 	font-size: 2rem;
-	color: var(--pink-color)
+	color: transparent;
+	background: linear-gradient(90deg, var(--pink-color), var(--apricot-color));
+	background-clip: text;
 }
 
 .proj-header {
