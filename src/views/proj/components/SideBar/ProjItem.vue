@@ -10,7 +10,8 @@
 				<i class="pi pi-bookmark"></i>
 			</div>
 			<div class="chevron-section">
-				<i class="pi pi-chevron-down"></i>
+				<i class="pi" :class="{ 'pi-chevron-down': !isExpanded, 'pi-chevron-up': isExpanded }"
+					@click="handleExpand"></i>
 			</div>
 		</div>
 
@@ -68,9 +69,10 @@ const toggleBookmark = () => {
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
+	align-items: center;
 	border-bottom: 1px solid var(--outline-gray);
 	width: 100%;
-	height: 4rem;
+	height: 5rem;
 	overflow: hidden;
 }
 
@@ -94,6 +96,8 @@ const toggleBookmark = () => {
 	padding-left: 0.4rem;
 	height: 100%;
 	overflow-x: hidden;
+	display: flex;
+	align-items: center
 }
 
 .proj-right {
@@ -129,98 +133,5 @@ const toggleBookmark = () => {
 	bottom: 0.2rem;
 	vertical-align: bottom;
 	/* border: 1px solid black; */
-}
-
-.proj-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: flex-start;
-	padding: 0.75rem;
-	cursor: pointer;
-	position: relative;
-	transition: background-color 0.2s;
-}
-
-.proj-header:hover {
-	background-color: var(--outline-gray);
-}
-
-.proj-header.active::before {
-	content: '';
-	position: absolute;
-	left: 0;
-	top: 0;
-	height: 100%;
-	width: 3px;
-	background: linear-gradient(to bottom, #ff7eb3, #ff9f7d);
-}
-
-
-.proj-info {
-	flex-grow: 1;
-	margin-right: 0.75rem;
-}
-
-.proj-title {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	font-weight: 500;
-	margin-bottom: 0.5rem;
-}
-
-.proj-title span {
-	cursor: pointer;
-}
-
-.progress-info {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-}
-
-.progress-bar {
-	width: 100px;
-	height: 4px;
-	background-color: var(--outline-gray);
-	border-radius: 2px;
-	overflow: hidden;
-}
-
-.progress-fill {
-	height: 100%;
-	background: linear-gradient(to right, #ff7eb3, #ff9f7d);
-	transition: width 0.3s ease;
-}
-
-.progress-text {
-	font-size: 0.75rem;
-	color: var(--text-secondary);
-}
-
-.expand-icon {
-	font-size: 0.75rem;
-	transition: transform 0.2s;
-}
-
-.bookmark-btn {
-	background: none;
-	border: none;
-	padding: 0.25rem;
-	cursor: pointer;
-	color: #ccc;
-	transition: color 0.2s;
-}
-
-.star-icon {
-	font-size: 1rem;
-}
-
-.star-icon.bookmarked {
-	color: var(--apricot-color);
-}
-
-.proj-content {
-	padding: 0.5rem;
 }
 </style>
