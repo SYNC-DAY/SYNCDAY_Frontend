@@ -1,6 +1,5 @@
 <template>
 	<nav class="nav-top">
-
 		<!-- logo -->
 		<div class="nav-logo">
 			<RouterLink to="/">
@@ -12,13 +11,33 @@
 		<div class="nav-tabs">
 			<ul>
 				<li>
-					<RouterLink to="/calendar">캘린더</RouterLink>
+					<RouterLink 
+					to="/calendar" 
+					class="nav-link" 
+					:class="{ 'active': isRouteActive('calendar') }">
+						캘린더
+						<div class="underbar"></div>
+					</RouterLink>
 				</li>
+
 				<li>
-					<RouterLink to="/team">팀</RouterLink>
+					<RouterLink 
+					to="/team" 
+					class="nav-link" 
+					:class="{ 'active': isRouteActive('team') }">
+						팀
+						<div class="underbar"></div>
+					</RouterLink>
 				</li>
+
 				<li>
-					<RouterLink to="/project">프로젝트</RouterLink>
+					<RouterLink 
+					to="/project" 
+					class="nav-link" 
+					:class="{ 'active': isRouteActive('project') }">
+						프로젝트
+						<div class="underbar"></div>
+					</RouterLink>
 				</li>
 			</ul>
 		</div>
@@ -47,12 +66,12 @@
 			<div class="profile" @click="toggleDropdown" ref="profileRef">
 				<div class="profile-image-container">
 					<RouterLink to="/mypage">
-						<img :src="user.profilePhoto || '/default-avatar.png'" alt="User Profile"
+						<img :src="authStore.user.profilePhoto || '/default-avatar.png'" alt="User Profile"
 							class="profile-image" />
 					</RouterLink>
 				</div>
 				<div class="user-menu">
-					<span class="user-name">{{ user.userName }}님 ▼</span>
+					<span class="user-name">{{ authStore.user.userName }}님 ▼</span>
 					<!-- 드롭다운 메뉴 -->
 					<div v-show="isDropdownOpen" class="dropdown-menu">
 						<RouterLink to="/mypage" class="dropdown-item">마이페이지</RouterLink>
@@ -60,90 +79,83 @@
 					</div>
 				</div>
 			</div>
-
 		</div>
 	</nav>
 </template>
 
 <script setup>
-import { RouterLink, useRouter } from 'vue-router';
+import { RouterLink, useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth.js';
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import axios from "axios";
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 
 const router = useRouter();
-const authStore = useAuthStore();
+const route = useRoute();
 const isDropdownOpen = ref(false);
 const profileRef = ref(null);
-const user = ref({})
+const authStore = useAuthStore();
 
-console.log("authStore.user.user: ", authStore.user);
-onMounted(async () => {
-  try {
-    // authStore.isAuthenticated가 true라면 이미 profile 데이터가 있는 상태
-    if (authStore.isAuthenticated) {
-      user.value = authStore
-    }
-  } catch (error) {
-    console.error('Failed to fetch user data:', error)
-  }
-})
+// 현재 라우트 경로 계산
+const currentRoute = computed(() => route.path);
+
 // 드롭다운 토글
 const toggleDropdown = () => {
-  isDropdownOpen.value = !isDropdownOpen.value;
+	isDropdownOpen.value = !isDropdownOpen.value;
 };
 
 // 드롭다운 외부 클릭 시 닫기
 const handleClickOutside = (event) => {
-  if (profileRef.value && !profileRef.value.contains(event.target)) {
-    isDropdownOpen.value = false;
-  }
+	if (profileRef.value && !profileRef.value.contains(event.target)) {
+		isDropdownOpen.value = false;
+	}
 };
 
 // 로그아웃 처리
 const handleLogout = async () => {
-  try {
-    await authStore.logout();
-    router.push('/login');
-  } catch (error) {
-    console.error('Logout failed:', error);
-  }
+	try {
+		await authStore.logout();
+		router.push('/login');
+	} catch (error) {
+		console.error('Logout failed:', error);
+	}
 };
 
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside);
+	document.addEventListener('click', handleClickOutside);
 });
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside);
+	document.removeEventListener('click', handleClickOutside);
 });
-</script>
 
+const isRouteActive = (routeName) => {
+  // 경로에 routeName이 포함되어 있는지 확인
+  return route.path.includes(`/${routeName}`);
+};
+</script>
 
 <style scoped>
 .nav-top {
 	width: 100%;
 	height: 10vh;
-	background-color: white;
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
 	align-items: center;
+	padding: 0.5rem;
+	border-bottom: 1px solid var(--outline-gray);
 }
 
 .nav-top > div,
-.nav-top 
-ul,
+.nav-top ul,
 .icons {
 	height: 100%;
-	background-color: white;
 	display: flex;
 	flex-direction: row;
 	justify-content: space-around;
 	align-items: center;
 }
 
-.nav-top ul{
+.nav-top ul {
 	width: 100%;
 }
 
@@ -151,70 +163,138 @@ ul,
 	flex: 2;
 	font-weight: 700;
 }
-.nav-logo span{
-	font-size: 6rem;
-}
-.nav-tabs{
-	flex: 5;
-}
-.nav-top 
-a,
-span{
-	text-decoration: none;
+
+.nav-logo span {
 	font-size: 2rem;
 }
-.nav-search{
-	flex: 2;
-  	padding: 1rem;
+
+.nav-tabs {
+	flex: 2.5;
 }
 
-input[type=search]{
+.nav-tabs ul {
 	width: 100%;
-	height: 6rem;
-	font-size: 2rem;
-	border-radius: 2rem;
-  padding-left: 0.5rem;
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
+	height: auto;
 }
 
-.nav-right{
+.nav-link {
+	text-decoration: none;
+	font-size: 1.2rem;
+	padding: 1rem 1rem;
+	position: relative;
+	display: inline-block;
+}
+
+/* 언더바 스타일 */
+.underbar {
+	position: absolute;
+	top: -0.3 rem;
+	left: 0;
+	width: 0;
+	height: 0.8rem;
+	background: linear-gradient(90deg, var(--pink-color), var(--apricot-color));
+	transition: width 0.3s ease;
+}
+
+.nav-link.active .underbar {
+	width:100%;
+}
+
+.nav-tabs li {
+	position: relative;
+	height: auto;
+}
+
+.nav-search {
+	flex: 2.5;
+	padding: 0.5rem;
+}
+
+input[type=search] {
+	width: 15rem;
+	height: 2.4rem;
+	font-size: 1.2rem;
+	border-radius: 1.2rem;
+	padding: 0 1rem;
+}
+
+.nav-right {
 	flex: 2;
 	display: flex;
 	flex-direction: row;
 }
 
-.icons{
+.icons {
 	flex: 1;
-
-}
-.icons img{
-	height: 3rem;
 }
 
-.profile{
+.icons img {
+	height: 1.5rem;
+}
+
+.profile {
 	flex: 1;
 	height: 100%;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	position: relative;
 }
+
 .profile-image-container {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  overflow: hidden;
-  margin-bottom: 0.25rem;
+	width: 4rem;
+	height: 4rem;
+	border-radius: 50%;
+	overflow: hidden;
+	margin-bottom: 0.25rem;
 }
 
 .profile-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.user-menu {
+	position: relative;
 }
 
 .user-name {
-  font-size: 1.8rem;
-  text-align: center;
-  color: black;
+	font-size: 1rem;
+	text-align: center;
+	color: black;
+	cursor: pointer;
 }
 
+.dropdown-menu {
+	position: absolute;
+	top: 100%;
+	right: 0;
+	background: white;
+	border: 1px solid var(--outline-gray);
+	border-radius: 0.5rem;
+	padding: 0.5rem;
+	z-index: 1000;
+}
+
+.dropdown-item {
+	display: block;
+	padding: 0.5rem 1rem;
+	text-decoration: none;
+	color: black;
+	white-space: nowrap;
+	cursor: pointer;
+	border: none;
+	background: none;
+	width: 100%;
+	text-align: left;
+	font-size: 1rem;
+}
+
+.dropdown-item:hover {
+	background-color: var(--outline-gray);
+}
 </style>

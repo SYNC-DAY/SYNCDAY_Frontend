@@ -53,16 +53,28 @@ const password = ref('')
 
 const handleLogin = async () => {
   try {
-    await authStore.login(email.value, password.value)
-    const redirectPath = route.query.redirect || '/'
-    router.push(redirectPath)
+    console.log("로그인 시도 시작")
+    const success = await authStore.login(email.value, password.value)
+    console.log("로그인 결과:", success)
+    console.log("현재 인증 상태:", authStore.isAuthenticated)
+    if (success) {
+      const redirectPath = route.query.redirect || '/'
+      console.log("리다이렉트 시도:", redirectPath)
+
+      try {
+        await router.push(redirectPath)
+        console.log("리다이렉트 성공")
+      } catch (e) {
+        console.error("라우터 이동 실패:", e)
+      }
+    }
   } catch (error) {
     console.error('Login failed:', error)
   }
 }
 </script>
 
-<<style scoped>
+<style scoped>
 .login-container {
   display: flex;
   justify-content: center;
@@ -102,12 +114,12 @@ const handleLogin = async () => {
 
 .login-form-container {
   flex: 1;
-  padding: 15rem 5rem 0 5rem;
+  padding:  5rem 0 5rem;
   border-left: 1px solid #eee;
 }
 
 .login-form-container h2 {
-  font-size: 4rem;
+  font-size: 2rem;
   font-weight: bold;
   color: #333;
 }
@@ -125,12 +137,12 @@ const handleLogin = async () => {
   padding: 2rem 1rem;
   border: 1px solid #ddd;
   border-radius: 5px;
-  font-size: 3rem;
+  font-size: 2rem;
 }
 
 .login-button {
   width: 100%;
-  padding: 3rem;
+  padding: 2rem;
   background-color: #1a237e;
   color: white;
   border: none;
