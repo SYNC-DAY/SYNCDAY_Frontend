@@ -3,7 +3,7 @@
 		<!-- logo -->
 		<div class="nav-logo">
 			<RouterLink to="/">
-				<span>SyncDay</span>
+				<span>SYNCDAY</span>
 			</RouterLink>
 		</div>
 
@@ -43,10 +43,10 @@
 			<!-- icons -->
 			<div class="icons">
 				<RouterLink to="/meetingroom">
-					<img src="@/assets/images/meetingroom.svg" alt="회의실 예약" class="icon-img" />
+					<i class="pi pi-calendar"></i>
 				</RouterLink>
 				<button class="icon-button" @click="toggleChatPop">
-					<img src="@/assets/images/dm.svg" alt="채팅" class="icon-img" />
+					<i class="pi pi-send"></i>
 				</button>
 				<RouterLink to="alarm">
 					<img src="@/assets/images/alarm.svg" alt="알림" class="icon-img" />
@@ -247,8 +247,8 @@ input[type=search] {
 	cursor: pointer;
 }
 
-.icon-button img {
-	height: 1.5rem;
+.icon-button i {
+	height: 1rem;
 }
 
 .profile {
@@ -269,8 +269,8 @@ input[type=search] {
 }
 
 .profile-image {
-	width: 100%;
-	height: 100%;
+	width: 4rem;
+	height: 4rem;
 	object-fit: cover;
 }
 

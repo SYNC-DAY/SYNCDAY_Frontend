@@ -14,6 +14,7 @@ import { setupAxiosInterceptors } from "../src/plugins/axios.js";
 import { definePreset } from "@primevue/themes";
 import Aura from "@primevue/themes/aura";
 import PrimeVue from "primevue/config";
+import "primeicons/primeicons.css";
 
 /* css */
 import "@/assets/styles/syncday/main.css";
