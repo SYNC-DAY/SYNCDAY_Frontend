@@ -58,7 +58,7 @@ const navigateToWorkspace = () => {
 
 <style scoped>
 .workspace-item {
-  margin-left: 1.5rem;
+  margin-left: 3rem;
   height: 3rem;
   position: relative;
   border-bottom: 1px solid var(--outline-gray);
@@ -66,6 +66,10 @@ const navigateToWorkspace = () => {
   flex-direction: row;
   align-items: center;
 
+}
+
+.workspace-item.active {
+  font-weight: 600;
 }
 
 .workspace-right {
