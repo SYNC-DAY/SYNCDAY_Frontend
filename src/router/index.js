@@ -15,7 +15,7 @@ export async function setupRouter() {
             {
                 path: '/',
                 name: 'Home',
-                component: () => import('@/views/main.vue'),
+                component: () => import('@/views/Main.vue'),
                 meta: { requiresAuth: true }
             },
             ...userRoutes,
