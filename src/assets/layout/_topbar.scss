@@ -11,6 +11,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     .layout-topbar-logo-container {
         width: 20rem;
         display: flex;
@@ -18,6 +19,7 @@
     }
 
     .layout-topbar-logo {
+        flex: 2;
         display: inline-flex;
         align-items: center;
         font-size: 1.5rem;
@@ -36,10 +38,15 @@
     }
 
     .layout-topbar-tabs {
+        flex: 3;
         display: inline-flex;
         justify-content: space-around;
-        gap: 3rem;
+        gap: 1rem;
         align-items: center;
+    }
+
+    .layout-topbar-search {
+        flex: 2
     }
 
     .layout-topbar-action {
@@ -48,7 +55,7 @@
         align-items: center;
         color: var(--text-color-secondary);
         border-radius: 50%;
-        width: 2.5rem;
+        width: 2rem;
         height: 2.5rem;
         color: var(--text-color);
         transition: background-color var(--element-transition-duration);
@@ -63,7 +70,7 @@
         }
 
         i {
-            font-size: 1.25rem;
+            font-size: 1rem;
         }
 
         span {
@@ -173,7 +180,7 @@
     }
 
     .config-panel-colors {
-        > div {
+        >div {
             padding-top: 0.5rem;
             display: flex;
             gap: 0.5rem;

@@ -29,7 +29,7 @@
         </div>
 
         <!-- search -->
-        <div>
+        <div class="layout-topbar-search">
             <InputText placeholder="Search" type="text" v-model="searchInput" fluid />
         </div>
 

@@ -36,7 +36,12 @@ const SyncDayPreset = definePreset(Aura, {
 });
 app.use(PrimeVue, {
     theme: {
-        preset: SyncDayPreset
+        preset: SyncDayPreset,
+        options: {
+            prefix: 'p',
+            darkModeSelector: '.fake-dark-selector',
+            cssLayer: false
+        }
     }
 });
 app.use(ToastService);
