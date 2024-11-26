@@ -1,20 +1,23 @@
 <!-- ProjItem.vue -->
 <template>
-	<div class="proj-item" @click="handleSelect">
-		<div class="proj-left" :class="{ 'active': isActive }"></div>
-		<div class="proj-title">
-			<span>{{ title }}</span>
-		</div>
-		<div class="proj-right">
-			<div class="bookmark-section">
-				<i class="pi pi-bookmark"></i>
+	<div class="proj-item">
+		<div class="proj-section" @click="handleSelect">
+			<div class="proj-left" :class="{ 'active': isActive }"></div>
+			<div class="proj-title">
+				<span>{{ title }}</span>
 			</div>
-			<div class="chevron-section">
-				<i class="pi" :class="{ 'pi-chevron-down': !isExpanded, 'pi-chevron-up': isExpanded }"
-					@click="handleExpand"></i>
+			<div class="proj-right">
+				<div class="bookmark-section">
+					<i class="pi pi-bookmark"></i>
+				</div>
+				<div class="chevron-section">
+					<i class="pi" :class="{ 'pi-chevron-down': !isExpanded, 'pi-chevron-up': isExpanded }"
+						@click="handleExpand"></i>
+				</div>
 			</div>
-		</div>
 
+
+		</div>
 		<div v-show="isExpanded" class="proj-content">
 			<slot></slot>
 		</div>
@@ -66,17 +69,20 @@ const toggleBookmark = () => {
 </script>
 <style scoped>
 .proj-item {
+	border-bottom: 1px solid var(--outline-gray);
+}
+
+.proj-section {
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
 	align-items: center;
-	border-bottom: 1px solid var(--outline-gray);
 	width: 100%;
 	height: 5rem;
 	overflow: hidden;
 }
 
-.proj-item>* {
+.proj-section>* {
 	/* border: 1px solid var(--outline-gray) */
 }
 

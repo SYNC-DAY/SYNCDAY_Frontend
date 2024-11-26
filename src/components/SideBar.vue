@@ -56,6 +56,8 @@ const toggleCollapse = () => {
 .sidebar-content {
 	height: 100%;
 	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
 }
 
 
