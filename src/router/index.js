@@ -5,7 +5,8 @@ import { useAuthStore } from "../stores/auth.js"
 // 각 도메인별 라우트 import
 import userRoutes from './user.js'
 import projectRoutes from './project.js'
-import chatRoutes from './chat.js'
+import calendarRoutes from './calendar.js'
+import meetingroomRoutes from './meetingroom.js'
 
 export async function setupRouter() {
   const router = createRouter({
@@ -19,7 +20,8 @@ export async function setupRouter() {
       },
       ...userRoutes,
       ...projectRoutes,
-      ...chatRoutes,
+      ...calendarRoutes,
+      ...meetingroomRoutes,
     ],
   })
 

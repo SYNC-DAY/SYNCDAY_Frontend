@@ -29,11 +29,12 @@ const toggleCollapse = () => {
 <style scoped>
 .sidebar {
   position: relative;
-  width: 20rem;
+  width: 18rem;
   height: calc(100%-10vh);
   background-color: white;
   border-right: 1px solid var(--outline-gray);
   transition: width 0.3s ease;
+  padding: 0.3rem;
 }
 
 .sidebar.collapsed {
@@ -59,7 +60,6 @@ const toggleCollapse = () => {
 .sidebar-content {
   height: 100%;
   overflow-y: auto;
-  padding: 1rem 0;
 }
 
 
