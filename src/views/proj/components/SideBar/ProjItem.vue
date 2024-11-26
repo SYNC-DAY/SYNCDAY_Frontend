@@ -2,13 +2,17 @@
 <template>
 	<div class="proj-item">
 		<div class="proj-left"></div>
-		<div class="proj-title"></div>
-		<div class="proj-right"></div>
+		<div class="proj-title">
+			<span>{{ title }}</span>
+		</div>
+		<div class="proj-right">
+			<i class="pi pi-bookmark"></i>
+		</div>
 	</div>
 </template>
 
 <script setup>
-import { ref, defineProps } from 'vue'
+import { ref } from 'vue'
 
 const props = defineProps({
 	title: {
@@ -54,10 +58,15 @@ const toggleBookmark = () => {
 .proj-item {
 	display: flex;
 	flex-direction: row;
-	margin-bottom: 0.25rem;
+	justify-content: space-between;
 	border-bottom: 1px solid var(--outline-gray);
 	width: 18rem;
 	height: 4rem;
+	overflow: hidden;
+}
+
+.proj-item>* {
+	/* border: 1px solid var(--outline-gray) */
 }
 
 .proj-left {
@@ -70,14 +79,24 @@ const toggleBookmark = () => {
 .proj-title {
 	width: auto;
 	height: 100%;
-	background-color: azure;
 	overflow-x: hidden;
 }
 
 .proj-right {
-	width: 2rem;
+	margin-right: 0;
+	width: 3rem;
 	height: 100%;
-	background-color: var(--background-gray)
+	background-color: var(--background-gray);
+	position: relative;
+	display: flex;
+	justify-content: center;
+}
+
+.proj-right i {
+	position: absolute;
+	top: -3px;
+	font-size: 2rem;
+	color: var(--pink-color)
 }
 
 .proj-header {
@@ -103,6 +122,7 @@ const toggleBookmark = () => {
 	width: 3px;
 	background: linear-gradient(to bottom, #ff7eb3, #ff9f7d);
 }
+
 
 .proj-info {
 	flex-grow: 1;
