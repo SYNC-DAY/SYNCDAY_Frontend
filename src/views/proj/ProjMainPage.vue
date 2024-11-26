@@ -27,7 +27,9 @@
   </SideBar>
 
 
-
+  <div class="proj-main">
+    <ProjSideBar />
+  </div>
 
 
   <!-- <div class="proj-main">

@@ -12,7 +12,8 @@
                 </div>
                 <div class="chatlist">
                     <ul>
-                        <li v-for="chat in filteredChatList" :key="chat.roomId" @click="openChatRoom(chat)" class="chat-room">
+                        <li v-for="chat in filteredChatList" :key="chat.roomId" @click="openChatRoom(chat)"
+                            class="chat-room">
                             <h4>{{ chat.chatRoomName }}</h4>
                             <p>{{ chat.lastMessage || '메시지가 없습니다' }}</p>
                         </li>
@@ -21,7 +22,8 @@
             </div>
         </div>
         <NewChatRoom v-if="isPopupVisible" @close="closeNewChatRoom" />
-        <ChatRoom v-if="selectedRoom" :roomId="selectedRoom.roomId" :chatRoomName="selectedRoom.chatRoomName" @close="closeChatRoom" />
+        <ChatRoom v-if="selectedRoom" :roomId="selectedRoom.roomId" :chatRoomName="selectedRoom.chatRoomName"
+            @close="closeChatRoom" />
     </div>
 </template>
 
@@ -31,7 +33,7 @@ import NewChatRoom from '@/views/chat/chat_components/NewChatRoom.vue';
 import { computed, onMounted, ref } from 'vue';
 import ChatRoom from './ChatRoom.vue';
 
-const isVisible = ref(true);
+const isVisible = ref(false);
 const chatList = ref([]);
 const searchQuery = ref('');
 const isPopupVisible = ref(false);
@@ -103,7 +105,8 @@ onMounted(() => {
 <style scoped>
 .popup {
     position: absolute;
-    top: 50px; /* 아이콘 아래로 50px */
+    top: 50px;
+    /* 아이콘 아래로 50px */
     left: 85%;
     transform: translateX(-50%);
     width: 30rem;
@@ -118,7 +121,8 @@ onMounted(() => {
 /* 팝업 콘텐츠 */
 .popup-content {
     padding: 10px;
-    overflow-y: auto; /* 내용이 길어지면 스크롤 */
+    overflow-y: auto;
+    /* 내용이 길어지면 스크롤 */
 }
 
 .popup-content p {
@@ -131,6 +135,7 @@ onMounted(() => {
 .closePopup {
     size: 2rem;
 }
+
 .close-button {
     position: absolute;
     top: 10px;
@@ -190,9 +195,11 @@ onMounted(() => {
     width: 80%;
     margin-left: 2.5rem;
 }
+
 .chatlist {
     margin-top: 1rem;
 }
+
 .chatlist h4 {
     font-size: 1rem;
 }

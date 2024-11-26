@@ -1,17 +1,14 @@
 <!-- ProjSideBar.vue -->
 <template>
 	<aside :class="['sidebar', { 'collapsed': isCollapsed }]">
-		<button @click="toggleCollapse" class="collapse-btn" :title="isCollapsed ? '사이드바 열기' : '사이드바 접기'">
-			{{ isCollapsed ? '>' : '<' }} </button>
+		<TieredMenu />
 
-				<div v-show="!isCollapsed" class="sidebar-content">
-					<slot></slot>
-				</div>
 	</aside>
 </template>
 
 <script setup>
 import { ref } from 'vue'
+import TieredMenu from 'primevue/tieredmenu';
 
 const isCollapsed = ref(false)
 const toggleCollapse = () => {
