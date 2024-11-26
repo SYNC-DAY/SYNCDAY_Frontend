@@ -30,7 +30,7 @@
 
         <!-- search -->
         <div>
-            <InputText placeholder="Search" type="text" :model="searchInput" />
+            <InputText placeholder="Search" type="text" v-model="searchInput" fluid />
         </div>
 
         <!-- 아이콘, 프로필 -->
