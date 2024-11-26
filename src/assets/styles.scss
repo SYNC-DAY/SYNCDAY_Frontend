@@ -2,4 +2,7 @@
 @import '@/assets/layout/layout.scss';
 @import 'primeicons/primeicons.css';
 @import '@/assets/demo/demo.scss';
-
+@import 'colors.css';
+:root {
+	--primary-color: var(--syncday-pink-color);
+}
