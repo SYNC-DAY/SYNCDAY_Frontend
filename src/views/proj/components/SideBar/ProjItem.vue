@@ -97,7 +97,7 @@ const toggleBookmark = () => {
 	top: -3px;
 	font-size: 2rem;
 	color: transparent;
-	background: linear-gradient(90deg, var(--pink-color), var(--apricot-color));
+	background: linear-gradient(180deg, var(--pink-color) 60%, var(--apricot-color));
 	background-clip: text;
 }
 
