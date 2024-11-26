@@ -124,6 +124,7 @@ const handleProjectUpdate = (updatedProject) => {
 }
 
 .proj-role img {
+	margin-left: 1rem;
 	width: 3rem;
 	height: 3rem;
 }
