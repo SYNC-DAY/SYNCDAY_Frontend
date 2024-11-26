@@ -12,21 +12,25 @@
 			<ul>
 				<li>
 					<RouterLink to="/calendar" class="nav-link" :class="{ 'active': isRouteActive('calendar') }">
-						캘린더
+						<span>
+							캘린더
+						</span>
 						<div class="underbar"></div>
 					</RouterLink>
 				</li>
 
 				<li>
 					<RouterLink to="/team" class="nav-link" :class="{ 'active': isRouteActive('team') }">
-						팀
+						<span>
+							팀
+						</span>
 						<div class="underbar"></div>
 					</RouterLink>
 				</li>
 
 				<li>
 					<RouterLink to="/project" class="nav-link" :class="{ 'active': isRouteActive('project') }">
-						프로젝트
+						<span>프로젝트</span>
 						<div class="underbar"></div>
 					</RouterLink>
 				</li>
@@ -49,7 +53,7 @@
 					<i class="pi pi-send"></i>
 				</button>
 				<RouterLink to="alarm">
-					<img src="@/assets/images/alarm.svg" alt="알림" class="icon-img" />
+					<i class="pi pi-bell"></i>
 				</RouterLink>
 			</div>
 
@@ -187,21 +191,29 @@ const isRouteActive = (routeName) => {
 
 .nav-link {
 	text-decoration: none;
-	font-size: 1.2rem;
+	font-size: 1.5rem;
 	padding: 1rem 1rem;
 	position: relative;
 	display: inline-block;
+	z-index: 1;
 }
 
-/* 언더바 스타일 */
+/* 언더바 스타일 수정 */
 .underbar {
 	position: absolute;
-	top: -0.3 rem;
+	bottom: 0.5rem;
+	/* 위치를 아래쪽으로 조정 */
 	left: 0;
 	width: 0;
-	height: 0.8rem;
+	height: 0.5rem;
+	/* 높이를 줄임 */
+	border-radius: 0.2rem;
 	background: linear-gradient(90deg, var(--pink-color), var(--apricot-color));
 	transition: width 0.3s ease;
+	/* opacity: 0.3; */
+	/* 불투명도 추가 */
+	z-index: -1;
+	/* 텍스트 뒤로 보내기 */
 }
 
 .nav-link.active .underbar {
