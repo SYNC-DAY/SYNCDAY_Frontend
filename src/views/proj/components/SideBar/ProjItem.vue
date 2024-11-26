@@ -6,7 +6,16 @@
 			<span>{{ title }}</span>
 		</div>
 		<div class="proj-right">
-			<i class="pi pi-bookmark"></i>
+			<div class="bookmark-section">
+				<i class="pi pi-bookmark"></i>
+			</div>
+			<div class="chevron-section">
+				<i class="pi pi-chevron-down"></i>
+			</div>
+		</div>
+
+		<div v-show="isExpanded" class="proj-content">
+			<slot></slot>
 		</div>
 	</div>
 </template>
@@ -82,6 +91,7 @@ const toggleBookmark = () => {
 
 .proj-title {
 	width: auto;
+	padding-left: 0.4rem;
 	height: 100%;
 	overflow-x: hidden;
 }
@@ -93,16 +103,32 @@ const toggleBookmark = () => {
 	background-color: var(--background-gray);
 	position: relative;
 	display: flex;
+	flex-direction: column;
+
+}
+
+.proj-right div {
+	flex: 1;
+	/* border: 1px solid black; */
+	display: flex;
+	flex-direction: row;
 	justify-content: center;
 }
 
-.proj-right i {
+.proj-right>.bookmark-section>i {
 	position: absolute;
-	top: -3px;
+	top: -2px;
 	font-size: 2rem;
 	color: transparent;
 	background: linear-gradient(180deg, var(--pink-color) 60%, var(--apricot-color));
 	background-clip: text;
+}
+
+.proj-right>.chevron-section>i {
+	position: absolute;
+	bottom: 0.2rem;
+	vertical-align: bottom;
+	/* border: 1px solid black; */
 }
 
 .proj-header {
