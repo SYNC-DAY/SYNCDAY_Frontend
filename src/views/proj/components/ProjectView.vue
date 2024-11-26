@@ -6,8 +6,16 @@
 	</div>
 
 	<div v-else class="project-container">
+		<div class="proj-header">
+			<div class="proj-title">
+				<h3>{{ project.proj_name }}</h3>
+			</div>
+			<div class="proj-role">
+				<img src="@/assets/icons/Crown.svg"></img>
+				<span>Owner</span>
+			</div>
+		</div>
 		<div class="header">
-			<h2>{{ project.proj_name }}</h2>
 
 			<!-- Simple VCS section -->
 			<div class="vcs-section">
@@ -93,7 +101,31 @@ const handleProjectUpdate = (updatedProject) => {
 
 <style scoped>
 .project-container {
-	padding: 1rem
+	padding: 1rem;
+	display: flex;
+	flex-direction: column;
+}
+
+.proj-header {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.proj-role {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.proj-role span {
+	color: var(--muted-text-color);
+	vertical-align: baseline;
+}
+
+.proj-role img {
+	width: 3rem;
+	height: 3rem;
 }
 
 .project-not-found {
