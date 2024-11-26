@@ -6,6 +6,7 @@ import { useAuthStore } from "../stores/auth.js"
 import userRoutes from './user.js'
 import projectRoutes from './project.js'
 import calendarRoutes from './calendar.js'
+import meetingroomRoutes from './meetingroom.js'
 
 export async function setupRouter() {
   const router = createRouter({
@@ -20,6 +21,7 @@ export async function setupRouter() {
       ...userRoutes,
       ...projectRoutes,
       ...calendarRoutes,
+      ...meetingroomRoutes,
     ],
   })
 
