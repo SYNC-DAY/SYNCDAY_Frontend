@@ -26,9 +26,13 @@
     </div>
   </SideBar>
 
-  <div class="proj-main">
-    <router-view :projects="projects" />
-  </div>
+
+
+
+
+  <!-- <div class="proj-main">
+    <router-view :projects="projects"></router-view>
+  </div> -->
 </template>
 
 <script setup>
@@ -38,8 +42,8 @@ import { storeToRefs } from "pinia";
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 
+import ProjSideBar from './components/SideBar/ProjSideBar.vue';
 import SideBar from '@/components/SideBar.vue';
-import ProjItem from './components/SideBar/ProjItem.vue';
 import WorkspaceItem from './components/SideBar/WorkspaceItem.vue';
 
 const router = useRouter();
