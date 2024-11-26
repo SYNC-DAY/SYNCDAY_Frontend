@@ -1,7 +1,7 @@
 <template>
     <div class="root-container">
         <AppTopbar />
-
+        <Navigation />
         <div class="main-content"></div>
         <RouterView />
     </div>
@@ -9,6 +9,8 @@
 
 <script setup>
 import { RouterView } from 'vue-router';
+
+import Navigation from './components/layout/Navigation.vue';
 import AppTopbar from './layout/AppTopbar.vue';
 </script>
 
