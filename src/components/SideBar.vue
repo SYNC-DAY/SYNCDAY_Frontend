@@ -2,11 +2,13 @@
 <template>
 	<aside :class="['sidebar', { 'collapsed': isCollapsed }]">
 		<button @click="toggleCollapse" class="collapse-btn" :title="isCollapsed ? '사이드바 열기' : '사이드바 접기'">
-			{{ isCollapsed ? '>' : '<' }} </button>
+			<i v-if="isCollapsed" class="pi pi-caret-right"></i>
+			<i v-else class="pi pi-caret-left"></i>
+		</button>
 
-				<div v-show="!isCollapsed" class="sidebar-content">
-					<slot></slot>
-				</div>
+		<div v-show="!isCollapsed" class="sidebar-content">
+			<slot></slot>
+		</div>
 	</aside>
 </template>
 
