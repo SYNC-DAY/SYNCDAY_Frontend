@@ -1,4 +1,5 @@
 <template>
+
 	<nav class="nav-top">
 		<!-- logo -->
 		<div class="nav-logo">
@@ -54,9 +55,9 @@
 				<RouterLink to="/meetingroom">
 					<img src="@/assets/images/meetingroom.svg" alt="회의실 예약" class="icon-img" />
 				</RouterLink>
-				<RouterLink to="chat">
+				<button class="icon-button" @click="toggleChatPop">
 					<img src="@/assets/images/dm.svg" alt="채팅" class="icon-img" />
-				</RouterLink>
+				</button>
 				<RouterLink to="alarm">
 					<img src="@/assets/images/alarm.svg" alt="알림" class="icon-img" />
 				</RouterLink>
@@ -79,7 +80,9 @@
 					</div>
 				</div>
 			</div>
-		</div>
+
+</div>
+<ChatPop :key="isPopupVisible" :isVisible="isPopupVisible" @update:isVisible="isPopupVisible = $event" />
 	</nav>
 </template>
 
@@ -88,6 +91,10 @@ import { RouterLink, useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth.js';
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 
+import ChatPop from '@/views/chat/ChatRoomList.vue';
+
+
+const isPopupVisible = ref(false);
 const router = useRouter();
 const route = useRoute();
 const isDropdownOpen = ref(false);
@@ -100,6 +107,11 @@ const currentRoute = computed(() => route.path);
 // 드롭다운 토글
 const toggleDropdown = () => {
 	isDropdownOpen.value = !isDropdownOpen.value;
+};
+
+// 채팅 팝업
+const toggleChatPop = () => {
+  isPopupVisible.value = !isPopupVisible.value;
 };
 
 // 드롭다운 외부 클릭 시 닫기
@@ -118,6 +130,9 @@ const handleLogout = async () => {
 		console.error('Logout failed:', error);
 	}
 };
+onMounted(() => {
+	isPopupVisible.value = false;
+});
 
 onMounted(() => {
 	document.addEventListener('click', handleClickOutside);
@@ -235,7 +250,17 @@ input[type=search] {
 	height: 1.5rem;
 }
 
-.profile {
+.icon-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.icon-button img {
+  height: 1.5rem;
+}
+.profile{
 	flex: 1;
 	height: 100%;
 	display: flex;

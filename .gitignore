@@ -33,3 +33,17 @@ coverage
 *.env
 *.env.*
 SyncDay_Front.iml
+node_modules
+coverage
+*.log*
+.nuxt
+.nitro
+.cache
+.output
+.env
+dist
+.DS_Store
+.idea
+.eslintcache
+api-generator/typedoc.json
+**/.DS_Store

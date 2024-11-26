@@ -1,30 +1,27 @@
 // router/index.js
-import { createRouter, createWebHistory } from 'vue-router'
-import ProjMainPage from '@/views/Proj/ProjMainPage.vue'
-import ProjectView from '@/views/Proj/components/ProjectView.vue'
-import WorkspaceView from '@/views/Workspace/WorkspaceView.vue'
+import ProjMainPage from '@/views/proj/ProjMainPage.vue';
+import ProjectView from '@/views/proj/components/ProjectView.vue';
+import WorkspaceView from '@/views/workspace/WorkspaceView.vue';
 
-export default  [
-  {
-    path: '/project',
-    component: ProjMainPage,
-    children: [
-      {
-        path: ':projectId',
-        name: 'Project',
-        component: ProjectView,
-        props: true
-      },
-      {
-        path: ':projectId/workspace/:workspaceId',
-        name: 'Workspace',
-        component: WorkspaceView,
-        props: true
-      }
-    ]
-  },
-  // GitHub 콜백 라우트를 최상위 레벨로 이동
+const routes = [
+    {
+        path: '/project',
+        component: ProjMainPage,
+        children: [
+            {
+                path: ':projectId',
+                name: 'Project',
+                component: ProjectView,
+                props: true
+            },
+            {
+                path: ':projectId/workspace/:workspaceId',
+                name: 'Workspace',
+                component: WorkspaceView,
+                props: true
+            }
+        ]
+    }
+];
 
-]
-
-
+export default routes;

@@ -1,35 +1,67 @@
-// main.js
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-import App from './App.vue'
-import { setupRouter } from './router'  // 이름 변경
-import { setupAxiosInterceptors } from '../src/plugins/axios.js'
+import { createApp } from 'vue';
+import App from './App.vue';
+
+/* pinia */
+import { createPinia } from 'pinia';
+
+/* router */
+import { setupRouter } from './router'; // 이름 변경
+
+/* axios */
+import { setupAxiosInterceptors } from '../src/plugins/axios.js';
+
+/* primevue */
+import { definePreset } from '@primevue/themes';
+import Aura from '@primevue/themes/aura';
 import PrimeVue from 'primevue/config';
-import Aura from '@primevue/themes';
-import '@/assets/styles/main.css'
+import ConfirmationService from 'primevue/confirmationservice';
+import ToastService from 'primevue/toastservice';
 
-async function setupApp() {
-    const app = createApp(App)
-    const pinia = createPinia()
+import '@/assets/styles.scss';
+import '@/assets/tailwind.css';
 
-    // 1. Pinia 설정
-    app.use(pinia)
+const app = createApp(App);
 
-    // 2. Axios 인터셉터 설정
-    setupAxiosInterceptors()
+/* pinia */
+const pinia = createPinia();
+app.use(pinia);
 
-    // 3. Router 설정 (비동기로 처리)
-    const router = await setupRouter()
-    app.use(router)
+/* axios */
+setupAxiosInterceptors();
 
-    /* Prime Vue */
-    app.use(PrimeVue, {
-        theme: {
-            preset: Aura
+/* router */
+const router = await setupRouter();
+app.use(router);
+
+/* prime vue */
+const SyncDayPreset = definePreset(Aura, {
+    semantic: {
+        primary: {
+            50: '{pink.50}',
+            100: '{pink.100}',
+            200: '{pink.200}',
+            300: '{pink.300}',
+            400: '{pink.400}',
+            500: '{pink.500}',
+            600: '{pink.600}',
+            700: '{pink.700}',
+            800: '{pink.800}',
+            900: '{pink.900}',
+            950: '{pink.950}'
         }
-    });
-    // 4. 앱 마운트
-    app.mount('#app')
-}
+    }
+});
+app.use(PrimeVue, {
+    theme: {
+        preset: SyncDayPreset,
+        options: {
+            prefix: 'p',
+            darkModeSelector: '.fake-dark-selector',
+            cssLayer: false
+        }
+    }
+});
+app.use(ToastService);
+app.use(ConfirmationService);
 
-setupApp()
+app.mount('#app');

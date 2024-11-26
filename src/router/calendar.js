@@ -2,34 +2,34 @@ export default [
     {
         path: '/calendar',
         component: () => import('@/views/calendar/CalendarRoot.vue'),
-        redirect: {path:"/calendar/view"},
+        redirect: { path: '/calendar/view' },
         meta: { requiresAuth: true },
         children: [
             {
                 path: 'view',
                 component: () => import('@/views/calendar/CalendarView.vue'),
                 meta: { requiresAuth: true }
-            },
+            }
             // {
             //     path: 'view/:musicalId/:reviewId',  // :id는 동적 라우트 매개변수
             //     name: 'ReviewDetailView',
-            //     component: () => import('@/views/review/ReviewDetailView.vue')    
+            //     component: () => import('@/views/review/ReviewDetailView.vue')
             // },
             // {
-            //     path: 'create',  
+            //     path: 'create',
             //     name: 'BoardCreate',
-            //     component: () => import('@/views/board/BoardCreate.vue')    
+            //     component: () => import('@/views/board/BoardCreate.vue')
             // },
             // {
-            //     path: 'view/no-args',  
+            //     path: 'view/no-args',
             //     name: 'BoardNoArgs',
-            //     component: () => import('@/views/board/BoardNoArgs.vue')    
+            //     component: () => import('@/views/board/BoardNoArgs.vue')
             // },
             // {
-            //     path: 'edit/:id',  
+            //     path: 'edit/:id',
             //     name: 'BoardUpdate',
-            //     component: () => import('@/views/board/BoardUpdate.vue')    
+            //     component: () => import('@/views/board/BoardUpdate.vue')
             // }
-        ],
-    },
+        ]
+    }
 ];
