@@ -1,7 +1,16 @@
 import { createApp } from 'vue';
 import App from './App.vue';
-import router from './router';
 
+/* pinia */
+import { createPinia } from 'pinia';
+
+/* router */
+import { setupRouter } from './router'; // 이름 변경
+
+/* axios */
+import { setupAxiosInterceptors } from '../src/plugins/axios.js';
+
+/* primevue */
 import { definePreset } from '@primevue/themes';
 import Aura from '@primevue/themes/aura';
 import PrimeVue from 'primevue/config';
@@ -13,7 +22,15 @@ import '@/assets/tailwind.css';
 
 const app = createApp(App);
 
+/* pinia */
+const pinia = createPinia();
+app.use(pinia);
+
+/* axios */
+setupAxiosInterceptors();
+
 /* router */
+const router = await setupRouter();
 app.use(router);
 
 /* prime vue */
