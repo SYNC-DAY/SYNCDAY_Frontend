@@ -26,7 +26,7 @@ const toggleCollapse = () => {
 <style scoped>
 .sidebar {
 	position: relative;
-	width: 18rem;
+	width: 15rem;
 	height: calc(100%-10vh);
 	background-color: white;
 	border-right: 1px solid var(--outline-gray);

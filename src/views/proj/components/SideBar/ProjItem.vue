@@ -1,7 +1,7 @@
 <!-- ProjItem.vue -->
 <template>
-	<div class="proj-item">
-		<div class="proj-left"></div>
+	<div class="proj-item" @click="handleSelect">
+		<div class="proj-left" :class="{ 'active': isActive }"></div>
 		<div class="proj-title">
 			<span>{{ title }}</span>
 		</div>
@@ -60,7 +60,7 @@ const toggleBookmark = () => {
 	flex-direction: row;
 	justify-content: space-between;
 	border-bottom: 1px solid var(--outline-gray);
-	width: 18rem;
+	width: 100%;
 	height: 4rem;
 	overflow: hidden;
 }
@@ -70,10 +70,14 @@ const toggleBookmark = () => {
 }
 
 .proj-left {
-	width: 1.2rem;
+	width: 1.5rem;
 	height: 100%;
-	background-color: var(--pink-color)
-		/* fill: grad */
+	/* fill: grad */
+}
+
+.active {
+	background: linear-gradient(to bottom, var(--pink-color),
+			var(--apricot-color));
 }
 
 .proj-title {
