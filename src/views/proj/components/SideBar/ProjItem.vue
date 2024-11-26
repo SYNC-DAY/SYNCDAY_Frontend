@@ -7,8 +7,8 @@
 				<span>{{ title }}</span>
 			</div>
 			<div class="proj-right">
-				<div class="bookmark-section">
-					<i class="pi pi-bookmark"></i>
+				<div class="bookmark-section" @click.stop="toggleBookmark">
+					<i class="pi pi-bookmark" :class="{ 'boomarked': isBookmarked }"></i>
 				</div>
 				<div class="chevron-section">
 					<i class="pi" :class="{ 'pi-chevron-down': !isExpanded, 'pi-chevron-up': isExpanded }"
@@ -80,6 +80,7 @@ const toggleBookmark = () => {
 	width: 100%;
 	height: 5rem;
 	overflow: hidden;
+
 }
 
 .proj-section>* {
@@ -103,7 +104,8 @@ const toggleBookmark = () => {
 	height: 100%;
 	overflow-x: hidden;
 	display: flex;
-	align-items: center
+	align-items: center;
+	cursor: pointer;
 }
 
 .proj-right {
@@ -125,13 +127,28 @@ const toggleBookmark = () => {
 	justify-content: center;
 }
 
+.bookmark-section {
+	cursor: pointer;
+}
+
 .proj-right>.bookmark-section>i {
 	position: absolute;
-	top: -2px;
+	top: -3px;
 	font-size: 2rem;
 	color: transparent;
 	background: linear-gradient(180deg, var(--pink-color) 60%, var(--apricot-color));
 	background-clip: text;
+}
+
+.bookmark-section i.bookmarked {
+	background: linear-gradient(180deg, var(--pink-color) 60%, var(--apricot-color));
+	background-clip: text;
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+}
+
+.chevron-section {
+	cursor: pointer;
 }
 
 .proj-right>.chevron-section>i {
