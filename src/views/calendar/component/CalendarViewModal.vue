@@ -1,6 +1,10 @@
 <template>
-    <div class="modal-overlay">
+    <div class="modal-overlay" @click="handleOutsideClick">
         <div class="modal-content">
+            <!-- 닫기 버튼 -->
+            <div class="close-btn-wrapper">
+                <button class="close-btn" @click="$emit('close')">×</button>
+            </div>
             <h3>상세조회</h3>
             <div>scheduleId: {{ scheduleId }}</div>
             <div>title: {{ title }}</div>
@@ -47,6 +51,14 @@ const userId = props.schedule.userId;
 const username = props.schedule.username;
 const userInfo = props.schedule.userInfo;
 
+const handleOutsideClick = (event) => {
+    if (event.target === event.currentTarget) {
+        emit('close');
+    }
+};
+
+const emit = defineEmits();
+
 onMounted(() => {});
 </script>
 
@@ -62,6 +74,21 @@ onMounted(() => {});
     padding: 20px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 } */
+.close-btn-wrapper {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #aaa;
+    transition: color 0.2s;
+}
+
 .modal-overlay {
     position: fixed;
     top: 0;

@@ -4,7 +4,13 @@
         <CalendarViewModal
             v-if="showEventModal"
             :schedule="selectedEvent"
-            @close="showEventModal = false"    
+            @close="closeModal"    
+        />
+        <CalendarModal
+            v-if="isModalVisible" 
+            :selectedInfo="selectedInfo" 
+            @close="closeModal" 
+            @submit="handleModalSubmit"
         />
     </div>
 </template>
@@ -17,14 +23,16 @@ import dayGridPlugin from '@fullcalendar/daygrid'; // DayGrid 보기 플러그�
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction'; // 클릭/드래그 기능
 import CalendarViewModal from './component/CalendarViewModal.vue';
+import CalendarModal from './component/CalendarModal.vue';
 
 import { useAuthStore } from '@/stores/auth';
 const authStore = useAuthStore();
-// const user = ref({});
-// const loading = ref(true);
 
 const showEventModal = ref(false);
 const selectedEvent = ref({});
+
+const isModalVisible = ref(false);      // 모달 표시 상태
+const selectedInfo = ref({});
 
 // 이벤트 데이터
 const events = ref([]);
@@ -34,7 +42,7 @@ const calendarOptions = ref({
     initialView: 'dayGridMonth',
     headerToolbar: {
         left: 'title prev next today',
-        right: 'dayGridMonth,timeGridWeek',
+        right: 'dayGridMonth,timeGridWeek addEventButton',
     },
     views: {
         dayGridMonth: {
@@ -44,15 +52,29 @@ const calendarOptions = ref({
             buttonText: '주간',
         },
     },
+    customButtons: {
+        addEventButton: {
+            text: '일정 추가',
+            click: (info) => {
+                selectedInfo.value = info;
+                isModalVisible.value = true;
+            },
+        },
+    },
     selectable: true, // 드래그로 날짜 선택 가능
     editable: true, // 이벤트 편집 가능 (드래그 앤 드롭 활성화)
     droppable: true, // 이벤트 드래그 앤 드롭 활성화
     locale: 'ko',
     dateClick: (info) => {
-        alert(`Date clicked: ${info.dateStr}`);
+        // selectedInfo.value = info;
+        // isModalVisible.value = true; // 모달 열기
+        // alert(`Date clicked: ${info.dateStr}`);
     },
     select: (info) => {
-        alert(`Selected from ${info.startStr} to ${info.endStr}`);
+        selectedInfo.value = info;
+        isModalVisible.value = true; // 모달 열기
+        console.log('selectInfo 보자!', info)
+        // alert(`Selected from ${info.startStr} to ${info.endStr}`);
     },
     eventClick: async (info) => {
         await fetchDetailSchedules(info.event.id, authStore.user.userId);
@@ -64,6 +86,14 @@ const calendarOptions = ref({
     },
     events: events,
 });
+
+const closeModal = () => {
+    if (isModalVisible.value == true) {
+        isModalVisible.value = false;
+    } else if (showEventModal.value == true) {
+        showEventModal.value = false;
+    }
+}
 
 // GET으로 조회!!!
 const fetchSchedules = async () => {
