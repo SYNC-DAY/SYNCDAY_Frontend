@@ -1,12 +1,12 @@
 <!-- ProjItem.vue -->
 <template>
 	<div class="proj-item">
-		<div class="proj-section" @click="handleSelect">
-			<div class="proj-left" :class="{ 'active': isActive }"></div>
-			<div class="proj-title">
+		<div class="proj-section container-row" @click="handleSelect">
+			<div class="proj-left" :class="{ 'background-gradient': isActive }"></div>
+			<div class="proj-title container-row">
 				<span>{{ title }}</span>
 			</div>
-			<div class="proj-right">
+			<div class="proj-right container-column">
 				<div class="bookmark-section" @click.stop="toggleBookmark">
 					<i class="pi background-gradient"
 						:class="{ 'pi-bookmark': !isBookmarked, 'pi-bookmark-fill': isBookmarked }"></i>
@@ -74,10 +74,7 @@ const toggleBookmark = () => {
 }
 
 .proj-section {
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
-	align-items: center;
+
 	width: 100%;
 	height: 5rem;
 	overflow: hidden;
@@ -94,18 +91,13 @@ const toggleBookmark = () => {
 	/* fill: grad */
 }
 
-.active {
-	background: linear-gradient(to bottom, var(--pink-color),
-			var(--apricot-color));
-}
+
 
 .proj-title {
 	width: auto;
 	padding-left: 0.4rem;
 	height: 100%;
 	overflow-x: hidden;
-	display: flex;
-	align-items: center;
 	cursor: pointer;
 }
 
@@ -115,8 +107,7 @@ const toggleBookmark = () => {
 	height: 100%;
 	background-color: var(--background-gray);
 	position: relative;
-	display: flex;
-	flex-direction: column;
+
 
 }
 
