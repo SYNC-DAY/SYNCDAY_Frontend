@@ -14,7 +14,7 @@
 <style scoped>
 .modal {
   position: absolute;
-  top: 30%;
+  top: 40%;
   left: 85%;
   transform: translate(-50%, -50%);
   background-color: white;
