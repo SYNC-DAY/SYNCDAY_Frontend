@@ -174,7 +174,7 @@ const updateWorkspaces = (projectWorkspaces) => {
 
 const fetchProjs = async () => {
   try {
-    const response = await axios.get(`/projs/users/${user.value.userId}`);
+    const response = await axios.get(`/proj-members/users/${user.value.userId}`);
     if (response.data.success) {
       projects.value = response.data.data;
       // Extract and flatten all workspaces from projects

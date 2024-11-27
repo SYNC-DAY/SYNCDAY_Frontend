@@ -35,7 +35,7 @@ const isLoginPage = computed(() => route.path === '/login');
 .app-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
 }
 
 .main-container {
