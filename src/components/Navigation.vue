@@ -38,13 +38,9 @@
 		</div>
 
 		<!-- search -->
-    <div class="nav-search">
-      <InputText
-          v-model="searchText"
-          placeholder="검색어를 입력하세요"
-          @keyup.enter="handleSearch"
-      />
-    </div>
+		<div class="nav-search">
+			<InputText v-model="searchText" placeholder="검색어를 입력하세요" @keyup.enter="handleSearch" />
+		</div>
 
 		<!-- icon,profile -->
 		<div class="nav-right flex-row">
@@ -104,14 +100,14 @@ const currentRoute = computed(() => route.path);
 
 // 검색 처리 함수 추가
 const handleSearch = () => {
-  if (searchText.value.trim()) { // 검색어가 비어있지 않은 경우에만 검색 실행
-    router.push({
-      path: '/search',
-      query: {
-        keyword: searchText.value.trim()
-      }
-    });
-  }
+	if (searchText.value.trim()) { // 검색어가 비어있지 않은 경우에만 검색 실행
+		router.push({
+			path: '/search',
+			query: {
+				keyword: searchText.value.trim()
+			}
+		});
+	}
 };
 
 // 드롭다운 토글
@@ -160,13 +156,16 @@ const isRouteActive = (routeName) => {
 
 <style scoped>
 .nav-top {
-  width: 100%;
-  height: 5rem;
-  padding: 0.5rem 2rem; /* 좌우 패딩 추가로 양쪽 여백 확보 */
-  border-bottom: 1px solid var(--outline-gray);
-  display: flex;
-  align-items: center; /* 세로 중앙 정렬 */
-  gap: 2rem; /* 요소들 사이 간격 */
+	width: 100%;
+	height: 5rem;
+	padding: 0.5rem 2rem;
+	/* 좌우 패딩 추가로 양쪽 여백 확보 */
+	border-bottom: 1px solid var(--outline-gray);
+	display: flex;
+	align-items: center;
+	/* 세로 중앙 정렬 */
+	justify-content: space-around;
+	gap: 2rem;
 }
 
 .nav-top>div,
@@ -185,8 +184,9 @@ const isRouteActive = (routeName) => {
 
 /* 로고 영역 */
 .nav-logo {
-  flex: 0 0 auto; /* 고정 크기 */
-  font-weight: 700;
+	flex: 0 0 auto;
+	/* 고정 크기 */
+	font-weight: 700;
 }
 
 .nav-logo span {
@@ -194,8 +194,10 @@ const isRouteActive = (routeName) => {
 }
 
 .nav-tabs {
-  flex: 0 1 auto; /* 축소는 가능하지만 늘어나지는 않음 */
-  min-width: 400px; /* 최소 너비 설정 */
+	flex: 0 1 auto;
+	/* 축소는 가능하지만 늘어나지는 않음 */
+	min-width: 15rem;
+	/* 최소 너비 설정 */
 }
 
 
@@ -242,31 +244,36 @@ const isRouteActive = (routeName) => {
 }
 
 .nav-search {
-  flex: 1 1 auto; /* 남은 공간을 최대한 차지 */
-  padding: 0.5rem;
+	flex: 1 1 auto;
+	/* 남은 공간을 최대한 차지 */
+	padding: 0.5rem;
 }
 
 .nav-search input {
-  width: 100%; /* 부모 컨테이너 기준으로 최대 너비 */
-  max-width: 25rem; /* 최대 너비 제한 */
-  height: 2.4rem;
-  font-size: 1rem;
-  border-radius: 1.2rem;
-  padding: 0 1rem;
+	width: 100%;
+	/* 부모 컨테이너 기준으로 최대 너비 */
+	max-width: 25rem;
+	/* 최대 너비 제한 */
+	height: 2.4rem;
+	font-size: 1rem;
+	border-radius: 1.2rem;
+	padding: 0 1rem;
 }
 
 /* 우측 아이콘/프로필 영역 */
 .nav-right {
-  flex: 0 0 auto; /* 고정 크기 */
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+	flex: 0 0 auto;
+	/* 고정 크기 */
+	display: flex;
+	align-items: center;
+	gap: 1rem;
 }
 
 .icons {
-  display: flex;
-  gap: 1rem; /* 아이콘 간 간격 */
-  align-items: center;
+	display: flex;
+	gap: 1rem;
+	/* 아이콘 간 간격 */
+	align-items: center;
 }
 
 .icons img {
