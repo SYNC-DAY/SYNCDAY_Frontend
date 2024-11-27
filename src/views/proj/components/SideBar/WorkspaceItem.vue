@@ -1,5 +1,5 @@
 <template>
-  <div class="workspace-item" :class="{ 'active': isActive }" @click="navigateToWorkspace">
+  <div class="workspace-item container-row" :class="{ 'active': isActive }" @click="navigateToWorkspace">
     <div class="workspace-left">
       <span>{{ title }}</span>
     </div>
@@ -62,9 +62,7 @@ const navigateToWorkspace = () => {
   height: 3rem;
   position: relative;
   border-bottom: 1px solid var(--outline-gray);
-  display: flex;
-  flex-direction: row;
-  align-items: center;
+  cursor: pointer;
 
 }
 
