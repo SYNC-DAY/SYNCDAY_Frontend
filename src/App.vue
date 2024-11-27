@@ -10,8 +10,8 @@
         <template v-if="authStore.isAuthenticated">
           <main class="content">
 
-            <!-- <router-view /> -->
-            <GithubOrg />
+            <router-view />
+
           </main>
         </template>
       </div>
