@@ -8,7 +8,8 @@
 			</div>
 			<div class="proj-right">
 				<div class="bookmark-section" @click.stop="toggleBookmark">
-					<i class="pi" :class="{ 'pi-bookmark': !isBookmarked, 'pi-bookmark-fill': isBookmarked }"></i>
+					<i class="pi background-gradient"
+						:class="{ 'pi-bookmark': !isBookmarked, 'pi-bookmark-fill': isBookmarked }"></i>
 				</div>
 				<div class="chevron-section">
 					<i class="pi" :class="{ 'pi-chevron-down': !isExpanded, 'pi-chevron-up': isExpanded }"
@@ -136,16 +137,11 @@ const toggleBookmark = () => {
 	top: -3px;
 	font-size: 2rem;
 	color: transparent;
-	background: linear-gradient(180deg, var(--pink-color) 50%, var(--apricot-color));
+	/* background: linear-gradient(180deg, var(--pink-color) 50%, var(--apricot-color)); */
 	background-clip: text;
 }
 
-.bookmark-section i.bookmarked {
-	background: linear-gradient(180deg, var(--pink-color) 50%, var(--apricot-color));
-	background-clip: text;
-	-webkit-background-clip: text;
-	-webkit-text-fill-color: transparent;
-}
+
 
 .chevron-section {
 	cursor: pointer;
