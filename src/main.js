@@ -14,16 +14,19 @@ import { setupAxiosInterceptors } from "../src/plugins/axios.js";
 import { definePreset } from "@primevue/themes";
 import Aura from "@primevue/themes/aura";
 import PrimeVue from "primevue/config";
-import "primeicons/primeicons.css";
+import 'primeicons/primeicons.css'
 
 /* css */
 import "@/assets/styles/syncday/main.css";
+import {useAuthStore} from "@/stores/auth.js";
 
 const app = createApp(App);
 
 /* pinia */
 const pinia = createPinia();
 app.use(pinia);
+const authStore = useAuthStore();
+await authStore.initializeAuth(); // 초기 인증 상태 설정
 
 /* axios */
 setupAxiosInterceptors();
