@@ -2,13 +2,13 @@
 <template>
 	<div class="proj-item">
 		<div class="proj-section container-row" @click="handleSelect">
-			<div class="proj-left" :class="{ 'background-gradient': isActive }"></div>
+			<div class="proj-left" :class="{ 'gradient-vertical': isActive }"></div>
 			<div class="proj-title container-row">
 				<span>{{ title }}</span>
 			</div>
 			<div class="proj-right container-column">
 				<div class="bookmark-section" @click.stop="toggleBookmark">
-					<i class="pi background-gradient"
+					<i class="pi gradient-vertical"
 						:class="{ 'pi-bookmark': !isBookmarked, 'pi-bookmark-fill': isBookmarked }"></i>
 				</div>
 				<div class="chevron-section">

@@ -10,6 +10,6 @@
 	flex-direction: column;
 }
 
-.background-gradient {
+.gradient-vertical {
 	background: linear-gradient(180deg, var(--pink-color) 50%, var(--apricot-color));
 }
