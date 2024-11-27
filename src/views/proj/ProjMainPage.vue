@@ -16,9 +16,10 @@
 
     <!-- Add New Project Section -->
     <div class="new-project-section">
-      <button class="new-project-btn" @click="showNewProjectInput = true" v-if="!showNewProjectInput">
+
+      <!-- <button class="new-project-btn" @click="showNewProjectInput = true" v-if="!showNewProjectInput">
         + New Project
-      </button>
+      </button> -->
       <div v-if="showNewProjectInput" class="new-project-input-container">
         <input v-model="newProjectName" @keyup.enter="createProject" @keyup.esc="cancelNewProject"
           placeholder="Enter project name..." ref="newProjectInput" class="new-project-input" />

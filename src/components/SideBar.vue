@@ -5,7 +5,7 @@
 			<i class="pi" :class="{ 'pi-chevron-right': isCollapsed, 'pi-chevron-left': !isCollapsed }"></i>
 		</button>
 
-		<div v-show="!isCollapsed" class="sidebar-content">
+		<div v-show="!isCollapsed" class="sidebar-content container-column">
 			<slot></slot>
 		</div>
 	</aside>
@@ -56,8 +56,6 @@ const toggleCollapse = () => {
 .sidebar-content {
 	height: 100%;
 	overflow-y: auto;
-	display: flex;
-	flex-direction: column;
 }
 
 

@@ -5,28 +5,28 @@
 		<button @click="goBack" class="back-button">Go Back</button>
 	</div>
 
-	<div v-else class="project-container">
-		<div class="proj-header">
-			<div class="proj-title">
-				<h3>{{ project.proj_name }}</h3>
-			</div>
-			<div class="proj-role">
-				<img src="@/assets/icons/Crown.svg"></img>
-				<span>Owner</span>
-			</div>
-		</div>
-		<div class="header">
+	<div v-else class="project-container container-column">
+		<div class="container-row">
+			<div class="proj-header-left container-row">
+				<!-- 프로젝트 이름 -->
+				<div class="proj-title">
+					<h3>{{ project.proj_name }}</h3>
+				</div>
 
-			<!-- Simple VCS section -->
-			<div class="vcs-section">
-				<a v-if="project.vcs_type" :href="project.vcs_proj_url" target="_blank" class="vcs-link">
-					GitHub Repository
-				</a>
-				<button v-else @click="handleOpenVCSModal" class="connect-github-btn">
-					Connect VCS Organizations
-				</button>
+				<!-- 역할, Todo: Project Member 테이블에서 역할 가져와서 표시 -->
+				<div class="proj-role container-row">
+					<img src="@/assets/icons/Crown.svg"></img>
+					<span>Owner</span>
+				</div>
+			</div>
+
+
+			<!-- VCS -->
+			<div class="proj-vcs">
+				<Button label="Organization" severity="contrast" icon="pi pi-building" @click="openVCSModal"></Button>
 			</div>
 		</div>
+
 
 		<div class="content">
 			<h3>Workspaces</h3>
@@ -54,7 +54,10 @@
 <script setup>
 import { computed, getCurrentInstance } from 'vue';
 import { useRouter } from 'vue-router';
-import VCSConnectModal from './VCSConnectModal.vue';
+
+import Button from 'primevue/button';
+
+import VCSConnectModal from './VCSOrgModal.vue';
 const props = defineProps({
 	projectId: {
 		type: [String, Number],
@@ -102,21 +105,15 @@ const handleProjectUpdate = (updatedProject) => {
 <style scoped>
 .project-container {
 	padding: 1rem;
-	display: flex;
-	flex-direction: column;
+
 }
 
 .proj-header {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
+	border-bottom: 1px solid var(--outline-gray)
 }
 
-.proj-role {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-}
+
+
 
 .proj-role span {
 	color: var(--muted-text-color);
@@ -125,8 +122,8 @@ const handleProjectUpdate = (updatedProject) => {
 
 .proj-role img {
 	margin-left: 1rem;
-	width: 3rem;
-	height: 3rem;
+	width: 2rem;
+	height: 2rem;
 }
 
 .project-not-found {
@@ -184,7 +181,7 @@ const handleProjectUpdate = (updatedProject) => {
 }
 
 .content {
-	margin-top: 20px;
+	margin-top: 1rem;
 }
 
 .workspaces-grid {

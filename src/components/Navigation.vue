@@ -1,5 +1,5 @@
 <template>
-	<nav class="nav-top">
+	<nav class="nav-top container-row">
 		<!-- logo -->
 		<div class="nav-logo">
 			<RouterLink to="/">
@@ -8,7 +8,7 @@
 		</div>
 
 		<!-- tabs -->
-		<div class="nav-tabs">
+		<div class="nav-tabs container-row">
 			<ul>
 				<li>
 					<RouterLink to="/calendar" class="nav-link" :class="{ 'active': isRouteActive('calendar') }">
@@ -43,7 +43,7 @@
 		</div>
 
 		<!-- icon,profile -->
-		<div class="nav-right">
+		<div class="nav-right flex-row">
 			<!-- icons -->
 			<div class="icons">
 				<RouterLink to="/meetingroom">
@@ -147,10 +147,7 @@ const isRouteActive = (routeName) => {
 .nav-top {
 	width: 100%;
 	height: 5rem;
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
-	align-items: center;
+
 	padding: 0.5rem;
 	border-bottom: 1px solid var(--outline-gray);
 }
@@ -184,9 +181,7 @@ const isRouteActive = (routeName) => {
 
 .nav-tabs ul {
 	width: 100%;
-	display: flex;
 	justify-content: space-around;
-	align-items: center;
 	height: auto;
 }
 
@@ -241,8 +236,6 @@ input[type=search] {
 
 .nav-right {
 	flex: 2;
-	display: flex;
-	flex-direction: row;
 }
 
 .icons {
