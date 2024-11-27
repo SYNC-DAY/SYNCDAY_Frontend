@@ -70,14 +70,14 @@ const props = defineProps({
     },
 });
 
-console.log('모달로 넘어온 값:',props.selectedInfo);
+console.log('모달로 넘어온 값:', props.selectedInfo);
 
 const formData = ref({
     id: authStore.user.userId,
     title: null,
     content: null,
-    startTime: '2024-11-26',
-    endTime: '2024-11-28',
+    startTime: '',
+    endTime: '',
     publicStatus: 'PRIVATE',
     scheduleRepeatId: null,
     repeatOrder: null,
@@ -109,18 +109,22 @@ const formatDateTime = (date) => {
     }).format(d);
 };
 
-// 시간 초기값, 기본값 포맷팅
-
 // 시작 날짜 및 시간
-const rawStartDate = ref(new Date());
+const rawStartDate = ref(() => {
+    const now = props.selectedInfo.start;
+    const nextHour = new Date(now);
+    nextHour.setMinutes(0, 0, 0); // 분, 초, 밀리초를 0으로 설정
+    nextHour.setHours(now.getMinutes() === 0 ? now.getHours() : now.getHours() + 1); // 다음 정시로 설정
+    return nextHour;
+});
 
 // 종료 날짜 및 시간
-const rawEndDate = ref(new Date());
+// const rawEndDate = ref(new Date(rawStartDate.value.getTime() + 60 * 60 * 1000));
 
 // 종일 체크 여부
 const isAllDay = ref(props.selectedInfo.allDay);
-console.log('종일 여부 체크:',isAllDay);
-console.log('시간 체크:',props.selectedInfo.start);
+console.log('종일 여부 체크:', isAllDay);
+console.log('시간 체크:', props.selectedInfo.start);
 
 // 회의 여부
 const isMeeting = ref(false);

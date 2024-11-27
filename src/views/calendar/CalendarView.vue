@@ -1,15 +1,11 @@
 <template>
     <div style="height: 100%; width: 100%">
         <FullCalendar :options="calendarOptions" />
-        <CalendarViewModal
-            v-if="showEventModal"
-            :schedule="selectedEvent"
-            @close="closeModal"    
-        />
+        <CalendarViewModal v-if="showEventModal" :schedule="selectedEvent" @close="closeModal" />
         <CalendarModal
-            v-if="isModalVisible" 
-            :selectedInfo="selectedInfo" 
-            @close="closeModal" 
+            v-if="isModalVisible"
+            :selectedInfo="selectedInfo"
+            @close="closeModal"
             @submit="handleModalSubmit"
         />
     </div>
@@ -31,7 +27,7 @@ const authStore = useAuthStore();
 const showEventModal = ref(false);
 const selectedEvent = ref({});
 
-const isModalVisible = ref(false);      // 모달 표시 상태
+const isModalVisible = ref(false); // 모달 표시 상태
 const selectedInfo = ref({});
 
 // 이벤트 데이터
@@ -73,7 +69,7 @@ const calendarOptions = ref({
     select: (info) => {
         selectedInfo.value = info;
         isModalVisible.value = true; // 모달 열기
-        console.log('selectInfo 보자!', info)
+        console.log('selectInfo 보자!', info);
         // alert(`Selected from ${info.startStr} to ${info.endStr}`);
     },
     eventClick: async (info) => {
@@ -93,7 +89,7 @@ const closeModal = () => {
     } else if (showEventModal.value == true) {
         showEventModal.value = false;
     }
-}
+};
 
 // GET으로 조회!!!
 const fetchSchedules = async () => {
@@ -107,20 +103,25 @@ const fetchSchedules = async () => {
             const startDate = new Date(schedule.start_time);
             const endDate = new Date(schedule.end_time);
 
-            // 날짜가 같으면 시간까지 포함
-            const isSameDate = startDate.toISOString().split('T')[0] === endDate.toISOString().split('T')[0];
+            // 날짜 차이를 계산
+            const dayDifference = 
+                Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)); // 일 단위 차이 계산
 
-            // 날짜가 다르면 endDate에 1일 추가
-            if (!isSameDate) {
-                endDate.setDate(endDate.getDate() + 1); // 날짜가 다르면 1일 추가
-            }
+            // 종일 이벤트인지 확인
+            const isAllDay = 
+                dayDifference > 1 || // 2일 이상 차이가 나는 경우
+                (dayDifference === 1 && // 하루 차이면서
+                    startDate.getHours() === 0 && 
+                    startDate.getMinutes() === 0 && 
+                    endDate.getHours() === 0 && 
+                    endDate.getMinutes() === 0);
 
             return {
                 id: schedule.schedule_id,
                 title: schedule.title,
-                // 날짜가 같으면 시간까지 포함하고, 다르면 날짜만 표시
-                start: isSameDate ? startDate.toISOString() : startDate.toISOString().split('T')[0],
-                end: isSameDate ? endDate.toISOString() : endDate.toISOString().split('T')[0],
+                start: startDate,
+                end: endDate,
+                allDay: isAllDay,
                 backgroundColor: '#FF9D85',
                 borderColor: '#FF9D85',
                 extendedProps: {
@@ -142,14 +143,21 @@ const fetchDetailSchedules = async (scheduleId, userId) => {
         const data = response.data.data[0];
         console.log('DetailSchedule!!:', data);
 
+        // UTC 시간을 KST로 변환하는 함수
+        const convertToKST = (utcTime) => {
+            const utcDate = new Date(utcTime);
+            const kstDate = new Date(utcDate.getTime() + 9 * 60 * 60 * 1000); // 9시간 추가
+            return kstDate.toISOString().replace('Z', '+09:00');
+        };
+
         // selectedEvent를 가져온 데이터로 업데이트
         selectedEvent.value = {
             scheduleId: data.schedule_id,
             title: data.title,
             content: data.content,
-            startTime: data.start_time,
-            endTime: data.end_time,
-            updateTime: data.update_time,
+            startTime: convertToKST(data.start_time),
+            endTime: convertToKST(data.end_time),
+            updateTime: convertToKST(data.update_time),
             publicStatus: data.public_status,
             scheduleRepeatId: data.schedule_repeat_id,
             repeatOrder: data.repeat_order,
@@ -157,11 +165,11 @@ const fetchDetailSchedules = async (scheduleId, userId) => {
             meetingroomId: data.meetingroom_id,
             userId: data.user_id,
             username: data.username,
-            userInfo: data.user_info.map(user => ({
+            userInfo: data.user_info.map((user) => ({
                 userId: user.user_id,
                 username: user.username,
-                participationStatus: user.participationStatus
-            }))
+                participationStatus: user.participationStatus,
+            })),
         };
     } catch (error) {
         console.error('Error fetching schedules:', error);
