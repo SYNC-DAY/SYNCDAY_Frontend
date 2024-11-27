@@ -1,11 +1,11 @@
 <template>
   <div v-if="isVisible" class="popup">
-    <button class="close-button" @click="closeRoom">X</button>
+    <button class="close-button" @click="$emit('close')">X</button>
     <button class="leave-chat" @click="leaveChat">채팅방 나가기</button>
     <div class="popup-content">
-      <h2>{{ currentRoom?.chatRoomName }}</h2>
+      <h2>{{ props.chatRoomName }}</h2>
       <div class="chat-messages">
-        <div v-for="(message, index) in messages" :key="index" class="message">
+        <div v-for="(message, index) in messages" :key="index">
           {{ message.content }}
         </div>
       </div>
@@ -13,7 +13,6 @@
         <input 
           v-model="newMessage"   type="text"   placeholder="메시지를 입력하세요"  @keyup.enter="sendMessage" />
       <button @click="sendMessage">전송</button>
-      <!-- <p>연결 상태: {{ connectionStatus }}</p> -->
     </div>
       </div>
     </div>
@@ -22,7 +21,7 @@
 </template>
 
 <script setup>
-import { onUnmounted, onMounted, ref, defineProps, defineEmits } from 'vue';
+import { onUnmounted, onMounted, ref, defineProps, computed } from 'vue';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 import { useAuthStore } from '@/stores/auth';
@@ -42,12 +41,12 @@ const authStore = useAuthStore()
 const connectionStatus = ref('웹 소켓 시작')
 const isConnected = ref(false)
 const stompClient = ref(null)
-const emit = defineEmits(['close']);
 const isVisible = ref(true);
-const messages = ref([]);
-const newMessage = ref('');
-const currentRoom = ref(props.roomInfo);
-// const subscriptions = ref({}) 토픽 구독 채팅방 연결
+const messages = computed(() => messagesInRoom.value[props.roomId] || []);
+const newMessage = ref(''); // 새 입력 메세지
+const subscriptions = ref({}) // 토픽 구독 채팅방 연결
+const messagesInRoom = ref({})  // 각 채팅방 당 메세지
+
 
 const connectWebSocket = () => {
   console.log('웹소켓 연결 시도 중...')
@@ -57,7 +56,9 @@ const connectWebSocket = () => {
   }
 
   // 환경변수나 설정에서 URL을 가져오는 것이 좋습니다
-  const socket = new SockJS('http://localhost:5000/ws');
+  const socket = new SockJS(`http://localhost:5000/ws?token=${authStore.accessToken}`, null, {
+    transports: ['websocket', 'xhr-streaming', 'xhr-polling']
+  });
 
   stompClient.value = new Client({
     webSocketFactory: () => socket,
@@ -72,12 +73,12 @@ const connectWebSocket = () => {
       console.log('STOMP 연결됨(success!!!): ' + frame)
       isConnected.value = true
       connectionStatus.value = '연결됨'
-      subscribeToRoom() // 연결 성공 시 구독 실행
+      subscribeToRoom(props.roomId) // 연결 성공 시 구독 실행
     },
     onStompError: (frame) => {
       console.error('STOMP 오류:', frame)
       isConnected.value = false;
-      handleConnectionFailure('STOMP 오류: ' + frame.headers['message'])
+      handleConnectionFailure('STOMP 오류: ' + frame.headers['messages'])
     },
     onDisconnect: () => {
       console.log('STOMP 연결 끊김');
@@ -95,30 +96,24 @@ const connectWebSocket = () => {
   } catch (error) {
     console.error('STOMP 클라이언트 활성화 실패:', error)
     isConnected.value = false;
-    handleConnectionFailure('활성화 실패')
   }
 }
 
-// 채팅방 메세지 구독
-const subscribeToRoom = () => {   
-  if (!stompClient.value || !isConnected.value) {
-    console.error('STOMP 클라이언트가 준비되지 않았습니다')
+
+const subscribeToRoom = (roomId) => {
+  if(subscriptions.value[props.roomId]) {
+    console.log(`이미 ${props.roomId} 채팅방 구독중`)
     return
   }
-  stompClient.value.subscribe(
-    `/topic/room/message/${props.roomId}`,
-    (message) => {
-      try {
-        const parsedMessage = JSON.parse(message.body);
-        messages.value.push(parsedMessage);
-      } catch (error) {
-        console.error('메시지 파싱 오류:', error);
-      }
-    },
-    { Authorization: `Bearer ${authStore.accessToken}` }
-  );
-};
 
+  subscriptions.value[roomId] = stompClient.value.subscribe(`/topic/chat/room/message/${roomId}`, messages => {
+    console.log('메세지 전송: ', messages)
+    if(!messagesInRoom.value[roomId]) {
+      messagesInRoom.value[roomId] =[]
+    }
+    messagesInRoom.value[roomId].push(JSON.parse(messages.body))
+  })
+}
 /** WebSocket 재연결 */
 const reconnectWebSocket = () => {
   setTimeout(() => {
@@ -127,63 +122,59 @@ const reconnectWebSocket = () => {
 };
 
 
-// const changeRoom = () => {
-//   if (stompClient.value && stompClient.value.connected) {
-//     subscribeToRoom(currentRoom.value)
-//   }
-// }
-
-// const handleConnectionFailure = (reason) => {
-//   console.error(`연결 실패: ${reason}`)
-//   isConnected.value = false
-//   connectionStatus.value = '연결 실패'
-// }
 
 const sendMessage = () => {
   console.log('전송 시도~!')
-  if (!isConnected.value || !stompClient.value?.connected) {
-    console.error('웹소켓에 연결되지 않았습니다. 연결을 시도합니다...');
-    connectWebSocket();
-    return;
-  }
-  if (newMessage.value.trim()) {
-    const chatMessage = {
-      senderId: authStore.user?.userId,
-      message: newMessage.value.trim(),
-      chatType: 'MESSAGE',
-    };
-    try {
-      stompClient.value.publish({
-        destination: `/app/room/message/${props.roomId}`,
-        body: JSON.stringify(chatMessage),
-      });
-      newMessage.value = ''; // 메시지 초기화
-    } catch (error) {
-      console.error('메시지 전송 중 오류:', error);
-    }
-  } else {
-    console.warn('빈 메시지는 전송할 수 없습니다.');
-  }
+  console.log('현재 메시지 값:', newMessage.value);
+  if (!newMessage.value || !newMessage.value.trim()) {
+  console.warn('빈 메시지는 전송할 수 없습니다.');
+  return;
+}
+
+if (!isConnected.value) {
+  console.error('웹소켓에 연결되지 않았습니다. 연결을 시도합니다...');
+  connectWebSocket(); // 연결 시도
+  return;
+}
+
+const chatMessage = {
+  senderId: authStore.user?.userId,
+  message: newMessage.value.trim(),
+  chatType: 'TALK',
+  sentTime: new Date().toISOString(),
+  roomId: props.roomId
 };
 
-const closeRoom = () => {
-  isVisible.value = false;
-  emit('close');
+try {
+  stompClient.value.publish({
+    destination: `/app/chat/room/message/room1`,
+    body: JSON.stringify(chatMessage),
+  });
+  newMessage.value = ''; // 메시지 초기화
+} catch (error) {
+  console.error('메시지 전송 중 오류:', error);
+}
+
 };
 
-const leaveChat = async () => {
-  try {
-    const response = await axios.post(`/api/chat/room/${props.roomId}/leave`, null, {
-      params: { userId: authStore.user?.userId },
-    });
-    console.log('채팅방을 나갑니다.')
-    console.log('API 요청 URL: ', axios.defaults.baseURL + `/api/chat/room/${props.roomId}/leave`);
-    console.log('응답 데이터: ', response.data);
-    // 필요 시 추가 동작 (e.g., 채팅방 목록 갱신)
-  } catch (error) {
-    console.error('채팅방 나가는 중 오류 발생:', error);
-  }
-};
+// const closeRoom = () => {
+//   isVisible.value = false;
+//   emit('close');
+// };
+
+// const leaveChat = async () => {
+//   try {
+//     const response = await axios.post(`/api/chat/room/${props.roomId}/leave`, null, {
+//       params: { userId: authStore.user?.userId },
+//     });
+//     console.log('채팅방을 나갑니다.')
+//     console.log('API 요청 URL: ', axios.defaults.baseURL + `/api/chat/room/${props.roomId}/leave`);
+//     console.log('응답 데이터: ', response.data);
+//     // 필요 시 추가 동작 (e.g., 채팅방 목록 갱신)
+//   } catch (error) {
+//     console.error('채팅방 나가는 중 오류 발생:', error);
+//   }
+// };
 
 
 onMounted(() => {
@@ -239,8 +230,9 @@ if (stompClient.value) {
     top: 15px;
     right: 10px;
     background: none;
+    border-color: #c7c5c5;
     border-radius: 20rem;
-    font-size: 1rem;
+    font-size: 0.9rem;
     cursor: pointer;
     color: #c7c5c5;
 }
@@ -276,7 +268,7 @@ h2 {
 }
 
 .newMessage {
-  font-size: 0.5rem;
+  font-size: 1rem;
 }
 .chat-input {
   display: flex;

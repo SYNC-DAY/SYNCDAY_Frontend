@@ -14,7 +14,7 @@
 <style scoped>
 .modal {
   position: absolute;
-  top: 30%;
+  top: 40%;
   left: 85%;
   transform: translate(-50%, -50%);
   background-color: white;
@@ -23,7 +23,7 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   z-index: 2000;
   width: 35rem;
-  height: 50rem;
+  height: 30rem;
 }
 
 .modal-content {
