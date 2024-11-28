@@ -9,7 +9,9 @@
       <div class="main-container">
         <template v-if="authStore.isAuthenticated">
           <main class="content">
+
             <router-view />
+            <!-- <GithubOrg></GithubOrg> -->
           </main>
         </template>
       </div>
@@ -22,6 +24,7 @@ import { computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from "@/stores/auth.js";
 import Navigation from "@/components/Navigation.vue";
+import GithubOrg from './views/vcs/GithubOrg.vue';
 
 const route = useRoute();
 const authStore = useAuthStore();
