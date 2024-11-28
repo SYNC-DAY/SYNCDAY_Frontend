@@ -112,19 +112,39 @@ const toggleProjectExpansion = (projId) => {
 
 const handleBookmarkChange = async (projId, isBookmarked) => {
   try {
-    await axios.put(`/proj-members/${projId}/bookmark`, {
-      bookmark_status: isBookmarked ? 'BOOKMARKED' : 'UNBOOKMARKED'
+    // Determine the HTTP method based on whether we're adding or removing the bookmark
+    const response = await axios({
+      method: isBookmarked ? 'POST' : 'DELETE',
+      url: '/proj-members/bookmark',
+      params: {
+        userId: user.value.userId,
+        projId: projId
+      }
     });
 
+    if (response.data.success) {
+      // Update the local project state to reflect the new bookmark status
+      const projIndex = projects.value.findIndex(p => p.proj_id === projId);
+      if (projIndex !== -1) {
+        projects.value[projIndex] = {
+          ...projects.value[projIndex],
+          bookmark_status: isBookmarked ? 'BOOKMARKED' : 'NONE'
+        };
+      }
+    } else {
+      throw new Error(response.data.error || 'Failed to update bookmark status');
+    }
+  } catch (err) {
+    console.error('Failed to update bookmark status:', err);
+    // You might want to add error handling UI feedback here
+    // Revert the bookmark state in the UI since the operation failed
     const projIndex = projects.value.findIndex(p => p.proj_id === projId);
     if (projIndex !== -1) {
       projects.value[projIndex] = {
         ...projects.value[projIndex],
-        bookmark_status: isBookmarked ? 'BOOKMARKED' : 'UNBOOKMARKED'
+        bookmark_status: isBookmarked ? 'NONE' : 'BOOKMARKED'
       };
     }
-  } catch (err) {
-    console.error('Failed to update bookmark status:', err);
   }
 };
 
