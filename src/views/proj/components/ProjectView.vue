@@ -236,9 +236,7 @@ const openNewWorkspaceDialog = () => {
 	justify-content: center;
 }
 
-.header-right button {
-	size: 2rem;
-}
+
 
 .workspaces-grid {
 	display: grid;
