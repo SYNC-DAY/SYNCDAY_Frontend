@@ -138,7 +138,7 @@ const selectOrganization = async (org) => {
 			user_id: user.value.userId,
 			proj_id: props.projectId,
 			vcs_type: 'GITHUB',
-			vcs_org_url: `https://github.com/${org.login}`,
+			vcs_proj_url: `https://github.com/${org.login}`,
 		});
 
 		if (!response.data.success) {
