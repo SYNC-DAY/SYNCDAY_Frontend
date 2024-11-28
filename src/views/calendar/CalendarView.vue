@@ -24,10 +24,12 @@ import CalendarModal from './component/CalendarModal.vue';
 import { useAuthStore } from '@/stores/auth';
 const authStore = useAuthStore();
 
+// 조회 모달 관련
 const showEventModal = ref(false);
 const selectedEvent = ref({});
 
-const isModalVisible = ref(false); // 모달 표시 상태
+// 등록 모달 관련
+const isModalVisible = ref(false);
 const selectedInfo = ref({});
 
 // 이벤트 데이터
@@ -70,10 +72,18 @@ const calendarOptions = ref({
         selectedInfo.value = info;
         isModalVisible.value = true; // 모달 열기
         console.log('selectInfo 보자!', info);
-        // alert(`Selected from ${info.startStr} to ${info.endStr}`);
+        console.log('start???:', info.start);
+        console.log('end???:', info.end);
+        alert(`Selected from ${info.startStr} to ${info.endStr} allDay: ${info.allDay}`);
     },
     eventClick: async (info) => {
         await fetchDetailSchedules(info.event.id, authStore.user.userId);
+
+        // 클릭된 이벤트의 allDay 값을 추가로 설정
+        selectedEvent.value = {
+            ...selectedEvent.value, // 기존의 상세 데이터 유지
+            allDay: info.event.allDay, // allDay 속성 추가
+        };
         console.log('selectedEvent:', selectedEvent.value);
 
         // 모달 열기
@@ -95,30 +105,22 @@ const closeModal = () => {
 const fetchSchedules = async () => {
     try {
         const response = await axios.get(`/schedule/my?userId=${authStore.user.userId}`);
-        console.log(response);
         const data = response.data.data;
-        console.log(data);
 
         events.value = data.map((schedule) => {
-            const startDate = new Date(schedule.start_time);
+            const startDate = new Date(schedule.start_time); // new Date()를 사용하면 KST로 바뀐다?
             const endDate = new Date(schedule.end_time);
 
-            // 날짜 차이를 계산
-            const dayDifference = 
-                Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)); // 일 단위 차이 계산
-
-            // 종일 이벤트인지 확인
-            const isAllDay = 
-                dayDifference > 1 || // 2일 이상 차이가 나는 경우
-                (dayDifference === 1 && // 하루 차이면서
-                    startDate.getHours() === 0 && 
-                    startDate.getMinutes() === 0 && 
-                    endDate.getHours() === 0 && 
-                    endDate.getMinutes() === 0);
+            // isAllDay를 True로 설정하는 조건: startDate와 endDate의 시각이 모두 00:00이면 true
+            const isAllDay =
+                startDate.getHours() === 0 &&
+                startDate.getMinutes() === 0 &&
+                endDate.getHours() === 0 &&
+                endDate.getMinutes() === 0;
 
             return {
                 id: schedule.schedule_id,
-                title: schedule.title,
+                title: schedule.title ? schedule.title : '(제목 없음)',
                 start: startDate,
                 end: endDate,
                 allDay: isAllDay,
@@ -141,23 +143,15 @@ const fetchDetailSchedules = async (scheduleId, userId) => {
     try {
         const response = await axios.get(`/schedule/my/${scheduleId}?userId=${userId}`);
         const data = response.data.data[0];
-        console.log('DetailSchedule!!:', data);
-
-        // UTC 시간을 KST로 변환하는 함수
-        const convertToKST = (utcTime) => {
-            const utcDate = new Date(utcTime);
-            const kstDate = new Date(utcDate.getTime() + 9 * 60 * 60 * 1000); // 9시간 추가
-            return kstDate.toISOString().replace('Z', '+09:00');
-        };
 
         // selectedEvent를 가져온 데이터로 업데이트
         selectedEvent.value = {
             scheduleId: data.schedule_id,
             title: data.title,
             content: data.content,
-            startTime: convertToKST(data.start_time),
-            endTime: convertToKST(data.end_time),
-            updateTime: convertToKST(data.update_time),
+            startTime: new Date(data.start_time),
+            endTime: new Date(data.end_time),
+            updateTime: new Date(data.update_time),
             publicStatus: data.public_status,
             scheduleRepeatId: data.schedule_repeat_id,
             repeatOrder: data.repeat_order,
@@ -176,8 +170,8 @@ const fetchDetailSchedules = async (scheduleId, userId) => {
     }
 };
 
-onMounted(() => {
-    fetchSchedules();
+onMounted(async () => {
+    await fetchSchedules();
 });
 </script>
 

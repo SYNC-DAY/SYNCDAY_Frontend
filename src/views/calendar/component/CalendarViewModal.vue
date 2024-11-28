@@ -20,6 +20,7 @@
             <div>userId: {{ userId }}</div>
             <div>username: {{ username }}</div>
             <div>userInfo: {{ userInfo }}</div>
+            <div>allDay: {{ allDay }}</div>
             <button @click="$emit('close')">Close</button>
         </div>
     </div>
@@ -27,6 +28,7 @@
 
 <script setup>
 import { ref, onMounted, defineProps } from 'vue';
+import dayjs from 'dayjs';
 import axios from 'axios';
 
 const props = defineProps({
@@ -50,6 +52,10 @@ const meetingroomId = props.schedule.meetingroomId;
 const userId = props.schedule.userId;
 const username = props.schedule.username;
 const userInfo = props.schedule.userInfo;
+const allDay = props.schedule.allDay;
+
+// 종일 체크 여부
+const isAllDay = ref(false);
 
 const handleOutsideClick = (event) => {
     if (event.target === event.currentTarget) {

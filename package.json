@@ -20,6 +20,7 @@
     "@stomp/stompjs": "^7.0.0",
     "axios": "^1.7.7",
     "chart.js": "3.3.2",
+    "dayjs": "^1.11.13",
     "dotenv": "^16.4.5",
     "jwt-decode": "^4.0.0",
     "lucide-vue-next": "^0.456.0",

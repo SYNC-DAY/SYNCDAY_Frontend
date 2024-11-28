@@ -10,6 +10,27 @@
             </div>
 
             <!-- 날짜/시간 -->
+            <!-- 시작 시간 선택 -->
+            <div>
+                <label for="startTime">시작 시간:</label>
+                <input
+                    id="startTime"
+                    type="datetime-local"
+                    :value="start"
+                    @input="updateStartTime($event.target.value)"
+                />
+            </div>
+
+            <!-- 종료 시간 선택 -->
+            <div>
+                <label for="endTime">종료 시간:</label>
+                <input
+                    id="endTime"
+                    type="datetime-local"
+                    :value="end"
+                    @input="updateEndTime($event.target.value)"
+                />
+            </div>
 
             <!-- 종일 체크 -->
             <div class="flex items-center mb-4">
@@ -17,6 +38,11 @@
                     <input type="checkbox" v-model="isAllDay" class="mr-2" />
                     종일
                 </label>
+            </div>
+
+            <!-- 내용 -->
+            <div>
+                <textarea v-model="formData.content" placeholder="내용을 입력해주세요."></textarea>
             </div>
 
             <!-- 회의 토글 -->
@@ -29,6 +55,14 @@
                     <div class="toggle-switch" :class="{ active: isMeeting }" @click="toggleMeeting">
                         <div class="toggle-slider"></div>
                     </div>
+                </div>
+            </div>
+
+            <!-- 회의실 -->
+            <div v-if="isMeeting">
+                <div>
+                    <!-- 회의실 조회해서 회의실 id 가져오게 해야한다. 이때 시간을 넘겨서 조회 -->
+                    <span>회의실 추가</span>
                 </div>
             </div>
 
@@ -46,23 +80,61 @@
                 </div>
             </div>
 
+            <!-- 참석자 -->
+            <div>
+                <div>
+                    <img src="@/assets/images/attendee.svg" alt="attendee" />
+                    <span> 참석자 </span>
+                </div>
+                <div>
+                    <!-- 엘라스틱 서치로 user_id를 리스트에 넣는다. -->
+                    <span>추가</span>
+                </div>
+            </div>
+
+            <!-- 알람 -->
+            <!-- 시간에 대한 알람만 있다면 종일이 풀려서 시간이 보일 때 나타나게 해도 괜찮을 듯! -->
+            <div>
+                <div>
+                    <img src="@/assets/images/alarm-clock.svg" alt="alarm-clock" />
+                    <span>알람</span>
+                </div>
+                <div>
+                    <span>추가</span>
+                </div>
+            </div>
+
+            <div>{{ dayjs(formData.startTime).format('YYYY-MM-DDTHH:mm') }}</div>
+            <div>{{ dayjs(formData.endTime).format('YYYY-MM-DDTHH:mm') }}</div>
+
+            <br /><br />
+
             <!-- 버튼 영역 -->
             <div class="button-section">
                 <button class="cancel-btn" @click="$emit('close')">취소</button>
                 <button class="submit-btn" @click="submitSchedule">저장</button>
             </div>
-            <DatePicker />
         </div>
     </div>
 </template>
 
 <script setup>
 import { ref, watch, onMounted, computed } from 'vue';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';  // UTC 플러그인
+import timezone from 'dayjs/plugin/timezone';  // 타임존 플러그인
 import axios from 'axios';
 import { DatePicker } from 'v-calendar';
 import 'v-calendar/style.css';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+
+dayjs.extend(utc);  // UTC 플러그인 사용
+dayjs.extend(timezone);  // 타임존 플러그인 사용
+
 const authStore = useAuthStore();
+
+const router = useRouter();
 
 const props = defineProps({
     selectedInfo: {
@@ -73,59 +145,44 @@ const props = defineProps({
 
 console.log('모달로 넘어온 값:', props.selectedInfo);
 
-const formData = ref({
-    id: authStore.user.userId,
-    title: null,
-    content: null,
-    startTime: '',
-    endTime: '',
-    publicStatus: 'PRIVATE',
-    scheduleRepeatId: null,
-    repeatOrder: null,
-    meetingStatus: 'INACTIVE',
-    meetingRoomId: null,
-    attendeeIds: [],
-    notificationTime: null,
-});
+// 시작과 종료 날짜 및 시간 받자!
+const start = ref(props.selectedInfo.start);
+const end = ref(props.selectedInfo.end);
 
-// 날짜 포맷팅
-const formatDate = (date) => {
-    const d = new Date(date);
-
-    return new Intl.DateTimeFormat('ko-KR', {
-        month: 'long',
-        day: 'numeric',
-        weekday: 'short',
-    }).format(d);
-};
-
-// 시간 포맷팅
-const formatDateTime = (date) => {
-    const d = new Date(date);
-
-    return new Intl.DateTimeFormat('ko-KR', {
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: true, // 12시간 형식 (오전/오후) 사용
-    }).format(d);
-};
-
-// 시작 날짜 및 시간
-const rawStartDate = ref(() => {
-    const now = props.selectedInfo.start;
-    const nextHour = new Date(now);
-    nextHour.setMinutes(0, 0, 0); // 분, 초, 밀리초를 0으로 설정
-    nextHour.setHours(now.getMinutes() === 0 ? now.getHours() : now.getHours() + 1); // 다음 정시로 설정
-    return nextHour;
-});
-
-// 종료 날짜 및 시간
-// const rawEndDate = ref(new Date(rawStartDate.value.getTime() + 60 * 60 * 1000));
+console.log('start', start);
+console.log('end', end);
 
 // 종일 체크 여부
-const isAllDay = ref(props.selectedInfo.allDay);
-console.log('종일 여부 체크:', isAllDay);
-console.log('시간 체크:', props.selectedInfo.start);
+const isAllDay = ref();
+
+// 날짜만 비교하여 isAllDay 설정
+const updateIsAllDay = () => {
+    // 오늘의 일정을 받을 때 여기서 end를 한시간 추가하게 할 수 있을 듯?
+
+    // const startDate = new Date(start.value).toISOString().split('T')[0];
+    // const endDate = new Date(end.value).toISOString().split('T')[0];
+
+    // start와 end를 날짜만 비교하려면 시간 부분을 00:00로 설정하여 비교
+    const startDate = new Date(start.value).setHours(0, 0, 0, 0);
+    const endDate = new Date(end.value).setHours(0, 0, 0, 0);
+    isAllDay.value = startDate !== endDate; // 날짜가 다르면 true, 같으면 false
+};
+
+// 'start'와 'end' 값이 변경될 때마다 updateIsAllDay 실행되게!
+watch([start, end], updateIsAllDay, { immediate: true });
+
+console.log('isAllDay:', isAllDay);
+
+// 시작 날짜와 시간 포맷팅
+const startDate = dayjs(start.value).tz('Asia/Seoul').format('YYYY-MM-DD');
+const startDateTime = dayjs(start.value).tz('Asia/Seoul').format('HH:mm');
+const endDate = dayjs(end.value).tz('Asia/Seoul').format('YYYY-MM-DD');
+const endDateTime = dayjs(end.value).tz('Asia/Seoul').format('HH:mm');
+
+console.log('startDate:', startDate);
+console.log('startDateTime:', startDateTime);
+console.log('endDate:', endDate);
+console.log('endDateTime:', endDateTime);
 
 // 회의 여부
 const isMeeting = ref(false);
@@ -147,15 +204,6 @@ const togglePublic = () => {
         isPublic.value = !isPublic.value; // 회의가 활성화되지 않은 경우에만 공개 상태를 변경
     }
 };
-
-// 상태 변경을 formData에 반영
-watch(isMeeting, (newValue) => {
-    formData.value.meetingStatus = newValue ? 'ACTIVE' : 'INACTIVE';
-});
-
-watch(isPublic, (newValue) => {
-    formData.value.publicStatus = newValue ? 'PUBLIC' : 'PRIVATE';
-});
 
 const submitSchedule = async () => {
     try {
@@ -187,11 +235,6 @@ const submitSchedule = async () => {
 
         // 모달 닫기
         emit('close');
-
-        // CalendarView로 이동
-        setTimeout(() => {
-            router.push({ name: 'CalendarView' });
-        }, 300); // 필요 시 딜레이 추가
     } catch (error) {
         // 실패 시 에러 처리
         console.error('스케줄 등록 실패:', error.response?.data || error.message);
@@ -202,6 +245,46 @@ const submitSchedule = async () => {
 };
 
 const emit = defineEmits(['close', 'submit']);
+
+const formData = ref({
+    id: authStore.user.userId,
+    title: null,
+    content: null,
+    startTime: `${startDate}T${startDateTime}+09:00`,
+    endTime: `${endDate}T${endDateTime}+09:00`,
+    publicStatus: 'PRIVATE',
+    scheduleRepeatId: null,
+    repeatOrder: null,
+    meetingStatus: 'INACTIVE',
+    meetingRoomId: null,
+    attendeeIds: [],
+    notificationTime: null,
+});
+
+// 상태 변경을 formData에 반영
+watch(isMeeting, (newValue) => {
+    formData.value.meetingStatus = newValue ? 'ACTIVE' : 'INACTIVE';
+}, { immediate: true });
+
+watch(isPublic, (newValue) => {
+    formData.value.publicStatus = newValue ? 'PUBLIC' : 'PRIVATE';
+}, { immediate: true });
+
+console.log('startTime:', formData.value.startTime);
+console.log('endTime:', formData.value.endTime);
+
+onMounted(() => {
+    updateIsAllDay();
+});
+
+// const componentInstance = ref(null);
+
+// onMounted(() => {
+//     console.log(componentInstance.value); // 컴포넌트 인스턴스 확인
+//     if (componentInstance.value && typeof componentInstance.value.update === 'function') {
+//         componentInstance.value.update();
+//     }
+// });
 </script>
 
 <style scoped>
