@@ -3,10 +3,13 @@
     <Accordion class="cardboard-accordion" multiple>
       <AccordionPanel v-for="(cardboard, index) in cardboards" :key="index" :value="index">
         <AccordionHeader>
-          <div class="cardboard-header w-full px-6 py-4 flex flex-col gap-2">
-            <div class="flex justify-between items-center">
-              <h3>{{ cardboard.title }}</h3>
-              <span class=""></span>
+          <div class="cardboard-header container-column w-full px-6 py-4">
+            <div class="container-row">
+              <span>{{ cardboard.title }}</span>
+              <div>
+                <span class="">{{ formatDate(cardboard.start_time) }}</span>
+                <span class="">{{ formatDate(cardboard.end_time) }}</span>
+              </div>
             </div>
             <div>
               <ProgressBar :value="cardboard.progress_status" style="height: 1rem" />
@@ -41,10 +44,27 @@ const props = defineProps({
   }
 });
 
-
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
 </script>
 
 <style>
+.cardboard-header {
+  gap: 1rem;
+}
+
+.cardboard-header span {
+  font-size: 1.5rem;
+  color: black;
+}
+
 .cardboard-view-container :deep(.p-accordion) {
   width: 100%;
 }
@@ -78,6 +98,7 @@ const props = defineProps({
 }
 
 .cardboard-header {
+  margin: 1rem;
   width: 100%;
 }
 

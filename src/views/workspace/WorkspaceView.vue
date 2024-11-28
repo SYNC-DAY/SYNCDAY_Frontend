@@ -48,6 +48,7 @@
                 minus.
               </p>
             </TabPanel>
+            <!-- Calendar view -->
           </TabPanels>
         </Tabs>
       </div>
