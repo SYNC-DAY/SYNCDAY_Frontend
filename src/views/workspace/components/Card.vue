@@ -2,10 +2,7 @@
 <template>
   <div class="card" @click="openModal">
     <div class="card-header">
-      <div 
-        class="tag" 
-        :style="{ backgroundColor: card.tag_color }"
-      >
+      <div class="tag" :style="{ backgroundColor: card.tag_color }">
         {{ card.tag_name }}
       </div>
       <div class="dates">
@@ -16,21 +13,13 @@
     <p class="card-content">{{ card.card_content }}</p>
     <div class="card-footer">
       <div class="assignee">
-        <img 
-          :src="card.assignee_profile_url" 
-          :alt="card.assignee_name"
-          class="avatar"
-        >
+        <img :src="card.assignee_profile_url" :alt="card.assignee_name" class="avatar">
         <span>{{ card.assignee_name }}</span>
       </div>
       <div class="team">{{ card.assignee_team_name }}</div>
     </div>
 
-    <CardModal 
-      :show="showModal" 
-      :card="card"
-      @close="closeModal"
-    />
+    <CardModal :show="showModal" :card="card" @close="closeModal" />
   </div>
 </template>
 
@@ -62,75 +51,32 @@ const formatDate = (dateString) => {
 };
 </script>
 
+// Card.vue
 <style scoped>
 .card {
-  background: white;
-  border-radius: 6px;
-  padding: 1rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  cursor: pointer;
-  transition: box-shadow 0.2s ease;
-}
-
-.card:hover {
-  box-shadow: 0 3px 6px rgba(0,0,0,0.15);
-}
-
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.tag {
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  color: black;
-}
-
-.dates {
-  font-size: 0.75rem;
-  color: #666;
+  /* existing styles */
+  min-width: 250px;
+  max-width: 100%;
+  overflow: hidden;
+  /* Prevent content overflow */
 }
 
 .card-title {
   margin: 0.5rem 0;
   font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .card-content {
   font-size: 0.875rem;
   color: #444;
   margin-bottom: 1rem;
-}
-
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.assignee {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.team {
-  font-size: 0.75rem;
-  color: #666;
-  background: #f0f0f0;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>

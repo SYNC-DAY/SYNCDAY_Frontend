@@ -9,11 +9,7 @@
       <span class="progress-text">{{ progress }}%</span>
     </div>
     <div class="cards-container">
-      <Card 
-        v-for="card in cards" 
-        :key="card.card_id"
-        :card="card"
-      ></Card>
+      <Card v-for="card in cards" :key="card.card_id" :card="card"></Card>
     </div>
   </div>
 </template>
@@ -39,35 +35,15 @@ defineProps({
 });
 </script>
 
+// Board.vue
 <style scoped>
 .board {
   background: #f5f5f5;
   border-radius: 8px;
   padding: 1rem;
-}
-
-.board-header {
-  margin-bottom: 1rem;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 6px;
-  background: #e0e0e0;
-  border-radius: 3px;
-  margin: 0.5rem 0;
-}
-
-.progress {
-  height: 100%;
-  background: #4CAF50;
-  border-radius: 3px;
-  transition: width 0.3s ease;
-}
-
-.progress-text {
-  font-size: 0.875rem;
-  color: #666;
+  min-width: 280px;
+  max-width: 100%;
+  height: fit-content;
 }
 
 .cards-container {
@@ -76,5 +52,26 @@ defineProps({
   gap: 0.5rem;
   max-height: calc(100vh - 200px);
   overflow-y: auto;
+  padding-right: 0.5rem;
+  /* Add space for scrollbar */
+}
+
+/* Add custom scrollbar styling */
+.cards-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cards-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.cards-container::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.cards-container::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 </style>
