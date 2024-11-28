@@ -76,7 +76,11 @@ import ProgressSpinner from 'primevue/progressspinner';
 import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 import { useGithubOrgStore } from '@/stores/github/useGithubOrgStore';
 import GithubAuthModal from './GithubAuthModal.vue';
-
+import { useAuthStore } from "@/stores/auth.js";
+import { storeToRefs } from "pinia";
+import axios from 'axios';
+const authStore = useAuthStore()
+const { user } = storeToRefs(authStore)
 // Props and Emits
 const props = defineProps({
 	isOpen: {
@@ -92,8 +96,8 @@ const props = defineProps({
 const emit = defineEmits(['update:visible', 'close', 'update:project']);
 
 // Stores
-const authStore = useGithubAuthStore();
-const orgStore = useGithubOrgStore();
+const githubAuthStore = useGithubAuthStore();
+const githubOrgStore = useGithubOrgStore();
 
 // State
 const isLoading = ref(false);
@@ -104,7 +108,7 @@ const pendingOperation = ref(null);
 
 // Methods
 const loadOrganizations = async () => {
-	if (!authStore.isAuthenticated) {
+	if (!githubAuthStore.isAuthenticated) {
 		showAuthModal.value = true;
 		pendingOperation.value = 'load';
 		return;
@@ -113,7 +117,7 @@ const loadOrganizations = async () => {
 	try {
 		isLoading.value = true;
 		error.value = null;
-		organizations.value = await orgStore.fetchOrganizations(true);
+		organizations.value = await githubOrgStore.fetchOrganizations(true);
 	} catch (err) {
 		error.value = err.message;
 	} finally {
@@ -122,7 +126,7 @@ const loadOrganizations = async () => {
 };
 
 const selectOrganization = async (org) => {
-	if (!authStore.isAuthenticated) {
+	if (!githubAuthStore.isAuthenticated) {
 		showAuthModal.value = true;
 		pendingOperation.value = 'select';
 		return;
@@ -130,23 +134,18 @@ const selectOrganization = async (org) => {
 
 	try {
 		isLoading.value = true;
-		const response = await fetch(`/api/projects/${props.projectId}/vcs`, {
-			method: 'PUT',
-			headers: {
-				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${authStore.accessToken}`
-			},
-			body: JSON.stringify({
-				vcs_type: 'GITHUB',
-				vcs_org_url: `https://github.com/${org.login}`,
-			}),
+		const response = await axios.put('/projs/vcs', {
+			user_id: user.value.userId,
+			proj_id: props.projectId,
+			vcs_type: 'GITHUB',
+			vcs_org_url: `https://github.com/${org.login}`,
 		});
 
-		if (!response.ok) {
+		if (!response.data.success) {
 			throw new Error('Failed to update project VCS info');
 		}
 
-		const updatedProject = await response.json();
+		const updatedProject = await response.data;
 		emit('update:project', updatedProject);
 		handleClose();
 	} catch (err) {
