@@ -1,6 +1,6 @@
 <template>
   <div class="cardboard-view-container p-4">
-    <Accordion class="cardboard-accordion" v-model:activeIndex="activePanel">
+    <Accordion class="cardboard-accordion" v-model:activeIndex="activePanel" multiple>
       <AccordionPanel v-for="(cardboard, index) in cardboards" :key="index" :value="index">
         <AccordionHeader>
           {{ cardboard.title }}
