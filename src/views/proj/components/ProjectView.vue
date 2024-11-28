@@ -1,82 +1,86 @@
 <template>
-	<div v-if="!project" class="project-not-found">
-		<h2>Project Not Found</h2>
-		<p>The requested project could not be found.</p>
-		<button @click="goBack" class="back-button">Go Back</button>
-	</div>
-
-	<div v-else class="project-container container-column">
-		<div class="container-row">
-			<div class="proj-header-left container-row">
-				<!-- 프로젝트 이름 -->
-				<div class="proj-title">
-					<h3>{{ project.proj_name }}</h3>
-				</div>
-
-				<!-- 역할, Todo: Project Member 테이블에서 역할 가져와서 표시 -->
-				<div class="proj-role container-row">
-					<img src="@/assets/icons/Crown.svg"></img>
-					<span>Owner</span>
-				</div>
-			</div>
-
-
-			<!-- VCS -->
-			<div class="proj-vcs">
-				<Button label="Organization" severity="contrast" icon="pi pi-building" @click="handleOpenVcsTypeMenu"
-					aria-haspopup="true" aria-controls="overlay-menu"></Button>
-			</div>
+	<div class="project-view">
+		<!-- Not Found State -->
+		<div v-if="!currentProject" class="flex flex-column items-center justify-center p-6">
+			<h2>Project Not Found</h2>
+			<p class="text-gray-600 mb-4">The requested project could not be found.</p>
+			<Button label="Go Back" @click="router.back()" />
 		</div>
 
-
-		<div class="content">
-			<h3>Workspaces</h3>
-			<div v-if="project.workspaces?.length" class="workspaces-grid">
-				<div v-for="workspace in project.workspaces" :key="workspace.workspace_id" class="workspace-card"
-					@click="navigateToWorkspace(workspace.workspace_id)">
-					<h4>{{ workspace.workspace_name }}</h4>
-					<div class="progress-bar">
-						<div class="progress-fill" :style="{ width: `${workspace.progress_status}%` }"></div>
+		<!-- Project Content -->
+		<div v-else class="flex flex-column gap-4 p-4">
+			<!-- Header Section -->
+			<div class="flex justify-between items-center">
+				<div class="flex items-center gap-4">
+					<div class="project-title">
+						<h2 class="text-xl font-bold m-0">{{ currentProject.proj_name }}</h2>
 					</div>
-					<span class="progress-text">{{ workspace.progress_status }}% Complete</span>
+					<div class="flex items-center gap-2">
+						<i class="pi pi-crown text-yellow-500"></i>
+						<span class="text-gray-600">Owner</span>
+					</div>
+				</div>
+
+				<!-- VCS Integration -->
+				<div class="vcs-controls">
+					<Button label="Organization" severity="secondary" icon="pi pi-building" @click="openVcsMenu"
+						aria-haspopup="true" aria-controls="overlay-menu" />
 				</div>
 			</div>
-			<div v-else class="no-workspaces">
-				<p>No workspaces found. Create a new workspace to get started.</p>
+
+			<!-- Workspaces Section -->
+			<div class="workspaces-section mt-6">
+				<div class="flex justify-between items-center mb-4">
+					<h3 class="text-lg font-semibold m-0">Workspaces</h3>
+					<Button label="New Workspace" icon="pi pi-plus" severity="secondary"
+						@click="openNewWorkspaceDialog" />
+				</div>
+
+				<!-- Workspaces Grid -->
+				<div v-if="currentProject.workspaces?.length"
+					class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+					<div v-for="workspace in currentProject.workspaces" :key="workspace.workspace_id"
+						class="workspace-card p-4 border rounded-lg hover:shadow-md transition-all cursor-pointer"
+						@click="navigateToWorkspace(workspace.workspace_id)">
+						<h4 class="text-md font-medium mb-2">{{ workspace.workspace_name }}</h4>
+						<div class="bg-gray-200 rounded-full h-2 mb-2">
+							<div class="bg-primary h-full rounded-full"
+								:style="{ width: `${workspace.progress_status}%` }"></div>
+						</div>
+						<span class="text-sm text-gray-600">{{ workspace.progress_status }}% Complete</span>
+					</div>
+				</div>
+
+				<!-- Empty State -->
+				<div v-else class="empty-state text-center p-6 bg-gray-50 rounded-lg">
+					<i class="pi pi-folder-open text-4xl text-gray-400 mb-3"></i>
+					<p class="text-gray-600">No workspaces found. Create a new workspace to get started.</p>
+				</div>
 			</div>
 		</div>
-	</div>
 
-	<!-- In your Project view -->
-	<VcsTypeMenu ref="menu" @vcs-selected="handleVCSSelection" />
+		<!-- Modals -->
+		<VcsTypeMenu ref="vcsMenu" @vcs-selected="handleVcsSelection" />
+
+		<GithubAuthModal :visible="showGithubAuthModal" @update:visible="showGithubAuthModal = $event"
+			@login-success="handleGithubLoginSuccess" @login-error="handleGithubLoginError" />
+
+		<GithubOrgModal :is-open="showGithubOrgModal" :project-id="projectId" @close="showGithubOrgModal = false"
+			@update:project="handleProjectUpdate" />
+	</div>
 </template>
 
 <script setup>
-import { ref, computed, getCurrentInstance } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-
+import { useToast } from 'primevue/usetoast';
 import Button from 'primevue/button';
 import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
+import GithubOrgModal from '@/views/vcs/github/GithubOrgModal.vue';
+import GithubAuthModal from '@/views/vcs/github/GithubAuthModal.vue';
+import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 
-const menu = ref();
-const handleOpenVcsTypeMenu = (event) => {
-	menu.value?.toggle(event);
-}
-const handleVCSSelection = async (vcsType) => {
-	try {
-		// Handle VCS type selection
-		if (vcsType === 'GITHUB') {
-			await authStore.loginWithGithub();
-		}
-	} catch (error) {
-		toast.add({
-			severity: 'error',
-			summary: 'VCS Connection Failed',
-			detail: error.message,
-			life: 3000
-		});
-	}
-};
+// Props
 const props = defineProps({
 	projectId: {
 		type: [String, Number],
@@ -88,163 +92,96 @@ const props = defineProps({
 	}
 });
 
-const { proxy } = getCurrentInstance();
+// Router and Stores
 const router = useRouter();
+const toast = useToast();
+const authStore = useGithubAuthStore();
 
-const project = computed(() =>
+// Refs
+const vcsMenu = ref(null);
+const showGithubAuthModal = ref(false);
+const showGithubOrgModal = ref(false);
+
+// Computed
+const currentProject = computed(() =>
 	props.projects.find(p => p.proj_id === parseInt(props.projectId))
 );
 
+// Navigation Methods
 const navigateToWorkspace = (workspaceId) => {
 	router.push({
 		name: 'Workspace',
-		params: {
-			projectId: props.projectId,
-			workspaceId
-		}
+		params: { projectId: props.projectId, workspaceId }
 	});
 };
 
-const goBack = () => {
-	router.back();
+// VCS Integration Methods
+const openVcsMenu = (event) => {
+	vcsMenu.value?.toggle(event);
 };
 
-// In your component
-const handleProjectUpdate = (updatedProject) => {
-	// Handle the updated project data
-	project.value = updatedProject;
-	showVCSModal.value = false;
+const handleVcsSelection = async (vcsType) => {
+	try {
+		if (vcsType === 'GITHUB') {
+			if (!authStore.isAuthenticated) {
+				showGithubAuthModal.value = true;
+			} else {
+				showGithubOrgModal.value = true;
+			}
+		}
+	} catch (error) {
+		toast.add({
+			severity: 'error',
+			summary: 'VCS Connection Failed',
+			detail: error.message,
+			life: 3000
+		});
+	}
 };
+
+const handleGithubLoginSuccess = () => {
+	showGithubAuthModal.value = false;
+	showGithubOrgModal.value = true;
+};
+
+const handleGithubLoginError = (error) => {
+	toast.add({
+		severity: 'error',
+		summary: 'GitHub Authentication Failed',
+		detail: error.message,
+		life: 3000
+	});
+};
+
+const handleProjectUpdate = (updatedProject) => {
+	// Emit event to update parent state
+	emit('update:project', updatedProject);
+	showGithubOrgModal.value = false;
+};
+
+// Event emits
+const emit = defineEmits(['update:project']);
 </script>
 
 <style scoped>
-.project-container {
-	padding: 1rem;
-
-}
-
-.proj-header {
-	border-bottom: 1px solid var(--outline-gray)
-}
-
-
-
-
-.proj-role span {
-	color: var(--muted-text-color);
-	vertical-align: baseline;
-}
-
-.proj-role img {
-	margin-left: 1rem;
-	width: 2rem;
-	height: 2rem;
-}
-
-.project-not-found {
-	text-align: center;
-	padding: 40px;
-}
-
-.back-button {
-	margin-top: 20px;
-	padding: 8px 16px;
-	background-color: #3b82f6;
-	color: white;
-	border: none;
-	border-radius: 4px;
-	cursor: pointer;
-}
-
-.back-button:hover {
-	background-color: #2563eb;
-}
-
-.header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 20px;
-}
-
-.vcs-section {
-	display: flex;
-	align-items: center;
-}
-
-.vcs-link,
-.connect-github-btn {
-	padding: 8px 16px;
-	border-radius: 4px;
-	text-decoration: none;
-}
-
-.vcs-link {
-	background-color: #24292e;
-	color: white;
-}
-
-.connect-github-btn {
-	background-color: #2ea44f;
-	color: white;
-	border: none;
-	cursor: pointer;
-}
-
-.connect-github-btn:hover {
-	background-color: #2c974b;
-}
-
-.content {
-	margin-top: 1rem;
-}
-
-.workspaces-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-	gap: 20px;
-	margin-top: 20px;
+.project-view {
+	min-height: 100vh;
 }
 
 .workspace-card {
-	padding: 16px;
-	border: 1px solid #e5e7eb;
-	border-radius: 8px;
-	cursor: pointer;
-	transition: all 0.2s;
+	background: white;
+	transition: all 0.2s ease-in-out;
 }
 
 .workspace-card:hover {
 	transform: translateY(-2px);
-	box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-.progress-bar {
-	width: 100%;
-	height: 4px;
-	background-color: #e5e7eb;
-	border-radius: 2px;
-	margin: 8px 0;
-	overflow: hidden;
-}
-
-.progress-fill {
-	height: 100%;
-	background: linear-gradient(to right, #ff7eb3, #ff9f7d);
-	transition: width 0.3s ease;
-}
-
-.progress-text {
-	font-size: 0.875rem;
-	color: #6b7280;
-}
-
-.no-workspaces {
-	text-align: center;
-	padding: 40px;
-	color: #6b7280;
-	background-color: #f9fafb;
-	border-radius: 8px;
-	margin-top: 20px;
+.empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	min-height: 200px;
 }
 </style>
