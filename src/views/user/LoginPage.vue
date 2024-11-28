@@ -95,7 +95,7 @@ const handleLogin = async () => {
 
 .login-welcome {
   flex: 1;
-  padding: 15rem 5rem 0 5rem;
+  padding: 2rem 0 0 5rem;
   background-color: white;
 }
 
@@ -114,40 +114,51 @@ const handleLogin = async () => {
 
 .login-form-container {
   flex: 1;
-  padding:  5rem 0 5rem;
+  padding:  1rem 0 5rem;
   border-left: 1px solid #eee;
+  text-align: center;
 }
 
 .login-form-container h2 {
   font-size: 2rem;
   font-weight: bold;
   color: #333;
+  margin-right: 18rem;
+  margin-bottom: 3rem;
+}
+
+.form-group {
+  text-align: left; /* 내부 요소들을 왼쪽 정렬 */
+  width: 80%; /* 컨테이너 너비 설정 */
+  margin: 0 auto 1rem auto; /* 상하 마진으로 간격 조정, 좌우는 자동으로 중앙 정렬 */
 }
 
 .form-group label {
-  display: block;
-  margin-bottom: 1rem;
+  display: block; /* inline-block에서 block으로 변경 */
+  margin-bottom: 0.5rem;
   font-size: large;
   color: #333;
   font-weight: 500;
+  text-align: left;
 }
 
 .form-group input {
-  width: 100%;
-  padding: 2rem 1rem;
+  width: 100%; /* 부모 요소인 form-group의 너비를 기준으로 100% */
+  padding: 0.5rem 0.5rem;
   border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 2rem;
+  border-radius: 0.5rem;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .login-button {
-  width: 100%;
-  padding: 2rem;
+  width: 80%;
+  padding: 1rem;
   background-color: #1a237e;
   color: white;
   border: none;
   border-radius: 1rem;
-  font-size: 2.5rem;
+  font-size: 1.5rem;
   font-weight: 500;
   cursor: pointer;}
 
@@ -156,14 +167,16 @@ const handleLogin = async () => {
 }
 
 .forgot-password {
-  padding: 2rem 1rem;
+  width: 80%;
+  margin: 0 auto;
+  padding: 0 0 1rem 0;
   text-align: right;
 }
 
 .forgot-password a {
   color: #666;
   text-decoration: none;
-  font-size: 1.9rem;
+  font-size: 1rem;
 }
 
 .forgot-password a:hover {

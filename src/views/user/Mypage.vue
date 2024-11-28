@@ -76,7 +76,7 @@ onMounted(() => {
 <style scoped>
 
 .profile-page {
-  max-width: 120rem;
+  max-width: 80rem;
   margin: 0 auto;
   padding: 0rem 2rem;
   min-height: 200vh;
@@ -95,7 +95,7 @@ onMounted(() => {
 }
 
 .profile-card {
-  max-width: 100rem;
+  max-width: 65rem;
   height: 70rem;
   width: 100%;
   background: white;
