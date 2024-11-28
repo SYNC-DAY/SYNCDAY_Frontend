@@ -1,156 +1,99 @@
-import { defineStore } from 'pinia';
-import { useGithubAuthStore } from './useGithubAuthStore';
+import { defineStore } from "pinia";
+import { useGithubAuthStore } from "./useGithubAuthStore";
+import { Octokit } from "@octokit/rest";
 
-const ORGS_STORAGE_KEY = 'github_organizations';
-const SELECTED_ORG_KEY = 'github_selected_org';
-const USER_INFO_KEY = 'github_user_info';
+const ORGS_STORAGE_KEY = "github_organizations";
+const SELECTED_ORG_KEY = "github_selected_org";
+const USER_INFO_KEY = "github_user_info";
 
-export const useGithubOrgStore = defineStore('githubOrg', {
+export const useGithubOrgStore = defineStore("githubOrg", {
   state: () => ({
-    organizations: JSON.parse(localStorage.getItem(ORGS_STORAGE_KEY) || '[]'),
-    selectedOrg: JSON.parse(localStorage.getItem(SELECTED_ORG_KEY) || 'null'),
+    organizations: JSON.parse(localStorage.getItem(ORGS_STORAGE_KEY) || "[]"),
+    selectedOrg: JSON.parse(localStorage.getItem(SELECTED_ORG_KEY) || "null"),
     orgRepositories: {},
     isLoading: false,
     error: null,
-    lastFetchTime: null
+    lastFetchTime: null,
+    octokit: null,
   }),
 
   getters: {
-    allOrganizations: (state) => state.organizations,
-    currentOrg: (state) => state.selectedOrg,
-    hasError: (state) => !!state.error,
-    getOrgRepositories: (state) => (orgName) => state.orgRepositories[orgName] || [],
-    shouldRefetch: (state) => {
+    allOrganizations: state => state.organizations,
+    currentOrg: state => state.selectedOrg,
+    hasError: state => !!state.error,
+    getOrgRepositories: state => orgName => state.orgRepositories[orgName] || [],
+    shouldRefetch: state => {
       if (!state.lastFetchTime) return true;
       return Date.now() - state.lastFetchTime > 5 * 60 * 1000;
     },
-    getUserInfo: () => {
-      const userInfoStr = localStorage.getItem(USER_INFO_KEY);
-      return userInfoStr ? JSON.parse(userInfoStr) : null;
-    }
   },
 
   actions: {
-    async fetchOrganizations(forceRefresh = false) {
+    initializeOctokit() {
       const authStore = useGithubAuthStore();
-      const userInfo = this.getUserInfo;
-      
-      if (!authStore.accessToken) {
-        throw new Error('No access token available');
+      const token = authStore.accessToken;
+
+      if (!token) {
+        throw new Error("No access token available");
       }
 
-      if (!userInfo) {
-        throw new Error('User info not found in localStorage');
-      }
+      this.octokit = new Octokit({
+        auth: token,
+      });
+    },
 
-      if (!forceRefresh && !this.shouldRefetch && this.organizations.length > 0) {
-        return this.organizations;
-      }
-
-      this.isLoading = true;
-      
+    async fetchOrganizations(forceRefresh = false) {
       try {
-        // Fetch organizations list using userInfo from localStorage
-        const orgsResponse = await fetch(
-          `https://api.github.com/users/${userInfo.login}/orgs`,
-          {
-            headers: {
-              'Authorization': `Bearer ${authStore.accessToken}`,
-              'Accept': 'application/vnd.github.v3+json'
-            }
-          }
-        );
-
-        if (!orgsResponse.ok) {
-          throw new Error(`HTTP error! status: ${orgsResponse.status}`);
+        if (!this.octokit) {
+          this.initializeOctokit();
         }
-        
-        const orgs = await orgsResponse.json();
-        console.log(orgs)
+
+        if (!forceRefresh && !this.shouldRefetch && this.organizations.length > 0) {
+          return this.organizations;
+        }
+
+        this.isLoading = true;
+
+        // Directly fetch user's organizations
+        const { data: orgs } = await this.octokit.rest.orgs.listForAuthenticatedUser();
+        console.log("Fetched orgs:", orgs);
+
         // Fetch detailed information for each organization
         const detailedOrgs = await Promise.all(
-          orgs.map(async (org) => {
-            const detailResponse = await fetch(
-              `https://api.github.com/orgs/${org.login}`,
-              {
-                headers: {
-                  'Authorization': `Bearer ${authStore.accessToken}`,
-                  'Accept': 'application/vnd.github.v3+json'
-                }
-              }
-            );
+          orgs.map(async org => {
+            try {
+              // Get detailed org info
+              const { data: orgDetail } = await this.octokit.rest.orgs.get({
+                org: org.login,
+              });
 
-            if (!detailResponse.ok) {
-              throw new Error(`Failed to fetch details for ${org.login}`);
+              // Get user's membership status in the org
+              const { data: membership } = await this.octokit.rest.orgs.getMembershipForAuthenticatedUser({
+                org: org.login,
+              });
+
+              return {
+                ...orgDetail,
+                membershipRole: membership.role,
+              };
+            } catch (error) {
+              console.error(`Error fetching details for org ${org.login}:`, error);
+              // Return basic org info if detailed fetch fails
+              return {
+                ...org,
+                membershipRole: "member",
+              };
             }
-
-            const detailData = await detailResponse.json();
-            return {
-              ...detailData,
-              _lastFetched: Date.now(),
-              _userId: userInfo.login
-            };
           })
         );
 
         this.organizations = detailedOrgs;
         this.lastFetchTime = Date.now();
         this.saveToLocalStorage();
-        
+
         return this.organizations;
-
       } catch (error) {
-        console.error('Error fetching organizations:', error);
-        this.error = error.message;
-        
-        if (error.status === 404) {
-          this.error = `User ${userInfo.login} not found`;
-        } else if (error.status === 403) {
-          this.error = 'Rate limit exceeded or access denied';
-        }
-        
-        throw new Error(this.error);
-      } finally {
-        this.isLoading = false;
-      }
-    },
-
-    async fetchOrgRepositories(orgName) {
-      const authStore = useGithubAuthStore();
-      const userInfo = this.getUserInfo;
-      
-      if (!authStore.accessToken) {
-        throw new Error('No access token available');
-      }
-
-      this.isLoading = true;
-      
-      try {
-        const response = await fetch(
-          `https://api.github.com/users/${userInfo.login}/orgs`,
-          {
-            headers: {
-              'Authorization': `Bearer ${authStore.accessToken}`,
-              'Accept': 'application/vnd.github.v3+json'
-            }
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const repos = await response.json();
-        console.log(repos)
-        this.orgRepositories[orgName] = repos.map(repo => ({
-          ...repo,
-          _lastFetched: Date.now(),
-          _userId: userInfo?.login
-        }));
-        
-        return this.orgRepositories[orgName];
-      } catch (error) {
-        console.error('Error fetching organization repositories:', error);
+        console.error("Error fetching organizations:", error);
         this.error = error.message;
         throw error;
       } finally {
@@ -158,35 +101,75 @@ export const useGithubOrgStore = defineStore('githubOrg', {
       }
     },
 
+    async fetchOrgRepositories(orgName) {
+      try {
+        if (!this.octokit) {
+          this.initializeOctokit();
+        }
+
+        this.isLoading = true;
+
+        const { data: repos } = await this.octokit.rest.repos.listForOrg({
+          org: orgName,
+          type: "all",
+          sort: "updated",
+          direction: "desc",
+        });
+
+        this.orgRepositories[orgName] = repos;
+        return repos;
+      } catch (error) {
+        console.error("Error fetching organization repositories:", error);
+        this.error = error.message;
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async fetchOrgMembers(orgName) {
+      try {
+        if (!this.octokit) {
+          this.initializeOctokit();
+        }
+
+        const { data: members } = await this.octokit.rest.orgs.listMembers({
+          org: orgName,
+          per_page: 100,
+        });
+
+        return members;
+      } catch (error) {
+        console.error("Error fetching organization members:", error);
+        this.error = error.message;
+        throw error;
+      }
+    },
+
     setSelectedOrg(org) {
       this.selectedOrg = org;
-      const userInfo = this.getUserInfo;
-      localStorage.setItem(SELECTED_ORG_KEY, JSON.stringify({
-        ...org,
-        _userId: userInfo?.login
-      }));
+      localStorage.setItem(SELECTED_ORG_KEY, JSON.stringify(org));
       if (org) {
         this.fetchOrgRepositories(org.login);
       }
     },
 
     saveToLocalStorage() {
-      const userInfo = this.getUserInfo;
-      localStorage.setItem(ORGS_STORAGE_KEY, JSON.stringify({
-        organizations: this.organizations,
-        userId: userInfo?.login,
-        timestamp: Date.now()
-      }));
+      localStorage.setItem(
+        ORGS_STORAGE_KEY,
+        JSON.stringify({
+          organizations: this.organizations,
+          timestamp: Date.now(),
+        })
+      );
     },
 
     loadFromLocalStorage() {
       const stored = localStorage.getItem(ORGS_STORAGE_KEY);
-      const userInfo = this.getUserInfo;
-      
-      if (stored && userInfo) {
+
+      if (stored) {
         const data = JSON.parse(stored);
-        if (data.userId === userInfo.login && 
-            Date.now() - data.timestamp < 5 * 60 * 1000) {
+        if (Date.now() - data.timestamp < 5 * 60 * 1000) {
           this.organizations = data.organizations;
           this.lastFetchTime = data.timestamp;
         }
@@ -199,6 +182,7 @@ export const useGithubOrgStore = defineStore('githubOrg', {
       this.orgRepositories = {};
       this.error = null;
       this.lastFetchTime = null;
+      this.octokit = null;
       localStorage.removeItem(ORGS_STORAGE_KEY);
       localStorage.removeItem(SELECTED_ORG_KEY);
     },
@@ -206,13 +190,5 @@ export const useGithubOrgStore = defineStore('githubOrg', {
     clearError() {
       this.error = null;
     },
-
-    hasOrganization(orgLogin) {
-      return this.organizations.some(org => org.login === orgLogin);
-    },
-
-    getOrganization(orgLogin) {
-      return this.organizations.find(org => org.login === orgLogin);
-    }
-  }
+  },
 });
