@@ -11,7 +11,7 @@
           <main class="content">
 
             <router-view />
-
+            <!-- <GithubOrg></GithubOrg> -->
           </main>
         </template>
       </div>
