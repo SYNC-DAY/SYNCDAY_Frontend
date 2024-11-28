@@ -1,8 +1,8 @@
 <template>
-  <div class="cardboard-container">
+  <div class="cardboard-container container-column">
     <!-- Control Panel -->
-    <section class="control-panel mb-4">
-      <div class="flex justify-between items-center">
+    <section class="control-panel container-row">
+      <div class="container-row">
         <div class="flex gap-2">
           <Dropdown v-model="selectedFilter" :options="filterOptions" optionLabel="label" placeholder="상태 필터"
             class="w-48" />
@@ -30,23 +30,23 @@
 
     <!-- Board List -->
     <DataTable v-else v-model:expandedRows="expandedRows" :value="filteredCardboards" dataKey="cardboard_id"
-      :paginator="true" :rows="5" :rowsPerPageOptions="[5, 10, 20]" tableStyle="min-width: 60rem"
+      :paginator="true" :rows="5" :rowsPerPageOptions="[5, 10, 20]" tableStyle="min-width: 20rem"
       @rowExpand="onRowExpand" @rowCollapse="onRowCollapse" class="shadow-sm">
       <!-- Expander Column -->
       <Column expander style="width: 3rem" />
 
       <!-- Board Info Column -->
-      <Column header="보드 정보" class="w-1/2">
+      <Column header="보드 정보" class="container-row">
         <template #body="{ data }">
           <div class="board-info">
-            <div class="flex justify-between items-center mb-2">
-              <h3 class="text-lg font-semibold text-gray-800">{{ data.title }}</h3>
+            <div class="container-row">
+              <h4 class="">{{ data.title }}</h4>
               <Tag :value="getStatusText(data.progress_status)" :severity="getStatusSeverity(data.progress_status)" />
             </div>
             <ProgressBar :value="data.progress_status" class="h-2 mb-2"
               :class="getProgressBarClass(data.progress_status)" />
-            <div class="text-sm text-gray-600 flex gap-4">
-              <span class="flex items-center gap-1">
+            <div class="text-sm text-gray-600 flex">
+              <span class="container-row">
                 <i class="pi pi-calendar" />
                 {{ formatDateRange(data.start_time, data.end_time) }}
               </span>
@@ -404,10 +404,10 @@ watch([selectedFilter, selectedSort], ([newFilter, newSort], [oldFilter, oldSort
   });
 });
 </script>
-
+<!-- 
 <style scoped>
 .cardboard-container {
-  @apply p-4 bg-white rounded-lg;
+  @apply p-4 bg-white rounded-lg w-full max-w-full overflow-x-auto;
 }
 
 .control-panel {
@@ -502,4 +502,4 @@ watch([selectedFilter, selectedSort], ([newFilter, newSort], [oldFilter, oldSort
 .slide-leave-to {
   @apply transform translate-y-4 opacity-0;
 }
-</style>
+</style> -->
