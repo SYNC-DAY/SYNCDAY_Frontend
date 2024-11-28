@@ -1,4 +1,3 @@
-// WorkspaceView.vue
 <template>
   <div class="workspace-container container-column width-100">
     <div v-if="isLoading" class="loading-state">
@@ -14,9 +13,9 @@
 
     <template v-else-if="workspaceDetails">
       <div class="workspace-header container-row underline-gray">
-        <h1>{{ workspaceDetails.workspace_name }}</h1>
+        <h3>{{ workspaceDetails.workspace_name }}</h3>
       </div>
-      <div class="workspace-content">
+      <div class="workspace-content container-column">
         <CardBoard :cardboards="workspaceDetails.cardboards || []"></CardBoard>
       </div>
     </template>
@@ -111,17 +110,10 @@ watch(
 </script>
 <style scoped>
 .workspace-container {
-  height: 100%;
-  max-height: 100vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  padding: 1rem;
 }
 
-.workspace-content {
-  flex: 1;
-  overflow: hidden;
-}
+.workspace-content {}
 
 .boards-container {
   height: 100%;
