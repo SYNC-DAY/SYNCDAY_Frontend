@@ -7,7 +7,7 @@
         </AccordionHeader>
 
         <AccordionContent v-for="card in cardboard.cards" :key="card.card_id">
-          <Card :card="card"></Card>
+          <CardItem :card="card"></CardItem>
         </AccordionContent>
       </AccordionPanel>
     </Accordion>
@@ -21,7 +21,7 @@ import AccordionPanel from 'primevue/accordionpanel';
 import AccordionHeader from 'primevue/accordionheader';
 import AccordionContent from 'primevue/accordioncontent';
 
-import Card from '../components/Card.vue';
+import CardItem from '../components/CardItem.vue';
 
 
 const props = defineProps({
