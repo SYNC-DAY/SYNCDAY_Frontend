@@ -9,66 +9,71 @@
 
 		<!-- Project Content -->
 		<div v-else class="project-container">
-			<div class="container-column">
-				<!-- Header Section -->
-				<div class="container-row">
-					<div class="proj-title">
-						<h2>{{ currentProject.proj_name }}</h2>
-					</div>
+			<div class="proj-header underline-gray ">
 
-					<div class="proj-role container-row">
-						<img v-if="currentProject.participation_status === 'OWNER'"
-							src="@/assets/icons/Crown.svg"></img>
-						<span>{{ currentProject.participation_status }}</span>
-					</div>
-
-
-					<!-- VCS Integration -->
-
-					<div class="flex items-center gap-3">
-						<div class="flex items-center gap-3">
-							<VcsInfo v-if="currentProject.vcs_type" :vcsType="currentProject.vcs_type"
-								:vcsMetadata="currentProject.vcs_metadata" :vcsProjUrl="currentProject.vcs_proj_url" />
-							<Button :label="currentProject.vcs_type ? 'Change Organization' : 'Connect to GitHub'"
-								severity="secondary" icon="pi pi-building" @click="openVcsMenu" aria-haspopup="true"
-								aria-controls="overlay-menu" />
+				<div class="proj-header container-row">
+					<!-- header-left -->
+					<div class="header-left container-row">
+						<!-- title -->
+						<div class="project-title">
+							<!-- org avatar section -->
+							<!-- <img/> -->
+							<!-- go to github org link when clicked -->
+							<a href="#">
+								<h2>
+									{{ currentProject.proj_name }}
+								</h2>
+							</a>
 						</div>
+
+						<!-- role -->
+						<div class="proj-role">
+							<img v-if="currentProject.participation_status === 'OWNER'"
+								src="@/assets/icons/Crown.svg"></img>
+							<span>{{ currentProject.participation_status }}</span>
+						</div>
+					</div>
+
+					<!-- Project settings -->
+					<div class="flex items-center gap-3">
+						<i class="pi pi-cog"></i>
 					</div>
 				</div>
 
-				<!-- VCS Integration -->
 
+			</div>
+			<!-- Workspaces & Members Section -->
+			<!-- prime vue tab -->
+			<div class="workspaces-section mt-6">
+				<div class="flex justify-between items-center mb-4">
+					<h3 class="text-lg font-semibold m-0">Workspaces</h3>
+					<Button label="New Workspace" icon="pi pi-plus" severity="secondary"
+						@click="openNewWorkspaceDialog" />
+				</div>
 
-				<!-- Workspaces Section -->
-				<div class="workspaces-section mt-6">
-					<div class="flex justify-between items-center mb-4">
-						<h3 class="text-lg font-semibold m-0">Workspaces</h3>
-						<Button label="New Workspace" icon="pi pi-plus" severity="secondary"
-							@click="openNewWorkspaceDialog" />
-					</div>
-
-					<!-- Workspaces Grid -->
-					<div v-if="currentProject.workspaces?.length"
-						class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-						<div v-for="workspace in currentProject.workspaces" :key="workspace.workspace_id"
-							class="workspace-card p-4 border rounded-lg hover:shadow-md transition-all cursor-pointer"
-							@click="navigateToWorkspace(workspace.workspace_id)">
-							<h4 class="text-md font-medium mb-2">{{ workspace.workspace_name }}</h4>
-							<div class="bg-gray-200 rounded-full h-2 mb-2">
-								<div class="bg-primary h-full rounded-full"
-									:style="{ width: `${workspace.progress_status}%` }"></div>
-							</div>
-							<span class="text-sm text-gray-600">{{ workspace.progress_status }}% Complete</span>
+				<!-- Workspaces Grid -->
+				<div v-if="currentProject.workspaces?.length"
+					class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+					<!-- prime vue card -->
+					<div v-for="workspace in currentProject.workspaces" :key="workspace.workspace_id"
+						class="workspace-card p-4 border rounded-lg hover:shadow-md transition-all cursor-pointer"
+						@click="navigateToWorkspace(workspace.workspace_id)">
+						<h4 class="text-md font-medium mb-2">{{ workspace.workspace_name }}</h4>
+						<div class="bg-gray-200 rounded-full h-2 mb-2">
+							<div class="bg-primary h-full rounded-full"
+								:style="{ width: `${workspace.progress_status}%` }"></div>
 						</div>
+						<span class="text-sm text-gray-600">{{ workspace.progress_status }}% Complete</span>
 					</div>
+				</div>
 
-					<!-- Empty State -->
-					<div v-else class="empty-state text-center p-6 bg-gray-50 rounded-lg">
-						<i class="pi pi-folder-open text-4xl text-gray-400 mb-3"></i>
-						<p class="text-gray-600">No workspaces found. Create a new workspace to get started.</p>
-					</div>
+				<!-- Empty State -->
+				<div v-else class="empty-state text-center p-6 bg-gray-50 rounded-lg">
+					<i class="pi pi-folder-open text-4xl text-gray-400 mb-3"></i>
+					<p class="text-gray-600">No workspaces found. Create a new workspace to get started.</p>
 				</div>
 			</div>
+
 
 			<!-- Modals -->
 			<VcsTypeMenu ref="vcsMenu" @vcs-selected="handleVcsSelection" />
@@ -188,12 +193,12 @@ const emit = defineEmits(['update:project']);
 }
 
 .proj-header {
-	border-bottom: 1px solid var(--outline-gray)
+	justify-content: space-between;
 }
 
 .proj-role span {
 	color: var(--muted-text-color);
-	vertical-align: baseline;
+	text-align: center;
 }
 
 .proj-role img {

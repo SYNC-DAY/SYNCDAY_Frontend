@@ -19,5 +19,5 @@
 }
 
 .underline-gray {
-	border-bottom: 1px solid var(--outline-gray)
+	border-bottom: 1px solid var(--outline-gray);
 }
