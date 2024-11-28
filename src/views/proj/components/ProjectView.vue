@@ -1,88 +1,92 @@
 <template>
-	<div class="container-column">
-		<!-- Loading State -->
-		<div v-if="isLoading" class="container-row">
-			<ProgressSpinner />
-		</div>
+	<div class="proj-container">
+		<div class="container-column">
+			<!-- Loading State -->
+			<div v-if="isLoading" class="container-row">
+				<ProgressSpinner />
+			</div>
 
-		<!-- Not Found State -->
-		<div v-else-if="!currentProject" class="container-column">
-			<h2 class="text-xl font-bold mb-2">Project Not Found</h2>
-			<p class="text-gray-600 mb-4">The requested project could not be found.</p>
-			<Button label="Go Back" @click="router.back()" />
-		</div>
+			<!-- Not Found State -->
+			<div v-else-if="!currentProject" class="container-column">
+				<h2 class="text-xl font-bold mb-2">Project Not Found</h2>
+				<p class="text-gray-600 mb-4">The requested project could not be found.</p>
+				<Button label="Go Back" @click="router.back()" />
+			</div>
 
-		<!-- Project Content -->
-		<div v-else class="project-container container-column">
-			<!-- Project Header -->
-			<div class="proj-header underline-gray">
-				<div class="container-row">
-					<!-- Header Left -->
-					<div class="header-left container-row">
-						<!-- Project Title -->
-						<div class="project-title container-row">
-							<a v-if="currentProject.vcs_proj_url" :href="currentProject.vcs_proj_url" target="_blank"
-								class="container-row">
-								<h2>{{ currentProject.proj_name }}</h2>
-							</a>
-							<h2 v-else>{{ currentProject.proj_name }}</h2>
-						</div>
+			<!-- Project Content -->
+			<div v-else class="container-column">
 
-						<!-- Project Role -->
-						<div class="proj-role container-row">
-							<img v-if="currentProject.participation_status === 'OWNER'" src="@/assets/icons/Crown.svg"
-								alt="Owner" class="role-icon" />
-							<span>{{ currentProject.participation_status }}</span>
-						</div>
+				<!-- Project Header -->
+				<div class="proj-header underline-gray container-row width-100">
+					<div class="container-row">
+						<!-- Header Left -->
+						<div class="container-row header-left">
+							<!-- Project Title -->
+							<div class="proj-title">
+								<a v-if="currentProject.vcs_proj_url" :href="currentProject.vcs_proj_url"
+									target="_blank" class="container-row">
+									<h2>{{ currentProject.proj_name }}</h2>
+								</a>
+								<h2 v-else>{{ currentProject.proj_name }}</h2>
+							</div>
 
-						<!-- VCS Integration -->
-						<div v-if="currentProject.vcs_type" class="container-row">
-							<VcsInfo :project="currentProject" />
+							<!-- Project Role -->
+							<div class="proj-role container-row">
+								<img v-if="currentProject.participation_status === 'OWNER'"
+									src="@/assets/icons/Crown.svg" alt="Owner" class="role-icon" />
+								<span>{{ currentProject.participation_status }}</span>
+							</div>
+
+							<!-- VCS Integration -->
+							<div v-if="currentProject.vcs_type" class="container-row">
+								<VcsInfo :project="currentProject" />
+							</div>
 						</div>
 					</div>
-
 					<!-- Header Right Settings -->
 					<div class="container-row header-right">
 						<Button icon="pi pi-cog" class="p-button-text" @click="openProjSettingsModal" />
 					</div>
-				</div>
-			</div>
 
-			<!-- Workspaces Section -->
-			<div class="workspaces-section mt-6">
-				<div class="container-row mb-4">
-					<h3 class="text-lg font-semibold">Workspaces</h3>
-					<Button label="New Workspace" icon="pi pi-plus" severity="secondary"
-						@click="openNewWorkspaceDialog" />
 				</div>
 
-				<!-- Workspaces Grid -->
-				<div v-if="currentProject.workspaces?.length" class="workspaces-grid">
-					<div v-for="workspace in currentProject.workspaces" :key="workspace.workspace_id"
-						class="workspace-card" @click="navigateToWorkspace(workspace.workspace_id)">
-						<h4 class="workspace-title">{{ workspace.workspace_name }}</h4>
-						<div class="progress-bar-bg">
-							<div class="progress-bar-fill" :style="{ width: `${workspace.progress_status}%` }"></div>
+				<!-- Workspaces Section -->
+				<div class="workspaces-section mt-6">
+					<div class="container-row mb-4">
+						<h3 class="text-lg font-semibold">Workspaces</h3>
+						<Button label="New Workspace" icon="pi pi-plus" severity="secondary"
+							@click="openNewWorkspaceDialog" />
+					</div>
+
+					<!-- Workspaces Grid -->
+					<div v-if="currentProject.workspaces?.length" class="workspaces-grid">
+						<div v-for="workspace in currentProject.workspaces" :key="workspace.workspace_id"
+							class="workspace-card" @click="navigateToWorkspace(workspace.workspace_id)">
+							<h4 class="workspace-title">{{ workspace.workspace_name }}</h4>
+							<div class="progress-bar-bg">
+								<div class="progress-bar-fill" :style="{ width: `${workspace.progress_status}%` }">
+								</div>
+							</div>
+							<span class="progress-text">{{ workspace.progress_status }}% Complete</span>
 						</div>
-						<span class="progress-text">{{ workspace.progress_status }}% Complete</span>
+					</div>
+
+					<!-- Empty State -->
+					<div v-else class="empty-state container-column">
+						<i class="pi pi-folder-open"></i>
+						<p>No workspaces found. Create a new workspace to get started.</p>
 					</div>
 				</div>
 
-				<!-- Empty State -->
-				<div v-else class="empty-state container-column">
-					<i class="pi pi-folder-open"></i>
-					<p>No workspaces found. Create a new workspace to get started.</p>
-				</div>
+				<!-- Modals -->
+				<VcsTypeMenu ref="vcsMenu" @vcs-selected="handleVcsSelection" />
+
+				<GithubAuthModal v-model:visible="showGithubAuthModal" @login-success="handleGithubLoginSuccess"
+					@login-error="handleGithubLoginError" />
+
+				<GithubOrgModal :is-open="showGithubOrgModal" :project-id="props.projectId"
+					@close="showGithubOrgModal = false" @update:project="handleProjectUpdate" />
 			</div>
-
-			<!-- Modals -->
-			<VcsTypeMenu ref="vcsMenu" @vcs-selected="handleVcsSelection" />
-
-			<GithubAuthModal v-model:visible="showGithubAuthModal" @login-success="handleGithubLoginSuccess"
-				@login-error="handleGithubLoginError" />
-
-			<GithubOrgModal :is-open="showGithubOrgModal" :project-id="props.projectId"
-				@close="showGithubOrgModal = false" @update:project="handleProjectUpdate" />
 		</div>
 	</div>
 </template>
@@ -191,14 +195,29 @@ const openNewWorkspaceDialog = () => {
 </script>
 
 <style scoped>
-.project-container {}
-
-.header-left {
-	gap: 1rem;
+.proj-container {
+	padding: 1rem;
 }
 
+.proj-header {
+	width: 100%;
+}
+
+.header-left {
+	flex: 1;
+	gap: 1rem;
+	min-width: 0;
+	/* Prevents flex item from overflowing */
+	display: flex;
+	align-items: center;
+}
+
+.proj-title {
+	flex: 1;
+}
 
 .proj-role {
+	justify-content: center;
 	gap: 0.5rem;
 }
 
@@ -209,6 +228,12 @@ const openNewWorkspaceDialog = () => {
 
 .proj-role span {
 	color: var(--muted-text-color);
+}
+
+.header-right {
+	flex: 1;
+	width: auto;
+	justify-content: center;
 }
 
 .header-right button {
