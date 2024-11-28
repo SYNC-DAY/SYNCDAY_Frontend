@@ -63,11 +63,11 @@ const navigateToWorkspace = () => {
   position: relative;
   border-bottom: 1px solid var(--outline-gray);
   cursor: pointer;
-
+  color: var(--muted-text-color)
 }
 
 .workspace-item.active {
-  font-weight: 600;
+  color: black;
 }
 
 .workspace-right {
