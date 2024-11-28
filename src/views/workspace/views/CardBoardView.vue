@@ -19,7 +19,7 @@
     </div>
 
     <!-- Empty State -->
-    <section v-else-if="!filteredCardboards.length" class="empty-state">
+    <section v-else-if="cardboardsLength == 0" class="empty-state">
       <div class="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-lg">
         <i class="pi pi-folder-open text-4xl text-gray-400 mb-4"></i>
         <h3 class="text-lg font-medium text-gray-600 mb-2">보드가 없습니다</h3>
@@ -140,7 +140,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
@@ -149,6 +149,19 @@ import Tag from 'primevue/tag';
 import Dropdown from 'primevue/dropdown';
 import Avatar from 'primevue/avatar';
 import ProgressSpinner from 'primevue/progressspinner';
+
+const debug = {
+  log: (component, message, data) => {
+    console.log(`[${component}]`, message, data ? data : '');
+  },
+  warn: (component, message, data) => {
+    console.warn(`[${component}]`, message, data ? data : '');
+  },
+  error: (component, message, error) => {
+    console.error(`[${component}]`, message, error);
+  }
+};
+
 
 // Props and Emits
 const props = defineProps({
@@ -361,6 +374,35 @@ const onRowExpand = (event) => {
 const onRowCollapse = (event) => {
   emit('rowCollapse', event.data);
 };
+
+// Lifecycle hooks
+onMounted(() => {
+  debug.log('CardBoardView', 'Component mounted', {
+    cardboardsLength: props.cardboards.length,
+    loading: props.loading
+  });
+});
+
+watch(() => props.cardboards, (newVal, oldVal) => {
+  debug.log('CardBoardView', 'Cardboards updated', {
+    oldLength: oldVal.length,
+    newLength: newVal.length,
+    isEmpty: newVal.length === 0
+  });
+}, { deep: true });
+
+watch(() => props.loading, (newVal, oldVal) => {
+  debug.log('CardBoardView', 'Loading state changed', {
+    from: oldVal,
+    to: newVal
+  });
+});
+watch([selectedFilter, selectedSort], ([newFilter, newSort], [oldFilter, oldSort]) => {
+  debug.log('CardBoardView', 'Filter/Sort changed', {
+    filter: { old: oldFilter, new: newFilter },
+    sort: { old: oldSort, new: newSort }
+  });
+});
 </script>
 
 <style scoped>

@@ -27,7 +27,7 @@
 
           <TabPanels>
             <TabPanel value="0">
-              <CardBoard />
+              <CardBoard :cardboards="workspaceDetails.cardboards || []"></CardBoard>
             </TabPanel>
             <TabPanel value="1">
               <p class="m-0">
@@ -53,9 +53,6 @@
         </Tabs>
       </div>
 
-      <div class="workspace-content container-column">
-        <CardBoard :cardboards="workspaceDetails.cardboards || []"></CardBoard>
-      </div>
     </template>
 
     <div v-else class="empty-state">
