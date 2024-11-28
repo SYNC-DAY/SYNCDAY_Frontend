@@ -23,7 +23,8 @@
 
 			<!-- VCS -->
 			<div class="proj-vcs">
-				<Button label="Organization" severity="contrast" icon="pi pi-building" @click="openVCSModal"></Button>
+				<Button label="Organization" severity="contrast" icon="pi pi-building" @click="handleOpenVcsTypeMenu"
+					aria-haspopup="true" aria-controls="overlay-menu"></Button>
 			</div>
 		</div>
 
@@ -47,17 +48,35 @@
 	</div>
 
 	<!-- In your Project view -->
-	<VCSConnectModal :is-open="showVCSModal" :project-id="projectId" @close="showVCSModal = false"
-		@update:project="handleProjectUpdate" />
+	<VcsTypeMenu ref="menu" @vcs-selected="handleVCSSelection" />
 </template>
 
 <script setup>
-import { computed, getCurrentInstance } from 'vue';
+import { ref, computed, getCurrentInstance } from 'vue';
 import { useRouter } from 'vue-router';
 
 import Button from 'primevue/button';
+import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
 
-import VCSConnectModal from './VCSOrgModal.vue';
+const menu = ref();
+const handleOpenVcsTypeMenu = (event) => {
+	menu.value?.toggle(event);
+}
+const handleVCSSelection = async (vcsType) => {
+	try {
+		// Handle VCS type selection
+		if (vcsType === 'GITHUB') {
+			await authStore.loginWithGithub();
+		}
+	} catch (error) {
+		toast.add({
+			severity: 'error',
+			summary: 'VCS Connection Failed',
+			detail: error.message,
+			life: 3000
+		});
+	}
+};
 const props = defineProps({
 	projectId: {
 		type: [String, Number],
@@ -75,10 +94,6 @@ const router = useRouter();
 const project = computed(() =>
 	props.projects.find(p => p.proj_id === parseInt(props.projectId))
 );
-
-const handleOpenVCSModal = () => {
-	proxy.$root.openVCSModal(props.projectId);
-};
 
 const navigateToWorkspace = (workspaceId) => {
 	router.push({
