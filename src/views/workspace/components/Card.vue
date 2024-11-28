@@ -1,30 +1,20 @@
 // Card.vue (업데이트)
 <template>
-  <div class="card" @click="openModal">
-    <div class="card-header">
-      <div class="tag" :style="{ backgroundColor: card.tag_color }">
-        {{ card.tag_name }}
-      </div>
-      <div class="dates">
-        {{ formatDate(card.start_time) }} - {{ formatDate(card.end_time) }}
-      </div>
-    </div>
-    <h4 class="card-title">{{ card.card_title }}</h4>
-    <p class="card-content">{{ card.card_content }}</p>
-    <div class="card-footer">
-      <div class="assignee">
-        <img :src="card.assignee_profile_url" :alt="card.assignee_name" class="avatar">
-        <span>{{ card.assignee_name }}</span>
-      </div>
-      <div class="team">{{ card.assignee_team_name }}</div>
-    </div>
+  <Card>
+    <template #titlie>{{ card.card_title }}</template>
+    <template #content> {{ card.card_content }} </template>
+  </Card>
 
-    <CardModal :show="showModal" :card="card" @close="closeModal" />
-  </div>
+
+  <CardModal :show="showModal" :card="card" @close="closeModal" />
 </template>
 
 <script setup>
 import { ref } from 'vue';
+import Card from 'primevue/card';
+
+
+
 import CardModal from './layout/CardModal.vue';
 const props = defineProps({
   card: {
