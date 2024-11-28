@@ -82,26 +82,14 @@ const handleLogin = async () => {
 		isLoading.value = true;
 		error.value = null;
 
+		// Just initiate the login - the callback component will handle the rest
 		authStore.loginWithGithub();
-		emit('login-success');
-		handleClose();
 
-		toast.add({
-			severity: 'success',
-			summary: 'Successfully Connected',
-			detail: 'Your GitHub account has been successfully connected.',
-			life: 3000
-		});
+		// No need to emit success here as the actual authentication
+		// hasn't happened yet - it will happen in the callback
 	} catch (err) {
 		error.value = err.message || 'Failed to connect to GitHub';
 		emit('login-error', err);
-
-		toast.add({
-			severity: 'error',
-			summary: 'Connection Failed',
-			detail: error.value,
-			life: 5000
-		});
 	} finally {
 		isLoading.value = false;
 	}
