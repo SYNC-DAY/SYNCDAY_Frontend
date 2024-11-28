@@ -156,8 +156,7 @@ const isRouteActive = (routeName) => {
 
 <style scoped>
 .nav-top {
-	box-sizing: border-box;
-	padding: 1rem 0.5rem;
+	padding: 1rem;
 }
 
 .nav-top>div,
