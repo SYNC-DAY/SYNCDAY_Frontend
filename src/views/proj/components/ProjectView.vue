@@ -65,7 +65,7 @@
 		<GithubAuthModal :visible="showGithubAuthModal" @update:visible="showGithubAuthModal = $event"
 			@login-success="handleGithubLoginSuccess" @login-error="handleGithubLoginError" />
 
-		<GithubOrgModal :is-open="showGithubOrgModal" :project-id="projectId" @close="showGithubOrgModal = false"
+		<GithubOrgModal :is-open="showGithubOrgModal" :project-id="props.projectId" @close="showOrgModal = false"
 			@update:project="handleProjectUpdate" />
 	</div>
 </template>

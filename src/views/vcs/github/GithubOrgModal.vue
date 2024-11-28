@@ -25,7 +25,7 @@
 					</div>
 				</Message>
 				<div class="flex justify-content-end">
-					<Button label="Try Again" severity="primary" @click="loadOrganizations" />
+					<Button label="Try Again" severity="primary" @click="retryOperation" />
 				</div>
 			</div>
 
@@ -62,34 +62,22 @@
 		</template>
 	</Dialog>
 
-	<!-- Auth Required Dialog -->
-	<Dialog v-model:visible="showAuthDialog" modal :style="{ width: '30rem' }" header="GitHub Authentication Required">
-		<div class="flex flex-column align-items-center gap-4 p-4">
-			<i class="pi pi-github text-4xl"></i>
-			<p class="text-center m-0">
-				You need to connect your GitHub account to access organization features.
-			</p>
-		</div>
-		<template #footer>
-			<div class="flex justify-content-end gap-2">
-				<Button label="Cancel" severity="secondary" text @click="handleAuthClose" />
-				<Button label="Connect GitHub" severity="primary" @click="handleAuthClick" />
-			</div>
-		</template>
-	</Dialog>
+	<!-- Auth Modal -->
+	<GithubAuthModal :visible="showAuthModal" @update:visible="handleAuthModalVisibility"
+		@login-success="handleLoginSuccess" @login-error="handleLoginError" />
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch } from 'vue';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
 import ProgressSpinner from 'primevue/progressspinner';
 import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 import { useGithubOrgStore } from '@/stores/github/useGithubOrgStore';
-import { useToast } from 'primevue/usetoast';
+import GithubAuthModal from './GithubAuthModal.vue';
 
-// Props
+// Props and Emits
 const props = defineProps({
 	isOpen: {
 		type: Boolean,
@@ -101,46 +89,52 @@ const props = defineProps({
 	}
 });
 
-// Emits
 const emit = defineEmits(['update:visible', 'close', 'update:project']);
 
-// Store and Services
+// Stores
 const authStore = useGithubAuthStore();
 const orgStore = useGithubOrgStore();
-const toast = useToast();
 
 // State
 const isLoading = ref(false);
 const error = ref(null);
 const organizations = ref([]);
-const showAuthDialog = ref(false);
+const showAuthModal = ref(false);
+const pendingOperation = ref(null);
 
 // Methods
 const loadOrganizations = async () => {
+	if (!authStore.isAuthenticated) {
+		showAuthModal.value = true;
+		pendingOperation.value = 'load';
+		return;
+	}
+
 	try {
 		isLoading.value = true;
 		error.value = null;
 		organizations.value = await orgStore.fetchOrganizations(true);
 	} catch (err) {
 		error.value = err.message;
-		toast.add({
-			severity: 'error',
-			summary: 'Failed to Load Organizations',
-			detail: err.message,
-			life: 3000
-		});
 	} finally {
 		isLoading.value = false;
 	}
 };
 
 const selectOrganization = async (org) => {
+	if (!authStore.isAuthenticated) {
+		showAuthModal.value = true;
+		pendingOperation.value = 'select';
+		return;
+	}
+
 	try {
 		isLoading.value = true;
 		const response = await fetch(`/api/projects/${props.projectId}/vcs`, {
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json',
+				'Authorization': `Bearer ${authStore.accessToken}`
 			},
 			body: JSON.stringify({
 				vcs_type: 'GITHUB',
@@ -155,24 +149,41 @@ const selectOrganization = async (org) => {
 		const updatedProject = await response.json();
 		emit('update:project', updatedProject);
 		handleClose();
-
-		toast.add({
-			severity: 'success',
-			summary: 'Organization Connected',
-			detail: `Successfully connected to ${org.name || org.login}`,
-			life: 3000
-		});
 	} catch (err) {
 		error.value = err.message;
-		toast.add({
-			severity: 'error',
-			summary: 'Connection Failed',
-			detail: err.message,
-			life: 3000
-		});
 	} finally {
 		isLoading.value = false;
 	}
+};
+
+const handleLoginSuccess = async () => {
+	showAuthModal.value = false;
+	if (pendingOperation.value === 'load') {
+		await loadOrganizations();
+	} else if (pendingOperation.value === 'select') {
+		// Retry the select operation
+		await loadOrganizations(); // First load orgs
+		// User will need to select org again
+	}
+	pendingOperation.value = null;
+};
+
+const handleLoginError = (error) => {
+	showAuthModal.value = false;
+	error.value = error.message;
+	pendingOperation.value = null;
+};
+
+const handleAuthModalVisibility = (visible) => {
+	showAuthModal.value = visible;
+	if (!visible) {
+		pendingOperation.value = null;
+	}
+};
+
+const retryOperation = async () => {
+	error.value = null;
+	await loadOrganizations();
 };
 
 const handleVisibilityChange = (newValue) => {
@@ -183,34 +194,14 @@ const handleVisibilityChange = (newValue) => {
 
 const handleClose = () => {
 	error.value = null;
+	pendingOperation.value = null;
 	emit('close');
-};
-
-const handleAuthClick = () => {
-	showAuthDialog.value = false;
-	authStore.loginWithGithub();
-};
-
-const handleAuthClose = () => {
-	showAuthDialog.value = false;
-	handleClose();
 };
 
 // Watchers
 watch(() => props.isOpen, async (newValue) => {
 	if (newValue) {
-		if (!authStore.isAuthenticated) {
-			showAuthDialog.value = true;
-		} else {
-			await loadOrganizations();
-		}
-	}
-});
-
-// Cleanup
-onMounted(() => {
-	if (props.isOpen && authStore.isAuthenticated) {
-		loadOrganizations();
+		await loadOrganizations();
 	}
 });
 </script>

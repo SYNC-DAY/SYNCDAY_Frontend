@@ -82,7 +82,7 @@ const handleLogin = async () => {
 		isLoading.value = true;
 		error.value = null;
 
-		await authStore.loginWithGithub();
+		authStore.loginWithGithub();
 		emit('login-success');
 		handleClose();
 
