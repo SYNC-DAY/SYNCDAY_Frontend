@@ -4,7 +4,7 @@
       <span>{{ title }}</span>
     </div>
     <div class=workspace-right>
-      <i class="pi" :class="{ 'pi-star': !initialBookmarked, 'pi-star-fill': initialBookmarked }"></i>
+      <!-- <i class="pi" :class="{ 'pi-star': !initialBookmarked, 'pi-star-fill': initialBookmarked }"></i> -->
     </div>
   </div>
 </template>
