@@ -174,26 +174,53 @@ const updateWorkspaces = (projectWorkspaces) => {
 
 const fetchProjs = async () => {
   try {
-    const response = await axios.get(`/projs/users/${user.value.userId}`);
-    if (response.data.success) {
-      projects.value = response.data.data;
-      // Extract and flatten all workspaces from projects
-      const allWorkspaces = projects.value.reduce((acc, proj) => {
-        return acc.concat(proj.workspaces.map(ws => ({
-          ...ws,
-          project_id: proj.proj_id
-        })));
-      }, []);
-      workspaces.value = allWorkspaces;
-    } else {
+    const response = await axios.get(`/proj-members/users/${user.value.userId}`);
+
+    if (!response.data.success) {
       throw new Error(response.data.error || 'Failed to fetch Projects');
     }
+
+    // Extract user's project member info from the response
+    const userProjMembers = response.data.data[0]?.proj_member_infos || [];
+
+    // Transform the data structure to match the component's needs
+    projects.value = userProjMembers.map(proj => ({
+      proj_id: proj.proj_id,
+      proj_name: proj.proj_name,
+      bookmark_status: proj.bookmark_status,
+      participation_status: proj.participation_status,
+      progress_status: proj.progress_status,
+      start_time: proj.start_time,
+      end_time: proj.end_time,
+      created_at: proj.created_at,
+      vcs_type: proj.vcs_type,
+      vcs_proj_url: proj.vcs_proj_url,
+      workspaces: proj.workspaces.map(ws => ({
+        workspace_id: ws.workspace_id,
+        workspace_name: ws.workspace_name,
+        created_at: ws.created_at,
+        progress_status: ws.progress_status,
+        vcs_type: ws.vcs_type,
+        vcs_repo_url: ws.vcs_repo_url,
+        proj_id: ws.proj_id
+      }))
+    }));
+
+    // Update workspaces ref with flattened workspace data
+    workspaces.value = userProjMembers.flatMap(proj =>
+      proj.workspaces.map(ws => ({
+        ...ws,
+        project_id: proj.proj_id
+      }))
+    );
+
   } catch (err) {
     console.error('Failed to fetch projects:', err);
     error.value = 'Failed to load projects';
+    projects.value = [];
+    workspaces.value = [];
   }
 };
-
 const createProject = async () => {
   if (!newProjectName.value.trim()) {
     return;
@@ -287,11 +314,8 @@ onMounted(() => {
 
 <style scoped>
 .proj-main {
-  height: calc(100vh - 10vh);
   flex: 1;
-  padding: 1rem;
-  display: inline-block;
-  overflow-y: auto;
+
 }
 
 .error-message {

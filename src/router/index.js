@@ -7,7 +7,8 @@ import calendarRoutes from "./calendar.js";
 import meetingroomRoutes from "./meetingroom.js";
 import projectRoutes from "./project.js";
 import userRoutes from "./user.js";
-
+import searchRoutes from "./search.js";
+import vcsRoutes from "./vcs.js";
 export async function setupRouter() {
   const router = createRouter({
     history: createWebHistory(),
@@ -20,58 +21,41 @@ export async function setupRouter() {
       },
       ...userRoutes,
       ...projectRoutes,
+      ...vcsRoutes,
       ...calendarRoutes,
       ...meetingroomRoutes,
+      ...searchRoutes,
     ],
   });
 
-  router.beforeEach(async (to, from, next) => {
+  router.beforeEach((to, from, next) => {
     const authStore = useAuthStore();
-    console.log("라우터 가드 시작 - 이동할 경로:", to.path);
-    console.log("현재 인증 상태:", authStore.isAuthenticated);
 
-    if (!authStore.isAuthenticated) {
-      await authStore.initializeAuth();
-    }
-
-    // 로그인 페이지인 경우
+    // 로그인 페이지로의 이동 처리
     if (to.path === "/login") {
+      // 이미 인증된 사용자는 메인 페이지로
       if (authStore.isAuthenticated) {
-        // 이미 인증된 경우 메인으로
         next("/");
-      } else {
-        // 인증되지 않은 경우 로그인 페이지로
-        next();
+        return;
       }
+      // 인증되지 않은 사용자는 로그인 페이지로
+      next();
       return;
     }
 
-    // 인증이 필요한 페이지의 경우
+    // 인증이 필요한 페이지 접근 처리
     if (to.meta.requiresAuth) {
-      if (authStore.isAuthenticated) {
-        // 이미 인증된 경우 바로 진행
-        next();
-      } else {
-        // 인증이 필요한 경우 initializeAuth 실행
-        try {
-          const isAuthenticated = await authStore.initializeAuth();
-          if (isAuthenticated) {
-            next();
-          } else {
-            next({
-              path: "/login",
-              query: { redirect: to.fullPath },
-            });
-          }
-        } catch (error) {
-          console.error("Auth check failed:", error);
-          next("/login");
-        }
+      if (!authStore.isAuthenticated) {
+        // 인증되지 않은 경우 로그인 페이지로 리다이렉트
+        next({
+          path: "/login",
+          query: { redirect: to.fullPath },
+        });
+        return;
       }
-      return;
     }
 
-    // 그 외의 경우
+    // 그 외의 경우는 정상적으로 라우팅
     next();
   });
 
