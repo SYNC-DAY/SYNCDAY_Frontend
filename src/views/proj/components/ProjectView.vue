@@ -1,89 +1,88 @@
 <template>
-	<div class="project-view">
+	<div class="container-column">
+		<!-- Loading State -->
+		<div v-if="isLoading" class="container-row">
+			<ProgressSpinner />
+		</div>
+
 		<!-- Not Found State -->
-		<div v-if="!currentProject" class="flex flex-column items-center justify-center p-6">
-			<h2>Project Not Found</h2>
+		<div v-else-if="!currentProject" class="container-column">
+			<h2 class="text-xl font-bold mb-2">Project Not Found</h2>
 			<p class="text-gray-600 mb-4">The requested project could not be found.</p>
 			<Button label="Go Back" @click="router.back()" />
 		</div>
 
 		<!-- Project Content -->
-		<div v-else class="project-container">
-			<div class="proj-header underline-gray ">
-
-				<div class="proj-header container-row">
-					<!-- header-left -->
+		<div v-else class="project-container container-column">
+			<!-- Project Header -->
+			<div class="proj-header underline-gray">
+				<div class="container-row">
+					<!-- Header Left -->
 					<div class="header-left container-row">
-						<!-- title -->
-						<div class="project-title">
-							<!-- org avatar section -->
-							<!-- <img/> -->
-							<!-- go to github org link when clicked -->
-							<a href="#">
-								<h2>
-									{{ currentProject.proj_name }}
-								</h2>
+						<!-- Project Title -->
+						<div class="project-title container-row">
+							<a v-if="currentProject.vcs_proj_url" :href="currentProject.vcs_proj_url" target="_blank"
+								class="container-row">
+								<h2>{{ currentProject.proj_name }}</h2>
 							</a>
+							<h2 v-else>{{ currentProject.proj_name }}</h2>
 						</div>
 
-						<!-- role -->
-						<div class="proj-role">
-							<img v-if="currentProject.participation_status === 'OWNER'"
-								src="@/assets/icons/Crown.svg"></img>
+						<!-- Project Role -->
+						<div class="proj-role container-row">
+							<img v-if="currentProject.participation_status === 'OWNER'" src="@/assets/icons/Crown.svg"
+								alt="Owner" class="role-icon" />
 							<span>{{ currentProject.participation_status }}</span>
 						</div>
+
+						<!-- VCS Integration -->
+						<div v-if="currentProject.vcs_type" class="container-row">
+							<VcsInfo :project="currentProject" />
+						</div>
 					</div>
 
-					<!-- Project settings -->
-					<div class="flex items-center gap-3">
-						<i class="pi pi-cog"></i>
+					<!-- Header Right Settings -->
+					<div class="container-row header-right">
+						<Button icon="pi pi-cog" class="p-button-text" @click="openProjSettingsModal" />
 					</div>
 				</div>
-
-
 			</div>
-			<!-- Workspaces & Members Section -->
-			<!-- prime vue tab -->
+
+			<!-- Workspaces Section -->
 			<div class="workspaces-section mt-6">
-				<div class="flex justify-between items-center mb-4">
-					<h3 class="text-lg font-semibold m-0">Workspaces</h3>
+				<div class="container-row mb-4">
+					<h3 class="text-lg font-semibold">Workspaces</h3>
 					<Button label="New Workspace" icon="pi pi-plus" severity="secondary"
 						@click="openNewWorkspaceDialog" />
 				</div>
 
 				<!-- Workspaces Grid -->
-				<div v-if="currentProject.workspaces?.length"
-					class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-					<!-- prime vue card -->
+				<div v-if="currentProject.workspaces?.length" class="workspaces-grid">
 					<div v-for="workspace in currentProject.workspaces" :key="workspace.workspace_id"
-						class="workspace-card p-4 border rounded-lg hover:shadow-md transition-all cursor-pointer"
-						@click="navigateToWorkspace(workspace.workspace_id)">
-						<h4 class="text-md font-medium mb-2">{{ workspace.workspace_name }}</h4>
-						<div class="bg-gray-200 rounded-full h-2 mb-2">
-							<div class="bg-primary h-full rounded-full"
-								:style="{ width: `${workspace.progress_status}%` }"></div>
+						class="workspace-card" @click="navigateToWorkspace(workspace.workspace_id)">
+						<h4 class="workspace-title">{{ workspace.workspace_name }}</h4>
+						<div class="progress-bar-bg">
+							<div class="progress-bar-fill" :style="{ width: `${workspace.progress_status}%` }"></div>
 						</div>
-						<span class="text-sm text-gray-600">{{ workspace.progress_status }}% Complete</span>
+						<span class="progress-text">{{ workspace.progress_status }}% Complete</span>
 					</div>
 				</div>
 
 				<!-- Empty State -->
-				<div v-else class="empty-state text-center p-6 bg-gray-50 rounded-lg">
-					<i class="pi pi-folder-open text-4xl text-gray-400 mb-3"></i>
-					<p class="text-gray-600">No workspaces found. Create a new workspace to get started.</p>
+				<div v-else class="empty-state container-column">
+					<i class="pi pi-folder-open"></i>
+					<p>No workspaces found. Create a new workspace to get started.</p>
 				</div>
 			</div>
-
 
 			<!-- Modals -->
 			<VcsTypeMenu ref="vcsMenu" @vcs-selected="handleVcsSelection" />
 
-			<GithubAuthModal :visible="showGithubAuthModal" @update:visible="showGithubAuthModal = $event"
-				@login-success="handleGithubLoginSuccess" @login-error="handleGithubLoginError" />
+			<GithubAuthModal v-model:visible="showGithubAuthModal" @login-success="handleGithubLoginSuccess"
+				@login-error="handleGithubLoginError" />
 
-			<GithubOrgModal :is-open="showGithubOrgModal" :project-id="props.projectId" @close="showOrgModal = false"
-				@update:project="handleProjectUpdate" />
-
+			<GithubOrgModal :is-open="showGithubOrgModal" :project-id="props.projectId"
+				@close="showGithubOrgModal = false" @update:project="handleProjectUpdate" />
 		</div>
 	</div>
 </template>
@@ -96,9 +95,9 @@ import Button from 'primevue/button';
 import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
 import GithubOrgModal from '@/views/vcs/github/GithubOrgModal.vue';
 import GithubAuthModal from '@/views/vcs/github/GithubAuthModal.vue';
-import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 import VcsInfo from './VcsInfo.vue';
-// Props
+import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
+
 const props = defineProps({
 	projectId: {
 		type: [String, Number],
@@ -110,22 +109,20 @@ const props = defineProps({
 	}
 });
 
-// Router and Stores
 const router = useRouter();
 const toast = useToast();
 const authStore = useGithubAuthStore();
+const emit = defineEmits(['update:project']);
 
-// Refs
 const vcsMenu = ref(null);
 const showGithubAuthModal = ref(false);
 const showGithubOrgModal = ref(false);
+const isLoading = ref(false);
 
-// Computed
 const currentProject = computed(() =>
 	props.projects.find(p => p.proj_id === parseInt(props.projectId))
 );
 
-// Navigation Methods
 const navigateToWorkspace = (workspaceId) => {
 	router.push({
 		name: 'Workspace',
@@ -133,7 +130,13 @@ const navigateToWorkspace = (workspaceId) => {
 	});
 };
 
-// VCS Integration Methods
+const navigateToSettings = () => {
+	router.push({
+		name: 'ProjectSettings',
+		params: { projectId: props.projectId }
+	});
+};
+
 const openVcsMenu = (event) => {
 	vcsMenu.value?.toggle(event);
 };
@@ -182,45 +185,96 @@ const handleProjectUpdate = (updatedProject) => {
 	});
 };
 
-// Event emits
-const emit = defineEmits(['update:project']);
+const openNewWorkspaceDialog = () => {
+	// Implementation for opening new workspace dialog
+};
 </script>
 
 <style scoped>
-.project-container {
-	padding: 1rem;
+.project-container {}
 
+.header-left {
+	gap: 1rem;
 }
 
-.proj-header {
-	justify-content: space-between;
-}
 
-.proj-role span {
-	color: var(--muted-text-color);
-	text-align: center;
+.proj-role {
+	gap: 0.5rem;
 }
 
 .proj-role img {
-	margin-left: 1rem;
 	width: 2rem;
 	height: 2rem;
 }
 
+.proj-role span {
+	color: var(--muted-text-color);
+}
+
+.header-right button {
+	size: 2rem;
+}
+
+.workspaces-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	gap: 1rem;
+}
+
 .workspace-card {
+	padding: 1rem;
 	background: white;
+	border: 1px solid var(--outline-gray);
+	border-radius: 0.5rem;
+	cursor: pointer;
 	transition: all 0.2s ease-in-out;
 }
 
 .workspace-card:hover {
 	transform: translateY(-2px);
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.workspace-title {
+	margin: 0 0 0.5rem 0;
+	font-size: 1rem;
+	font-weight: 500;
+}
+
+.progress-bar-bg {
+	width: 100%;
+	height: 0.5rem;
+	background-color: var(--outline-gray);
+	border-radius: 0.25rem;
+	margin-bottom: 0.5rem;
+}
+
+.progress-bar-fill {
+	height: 100%;
+	background: var(--pink-color);
+	border-radius: 0.25rem;
+	transition: width 0.3s ease;
+}
+
+.progress-text {
+	font-size: 0.875rem;
+	color: var(--muted-text-color);
 }
 
 .empty-state {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	min-height: 200px;
+	padding: 3rem;
+	text-align: center;
+	background: var(--background-color);
+	border-radius: 0.5rem;
+}
+
+.empty-state i {
+	font-size: 2.5rem;
+	color: var(--muted-text-color);
+	margin-bottom: 1rem;
+}
+
+.empty-state p {
+	color: var(--muted-text-color);
 }
 </style>

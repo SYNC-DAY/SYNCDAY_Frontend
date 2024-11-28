@@ -1,5 +1,5 @@
 <template>
-	<nav class="nav-top container-row">
+	<nav class="nav-top container-row underline-gray">
 		<!-- logo -->
 		<div class="nav-logo">
 			<RouterLink to="/">
@@ -156,16 +156,8 @@ const isRouteActive = (routeName) => {
 
 <style scoped>
 .nav-top {
-	width: 100%;
-	height: 5rem;
-	padding: 0.5rem 2rem;
-	/* 좌우 패딩 추가로 양쪽 여백 확보 */
-	border-bottom: 1px solid var(--outline-gray);
-	display: flex;
-	align-items: center;
-	/* 세로 중앙 정렬 */
-	justify-content: space-around;
-	gap: 2rem;
+	box-sizing: border-box;
+	padding: 1rem 0.5rem;
 }
 
 .nav-top>div,
@@ -194,7 +186,7 @@ const isRouteActive = (routeName) => {
 }
 
 .nav-tabs {
-	flex: 0 1 auto;
+	flex: 1;
 	/* 축소는 가능하지만 늘어나지는 않음 */
 	min-width: 15rem;
 	/* 최소 너비 설정 */
