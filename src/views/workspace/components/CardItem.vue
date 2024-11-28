@@ -1,6 +1,6 @@
 // Card.vue (업데이트)
 <template>
-  <Card>
+  <Card @click="openModal">
     <template #titlie>{{ card.card_title }}</template>
     <template #content> {{ card.card_content }} </template>
   </Card>
