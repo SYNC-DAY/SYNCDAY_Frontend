@@ -8,10 +8,10 @@
 		</div>
 
 		<!-- Project Content -->
-		<div v-else class="flex flex-column gap-4 p-4">
+		<div v-else class="container-column gap-4 p-4">
 			<!-- Header Section -->
-			<div class="flex justify-between items-center">
-				<div class="flex items-center gap-4">
+			<div class="container-column">
+				<div class="container-row gap-4">
 					<div class="project-title">
 						<h2 class="text-xl font-bold m-0">{{ currentProject.proj_name }}</h2>
 					</div>
@@ -19,18 +19,21 @@
 						<i class="pi pi-crown text-yellow-500"></i>
 						<span class="text-gray-600">Owner</span>
 					</div>
+					<!-- VCS Integration -->
+
+					<div class="flex items-center gap-3">
+						<div class="flex items-center gap-3">
+							<VcsInfo v-if="currentProject.vcs_type" :vcsType="currentProject.vcs_type"
+								:vcsMetadata="currentProject.vcs_metadata" :vcsProjUrl="currentProject.vcs_proj_url" />
+							<Button :label="currentProject.vcs_type ? 'Change Organization' : 'Connect to GitHub'"
+								severity="secondary" icon="pi pi-building" @click="openVcsMenu" aria-haspopup="true"
+								aria-controls="overlay-menu" />
+						</div>
+					</div>
 				</div>
 
 				<!-- VCS Integration -->
-				<div class="flex items-center gap-3">
-					<div class="flex items-center gap-3">
-						<VcsInfo v-if="currentProject.vcs_type" :vcsType="currentProject.vcs_type"
-							:vcsMetadata="currentProject.vcs_metadata" :vcsProjUrl="currentProject.vcs_proj_url" />
-						<Button :label="currentProject.vcs_type ? 'Change Organization' : 'Connect to GitHub'"
-							severity="secondary" icon="pi pi-building" @click="openVcsMenu" aria-haspopup="true"
-							aria-controls="overlay-menu" />
-					</div>
-				</div>
+
 
 				<!-- Workspaces Section -->
 				<div class="workspaces-section mt-6">
