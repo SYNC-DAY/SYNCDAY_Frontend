@@ -11,7 +11,7 @@ import AccordionHeader from 'primevue/accordionheader';
 import AccordionContent from 'primevue/accordioncontent';
 
 
-import Card from '../Card.vue';
+import Card from '../CardItem.vue';
 
 defineProps({
   title: {
