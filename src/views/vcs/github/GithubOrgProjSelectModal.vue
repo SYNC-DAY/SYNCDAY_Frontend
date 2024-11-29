@@ -23,7 +23,7 @@
 					<template #option="{ option }">
 						<div class="flex align-items-center gap-2">
 							<span v-if="option.avatar_url">
-								<Avatar :src="option.avatar_url" class="mr-2" />
+								<Avatar :src="option.avatar_url" />
 							</span>
 							<span>{{ option.name }}</span>
 						</div>
@@ -46,6 +46,9 @@ import { ref, computed, watch } from 'vue';
 import CascadeSelect from 'primevue/cascadeselect';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
+import Avatar from 'primevue/avatar';
+import AvatarGroup from 'primevue/avatargroup';   //Optional for grouping
+
 import { useGithubOrgStore } from '@/stores/github/useGithubOrgStore';
 import { storeToRefs } from 'pinia';
 
@@ -76,7 +79,7 @@ const cascadeOptions = computed(() => {
 	return orgsArray.map(org => ({
 		name: org.login,
 		avatar_url: org.avatar_url,
-		projects: orgRepositories.value[org.login] || [],
+		projects: org.projects,
 		originalData: org
 	}));
 });
