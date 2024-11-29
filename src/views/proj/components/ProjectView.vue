@@ -1,5 +1,5 @@
 <template>
-	<div class="project-view">
+	<div class="proj-container container-column">
 		<!-- Not Found State -->
 		<div v-if="!currentProject" class="flex flex-column items-center justify-center p-6">
 			<h2>Project Not Found</h2>
@@ -170,8 +170,8 @@ const emit = defineEmits(['update:project']);
 </script>
 
 <style scoped>
-.project-view {
-	min-height: 100vh;
+.proj-container {
+	padding: 1rem;
 }
 
 .workspace-card {
