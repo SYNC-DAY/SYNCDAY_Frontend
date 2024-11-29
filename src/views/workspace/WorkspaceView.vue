@@ -22,7 +22,7 @@
           <TabList>
             <Tab value="0">CardBoard</Tab>
             <Tab value="1">Kanban</Tab>
-            <Tab value="2">RoadMap</Tab>
+            <Tab value="2">Calendar</Tab>
           </TabList>
 
           <TabPanels>
