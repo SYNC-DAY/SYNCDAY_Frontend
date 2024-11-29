@@ -1,8 +1,8 @@
 <template>
-	<div class="kanban-container">
-		<div class="kanban-columns">
+	<div class="kanban-container width-100">
+		<div class="kanban-columns container-row">
 			<!-- To Do Column -->
-			<div class="kanban-column">
+			<div class="kanban-column container-column">
 				<div class="column-header">To Do</div>
 				<div class="column-content">
 					<template v-for="board in cardboards" :key="board.cardboard_id">
@@ -73,32 +73,27 @@ const organizedCards = computed(() => {
 
 <style scoped>
 .kanban-container {
-	width: 100%;
-	height: 100%;
-	padding: 20px;
-	background-color: #fff;
+	gap: 3rem;
 }
 
 .kanban-columns {
-	display: flex;
-	gap: 20px;
-	height: 100%;
+	gap: 1rem
 }
 
 .kanban-column {
 	flex: 1;
-	background-color: #FFE4E9;
+	background-color: var(--p-primary-100);
 	/* Light pink background from your design */
-	border-radius: 16px;
-	padding: 16px;
-	min-width: 300px;
+	border-radius: 1rem;
+	padding: 1rem;
+
 }
 
 .column-header {
-	font-size: 20px;
+	font-size: 1rem;
 	font-weight: bold;
 	margin-bottom: 16px;
-	color: #333;
+
 }
 
 .column-content {
@@ -129,13 +124,13 @@ const organizedCards = computed(() => {
 }
 
 .card-title {
-	font-size: 14px;
+	font-size: 0.8rem;
 	color: #333;
 }
 
 .assignee-avatar {
-	width: 24px;
-	height: 24px;
+	width: 1.5rem;
+	height: 1.5rem;
 	border-radius: 50%;
 	object-fit: cover;
 }
