@@ -1,209 +1,146 @@
 <template>
-	<div class="github-org-selector">
-		<Accordion :activeIndex="activeIndex" @tab-change="handleTabChange">
-			<!-- Organizations Tab -->
-			<AccordionTab header="Select Organization">
-				<div class="orgs-container">
-					<div class="loading-state flex justify-center p-4" v-if="orgsLoading">
-						<i class="pi pi-spinner animate-spin text-2xl"></i>
-					</div>
+	<div class="w-full">
+		<!-- Organization Selection Header -->
+		<div class="mb-4 flex items-center justify-between">
+			<h2 class="text-xl font-bold">Organizations</h2>
+			<button @click="refreshOrganizations"
+				class="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600" :disabled="isLoading">
+				Refresh
+			</button>
+		</div>
 
-					<div v-else-if="orgStore.allOrganizations.length" class="grid gap-3">
-						<div v-for="org in orgStore.allOrganizations" :key="org.login" @click="selectOrganization(org)"
-							class="org-item p-4 border rounded cursor-pointer transition-all hover:border-primary"
-							:class="{ 'border-primary bg-primary-50': selectedOrg?.login === org.login }">
-							<div class="flex items-center gap-3">
-								<img :src="org.avatar_url" :alt="org.login" class="w-10 h-10 rounded-full" />
-								<div class="flex-grow">
-									<h4 class="font-medium text-gray-900">{{ org.login }}</h4>
-									<p class="text-sm text-gray-600">{{ org.description }}</p>
-								</div>
-								<i v-if="selectedOrg?.login === org.login" class="pi pi-check text-primary"></i>
-							</div>
+		<!-- Loading State -->
+		<div v-if="isLoading" class="text-center py-4">
+			<p>Loading organizations...</p>
+		</div>
+
+		<!-- Error State -->
+		<div v-else-if="error" class="text-red-500 py-4">
+			{{ error }}
+		</div>
+
+		<!-- Organizations List -->
+		<div v-else class="space-y-4">
+			<div v-for="org in organizations" :key="org.id" class="border rounded-lg p-4">
+				<div class="flex items-center justify-between mb-4">
+					<!-- Organization Info -->
+					<div class="flex items-center">
+						<img :src="org.avatarUrl" :alt="org.login" class="w-10 h-10 rounded-full mr-3" />
+						<div>
+							<h3 class="font-semibold">{{ org.login }}</h3>
+							<p class="text-sm text-gray-600">Role: {{ org.membershipRole }}</p>
 						</div>
 					</div>
 
-					<div v-else class="empty-state text-center p-6 bg-gray-50 rounded">
-						<i class="pi pi-building text-4xl text-gray-400 mb-3"></i>
-						<p class="text-gray-600">No organizations found</p>
-					</div>
+					<!-- View Projects Button -->
+					<button @click="toggleOrgProjects(org)"
+						class="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200">
+						{{ org.showProjects ? 'Hide Projects' : 'View Projects' }}
+					</button>
 				</div>
-			</AccordionTab>
 
-			<!-- Projects Tab -->
-			<AccordionTab header="Select Project" :disabled="!selectedOrg">
-				<template #header>
-					<div class="flex items-center gap-2">
-						<span>Select Project</span>
-						<span v-if="selectedOrg" class="text-sm text-gray-500">
-							({{ selectedOrg.login }})
-						</span>
-					</div>
-				</template>
-
-				<div class="projects-container">
-					<div class="loading-state flex justify-center p-4" v-if="projectsLoading">
-						<i class="pi pi-spinner animate-spin text-2xl"></i>
-					</div>
-
-					<div v-else-if="projectStore.userProjects.length" class="grid gap-3">
-						<div v-for="project in projectStore.userProjects" :key="project.id"
-							@click="selectProject(project)"
-							class="project-item p-4 border rounded cursor-pointer transition-all hover:border-primary"
-							:class="{ 'border-primary bg-primary-50': selectedProject?.id === project.id }">
-							<div class="flex items-center justify-between">
-								<div class="project-info">
-									<h4 class="font-medium text-gray-900">{{ project.title }}</h4>
-									<p v-if="project.shortDescription" class="text-sm text-gray-600 mt-1">
-										{{ project.shortDescription }}
-									</p>
-									<div class="flex items-center gap-2 mt-2">
-										<Tag :severity="project.closed ? 'danger' : 'success'">
-											{{ project.closed ? 'Closed' : 'Open' }}
-										</Tag>
-										<span class="text-xs text-gray-500">
-											Updated: {{ formatDate(project.updatedAt) }}
-										</span>
-									</div>
-								</div>
-								<i v-if="selectedProject?.id === project.id" class="pi pi-check text-primary"></i>
+				<!-- Projects Section -->
+				<div v-if="org.showProjects" class="mt-4">
+					<div v-if="getOrgProjects(org.login).length > 0" class="space-y-2">
+						<div v-for="project in getOrgProjects(org.login)" :key="project.id"
+							class="p-3 bg-gray-50 rounded">
+							<div class="flex justify-between items-center">
+								<a :href="project.url" target="_blank" class="text-blue-600 hover:underline">
+									{{ project.title }}
+								</a>
+								<span class="text-sm text-gray-500">
+									#{{ project.number }}
+								</span>
+							</div>
+							<p v-if="project.shortDescription" class="text-sm text-gray-600 mt-1">
+								{{ project.shortDescription }}
+							</p>
+							<div class="text-xs text-gray-500 mt-1">
+								Last updated: {{ new Date(project.updatedAt).toLocaleDateString() }}
 							</div>
 						</div>
 					</div>
-
-					<div v-else class="empty-state text-center p-6 bg-gray-50 rounded">
-						<i class="pi pi-folder-open text-4xl text-gray-400 mb-3"></i>
-						<p class="text-gray-600">No projects found in this organization</p>
-					</div>
+					<p v-else class="text-gray-500 text-sm">
+						No projects found for this organization.
+					</p>
 				</div>
-			</AccordionTab>
-		</Accordion>
-
-		<!-- Action Buttons -->
-		<div class="flex justify-end gap-2 mt-4">
-			<Button label="Cancel" severity="secondary" text @click="$emit('cancel')" />
-			<Button label="Connect Project" :disabled="!selectedProject" @click="handleConnect" />
+			</div>
 		</div>
 	</div>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
-import Accordion from 'primevue/accordion'
-import AccordionTab from 'primevue/accordiontab'
-import Button from 'primevue/button'
-import Tag from 'primevue/tag'
-import { useGithubOrgStore } from '@/stores/github/useGithubOrgStore'
-import { useGithubProjectsStore } from '@/stores/github/useGithubProjectsStore'
+import { ref, onMounted } from 'vue';
+import { useGithubOrgStore } from '@/stores/github/useGithubOrgStore';
+import { useGithubProjectsStore } from '@/stores/github/useGithubProjectsStore';
 
-const emit = defineEmits(['cancel', 'connect'])
+const orgStore = useGithubOrgStore();
+const projectsStore = useGithubProjectsStore();
+console.log('Projects Store:', projectsStore);
+console.log('Store methods:', Object.getOwnPropertyNames(projectsStore));
+console.log('Store prototype methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(projectsStore)));
 
-// Stores
-const orgStore = useGithubOrgStore()
-const projectStore = useGithubProjectsStore()
+const organizations = ref([]);
+const isLoading = ref(false);
+const error = ref(null);
 
-// State
-const activeIndex = ref(0)
-const orgsLoading = ref(false)
-const projectsLoading = ref(false)
-const selectedOrg = ref(null)
-const selectedProject = ref(null)
+const getOrgProjects = (orgName) => {
+	return projectsStore.getOrgProjects(orgName);
+};
 
-// Methods
-const fetchOrganizations = async () => {
+async function fetchOrganizations(forceRefresh = false) {
 	try {
-		orgsLoading.value = true
-		await orgStore.fetchOrganizations()
-	} catch (error) {
-		console.error('Error fetching organizations:', error)
+		isLoading.value = true;
+		error.value = null;
+		const orgs = await orgStore.fetchOrganizations(forceRefresh);
+		organizations.value = orgs.map(org => ({
+			...org,
+			showProjects: false
+		}));
+	} catch (err) {
+		error.value = "Failed to fetch organizations: " + err.message;
 	} finally {
-		orgsLoading.value = false
+		isLoading.value = false;
 	}
 }
 
-const fetchProjects = async () => {
-	if (!selectedOrg.value) return
 
-	try {
-		projectsLoading.value = true
-		await projectStore.fetchUserProjects()
-	} catch (error) {
-		console.error('Error fetching projects:', error)
-	} finally {
-		projectsLoading.value = false
+// Add immediate console log to check the store
+console.log('Projects Store:', projectsStore);
+
+async function toggleOrgProjects(org) {
+	// Add debug logging
+	console.log('Store methods:', Object.keys(projectsStore));
+
+	org.showProjects = !org.showProjects;
+
+	if (org.showProjects && !projectsStore.getOrgProjects(org.login).length) {
+		try {
+			isLoading.value = true;
+			// Check if the method exists
+			if (typeof projectsStore.fetchOrgProjects !== 'function') {
+				throw new Error('fetchOrgProjects method not available');
+			}
+			await projectsStore.fetchOrgProjects(org.login);
+		} catch (err) {
+			error.value = `Failed to fetch projects for ${org.login}: ${err.message}`;
+			console.error('Store error:', err);
+		} finally {
+			isLoading.value = false;
+		}
 	}
 }
 
-const selectOrganization = (org) => {
-	selectedOrg.value = org
-	selectedProject.value = null
-	activeIndex.value = 1 // Move to projects tab
+async function refreshOrganizations() {
+	await fetchOrganizations(true);
+	// Clear cached projects
+	organizations.value.forEach(org => {
+		org.showProjects = false;
+		projectsStore.clearOrgProjects(org.login);
+	});
 }
 
-const selectProject = (project) => {
-	selectedProject.value = project
-}
-
-const handleTabChange = (event) => {
-	activeIndex.value = event.index
-}
-
-const handleConnect = () => {
-	if (selectedOrg.value && selectedProject.value) {
-		emit('connect', {
-			organization: selectedOrg.value,
-			project: selectedProject.value
-		})
-	}
-}
-
-const formatDate = (dateString) => {
-	if (!dateString) return ''
-	return new Intl.DateTimeFormat('default', {
-		year: 'numeric',
-		month: 'short',
-		day: 'numeric'
-	}).format(new Date(dateString))
-}
-
-// Watchers
-watch(() => selectedOrg.value, () => {
-	if (selectedOrg.value) {
-		fetchProjects()
-	}
-})
-
-// Initial load
-fetchOrganizations()
+onMounted(async () => {
+	await fetchOrganizations();
+});
 </script>
-
-<style scoped>
-.animate-spin {
-	animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-	from {
-		transform: rotate(0deg);
-	}
-
-	to {
-		transform: rotate(360deg);
-	}
-}
-
-:deep(.p-accordion-header-text) {
-	flex: 1;
-}
-
-.org-item,
-.project-item {
-	background: white;
-	transition: all 0.2s ease;
-}
-
-.org-item:hover,
-.project-item:hover {
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-</style>

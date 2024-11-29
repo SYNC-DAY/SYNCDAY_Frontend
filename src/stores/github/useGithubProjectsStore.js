@@ -25,160 +25,78 @@ export const useGithubProjectsStore = defineStore("githubProjects", {
         throw new Error("No access token available");
       }
 
-      this.octokit = new Octokit({
-        auth: token,
-      });
+      if (!this.octokit) {
+        this.octokit = new Octokit({
+          auth: token,
+        });
+      }
+
+      return this.octokit;
     },
 
-    async fetchUserProjects() {
+    async fetchOrgProjects(orgName) {
+      if (!orgName) {
+        throw new Error("Organization name is required");
+      }
+
       try {
-        if (!this.octokit) {
-          this.initializeOctokit();
-        }
-
         this.isLoading = true;
+        const octokit = this.initializeOctokit();
 
-        // First try the REST API approach
-        const { data: projects } = await this.octokit.rest.projects.listForAuthenticatedUser({
-          state: "open",
-          per_page: 100,
-        });
-
-        if (projects && projects.length > 0) {
-          this.userProjects = projects.map(project => ({
-            id: project.id,
-            title: project.name,
-            shortDescription: project.body,
-            url: project.html_url,
-            closed: project.state === "closed",
-            updatedAt: project.updated_at,
-            number: project.number,
-            items: [],
-          }));
-        } else {
-          // Fallback to trying GraphQL for ProjectsV2
-          try {
-            const { data } = await this.octokit.graphql(`
-              query {
-                viewer {
-                  projectsV2(first: 100) {
+        const query = `
+          query($orgName: String!) {
+            organization(login: $orgName) {
+              projectsV2(first: 100) {
+                nodes {
+                  id
+                  title
+                  shortDescription
+                  url
+                  closed
+                  updatedAt
+                  number
+                  items {
                     nodes {
                       id
-                      title
-                      shortDescription
-                      url
-                      closed
-                      updatedAt
-                      number
                     }
                   }
                 }
               }
-            `);
-
-            if (data?.viewer?.projectsV2?.nodes) {
-              this.userProjects = data.viewer.projectsV2.nodes;
             }
-          } catch (graphqlError) {
-            console.warn("GraphQL projects fetch failed:", graphqlError);
-            // If both attempts fail, set empty array but don't throw error
-            this.userProjects = [];
           }
+        `;
+
+        const response = await octokit.graphql(query, {
+          orgName,
+        });
+
+        console.log(`Response for ${orgName}:`, response);
+
+        if (response?.data?.organization?.projectsV2?.nodes) {
+          this.orgProjects[orgName] = response.data.organization.projectsV2.nodes;
+          return this.orgProjects[orgName];
         }
 
-        return this.userProjects;
+        this.orgProjects[orgName] = [];
+        return [];
       } catch (error) {
-        console.error("Error fetching user projects:", error);
+        console.error(`Error fetching projects for org ${orgName}:`, error);
         this.error = error.message;
-        // Don't throw the error, just return empty array
-        this.userProjects = [];
+        this.orgProjects[orgName] = [];
         return [];
       } finally {
         this.isLoading = false;
       }
     },
 
-    async fetchProjectDetails(projectId) {
+    async fetchAllOrgProjects(orgNames) {
       try {
-        if (!this.octokit) {
-          this.initializeOctokit();
-        }
-
         this.isLoading = true;
-
-        // First try REST API
-        try {
-          const { data: project } = await this.octokit.rest.projects.get({
-            project_id: projectId,
-          });
-
-          if (project) {
-            const { data: columns } = await this.octokit.rest.projects.listColumns({
-              project_id: projectId,
-            });
-
-            this.selectedProject = {
-              ...project,
-              columns: columns || [],
-            };
-
-            return this.selectedProject;
-          }
-        } catch (restError) {
-          console.warn("REST API project fetch failed:", restError);
-        }
-
-        // Fallback to GraphQL
-        const { data } = await this.octokit.graphql(
-          `
-          query($projectId: ID!) {
-            node(id: $projectId) {
-              ... on ProjectV2 {
-                id
-                title
-                shortDescription
-                url
-                closed
-                updatedAt
-                number
-                owner {
-                  ... on Organization {
-                    login
-                    avatarUrl
-                  }
-                  ... on User {
-                    login
-                    avatarUrl
-                  }
-                }
-                fields(first: 20) {
-                  nodes {
-                    ... on ProjectV2FieldCommon {
-                      id
-                      name
-                      dataType
-                    }
-                  }
-                }
-              }
-            }
-          }
-        `,
-          {
-            projectId,
-          }
-        );
-
-        if (data?.node) {
-          this.selectedProject = data.node;
-          return data.node;
-        }
-
-        throw new Error("Project not found");
+        const promises = orgNames.map(orgName => this.fetchOrgProjects(orgName));
+        await Promise.all(promises);
       } catch (error) {
-        console.error("Error fetching project details:", error);
+        console.error("Error fetching all org projects:", error);
         this.error = error.message;
-        throw error;
       } finally {
         this.isLoading = false;
       }
@@ -190,6 +108,14 @@ export const useGithubProjectsStore = defineStore("githubProjects", {
       this.selectedProject = null;
       this.error = null;
       this.octokit = null;
+    },
+
+    clearOrgProjects(orgName) {
+      if (orgName) {
+        delete this.orgProjects[orgName];
+      } else {
+        this.orgProjects = {};
+      }
     },
   },
 });
