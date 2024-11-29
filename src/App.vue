@@ -9,7 +9,9 @@
       <div class="main-container">
         <template v-if="authStore.isAuthenticated">
           <main class="content">
+
             <router-view />
+            <Assistant />
           </main>
         </template>
       </div>
@@ -18,10 +20,14 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from "@/stores/auth.js";
+import { useAssistantStore } from "@/stores/assistant.js";
+import { EventSourcePolyfill } from 'event-source-polyfill';
 import Navigation from "@/components/Navigation.vue";
+import Assistant from './components/Assistant.vue';
+
 
 const route = useRoute();
 const authStore = useAuthStore();
