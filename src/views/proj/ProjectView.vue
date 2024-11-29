@@ -67,7 +67,8 @@
 
 		<GithubAuthModal :visible="showGithubAuthModal" @update:visible="showGithubAuthModal = $event"
 			@login-success="handleGithubLoginSuccess" @login-error="handleGithubLoginError" />
-		<!-- <GithubOrgProjectSelector @select="handleProjectSelect" /> -->
+
+
 
 		<template>
 		</template>
