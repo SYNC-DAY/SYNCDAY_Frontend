@@ -69,7 +69,7 @@
 			@login-success="handleGithubLoginSuccess" @login-error="handleGithubLoginError" />
 
 
-
+		<OrgSelectMenu v-model:visible="showOrgProjSelectionModal" @select="handleProjectSelect" />
 		<template>
 		</template>
 
@@ -78,13 +78,16 @@
 
 <script setup>
 import { ref, computed } from 'vue';
+import axios from 'axios';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import Button from 'primevue/button';
+import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
+import { useAuthStore } from '@/stores/auth';
 import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
 import GithubAuthModal from '@/views/vcs/github/GithubAuthModal.vue';
-import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
-
+import OrgSelectMenu from '../vcs/github/OrgSelectMenu.vue';
+import { storeToRefs } from 'pinia';
 
 const props = defineProps({
 	projectId: {
@@ -100,8 +103,9 @@ const props = defineProps({
 // Router and Stores
 const router = useRouter();
 const toast = useToast();
-const authStore = useGithubAuthStore();
-
+const githubAuthStore = useGithubAuthStore();
+const authStore = useAuthStore();
+const { user } = storeToRefs(authStore);
 // Refs
 const vcsMenu = ref(null);
 const showGithubAuthModal = ref(false);
@@ -128,7 +132,7 @@ const openVcsMenu = (event) => {
 const handleVcsSelection = async (vcsType) => {
 	try {
 		if (vcsType === 'GITHUB') {
-			if (!authStore.isAuthenticated) {
+			if (!githubAuthStore.isAuthenticated) {
 				showGithubAuthModal.value = true;
 			} else {
 				showOrgProjSelectionModal.value = true;
@@ -164,10 +168,58 @@ const handleProjectUpdate = (updatedProject) => {
 	showOrgProjSelectionModal.value = false;
 };
 
-function handleProjectSelect({ org, project }) {
-	console.log('Selected organization:', org.login);
-	console.log('Selected project:', project.title);
-}
+// Update the handleProjectSelect method in ProjectView.vue
+
+const handleProjectSelect = async ({ organization }) => {
+	try {
+		// First, construct the organization URL
+		const orgUrl = `https://github.com/${organization.login}`;
+
+		// Make the axios request to update the project's VCS information
+		const response = await axios.put("/projs/vcs", {
+			user_id: user.value.userId,
+			proj_id: props.projectId,
+			vcs_type: 'GITHUB',
+			vcs_proj_url: orgUrl
+		});
+
+		if (!response.data.success) {
+			throw new Error(response.data.error || 'Failed to update VCS information');
+		}
+
+		// Update the local project state
+		const updatedProject = {
+			...currentProject.value,
+			vcs_type: 'GITHUB',
+			vcs_proj_url: orgUrl
+		};
+
+		// Emit the update event to refresh the parent component
+		emit('update:project', updatedProject);
+
+		// Show success toast
+		toast.add({
+			severity: 'success',
+			summary: 'VCS Updated',
+			detail: `Successfully connected to GitHub organization: ${organization.login}`,
+			life: 3000
+		});
+
+		// Close the organization selection modal
+		showOrgProjSelectionModal.value = false;
+
+	} catch (error) {
+		console.error('Failed to update VCS information:', error);
+
+		// Show error toast
+		toast.add({
+			severity: 'error',
+			summary: 'Update Failed',
+			detail: error.message || 'Failed to update VCS information',
+			life: 3000
+		});
+	}
+};
 // Event emits
 const emit = defineEmits(['update:project']);
 </script>

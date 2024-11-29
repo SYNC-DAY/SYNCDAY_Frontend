@@ -1,100 +1,113 @@
 <template>
-	<div class="github-org-menu">
-		<TieredMenu :model="organizations" :popup="true" ref="menu" />
-		<Button @click="toggleMenu" class="org-select-button" :label="selectedOrgLabel"
-			:icon="selectedOrg ? 'pi pi-building' : 'pi pi-github'" />
-	</div>
+	<Dialog :visible="visible" @update:visible="emit('update:visible', $event)" modal
+		header="Select GitHub Organization" :style="{ width: '50vw' }" :closable="true">
+		<div class="flex flex-column gap-4">
+			<div class="org-selection">
+				<label class="block mb-2">Organization</label>
+				<Select v-model="selectedOrg" :options="orgItems()" optionLabel="label"
+					placeholder="Select an organization" class="w-full" :loading="orgStore.loading" :filter="true"
+					:filterMatchMode="'contains'" :filterFields="['searchTerms']" @change="handleOrgChange">
+					<template #value="slotProps">
+						<div v-if="slotProps.value" class="flex items-center">
+							<img :src="slotProps.value.image" :alt="slotProps.value.label" class="mr-2 rounded-full"
+								style="width: 1rem; height: 1rem" />
+							<div>{{ slotProps.value.label }}</div>
+						</div>
+						<span v-else>
+							{{ slotProps.placeholder }}
+						</span>
+					</template>
+					<template #option="slotProps">
+						<div class="flex items-center">
+							<img :src="slotProps.option.image" :alt="slotProps.option.label" class="mr-2 rounded-full"
+								style="width: 1rem; height: 1rem" />
+							<div>{{ slotProps.option.label }}</div>
+						</div>
+					</template>
+				</Select>
+			</div>
+		</div>
+
+		<template #footer>
+			<div class="flex justify-end gap-2">
+				<Button label="Cancel" icon="pi pi-times" @click="closeDialog" class="p-button-text" />
+				<Button label="Next" icon="pi pi-arrow-right" @click="handleSubmit" :disabled="!selectedOrg" />
+			</div>
+		</template>
+	</Dialog>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
-import { useGithubOrgStore } from '@/stores/github/useGithubOrgStore';
-import { storeToRefs } from 'pinia';
-import TieredMenu from 'primevue/tieredmenu';
+import { ref, watch } from 'vue';
+import Dialog from 'primevue/dialog';
+import Select from 'primevue/select';
 import Button from 'primevue/button';
+import { useGithubOrgStore } from '@/stores/github/useGithubOrgStore';
 
-// Store
-const orgStore = useGithubOrgStore();
-const { organizations, currentOrg } = storeToRefs(orgStore);
-
-// Refs
-const menu = ref(null);
-const menuItems = ref([]);
-const selectedOrg = ref(null);
-
-// Computed
-const selectedOrgLabel = computed(() =>
-	selectedOrg.value ? selectedOrg.value.login : 'Select Organization'
-);
-
-// Methods
-const toggleMenu = (event) => {
-	menu.value.toggle(event);
-};
-
-const handleOrgSelect = async (org) => {
-	selectedOrg.value = org;
-	await orgStore.setSelectedOrg(org);
-	await orgStore.fetchOrgRepositories(org.login);
-	menu.value.hide();
-};
-
-const fetchMenuItems = async () => {
-	try {
-		await orgStore.fetchOrganizations();
-
-		menuItems.value = organizations.value.map(org => ({
-			label: org.login,
-			icon: 'pi pi-building',
-			command: () => handleOrgSelect(org),
-			items: [
-				{
-					label: `Members: ${org.membershipRole}`,
-					icon: 'pi pi-users'
-				},
-				{
-					label: org.description || 'No description',
-					icon: 'pi pi-info-circle'
-				}
-			]
-		}));
-	} catch (error) {
-		console.error('Error fetching organizations:', error);
-	}
-};
-
-// Lifecycle
-onMounted(async () => {
-	await fetchMenuItems();
-
-	// Set initial selection if there's a current org
-	if (currentOrg.value) {
-		selectedOrg.value = currentOrg.value;
+const props = defineProps({
+	visible: {
+		type: Boolean,
+		required: true
 	}
 });
 
-// Watch for external org changes
-watch(currentOrg, (newOrg) => {
-	if (newOrg && (!selectedOrg.value || selectedOrg.value.login !== newOrg.login)) {
-		selectedOrg.value = newOrg;
+const emit = defineEmits(['update:visible', 'select']);
+
+// Store
+const orgStore = useGithubOrgStore();
+
+// State
+const selectedOrg = ref(null);
+
+// Methods
+const orgItems = () => {
+	// Convert object to array if needed, otherwise use the array directly
+	const orgsArray = Array.isArray(orgStore.organizations)
+		? orgStore.organizations
+		: Object.values(orgStore.organizations);
+
+	return orgsArray.map(org => ({
+		label: org.login,
+		value: org.login,
+		image: org.avatar_url,
+		searchTerms: `${org.login} ${org.description || ''}`.toLowerCase()
+	}));
+};
+
+const handleOrgChange = () => {
+	// Add any additional logic needed when organization changes
+};
+
+const closeDialog = () => {
+	emit('update:visible', false);
+	selectedOrg.value = null;
+};
+
+const handleSubmit = () => {
+	if (selectedOrg.value) {
+		const orgsArray = Array.isArray(orgStore.organizations)
+			? orgStore.organizations
+			: Object.values(orgStore.organizations);
+
+		const originalOrg = orgsArray.find(org => org.login === selectedOrg.value.value);
+		emit('select', {
+			organization: originalOrg
+		});
+		closeDialog();
+	}
+};
+// Fetch organizations when dialog opens
+watch(() => props.visible, async (newValue) => {
+	if (newValue) {
+		await orgStore.fetchOrganizations();
+	} else {
+		selectedOrg.value = null;
 	}
 });
 </script>
 
 <style scoped>
-.github-org-menu {
-	position: relative;
-	display: inline-block;
-}
-
-.org-select-button {
-	min-width: 200px;
-	text-align: left;
-}
-
-:deep(.p-button-label) {
-	flex: 1;
-	text-align: left;
-	margin-left: 0.5rem;
+.org-selection {
+	width: 100%;
 }
 </style>
