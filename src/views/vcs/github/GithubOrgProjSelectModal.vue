@@ -17,25 +17,14 @@
 			</div>
 
 			<div v-else>
-				<CascadeSelect v-model="selected" :options="cascadeOptions" optionLabel="name" optionGroupLabel="name"
-					optionGroupChildren="projects" class="w-full" placeholder="Select Organization and Project"
-					@change="handleSelection">
-					<template #option="{ option }">
-						<div class="flex align-items-center gap-2">
-							<span v-if="option.avatar_url">
-								<Avatar :src="option.avatar_url" />
-							</span>
-							<span>{{ option.name }}</span>
-						</div>
-					</template>
-				</CascadeSelect>
+				<Select v-model="selected" :options="options"></Select>
 			</div>
 		</div>
 
 		<template #footer>
 			<div class="flex justify-end gap-2">
 				<Button label="Cancel" severity="secondary" @click="$emit('update:visible', false)" />
-				<Button label="Connect" :loading="loading" :disabled="!selected || loading" @click="handleConnect" />
+				<Button label="save" :loading="loading" :disabled="!selected || loading" @click="handleConnect" />
 			</div>
 		</template>
 	</Dialog>
@@ -43,7 +32,8 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import CascadeSelect from 'primevue/cascadeselect';
+
+import Select from 'primevue/select';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import Avatar from 'primevue/avatar';
@@ -71,17 +61,12 @@ const loading = ref(false);
 const orgRepositories = ref({});
 
 // Transform organizations data for CascadeSelect
-const cascadeOptions = computed(() => {
+const options = computed(() => {
 	const orgs = organizations.value;
 	// Convert object to array if it's not already an array
 	const orgsArray = Array.isArray(orgs) ? orgs : Object.values(orgs || {});
 
-	return orgsArray.map(org => ({
-		name: org.login,
-		avatar_url: org.avatar_url,
-		projects: org.projects,
-		originalData: org
-	}));
+	return orgsArray.map(org => (org.login));
 });
 
 // Load organizations and their repositories
