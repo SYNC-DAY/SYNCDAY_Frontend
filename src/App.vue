@@ -9,6 +9,7 @@
       <div class="main-container">
         <template v-if="authStore.isAuthenticated">
           <main class="content">
+
             <router-view />
             <Assistant/>
           </main>
@@ -27,6 +28,7 @@ import { EventSourcePolyfill } from 'event-source-polyfill';
 import Navigation from "@/components/Navigation.vue";
 import Assistant from './components/Assistant.vue';
 
+import GithubOrg from './views/vcs/GithubOrg.vue';
 
 const route = useRoute();
 const authStore = useAuthStore();
@@ -40,7 +42,8 @@ const isLoginPage = computed(() => route.path === '/login');
 .app-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  max-width: 100vw;
 }
 
 .main-container {

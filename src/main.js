@@ -18,6 +18,9 @@ import { setupAxiosInterceptors } from "../src/plugins/axios.js";
 import { definePreset } from "@primevue/themes";
 import Aura from "@primevue/themes/aura";
 import PrimeVue from "primevue/config";
+import ToastService from "primevue/toastservice";
+import Toast from "primevue/toast";
+
 import "primeicons/primeicons.css";
 
 /* css */
@@ -70,5 +73,7 @@ app.use(PrimeVue, {
     },
   },
 });
+app.use(ToastService);
+app.component("Toast", Toast);
 
 app.mount("#app");
