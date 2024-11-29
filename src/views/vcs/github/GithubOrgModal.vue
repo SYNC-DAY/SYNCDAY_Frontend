@@ -108,15 +108,15 @@ const pendingOperation = ref(null);
 
 // Methods
 const loadOrganizations = async () => {
-	if (!githubAuthStore.isAuthenticated) {
-		showAuthModal.value = true;
-		pendingOperation.value = 'load';
-		return;
-	}
-
 	try {
 		isLoading.value = true;
 		error.value = null;
+
+		const isAuthenticated = await githubAuthStore.ensureAuthenticated();
+		if (!isAuthenticated) {
+			return;
+		}
+
 		organizations.value = await githubOrgStore.fetchOrganizations(true);
 	} catch (err) {
 		error.value = err.message;
