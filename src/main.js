@@ -1,8 +1,12 @@
 import { createApp } from "vue";
+import { useAuthStore } from "./stores/auth";
 import App from "./App.vue";
 
 /* pinia */
 import { createPinia } from "pinia";
+
+/* pinia-persisted-state */
+import { createPersistedState } from "pinia-plugin-persistedstate";
 
 /* router */
 import { setupRouter } from "./router"; // 이름 변경
@@ -23,7 +27,13 @@ const app = createApp(App);
 
 /* pinia */
 const pinia = createPinia();
+const pinia_persisted_state = createPersistedState({
+  storage: sessionStorage
+});
+pinia.use(pinia_persisted_state);
 app.use(pinia);
+const authStore = useAuthStore();
+await authStore.initializeAuth(); // 초기 인증 상태 설정
 
 /* axios */
 setupAxiosInterceptors();
