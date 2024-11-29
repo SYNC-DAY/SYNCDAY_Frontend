@@ -25,6 +25,7 @@ import Button from "primevue/button";
 import Tag from "primevue/tag";
 import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
+import Dialog from "primevue/dialog";
 
 /* css */
 import "@/assets/styles/syncday/main.css";
@@ -85,5 +86,7 @@ app.component("ProgressSpinner", ProgressSpinner);
 app.component("Message", Message);
 app.use(ToastService);
 app.component("Toast", Toast);
+app.use("Dialog", Dialog);
 
+/* mount */
 app.mount("#app");

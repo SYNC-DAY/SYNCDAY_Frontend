@@ -67,8 +67,8 @@
 
 		<GithubAuthModal :visible="showGithubAuthModal" @update:visible="showGithubAuthModal = $event"
 			@login-success="handleGithubLoginSuccess" @login-error="handleGithubLoginError" />
-		<GithubOrgProjectSelector @select="handleProjectSelect" />
-
+		<!-- <GithubOrgProjectSelector @select="handleProjectSelect" /> -->
+		<GithubOrgProjSelectModal @select="handleProjSelect" />
 		<template>
 		</template>
 
@@ -83,8 +83,8 @@ import Button from 'primevue/button';
 import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
 import GithubAuthModal from '@/views/vcs/github/GithubAuthModal.vue';
 import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
-import GithubOrgProjectSelector from './GithubOrgProjectSelector.vue';
-
+// import GithubOrgProjectSelector from './GithubOrgProjectSelector.vue';
+import GithubOrgProjSelectModal from '@/views/vcs/github/GithubOrgProjSelectModal.vue';
 // Props
 const props = defineProps({
 	projectId: {
@@ -105,7 +105,7 @@ const authStore = useGithubAuthStore();
 // Refs
 const vcsMenu = ref(null);
 const showGithubAuthModal = ref(false);
-const showGithubOrgModal = ref(false);
+const showOrgProjSelectionModal = ref(false);
 
 // Computed
 const currentProject = computed(() =>
@@ -131,7 +131,7 @@ const handleVcsSelection = async (vcsType) => {
 			if (!authStore.isAuthenticated) {
 				showGithubAuthModal.value = true;
 			} else {
-				showGithubOrgModal.value = true;
+				showOrgProjSelectionModal.value = true;
 			}
 		}
 	} catch (error) {
@@ -146,7 +146,7 @@ const handleVcsSelection = async (vcsType) => {
 
 const handleGithubLoginSuccess = () => {
 	showGithubAuthModal.value = false;
-	showGithubOrgModal.value = true;
+	showOrgProjSelectionModal.value = true;
 };
 
 const handleGithubLoginError = (error) => {
@@ -161,7 +161,7 @@ const handleGithubLoginError = (error) => {
 const handleProjectUpdate = (updatedProject) => {
 	// Emit event to update parent state
 	emit('update:project', updatedProject);
-	showGithubOrgModal.value = false;
+	showOrgProjSelectionModal.value = false;
 };
 
 function handleProjectSelect({ org, project }) {
