@@ -1,5 +1,5 @@
 <template>
-	<div class="proj-container container-column">
+	<div class="container-column">
 		<!-- Not Found State -->
 		<div v-if="!currentProject" class="flex flex-column items-center justify-center p-6">
 			<h2>Project Not Found</h2>
@@ -8,21 +8,24 @@
 		</div>
 
 		<!-- Project Content -->
-		<div v-else class="flex flex-column gap-4 p-4">
+		<div v-else class="proj-container">
+
 			<!-- Header Section -->
-			<div class="flex justify-between items-center">
-				<div class="flex items-center gap-4">
+			<div class="container-row proj-header">
+
+				<!-- header-left -->
+				<div class="header-left container-row">
 					<div class="project-title">
-						<h2 class="text-xl font-bold m-0">{{ currentProject.proj_name }}</h2>
+						<h2>{{ currentProject.proj_name }}</h2>
 					</div>
-					<div class="flex items-center gap-2">
-						<i class="pi pi-crown text-yellow-500"></i>
-						<span class="text-gray-600">Owner</span>
+					<div class="container-row role">
+						<img v-if="currentProject.participation_status === 'OWNER'" src="@/assets/icons/Crown.svg"
+							alt="" class="role-icon" />
+						<span>{{ currentProject.participation_status }}</span>
 					</div>
 				</div>
 
-				<!-- VCS Integration -->
-				<div class="vcs-controls">
+				<div class="header-right">
 					<Button label="Organization" severity="secondary" icon="pi pi-building" @click="openVcsMenu"
 						aria-haspopup="true" aria-controls="overlay-menu" />
 				</div>
@@ -172,6 +175,26 @@ const emit = defineEmits(['update:project']);
 <style scoped>
 .proj-container {
 	padding: 1rem;
+}
+
+.proj-header {
+	gap: 2rem;
+}
+
+.header-left {
+	gap: 1rem;
+}
+
+.role {}
+
+.role span {
+	color: var(--muted-text-color);
+
+}
+
+.header-right {
+	align-items: center;
+	margin-right: 3rem;
 }
 
 .workspace-card {
