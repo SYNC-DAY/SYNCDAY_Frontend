@@ -18,10 +18,14 @@ import { setupAxiosInterceptors } from "../src/plugins/axios.js";
 import { definePreset } from "@primevue/themes";
 import Aura from "@primevue/themes/aura";
 import PrimeVue from "primevue/config";
+import ToastService from "primevue/toastservice";
+import Toast from "primevue/toast";
+
 import "primeicons/primeicons.css";
 
 /* css */
 import "@/assets/styles/syncday/main.css";
+import { useAuthStore } from "@/stores/auth.js";
 
 const app = createApp(App);
 
@@ -70,5 +74,7 @@ app.use(PrimeVue, {
     },
   },
 });
+app.use(ToastService);
+app.component("Toast", Toast);
 
 app.mount("#app");
