@@ -22,13 +22,6 @@ const routes = [
       },
     ],
   },
-  // In your router configuration
-  {
-    path: "/github/projects",
-    name: "GithubProjects",
-    component: () => import("@/views/vcs/github/GithubProject.vue"),
-    meta: { requiresAuth: true },
-  },
 ];
 
 export default routes;

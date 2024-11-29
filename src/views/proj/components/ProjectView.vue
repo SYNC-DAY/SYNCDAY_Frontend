@@ -78,7 +78,6 @@ import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import Button from 'primevue/button';
 import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
-import GithubOrgModal from '@/views/vcs/github/GithubOrgModal.vue';
 import GithubAuthModal from '@/views/vcs/github/GithubAuthModal.vue';
 import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 import GithubOrgProjectSelector from './GithubOrgProjectSelector.vue';
