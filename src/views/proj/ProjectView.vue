@@ -83,8 +83,8 @@ import Button from 'primevue/button';
 import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
 import GithubAuthModal from '@/views/vcs/github/GithubAuthModal.vue';
 import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
-// import GithubOrgProjectSelector from './GithubOrgProjectSelector.vue';
-// Props
+
+
 const props = defineProps({
 	projectId: {
 		type: [String, Number],

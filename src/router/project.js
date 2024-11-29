@@ -1,6 +1,6 @@
 // router/index.js
 import ProjMainPage from "@/views/proj/ProjMainPage.vue";
-import ProjectView from "@/views/proj/components/ProjectView.vue";
+import ProjectView from "@/views/proj/ProjectView.vue";
 import WorkspaceView from "@/views/workspace/WorkspaceView.vue";
 
 const routes = [

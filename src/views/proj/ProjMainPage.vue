@@ -40,8 +40,8 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 
 import SideBar from '@/components/SideBar.vue';
-import ProjItem from './components/SideBar/ProjItem.vue';
-import WorkspaceItem from './components/SideBar/WorkspaceItem.vue';
+import ProjItem from './SideBar/ProjItem.vue';
+import WorkspaceItem from './SideBar/WorkspaceItem.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
