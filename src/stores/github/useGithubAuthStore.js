@@ -31,7 +31,7 @@ export const useGithubAuthStore = defineStore("githubAuth", {
     loginWithGithub() {
       const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
       const redirectUri = import.meta.env.VITE_GITHUB_REDIRECT_URI;
-      const scope = "read:user read:repo read:org read:proj";
+      const scope = "read:user read:repo read:org read:project";
 
       const currentPath = window.location.pathname + window.location.search;
       localStorage.setItem("github_auth_redirect", currentPath);

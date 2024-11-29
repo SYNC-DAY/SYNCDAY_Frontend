@@ -11,6 +11,7 @@
           <main class="content">
 
             <router-view />
+            <!-- <GithubProject /> -->
             <!-- <GithubOrg></GithubOrg> -->
           </main>
         </template>
@@ -25,7 +26,7 @@ import { useRoute } from 'vue-router';
 import { useAuthStore } from "@/stores/auth.js";
 import Navigation from "@/components/Navigation.vue";
 import GithubOrg from './views/vcs/GithubOrg.vue';
-
+import GithubProject from './views/vcs/github/GithubProject.vue';
 const route = useRoute();
 const authStore = useAuthStore();
 console.log("App.vue에서 찍어보는 useAuthStore.user: ", authStore.user)
