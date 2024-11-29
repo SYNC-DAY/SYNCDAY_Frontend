@@ -64,9 +64,11 @@
 
 		<GithubAuthModal :visible="showGithubAuthModal" @update:visible="showGithubAuthModal = $event"
 			@login-success="handleGithubLoginSuccess" @login-error="handleGithubLoginError" />
+		<GithubOrgProjectSelector @select="handleProjectSelect" />
 
-		<GithubOrgModal :is-open="showGithubOrgModal" :project-id="projectId" @close="showGithubOrgModal = false"
-			@update:project="handleProjectUpdate" />
+		<template>
+		</template>
+
 	</div>
 </template>
 
@@ -79,6 +81,7 @@ import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
 import GithubOrgModal from '@/views/vcs/github/GithubOrgModal.vue';
 import GithubAuthModal from '@/views/vcs/github/GithubAuthModal.vue';
 import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
+import GithubOrgProjectSelector from './GithubOrgProjectSelector.vue';
 
 // Props
 const props = defineProps({
@@ -159,6 +162,10 @@ const handleProjectUpdate = (updatedProject) => {
 	showGithubOrgModal.value = false;
 };
 
+function handleProjectSelect({ org, project }) {
+	console.log('Selected organization:', org.login);
+	console.log('Selected project:', project.title);
+}
 // Event emits
 const emit = defineEmits(['update:project']);
 </script>

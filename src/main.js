@@ -16,11 +16,20 @@ import Aura from "@primevue/themes/aura";
 import PrimeVue from "primevue/config";
 import ToastService from "primevue/toastservice";
 import Toast from "primevue/toast";
-
 import "primeicons/primeicons.css";
+import Accordion from "primevue/accordion";
+import AccordionTab from "primevue/accordiontab";
+import DataTable from "primevue/datatable";
+import Column from "primevue/column";
+import Button from "primevue/button";
+import Tag from "primevue/tag";
+import ProgressSpinner from "primevue/progressspinner";
+import Message from "primevue/message";
 
 /* css */
 import "@/assets/styles/syncday/main.css";
+
+/* authStore */
 import { useAuthStore } from "@/stores/auth.js";
 
 const app = createApp(App);
@@ -66,6 +75,14 @@ app.use(PrimeVue, {
     },
   },
 });
+app.component("Accordion", Accordion);
+app.component("AccordionTab", AccordionTab);
+app.component("DataTable", DataTable);
+app.component("Column", Column);
+app.component("Button", Button);
+app.component("Tag", Tag);
+app.component("ProgressSpinner", ProgressSpinner);
+app.component("Message", Message);
 app.use(ToastService);
 app.component("Toast", Toast);
 

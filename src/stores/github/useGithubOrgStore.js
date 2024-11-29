@@ -1,35 +1,18 @@
 import { defineStore } from "pinia";
 import { useGithubAuthStore } from "./useGithubAuthStore";
 import { Octokit } from "@octokit/rest";
+import { ref, computed } from "vue";
 
-const ORGS_STORAGE_KEY = "github_organizations";
-const SELECTED_ORG_KEY = "github_selected_org";
-const USER_INFO_KEY = "github_user_info";
+export const useGithubOrgStore = defineStore("githubOrg", () => {
+  const organizations = ref({});
+  const selectedOrg = ref(null);
+  const selectedProject = ref(null);
+  const octokit = ref(null);
+  const isLoading = ref(false);
+  const error = ref(null);
 
-export const useGithubOrgStore = defineStore("githubOrg", {
-  state: () => ({
-    organizations: JSON.parse(localStorage.getItem(ORGS_STORAGE_KEY) || "[]"),
-    selectedOrg: JSON.parse(localStorage.getItem(SELECTED_ORG_KEY) || "null"),
-    orgRepositories: {},
-    isLoading: false,
-    error: null,
-    lastFetchTime: null,
-    octokit: null,
-  }),
-
-  getters: {
-    allOrganizations: state => state.organizations,
-    currentOrg: state => state.selectedOrg,
-    hasError: state => !!state.error,
-    getOrgRepositories: state => orgName => state.orgRepositories[orgName] || [],
-    shouldRefetch: state => {
-      if (!state.lastFetchTime) return true;
-      return Date.now() - state.lastFetchTime > 5 * 60 * 1000;
-    },
-  },
-
-  actions: {
-    initializeOctokit() {
+  function initializeOctokit() {
+    if (!octokit.value) {
       const authStore = useGithubAuthStore();
       const token = authStore.accessToken;
 
@@ -37,158 +20,123 @@ export const useGithubOrgStore = defineStore("githubOrg", {
         throw new Error("No access token available");
       }
 
-      this.octokit = new Octokit({
+      octokit.value = new Octokit({
         auth: token,
       });
-    },
+    }
+    return octokit.value;
+  }
 
-    async fetchOrganizations(forceRefresh = false) {
-      try {
-        if (!this.octokit) {
-          this.initializeOctokit();
-        }
+  async function fetchOrganizations(forceRefresh = false) {
+    try {
+      if (!octokit.value) {
+        initializeOctokit();
+      }
 
-        if (!forceRefresh && !this.shouldRefetch && this.organizations.length > 0) {
-          return this.organizations;
-        }
+      isLoading.value = true;
+      const { data: orgs } = await octokit.value.rest.orgs.listForAuthenticatedUser();
 
-        this.isLoading = true;
+      // Transform organizations data structure
+      const orgsMap = {};
+      for (const org of orgs) {
+        orgsMap[org.login] = {
+          ...org,
+          projects: [],
+          projectsFetched: false,
+          isExpanded: false,
+        };
+      }
 
-        // Directly fetch user's organizations
-        const { data: orgs } = await this.octokit.rest.orgs.listForAuthenticatedUser();
-        console.log("Fetched orgs:", orgs);
+      organizations.value = orgsMap;
+      console.log("Fetched orgs:", orgs);
+      return Object.values(organizations.value);
+    } catch (error) {
+      console.error("Error fetching organizations:", error);
+      throw error;
+    } finally {
+      isLoading.value = false;
+    }
+  }
 
-        // Fetch detailed information for each organization
-        const detailedOrgs = await Promise.all(
-          orgs.map(async org => {
-            try {
-              // Get detailed org info
-              const { data: orgDetail } = await this.octokit.rest.orgs.get({
-                org: org.login,
-              });
+  async function fetchOrgProjects(orgName) {
+    if (!orgName || !organizations.value[orgName]) {
+      throw new Error("Invalid organization");
+    }
 
-              // Get user's membership status in the org
-              const { data: membership } = await this.octokit.rest.orgs.getMembershipForAuthenticatedUser({
-                org: org.login,
-              });
+    try {
+      isLoading.value = true;
 
-              return {
-                ...orgDetail,
-                membershipRole: membership.role,
-              };
-            } catch (error) {
-              console.error(`Error fetching details for org ${org.login}:`, error);
-              // Return basic org info if detailed fetch fails
-              return {
-                ...org,
-                membershipRole: "member",
-              };
+      const query = `
+        query($orgName: String!) {
+          organization(login: $orgName) {
+            projectsV2(first: 100) {
+              nodes {
+                id
+                title
+                shortDescription
+                url
+                closed
+                updatedAt
+                number
+                items {
+                  nodes {
+                    id
+                  }
+                }
+              }
             }
-          })
-        );
-
-        this.organizations = detailedOrgs;
-        this.lastFetchTime = Date.now();
-        this.saveToLocalStorage();
-
-        return this.organizations;
-      } catch (error) {
-        console.error("Error fetching organizations:", error);
-        this.error = error.message;
-        throw error;
-      } finally {
-        this.isLoading = false;
-      }
-    },
-
-    async fetchOrgRepositories(orgName) {
-      try {
-        if (!this.octokit) {
-          this.initializeOctokit();
+          }
         }
+      `;
 
-        this.isLoading = true;
+      const response = await octokit.value.graphql(query, { orgName });
+      const projects = response?.data?.organization?.projectsV2?.nodes || [];
 
-        const { data: repos } = await this.octokit.rest.repos.listForOrg({
-          org: orgName,
-          type: "all",
-          sort: "updated",
-          direction: "desc",
-        });
+      // Update organization with projects
+      organizations.value[orgName] = {
+        ...organizations.value[orgName],
+        projects,
+        projectsFetched: true,
+      };
 
-        this.orgRepositories[orgName] = repos;
-        return repos;
-      } catch (error) {
-        console.error("Error fetching organization repositories:", error);
-        this.error = error.message;
-        throw error;
-      } finally {
-        this.isLoading = false;
-      }
-    },
+      return projects;
+    } catch (error) {
+      console.error(`Error fetching projects for ${orgName}:`, error);
+      throw error;
+    } finally {
+      isLoading.value = false;
+    }
+  }
 
-    async fetchOrgMembers(orgName) {
-      try {
-        if (!this.octokit) {
-          this.initializeOctokit();
-        }
+  function selectOrg(orgName) {
+    selectedOrg.value = organizations.value[orgName] || null;
+  }
 
-        const { data: members } = await this.octokit.rest.orgs.listMembers({
-          org: orgName,
-          per_page: 100,
-        });
+  function selectProject(orgName, projectId) {
+    const org = organizations.value[orgName];
+    if (org) {
+      selectedProject.value = org.projects.find(p => p.id === projectId) || null;
+    }
+  }
 
-        return members;
-      } catch (error) {
-        console.error("Error fetching organization members:", error);
-        this.error = error.message;
-        throw error;
-      }
-    },
+  function clearState() {
+    organizations.value = {};
+    selectedOrg.value = null;
+    selectedProject.value = null;
+    error.value = null;
+    octokit.value = null;
+  }
 
-    setSelectedOrg(org) {
-      this.selectedOrg = org;
-      localStorage.setItem(SELECTED_ORG_KEY, JSON.stringify(org));
-      if (org) {
-        this.fetchOrgRepositories(org.login);
-      }
-    },
-
-    saveToLocalStorage() {
-      localStorage.setItem(
-        ORGS_STORAGE_KEY,
-        JSON.stringify({
-          organizations: this.organizations,
-          timestamp: Date.now(),
-        })
-      );
-    },
-
-    loadFromLocalStorage() {
-      const stored = localStorage.getItem(ORGS_STORAGE_KEY);
-
-      if (stored) {
-        const data = JSON.parse(stored);
-        if (Date.now() - data.timestamp < 5 * 60 * 1000) {
-          this.organizations = data.organizations;
-          this.lastFetchTime = data.timestamp;
-        }
-      }
-    },
-
-    clearState() {
-      this.organizations = [];
-      this.selectedOrg = null;
-      this.orgRepositories = {};
-      this.error = null;
-      this.lastFetchTime = null;
-      this.octokit = null;
-      localStorage.removeItem(ORGS_STORAGE_KEY);
-      localStorage.removeItem(SELECTED_ORG_KEY);
-    },
-
-    clearError() {
-      this.error = null;
-    },
-  },
+  return {
+    organizations,
+    selectedOrg,
+    selectedProject,
+    isLoading,
+    error,
+    fetchOrganizations,
+    fetchOrgProjects,
+    selectOrg,
+    selectProject,
+    clearState,
+  };
 });
