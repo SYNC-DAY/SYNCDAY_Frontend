@@ -1,3 +1,4 @@
+// useGithubOrgStore.js
 import { defineStore } from "pinia";
 import { useGithubAuthStore } from "./useGithubAuthStore";
 import { Octokit } from "@octokit/rest";
@@ -39,16 +40,16 @@ export const useGithubOrgStore = defineStore("githubOrg", () => {
       // Transform organizations data structure
       const orgsMap = {};
       for (const org of orgs) {
+        // Preserve existing projects if they exist
+        const existingOrg = organizations.value[org.login];
         orgsMap[org.login] = {
           ...org,
-          projects: [],
-          projectsFetched: false,
-          isExpanded: false,
+          projects: existingOrg?.projects || [],
+          projectsFetched: existingOrg?.projectsFetched || false,
         };
       }
 
       organizations.value = orgsMap;
-      console.log("Fetched orgs:", orgs);
       return Object.values(organizations.value);
     } catch (error) {
       console.error("Error fetching organizations:", error);
@@ -90,7 +91,7 @@ export const useGithubOrgStore = defineStore("githubOrg", () => {
       `;
 
       const response = await octokit.value.graphql(query, { orgName });
-      const projects = response?.data?.organization?.projectsV2?.nodes || [];
+      const projects = response.organization.projectsV2.nodes;
 
       // Update organization with projects
       organizations.value[orgName] = {
@@ -109,7 +110,7 @@ export const useGithubOrgStore = defineStore("githubOrg", () => {
   }
 
   function selectOrg(orgName) {
-    selectedOrg.value = organizations.value[orgName] || null;
+    selectedOrg.value = orgName ? organizations.value[orgName] : null;
   }
 
   function selectProject(orgName, projectId) {

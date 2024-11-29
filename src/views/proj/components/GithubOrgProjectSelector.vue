@@ -1,3 +1,4 @@
+<!-- GithubOrgProjectSelector.vue -->
 <template>
 	<div class="p-4">
 		<!-- Header with Refresh Button -->
@@ -11,23 +12,26 @@
 			{{ error }}
 		</Message>
 
-		<!-- Organizations Accordion -->
-		<Accordion v-model:activeIndex="activeIndex" @tab-change="handleTabChange">
-			<AccordionTab v-for="org in organizations" :key="org.login">
-				<template #header>
+		<!-- Organizations List -->
+		<div class="mb-4">
+			<div v-for="org in organizations" :key="org.login"
+				class="p-4 border rounded-lg mb-2 cursor-pointer hover:bg-gray-50"
+				:class="{ 'bg-gray-100': selectedOrg?.login === org.login }" @click="selectOrganization(org)">
+				<div class="flex items-center justify-between">
 					<div class="flex items-center gap-3">
-						<!-- <img :src="org.avatar_url" :alt="org.login" class="w-8 h-8 rounded-full" /> -->
 						<div>
 							<span class="font-medium">{{ org.login }}</span>
 							<span class="text-sm text-gray-500 ml-2">({{ org.membershipRole }})</span>
 						</div>
 					</div>
-				</template>
+					<i class="pi"
+						:class="{ 'pi-chevron-down': selectedOrg?.login === org.login, 'pi-chevron-right': selectedOrg?.login !== org.login }"></i>
+				</div>
 
-				<!-- Projects Content -->
-				<div class="mt-4">
+				<!-- Projects Section (Expanded when org is selected) -->
+				<div v-if="selectedOrg?.login === org.login" class="mt-4">
 					<!-- Loading State -->
-					<div v-if="loadingOrgs.has(org.login)" class="flex justify-center p-4">
+					<div v-if="loadingProjects" class="flex justify-center p-4">
 						<ProgressSpinner style="width:50px;height:50px" />
 					</div>
 
@@ -68,27 +72,24 @@
 						No projects found for this organization.
 					</div>
 				</div>
-			</AccordionTab>
-		</Accordion>
+			</div>
+		</div>
 	</div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useGithubOrgStore } from '@/stores/github/useGithubOrgStore';
-import { useGithubProjectsStore } from '@/stores/github/useGithubProjectsStore';
 import { storeToRefs } from 'pinia';
 
 // Store setup
 const orgStore = useGithubOrgStore();
-const projectsStore = useGithubProjectsStore();
-const { organizations: orgList } = storeToRefs(orgStore);
+const { organizations: orgList, selectedOrg } = storeToRefs(orgStore);
 
 // Local state
 const error = ref(null);
-const activeIndex = ref(null);
 const selectedProject = ref(null);
-const loadingOrgs = ref(new Set());
+const loadingProjects = ref(false);
 
 // Computed property for organizations
 const organizations = computed(() => {
@@ -96,43 +97,44 @@ const organizations = computed(() => {
 });
 
 // Methods
-async function onProjectSelect(org, project) {
-	selectedProject.value = project;
-	emit('select', { org, project });
-}
-
-async function handleTabChange(event) {
-	const org = organizations.value[event.index];
-	if (!org) return;
-	console.log("handleTagChange")
-
-	// Skip if projects are already loaded
-	if (org.projects?.length > 0) return;
-
+async function selectOrganization(org) {
 	try {
-		loadingOrgs.value.add(org.login);
-		const projects = await orgStore.fetchOrgProjects(org.login);
+		if (selectedOrg.value?.login === org.login) {
+			// If clicking the same org, collapse it
+			orgStore.selectOrg(null);
+			return;
+		}
 
-		// Update organization with projects
-		org.projects = projects;
+		loadingProjects.value = true;
+		error.value = null;
 
+		// Select the organization first
+		orgStore.selectOrg(org.login);
+
+		// Fetch projects if they haven't been fetched yet
+		if (!org.projectsFetched) {
+			await orgStore.fetchOrgProjects(org.login);
+		}
 	} catch (err) {
 		error.value = `Failed to fetch projects for ${org.login}: ${err.message}`;
 		console.error('Project fetch error:', err);
 	} finally {
-		loadingOrgs.value.delete(org.login);
+		loadingProjects.value = false;
 	}
+}
+
+async function onProjectSelect(org, project) {
+	selectedProject.value = project;
+	emit('select', { org, project });
 }
 
 async function refreshOrganizations() {
 	try {
 		error.value = null;
 		selectedProject.value = null;
-		activeIndex.value = null;
-		loadingOrgs.value.clear();
+		loadingProjects.value = false;
 
 		await orgStore.clearState();
-		await projectsStore.clearState();
 		await orgStore.fetchOrganizations(true);
 	} catch (err) {
 		error.value = `Failed to refresh organizations: ${err.message}`;
@@ -155,10 +157,6 @@ const emit = defineEmits(['select']);
 </script>
 
 <style scoped>
-:deep(.p-accordion-header-link) {
-	padding: 1rem !important;
-}
-
 :deep(.p-datatable .p-datatable-tbody > tr) {
 	cursor: pointer;
 }
