@@ -68,8 +68,7 @@
 		<GithubAuthModal :visible="showGithubAuthModal" @update:visible="showGithubAuthModal = $event"
 			@login-success="handleGithubLoginSuccess" @login-error="handleGithubLoginError" />
 		<!-- <GithubOrgProjectSelector @select="handleProjectSelect" /> -->
-		<GithubOrgProjSelectModal @update:vixible="showOrgProjSelectionModal = $event" @select="handleProjSelect"
-			:visible="showOrgProjSelectionModal" />
+
 		<template>
 		</template>
 
@@ -85,7 +84,6 @@ import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
 import GithubAuthModal from '@/views/vcs/github/GithubAuthModal.vue';
 import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 // import GithubOrgProjectSelector from './GithubOrgProjectSelector.vue';
-import GithubOrgProjSelectModal from '@/views/vcs/github/GithubOrgProjSelectModal.vue';
 // Props
 const props = defineProps({
 	projectId: {
@@ -187,6 +185,11 @@ const emit = defineEmits(['update:project']);
 }
 
 .role {}
+
+.role img {
+	width: 1.5rem;
+	height: 1.5rem;
+}
 
 .role span {
 	color: var(--muted-text-color);
