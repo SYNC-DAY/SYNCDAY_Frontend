@@ -55,8 +55,8 @@ import { useAuthStore } from "@/stores/auth.js";
 import axios from 'axios';
 
 // 도메인별 결과 컴포넌트 import
-import ProjectSearch from "@/views/search/projectsearch/ProjectSearch.vue";
-// import WorkspaceResult from './components/WorkspaceResult.vue';
+import ProjectSearch from "@/views/search/components/ProjectSearch.vue";
+import WorkspaceSearch from './components/WorkspaceSearch.vue';
 // import CardboardResult from './components/CardboardResult.vue';
 // import CardResult from './components/CardResult.vue';
 // import CommentResult from './components/CommentResult.vue';
@@ -74,7 +74,7 @@ const searchResults = ref([]);
 const getResultComponent = (type) => {
   const components = {
     'projects': ProjectSearch,
-    // 'workspace': WorkspaceSearch,
+    'workspace': WorkspaceSearch,
     // 'cardboard': CardboardResult,
     // 'card': CardResult,
     // 'comments': CommentResult,
@@ -127,7 +127,7 @@ const domainResults = ref({
 // API 엔드포인트 설정
 const API_ENDPOINTS = {
   projects: '/projs/search',
-  // workspace: '/workspace/search',
+  workspace: '/workspaces/search',
   // cardboard: '/cardboard/search',
   // card: '/card/search',
   // comments: '/comments/search',
