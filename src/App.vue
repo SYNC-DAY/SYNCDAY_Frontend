@@ -11,7 +11,7 @@
           <main class="content">
 
             <router-view />
-            <Assistant/>
+            <Assistant />
           </main>
         </template>
       </div>
