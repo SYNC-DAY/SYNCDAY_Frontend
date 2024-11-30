@@ -125,7 +125,7 @@ if (eventSource.value) {
 
 eventSource.value = new EventSourcePolyfill(
     // `http://localhost:8080/sse/notification/subscribe/${userId}`,
-    `http://localhost:8080/sse/notification/subscribe/1`,
+    `http://localhost:5000/sse/notification/subscribe/1`,
     {
     headers: {
         Authorization: `Bearer ${token}`,

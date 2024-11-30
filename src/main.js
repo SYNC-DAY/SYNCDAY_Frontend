@@ -93,7 +93,7 @@ app.component("ProgressSpinner", ProgressSpinner);
 app.component("Message", Message);
 app.use(ToastService);
 app.component("Toast", Toast);
-app.use("Dialog", Dialog);
+app.component("Dialog", Dialog);
 
 /* mount */
 app.mount("#app");
