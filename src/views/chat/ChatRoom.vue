@@ -6,6 +6,7 @@
       <h2>{{ props.chatRoomName }}</h2>
       <div class="chat-messages">
         <div v-for="(message, index) in messages" :key="index">
+        {{ message.senderName }} 
           {{ message.content }}
         </div>
       </div>
@@ -107,7 +108,7 @@ const subscribeToRoom = (roomId) => {
   }
 
   subscriptions.value[roomId] = stompClient.value.subscribe(`/topic/room/${roomId}`, message => {
-    console.log('메시지 수신:', message)
+    console.log('메시지 수신:', message.body)
     if (!messagesInRoom.value[roomId]) {
       messagesInRoom.value[roomId] = []
     }
@@ -156,9 +157,10 @@ if (!isConnected.value) {
 }
 
 const chatMessage = {
-  message: newMessage.value.trim(),
+  content: newMessage.value.trim(),
   roomId: props.roomId,
   senderId: authStore.user?.userId,
+  senderName: authStore.user?.name,
   chatType: 'TALK',
   sentTime: new Date().toISOString(),
 };

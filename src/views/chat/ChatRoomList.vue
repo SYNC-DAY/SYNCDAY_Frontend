@@ -77,15 +77,15 @@ const fetchChatRooms = async () => {
     console.log('API 요청 URL: ', axios.defaults.baseURL + '/chat/room');
     console.log('응답데이터: ', response.data)
     // chatList.value = Array.isArray(response.data) ? response.data : [];
-    if (response.data.success) {
-      chatList.value = Array.isArray(response.data.data) ? response.data.data : [];
+    if (Array.isArray(response.data)) {
+      chatList.value = response.data;
     } else {
-      console.error('서버 오류:', response.data.error.message || '알 수 없는 오류');
-      chatList.value = []; // 실패 시 빈 배열로 설정
+      console.error('예상치 못한 응답 데이터 형식:', response.data);
+      chatList.value = [];
     }
   } catch (error) {
-    console.error('채팅방 목록을 가져오는 중 오류 발생:', error);
-    chatList.value = []; // 실패 시 빈 배열로 설정
+    console.error('채팅방 목록을 가져오는 중 오류 발생:', error.message);
+    chatList.value = [];
   }
 };
 
