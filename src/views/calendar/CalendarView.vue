@@ -6,13 +6,12 @@
             v-if="isModalVisible"
             :selectedInfo="selectedInfo"
             @close="closeModal"
-            @submit="handleModalSubmit"
         />
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import axios from 'axios';
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid'; // DayGrid 보기 플러그인
@@ -50,6 +49,10 @@ const calendarOptions = ref({
             buttonText: '주간',
         },
     },
+    dayCellContent: (info) => {
+        // 날짜 셀의 텍스트를 완전히 재정의
+        return { html: `<div class='date-circle'>${info.date.getDate()}</div>` }; // 원하는 HTML 삽입
+    },
     customButtons: {
         addEventButton: {
             text: '일정 추가',
@@ -64,6 +67,7 @@ const calendarOptions = ref({
     droppable: true, // 이벤트 드래그 앤 드롭 활성화
     locale: 'ko',
     dateClick: (info) => {
+        console.log('dateClick:', info);
         // selectedInfo.value = info;
         // isModalVisible.value = true; // 모달 열기
         // alert(`Date clicked: ${info.dateStr}`);
@@ -111,12 +115,27 @@ const fetchSchedules = async () => {
             const startDate = new Date(schedule.start_time); // new Date()를 사용하면 KST로 바뀐다?
             const endDate = new Date(schedule.end_time);
 
-            // isAllDay를 True로 설정하는 조건: startDate와 endDate의 시각이 모두 00:00이면 true
-            const isAllDay =
-                startDate.getHours() === 0 &&
-                startDate.getMinutes() === 0 &&
-                endDate.getHours() === 0 &&
-                endDate.getMinutes() === 0;
+            // isAllDay를 True로 설정하는 조건
+            let isAllDay = false;
+
+            // startDate와 endDate의 시각이 모두 00:00인지 확인
+            const isStartAtMidnight = startDate.getHours() === 0 && startDate.getMinutes() === 0;
+            const isEndAtMidnight = endDate.getHours() === 0 && endDate.getMinutes() === 0;
+
+            if (isStartAtMidnight && isEndAtMidnight) {
+                // 둘 다 00:00일 경우 isAllDay를 true로 설정
+                isAllDay = true;
+            } else if (!isStartAtMidnight || !isEndAtMidnight) {
+                // 시각이 하나라도 00:00이 아니고, 날짜가 다를 경우 isAllDay는 true
+                if (startDate.toDateString() !== endDate.toDateString()) {
+                    // 날짜가 다르면 endDate에 하루를 추가하고 시간을 00:00으로 설정
+                    endDate.setDate(endDate.getDate() + 1);
+                    endDate.setHours(0, 0, 0, 0);
+                    isAllDay = true;
+                }
+            }
+
+            console.log('isAllDay:', isAllDay);
 
             return {
                 id: schedule.schedule_id,

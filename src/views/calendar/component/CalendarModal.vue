@@ -10,27 +10,6 @@
             </div>
 
             <!-- 날짜/시간 -->
-            <!-- 시작 시간 선택 -->
-            <div>
-                <label for="startTime">시작 시간:</label>
-                <input
-                    id="startTime"
-                    type="datetime-local"
-                    :value="start"
-                    @input="updateStartTime($event.target.value)"
-                />
-            </div>
-
-            <!-- 종료 시간 선택 -->
-            <div>
-                <label for="endTime">종료 시간:</label>
-                <input
-                    id="endTime"
-                    type="datetime-local"
-                    :value="end"
-                    @input="updateEndTime($event.target.value)"
-                />
-            </div>
 
             <!-- 종일 체크 -->
             <div class="flex items-center mb-4">
@@ -145,44 +124,37 @@ const props = defineProps({
 
 console.log('모달로 넘어온 값:', props.selectedInfo);
 
-// 시작과 종료 날짜 및 시간 받자!
-const start = ref(props.selectedInfo.start);
-const end = ref(props.selectedInfo.end);
+// 캘린더에서 받은 날짜 초기값 / 후에 DatePicker에서 받을 날짜 넣을거다!
+const startDate = ref(dayjs(props.selectedInfo.start).tz('Asia/Seoul').format('YYYY-MM-DD'));
+const startDateTime = ref(dayjs(props.selectedInfo.start).tz('Asia/Seoul').format('HH:mm'));
+const endDate = ref(dayjs(props.selectedInfo.end).tz('Asia/Seoul').format('YYYY-MM-DD'));
+const endDateTime = ref(dayjs(props.selectedInfo.end).tz('Asia/Seoul').format('HH:mm'));
 
-console.log('start', start);
-console.log('end', end);
+// 종일 체크 여부 -> 날짜냐? 날짜+시간이냐? 차이!!!!!!
+const isAllDay = ref(true);
 
-// 종일 체크 여부
-const isAllDay = ref();
+// // 날짜만 비교하여 isAllDay 설정
+// const updateIsAllDay = () => {
+//     // 오늘의 일정을 받을 때 여기서 end를 한시간 추가하게 할 수 있을 듯?
 
-// 날짜만 비교하여 isAllDay 설정
-const updateIsAllDay = () => {
-    // 오늘의 일정을 받을 때 여기서 end를 한시간 추가하게 할 수 있을 듯?
+//     // start와 end를 날짜만 비교하려면 시간 부분을 00:00로 설정하여 비교
+//     const startDate = new Date(start.value).setHours(0, 0, 0, 0);
+//     const endDate = new Date(end.value).setHours(0, 0, 0, 0);
+//     isAllDay.value = startDate !== endDate; // 날짜가 다르면 true, 같으면 false
+// };
 
-    // const startDate = new Date(start.value).toISOString().split('T')[0];
-    // const endDate = new Date(end.value).toISOString().split('T')[0];
+// // 'start'와 'end' 값이 변경될 때마다 updateIsAllDay 실행되게!
+// watch([start, end], updateIsAllDay, { immediate: true });
 
-    // start와 end를 날짜만 비교하려면 시간 부분을 00:00로 설정하여 비교
-    const startDate = new Date(start.value).setHours(0, 0, 0, 0);
-    const endDate = new Date(end.value).setHours(0, 0, 0, 0);
-    isAllDay.value = startDate !== endDate; // 날짜가 다르면 true, 같으면 false
-};
+// console.log('isAllDay:', isAllDay);
 
-// 'start'와 'end' 값이 변경될 때마다 updateIsAllDay 실행되게!
-watch([start, end], updateIsAllDay, { immediate: true });
+// // 시작 날짜와 시간 포맷팅
+// const startDate = dayjs(start.value).tz('Asia/Seoul').format('YYYY-MM-DD');
+// const startDateTime = dayjs(start.value).tz('Asia/Seoul').format('HH:mm');
+// const endDate = dayjs(end.value).tz('Asia/Seoul').format('YYYY-MM-DD');
+// const endDateTime = dayjs(end.value).tz('Asia/Seoul').format('HH:mm');
 
-console.log('isAllDay:', isAllDay);
-
-// 시작 날짜와 시간 포맷팅
-const startDate = dayjs(start.value).tz('Asia/Seoul').format('YYYY-MM-DD');
-const startDateTime = dayjs(start.value).tz('Asia/Seoul').format('HH:mm');
-const endDate = dayjs(end.value).tz('Asia/Seoul').format('YYYY-MM-DD');
-const endDateTime = dayjs(end.value).tz('Asia/Seoul').format('HH:mm');
-
-console.log('startDate:', startDate);
-console.log('startDateTime:', startDateTime);
-console.log('endDate:', endDate);
-console.log('endDateTime:', endDateTime);
+// startDate, startDateTime, endDate, endDateTime을 이용해서 화면에 보여주게 하자!
 
 // 회의 여부
 const isMeeting = ref(false);
@@ -233,6 +205,9 @@ const submitSchedule = async () => {
         // 성공 시 처리
         console.log('스케줄 등록 성공:', response.data);
 
+        // 부모 컴포넌트에 데이터 전달
+        emit('submit', response.data);
+
         // 모달 닫기
         emit('close');
     } catch (error) {
@@ -250,8 +225,8 @@ const formData = ref({
     id: authStore.user.userId,
     title: null,
     content: null,
-    startTime: `${startDate}T${startDateTime}+09:00`,
-    endTime: `${endDate}T${endDateTime}+09:00`,
+    startTime: `${startDate.value}T${startDateTime.value}+09:00`,
+    endTime: `${endDate.value}T${endDateTime.value}+09:00`,
     publicStatus: 'PRIVATE',
     scheduleRepeatId: null,
     repeatOrder: null,
@@ -274,7 +249,7 @@ console.log('startTime:', formData.value.startTime);
 console.log('endTime:', formData.value.endTime);
 
 onMounted(() => {
-    updateIsAllDay();
+    // updateIsAllDay();
 });
 
 // const componentInstance = ref(null);
