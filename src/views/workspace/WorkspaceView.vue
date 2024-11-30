@@ -13,7 +13,12 @@
 
     <template v-else-if="workspaceDetails">
       <div class="workspace-header container-row underline-gray">
-        <h3>{{ workspaceDetails.workspace_name }}</h3>
+        <div class="container-row header-left">
+          <h4>{{ workspaceDetails.workspace_name }}</h4>
+          <i class="pi pi-github"></i>
+        </div>
+
+        <Button icon="pi pi-cog" label="Settings" severity="secondary" </Button>
       </div>
 
       <!-- select view mode -->
@@ -145,6 +150,18 @@ watch(
 <style scoped>
 .workspace-container {
   padding: 1rem;
+}
+
+.workspace-header {
+  padding: 0 1rem;
+}
+
+.workspace-header h4 {
+  font-size: 1.4rem;
+}
+
+.workspace-header>h3 {
+  font-size: 2rem;
 }
 
 .workspace-content {}

@@ -33,3 +33,8 @@
 .underline-gray {
 	border-bottom: 1px solid var(--outline-gray);
 }
+
+.header-left {
+	justify-content: left;
+	gap: 1rem;
+}

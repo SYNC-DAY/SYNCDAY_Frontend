@@ -16,7 +16,7 @@
 				<!-- header-left -->
 				<div class="header-left container-row">
 					<div class="project-title">
-						<h2>{{ currentProject.proj_name }}</h2>
+						<h3>{{ currentProject.proj_name }}</h3>
 					</div>
 					<div class="container-row role">
 						<img v-if="currentProject.participation_status === 'OWNER'" src="@/assets/icons/Crown.svg"
@@ -258,9 +258,7 @@ const emit = defineEmits(['update:project']);
 	gap: 2rem;
 }
 
-.header-left {
-	gap: 1rem;
-}
+
 
 .role {}
 

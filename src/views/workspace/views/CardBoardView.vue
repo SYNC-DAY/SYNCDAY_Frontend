@@ -67,12 +67,12 @@
       <Column header="담당자" class="w-1/4">
         <template #body="{ data }">
           <div class="flex flex-wrap gap-2">
-            <div v-for="user in getUniqueAssignees(data.cards)" :key="user.id"
+            <CardItem v-for="user in getUniqueAssignees(data.cards)" :key="user.id"
               class="flex items-center gap-2 bg-gray-50 rounded-full px-3 py-1 hover:bg-gray-100 transition-colors">
               <Avatar :image="user.profileUrl" :label="getInitials(user.name)" size="small" shape="circle"
                 class="w-6 h-6" />
               <span class="text-sm">{{ user.name }}</span>
-            </div>
+            </CardItem>
           </div>
         </template>
       </Column>
