@@ -8,6 +8,9 @@
 						<div class="tag-indicator" :style="{ backgroundColor: card.tag_color }"></div>
 						<CardItem :card="card" />
 					</div>
+					<div class="container-row justify-center">
+						<Button icon="pi pi-plus" rounded severity="secondary"></Button>
+					</div>
 				</template>
 			</Card>
 		</div>
@@ -20,6 +23,9 @@
 						<div class="tag-indicator" :style="{ backgroundColor: card.tag_color }"></div>
 						<CardItem :card="card" />
 					</div>
+					<div class="container-row justify-center">
+						<Button icon="pi pi-plus" rounded severity="secondary"></Button>
+					</div>
 				</template>
 			</Card>
 		</div>
@@ -31,6 +37,9 @@
 					<div v-for="card in organizedCards.done" :key="card.card_id" class="card-wrapper">
 						<div class="tag-indicator" :style="{ backgroundColor: card.tag_color }"></div>
 						<CardItem :card="card" />
+					</div>
+					<div class="container-row justify-center">
+						<Button icon="pi pi-plus" rounded severity="secondary"></Button>
 					</div>
 				</template>
 			</Card>
