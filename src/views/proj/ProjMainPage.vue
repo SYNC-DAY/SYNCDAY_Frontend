@@ -15,18 +15,12 @@
     </template>
 
     <!-- Add New Project Section -->
-    <div class="new-project-section">
-
-      <!-- <button class="new-project-btn" @click="showNewProjectInput = true" v-if="!showNewProjectInput">
-        + New Project
-      </button> -->
-      <div v-if="showNewProjectInput" class="new-project-input-container">
-        <input v-model="newProjectName" @keyup.enter="createProject" @keyup.esc="cancelNewProject"
-          placeholder="Enter project name..." ref="newProjectInput" class="new-project-input" />
-      </div>
+    <div class="container-row justify-center" style="padding: 1rem">
+      <Button label="New Project" icon="pi pi-plus" @click="showNewProjModal = true"></Button>
     </div>
   </SideBar>
 
+  <NewProjModal v-model:visible="showNewProjModal" @submit="handleProjectSubmit" />
   <div class="proj-main">
     <router-view :projects="projects" />
   </div>
@@ -43,6 +37,8 @@ import SideBar from '@/components/SideBar.vue';
 import ProjItem from './sidebar/ProjItem.vue';
 import WorkspaceItem from './sidebar/WorkspaceItem.vue';
 
+import NewProjModal from './components/NewProjModal.vue';
+
 const router = useRouter();
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
@@ -58,6 +54,9 @@ const activeProject = ref(null);
 const expandedProjects = ref([]);
 const isLoading = ref(false);
 const error = ref(null);
+
+
+const showNewProjModal = ref(false);
 
 // New state for project creation
 const showNewProjectInput = ref(false);
@@ -241,41 +240,15 @@ const fetchProjs = async () => {
     workspaces.value = [];
   }
 };
-const createProject = async () => {
-  if (!newProjectName.value.trim()) {
-    return;
-  }
-
+const handleProjectSubmit = async (projectData) => {
   try {
-    const response = await axios.post('/projs', {
-      proj_name: newProjectName.value.trim(),
-      user_id: user.value.userId
-    });
-
-    if (response.data.success) {
-      const newProject = {
-        proj_id: response.data.data.proj_id,
-        proj_name: response.data.data.proj_name,
-        bookmark_status: 'UNBOOKMARKED',
-        progress_status: 'NOT_STARTED',
-        workspaces: [],
-        ...response.data.data
-      };
-
-      projects.value = [...projects.value, newProject];
-      newProjectName.value = '';
-      showNewProjectInput.value = false;
-      expandedProjects.value.push(newProject.proj_id);
-      await selectProject(newProject.proj_id);
-    } else {
-      throw new Error(response.data.error || 'Failed to create project');
-    }
-  } catch (err) {
-    console.error('Failed to create project:', err);
-    error.value = 'Failed to create project';
+    // Handle project creation
+    console.log('New project data:', projectData);
+    // Add your API call here
+  } catch (error) {
+    console.error('Failed to create project:', error);
   }
 };
-
 const createWorkspace = async (projectId, workspaceName) => {
   try {
     const response = await axios.post('/workspaces', {
@@ -314,17 +287,9 @@ const createWorkspace = async (projectId, workspaceName) => {
   }
 };
 
-const cancelNewProject = () => {
-  showNewProjectInput.value = false;
-  newProjectName.value = '';
-};
 
-watch(showNewProjectInput, async (newVal) => {
-  if (newVal) {
-    await nextTick();
-    newProjectInput.value?.focus();
-  }
-});
+
+
 
 onMounted(() => {
   fetchProjs();
@@ -352,11 +317,6 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   height: 100%;
-}
-
-.new-project-section {
-  padding: 0.75rem;
-  border-top: 1px solid #e5e7eb;
 }
 
 .new-project-btn {
