@@ -1,106 +1,44 @@
 <template>
 	<Dialog :visible="visible" @update:visible="handleVisibilityChange" modal header="프로젝트 설정"
 		:style="{ width: '70vw' }" class="p-0">
-		<TabView>
-			<!-- Basic Info Tab -->
-			<TabPanel header="기본 정보">
-				<div class="space-y-4">
-					<div class="field">
-						<label for="projName">프로젝트 이름</label>
-						<InputText id="projName" v-model="formData.projName" class="w-full"
-							:class="{ 'p-invalid': errors.projName }" />
-						<small class="p-error" v-if="errors.projName">{{ errors.projName }}</small>
-					</div>
 
-					<div class="field">
-						<label>프로젝트 기간</label>
-						<div class="flex gap-2">
-							<Calendar v-model="formData.startDate" :showIcon="true" dateFormat="yy-mm-dd"
-								class="w-full" />
-							<Calendar v-model="formData.endDate" :showIcon="true" dateFormat="yy-mm-dd"
-								:minDate="formData.startDate" class="w-full" />
-						</div>
-					</div>
-				</div>
-			</TabPanel>
+		<Tabs value="0">
+			<TabList>
+				<Tab value="0">프로젝트</Tab>
+				<Tab value="1">멤버</Tab>
+				<Tab value="2">VCS</Tab>
+			</TabList>
 
-			<!-- Members Tab -->
-			<TabPanel header="멤버 관리">
-				<div class="space-y-4">
-					<!-- Member List -->
-					<DataTable :value="projectMembers" class="p-datatable-sm">
-						<Column field="username" header="이름">
-							<template #body="{ data }">
-								<div class="flex items-center gap-2">
-									<Avatar :image="data.profile_photo" :alt="data.username" shape="circle"
-										size="small">
-										<template #image>
-											{{ getInitials(data.username) }}
-										</template>
-									</Avatar>
-									<span>{{ data.username }}</span>
-								</div>
-							</template>
-						</Column>
-						<Column field="email" header="이메일" />
-						<Column field="participation_status" header="권한">
-							<template #body="{ data }">
-								<Dropdown v-model="data.participation_status" :options="participationOptions"
-									optionLabel="label" optionValue="value" @change="updateMemberStatus(data)"
-									:disabled="data.user_id === user.value.userId" />
-							</template>
-						</Column>
-						<Column style="width: 5rem">
-							<template #body="{ data }">
-								<Button icon="pi pi-trash" severity="danger" text rounded
-									@click="confirmRemoveMember(data)" :disabled="data.user_id === user.value.userId" />
-							</template>
-						</Column>
-					</DataTable>
+			<TabPanels>
+				<TabPanel value="0">
+					Project
+				</TabPanel>
+				<TabPanel value="1">
+					Members
+				</TabPanel>
+				<TabPanel value="2">
+					VCS
+				</TabPanel>
 
-					<!-- Add Member -->
-					<div class="flex gap-2">
-						<AutoComplete v-model="selectedUser" :suggestions="userSuggestions" @complete="searchUsers"
-							optionLabel="username" placeholder="사용자 검색" class="w-full" />
-						<Button icon="pi pi-plus" @click="addMember" :disabled="!selectedUser" />
-					</div>
-				</div>
-			</TabPanel>
 
-			<!-- VCS Tab -->
-			<TabPanel header="VCS 설정">
-				<!-- Reuse parts of the previous VCS settings -->
-				<div class="space-y-4">
-					<div class="field">
-						<label>VCS 타입</label>
-						<Dropdown v-model="formData.vcsType" :options="vcsTypes" optionLabel="label" optionValue="value"
-							placeholder="VCS 타입을 선택하세요" class="w-full" />
-					</div>
-
-					<!-- GitHub specific settings -->
-					<div v-if="formData.vcsType === 'GITHUB'" class="space-y-4">
-						<!-- ... GitHub settings from previous implementation ... -->
-					</div>
-				</div>
-			</TabPanel>
-		</TabView>
+			</TabPanels>
+		</Tabs>
 
 		<template #footer>
-			<div class="flex justify-between">
-				<Button label="프로젝트 삭제" icon="pi pi-trash" severity="danger" text @click="confirmDeleteProject" />
-				<div class="flex gap-2">
-					<Button label="취소" icon="pi pi-times" text @click="handleCancel" />
-					<Button label="저장" icon="pi pi-check" @click="handleSave" :loading="isSaving" />
-				</div>
-			</div>
+
 		</template>
 	</Dialog>
 
-	<ConfirmDialog />
 </template>
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
+
+import Tabs from 'primevue/tabs';
+import TabList from 'primevue/tablist';
+import Tab from 'primevue/tab';
+import TabPanels from 'primevue/tabpanels';
+import TabPanel from 'primevue/tabpanel';
 
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
