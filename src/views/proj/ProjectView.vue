@@ -1,5 +1,5 @@
 <template>
-	<div class="container-column">
+	<div class="container-col">
 		<!-- Not Found State -->
 		<div v-if="!currentProject" class="flex flex-column items-center justify-center p-6">
 			<h2>Project Not Found</h2>
@@ -11,7 +11,7 @@
 		<div v-else class="proj-container">
 
 			<!-- Header Section -->
-			<div class="container-row proj-header">
+			<div class="container-row proj-header underline-gray">
 
 				<!-- header-left -->
 				<div class="header-left container-row">
@@ -26,15 +26,17 @@
 				</div>
 
 				<div class="header-right">
-					<Button label="settings" severity="secondary" icon="pi pi-building" @click="openVcsMenu"
+					<Button label="settings" severity="secondary" icon="pi pi-cog" @click="openVcsMenu"
 						aria-haspopup="true" aria-controls="overlay-menu" />
 				</div>
 			</div>
 
 			<!-- Workspaces Section -->
-			<div class="workspaces-section mt-6">
-				<div class="flex justify-between items-center mb-4">
-					<h3 class="text-lg font-semibold m-0">Workspaces</h3>
+			<div class="workspaces-section container-col">
+
+				<!-- workspaces-header -->
+				<div class="container-row workspaces-header">
+					<h3 class="semibold">Workspaces</h3>
 					<Button label="New Workspace" icon="pi pi-plus" severity="secondary"
 						@click="openNewWorkspaceDialog" />
 				</div>
@@ -254,7 +256,16 @@ const emit = defineEmits(['update:project']);
 	margin-right: 3rem;
 }
 
-.workspace-card {
+
+
+/* Workspace Styles */
+
+.workspaces-header>.container-row {
+	gap: 1rem;
+	justify-content: center;
+}
+
+.workspaces-section .workspace-card {
 	background: white;
 	transition: all 0.2s ease-in-out;
 }

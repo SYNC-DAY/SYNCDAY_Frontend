@@ -5,7 +5,7 @@
 	align-items: center;
 }
 
-.container-column {
+.container-col {
 	display: flex;
 	flex-direction: column;
 }

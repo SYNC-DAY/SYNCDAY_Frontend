@@ -1,5 +1,5 @@
 <template>
-  <div class="cardboard-container container-column">
+  <div class="cardboard-container container-col">
     <!-- Control Panel -->
     <section class="control-panel container-row">
       <div class="container-row">

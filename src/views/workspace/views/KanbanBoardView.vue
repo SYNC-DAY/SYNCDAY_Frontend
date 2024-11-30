@@ -2,7 +2,7 @@
 	<div class="kanban-container width-100">
 		<div class="kanban-columns container-row">
 			<!-- To Do Column -->
-			<div class="kanban-column container-column">
+			<div class="kanban-column container-col">
 				<div class="column-header">To Do</div>
 				<div class="column-content">
 					<template v-for="board in cardboards" :key="board.cardboard_id">

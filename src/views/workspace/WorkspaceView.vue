@@ -1,5 +1,5 @@
 <template>
-  <div class="workspace-container container-column width-100">
+  <div class="workspace-container container-col width-100">
     <div v-if="isLoading" class="loading-state">
       Loading...
     </div>
