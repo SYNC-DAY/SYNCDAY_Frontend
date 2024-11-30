@@ -1,42 +1,31 @@
 <template>
-	<div class="kanban-container width-100">
-		<div class="kanban-columns container-row">
-			<!-- To Do Column -->
-			<div class="kanban-column container-col">
-				<div class="column-header">To Do</div>
-				<div class="column-content">
-					<template v-for="board in cardboards" :key="board.cardboard_id">
-						<template v-for="card in board.cards" :key="card.card_id">
-							<CardItem class="card" :card="card">
-								<div class="card-tag" :style="{ backgroundColor: card.tag_color }"></div>
-								<div class="card-content">
-									<div class="card-title">{{ card.card_title }}</div>
-									<div class="card-assignee">
-										<img :src="card.assignee_profile_url" :alt="card.assignee_name"
-											class="assignee-avatar" />
-									</div>
-								</div>
-							</CardItem>
-						</template>
-					</template>
-				</div>
-			</div>
+	<div class="kanban-container container-row">
+		<div class="kanban-column">
+			<strong>To Do</strong>
+			<Card>
+				<template #content>
+					<CardItem v-for="card in organizedCards.todo" :key="card.card_id" :card="card" />
+				</template>
+			</Card>
+		</div>
 
-			<!-- In Progress Column -->
-			<div class="kanban-column">
-				<div class="column-header">In Progress</div>
-				<div class="column-content">
-					<!-- Cards will be dynamically added here -->
-				</div>
-			</div>
+		<div class="kanban-column">
+			<strong>In Progress</strong>
+			<Card>
+				<template>
+					<CardItem v-for="card in organizedCards.inProgress" :key="card.card_id" :card="card" />
+				</template>
+			</Card>
+		</div>
 
-			<!-- Done Column -->
-			<div class="kanban-column">
-				<div class="column-header">Done</div>
-				<div class="column-content">
-					<!-- Cards will be dynamically added here -->
-				</div>
-			</div>
+
+		<div class="kanban-column">
+			<strong>Done</strong>
+			<Card>
+				<template #content>
+					<CardItem v-for="card in organizedCards.done" :key="card.card_id" :card="card" />
+				</template>
+			</Card>
 		</div>
 	</div>
 </template>
@@ -73,33 +62,21 @@ const organizedCards = computed(() => {
 
 <style scoped>
 .kanban-container {
-	gap: 3rem;
+	margin-top: 1rem;
+	align-items: start;
+	gap: 1.5rem;
 }
 
-.kanban-columns {
-	gap: 1rem
+.kanban-background {
+	margin-top: 1rem;
 }
 
 .kanban-column {
+	display: flex;
+	flex-direction: column;
 	flex: 1;
-	background-color: var(--p-primary-50);
-	/* Light pink background from your design */
-	border-radius: 1rem;
-	padding: 1rem;
-
 }
 
-.column-header {
-	font-size: 1rem;
-	font-weight: bold;
-	margin-bottom: 16px;
-
-}
-
-.column-content {
-	height: calc(100% - 40px);
-	overflow-y: auto;
-}
 
 .card {
 	background: white;
