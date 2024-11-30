@@ -32,7 +32,7 @@
 			</div>
 
 			<!-- Workspaces Section -->
-			<div class="workspaces-section container-col">
+			<div class="workspaces-container container-col">
 
 				<!-- workspaces-header -->
 				<div class="container-row workspaces-header">
@@ -44,14 +44,15 @@
 				<!-- Workspaces Grid -->
 				<div v-if="currentProject.workspaces?.length" class="workspaces-grid">
 					<Card v-for="workspace in currentProject.workspaces" :key="workspace.workspace_id"
-						style="height: 10rem" class="workspace-card cursor-pointer gap-1 container-column"
+						style="height: 10rem" class="workspace-card"
 						@click="navigateToWorkspace(workspace.workspace_id)">
-						<template #title>
-							<div class="">{{ workspace.workspace_name }}</div>
-						</template>
-						<template #subtitle>{{ workspace.start_time }}</template>
+						<template #title>{{ workspace.workspace_name }}</template>
+
 						<template #content>
-							<ProgressBar :value="workspace.progress_status" class="primary" style="height:1rem" />
+							<div class="flex gap-4 mt-1">
+								<ProgressBar :value="workspace.progress_status" class="primary" style="height:1rem" />
+								<Button icon="pi pi-github" variant="text"></Button>
+							</div>
 						</template>
 					</Card>
 				</div>
@@ -260,6 +261,10 @@ const emit = defineEmits(['update:project']);
 
 /* Workspace Styles */
 
+.workspaces-container {
+	padding: 1rem;
+}
+
 .workspaces-header>.container-row {
 	gap: 1rem;
 	justify-content: center;
@@ -274,6 +279,7 @@ const emit = defineEmits(['update:project']);
 
 .workspace-card {
 	gap: 2rem;
+
 }
 
 .workspace-card:hover {
