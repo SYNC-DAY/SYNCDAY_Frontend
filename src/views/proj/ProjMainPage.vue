@@ -32,12 +32,14 @@ import { useAuthStore } from "@/stores/auth.js";
 import { storeToRefs } from "pinia";
 import { useRouter } from 'vue-router';
 import axios from 'axios';
+import { useToast } from 'primevue/usetoast';
 
 import SideBar from '@/components/SideBar.vue';
 import ProjItem from './sidebar/ProjItem.vue';
 import WorkspaceItem from './sidebar/WorkspaceItem.vue';
 
 import NewProjModal from './components/NewProjModal.vue';
+const toast = useToast();
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -240,54 +242,6 @@ const fetchProjs = async () => {
     workspaces.value = [];
   }
 };
-const handleProjectSubmit = async (projectData) => {
-  try {
-    // Handle project creation
-    console.log('New project data:', projectData);
-    // Add your API call here
-  } catch (error) {
-    console.error('Failed to create project:', error);
-  }
-};
-const createWorkspace = async (projectId, workspaceName) => {
-  try {
-    const response = await axios.post('/workspaces', {
-      workspace_name: workspaceName.trim(),
-      proj_id: projectId
-    });
-
-    if (response.data.success) {
-      const newWorkspace = {
-        workspace_id: response.data.data.workspace_id,
-        workspace_name: response.data.data.workspace_name,
-        project_id: projectId,
-        progress_status: 0,
-        bookmark_status: 'UNBOOKMARKED',
-        ...response.data.data
-      };
-
-      // Update workspaces ref
-      workspaces.value = [...workspaces.value, newWorkspace];
-
-      // Update projects ref
-      const projectIndex = projects.value.findIndex(p => p.proj_id === projectId);
-      if (projectIndex !== -1) {
-        projects.value[projectIndex] = {
-          ...projects.value[projectIndex],
-          workspaces: [...projects.value[projectIndex].workspaces, newWorkspace]
-        };
-      }
-
-      return newWorkspace;
-    }
-    throw new Error(response.data.error || 'Failed to create workspace');
-  } catch (err) {
-    console.error('Failed to create workspace:', err);
-    throw err;
-  }
-};
-
-
 
 
 
