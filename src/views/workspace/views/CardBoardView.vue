@@ -25,10 +25,28 @@
           {{ formatDate(slotProps.data.end_time) }}
         </template>
       </Column>
+      <Column field="vcs_milestone_url" header="VCS">
+        <template #body="slotProps">
+          Link
+        </template>
+      </Column>
       <template #expansion="slotProps">
-        <div class="p-4">
+        <div class="">
           <DataTable :value="slotProps.data.cards">
-            <Column field="card_id" sortable></Column>
+            <Column field="card_title" header="제목" sortable></Column>
+            <Column field="start_time" header="시작" sortable>
+              <template #body="slotProps">
+                {{ formatDate(slotProps.start_time) }}
+              </template>
+            </Column>
+
+            <Column field="end_time" header="끝" sortable>
+              <template #body="slotProps">
+                {{ formatDate(slotProps.end_time) }}
+              </template>
+            </Column>
+            <Column field="assignee" header="담당자" sortable></Column>
+            <Column field="tag" header="태그" sortable></Column>
           </DataTable>
         </div>
       </template>
