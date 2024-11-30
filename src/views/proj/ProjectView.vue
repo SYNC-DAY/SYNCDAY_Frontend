@@ -26,7 +26,7 @@
 				</div>
 
 				<div class="header-right">
-					<Button label="settings" severity="secondary" icon="pi pi-cog" @click="openVcsMenu"
+					<Button label="settings" severity="secondary" icon="pi pi-cog" @click="openProjectSettings"
 						aria-haspopup="true" aria-controls="overlay-menu" />
 				</div>
 			</div>
@@ -73,6 +73,11 @@
 
 
 		<OrgSelectMenu v-model:visible="showOrgProjSelectionModal" @select="handleProjectSelect" />
+
+
+		<ProjectSettingsModal v-model:visible="showProjectSettings" :projectId="props.projectId"
+			:projectData="currentProject" @project-updated="handleProjectUpdate"
+			@project-deleted="handleProjectDelete" />
 		<template>
 		</template>
 
@@ -80,18 +85,19 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
 import axios from 'axios';
+import { storeToRefs } from 'pinia';
+import { ref, computed } from 'vue';
+import { useAuthStore } from '@/stores/auth';
+import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import Button from 'primevue/button';
-import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
-import { useAuthStore } from '@/stores/auth';
 import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
 import GithubAuthModal from '@/views/vcs/github/GithubAuthModal.vue';
 import OrgSelectMenu from '../vcs/github/OrgSelectMenu.vue';
-import { storeToRefs } from 'pinia';
-
+import ProjectSettingsModal from './components/ProjectSettingsModal.vue';
+// props
 const props = defineProps({
 	projectId: {
 		type: [String, Number],
@@ -109,11 +115,12 @@ const toast = useToast();
 const githubAuthStore = useGithubAuthStore();
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
+
 // Refs
 const vcsMenu = ref(null);
 const showGithubAuthModal = ref(false);
 const showOrgProjSelectionModal = ref(false);
-
+const showProjectSettings = ref(false);
 // Computed
 const currentProject = computed(() =>
 	props.projects.find(p => p.proj_id === parseInt(props.projectId))
@@ -131,6 +138,11 @@ const navigateToWorkspace = (workspaceId) => {
 const openVcsMenu = (event) => {
 	vcsMenu.value?.toggle(event);
 };
+
+const openProjectSettings = (project) => {
+	showProjectSettings.value = true;
+}
+
 
 const handleVcsSelection = async (vcsType) => {
 	try {
@@ -150,7 +162,17 @@ const handleVcsSelection = async (vcsType) => {
 		});
 	}
 };
+const handleProjectUpdate = (updatedProject) => {
+	const index = projects.value.findIndex(p => p.proj_id === updatedProject.proj_id);
+	if (index !== -1) {
+		projects.value[index] = { ...projects.value[index], ...updatedProject };
+	}
+};
 
+const handleProjectDelete = (projectId) => {
+	projects.value = projects.value.filter(p => p.proj_id !== projectId);
+	router.push('/');
+};
 const handleGithubLoginSuccess = () => {
 	showGithubAuthModal.value = false;
 	showOrgProjSelectionModal.value = true;
@@ -165,11 +187,11 @@ const handleGithubLoginError = (error) => {
 	});
 };
 
-const handleProjectUpdate = (updatedProject) => {
-	// Emit event to update parent state
-	emit('update:project', updatedProject);
-	showOrgProjSelectionModal.value = false;
-};
+// const handleProjectUpdate = (updatedProject) => {
+// 	// Emit event to update parent state
+// 	emit('update:project', updatedProject);
+// 	showOrgProjSelectionModal.value = false;
+// };
 
 // Update the handleProjectSelect method in ProjectView.vue
 

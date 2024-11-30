@@ -25,6 +25,7 @@
   <!-- New Project Modal -->
   <NewProjModal v-model:visible="showNewProjModal" @submit="handleProjectSubmit" />
 
+  <!-- Project Settings Modal -->
   <!-- Main Content Area -->
   <div class="proj-main">
     <router-view :projects="projects" />
@@ -44,6 +45,7 @@ import ProjItem from './sidebar/ProjItem.vue';
 import WorkspaceItem from './sidebar/WorkspaceItem.vue';
 import NewProjModal from './components/NewProjModal.vue';
 
+
 // Initialize services
 const toast = useToast();
 const router = useRouter();
@@ -60,6 +62,7 @@ const activeWorkspace = ref(null);
 const activeProject = ref(null);
 const expandedProjects = ref([]);
 const showNewProjModal = ref(false);
+
 
 // Project submission handler
 const handleProjectSubmit = async (projectData) => {
@@ -254,6 +257,8 @@ const fetchProjs = async () => {
 onMounted(() => {
   fetchProjs();
 });
+
+
 </script>
 
 <style scoped>
