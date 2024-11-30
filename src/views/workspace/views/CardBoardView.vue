@@ -5,7 +5,6 @@
       @rowClick="onRowClick" :selectionMode="null">
       <template #header>
         <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-semibold">카드보드</h2>
           <div class="flex gap-2">
             <Button text icon="pi pi-plus" label="전체 펼치기" @click="expandAll" />
             <Button text icon="pi pi-minus" label="전체 접기" @click="collapseAll" />
