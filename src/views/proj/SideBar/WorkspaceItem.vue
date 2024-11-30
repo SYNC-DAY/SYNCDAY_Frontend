@@ -15,6 +15,7 @@ import { useRouter } from 'vue-router';
 
 const router = useRouter();
 
+
 const props = defineProps({
   title: {
     type: String,

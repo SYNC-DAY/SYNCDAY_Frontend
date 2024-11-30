@@ -11,7 +11,7 @@
           <main class="content">
 
             <router-view />
-            <Assistant/>
+            <Assistant />
           </main>
         </template>
       </div>
@@ -28,7 +28,6 @@ import { EventSourcePolyfill } from 'event-source-polyfill';
 import Navigation from "@/components/Navigation.vue";
 import Assistant from './components/Assistant.vue';
 
-import GithubOrg from './views/vcs/GithubOrg.vue';
 
 const route = useRoute();
 const authStore = useAuthStore();
