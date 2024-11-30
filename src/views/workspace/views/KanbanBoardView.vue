@@ -7,7 +7,7 @@
 				<div class="column-content">
 					<template v-for="board in cardboards" :key="board.cardboard_id">
 						<template v-for="card in board.cards" :key="card.card_id">
-							<div class="card">
+							<CardItem class="card" :card="card">
 								<div class="card-tag" :style="{ backgroundColor: card.tag_color }"></div>
 								<div class="card-content">
 									<div class="card-title">{{ card.card_title }}</div>
@@ -16,7 +16,7 @@
 											class="assignee-avatar" />
 									</div>
 								</div>
-							</div>
+							</CardItem>
 						</template>
 					</template>
 				</div>
@@ -43,7 +43,7 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-
+import CardItem from '../components/CardItem.vue';
 const props = defineProps({
 	cardboards: {
 		type: Array,
@@ -82,7 +82,7 @@ const organizedCards = computed(() => {
 
 .kanban-column {
 	flex: 1;
-	background-color: var(--p-primary-100);
+	background-color: var(--p-primary-50);
 	/* Light pink background from your design */
 	border-radius: 1rem;
 	padding: 1rem;
@@ -145,11 +145,11 @@ const organizedCards = computed(() => {
 }
 
 .column-content::-webkit-scrollbar-thumb {
-	background: #ffa5b5;
+	background: var(--p-primary-100);
 	border-radius: 3px;
 }
 
 .column-content::-webkit-scrollbar-thumb:hover {
-	background: #ff7b93;
+	background: var(--p-primary-100);
 }
 </style>

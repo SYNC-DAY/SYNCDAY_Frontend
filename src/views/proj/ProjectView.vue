@@ -43,18 +43,18 @@
 
 				<!-- Workspaces Grid -->
 				<div v-if="currentProject.workspaces?.length" class="workspaces-grid">
-					<Card v-for="workspace in currentProject.workspaces" :key="workspace.workspace_id"
-						style="height: 10rem" class="workspace-card"
-						@click="navigateToWorkspace(workspace.workspace_id)">
-						<template #title>{{ workspace.workspace_name }}</template>
+					<div v-for="workspace in currentProject.workspaces" :key="workspace.workspace_id"
+						class="workspace-card" @click="navigateToWorkspace(workspace.workspace_id)">
+						<Card style="">
+							<template #title>{{ workspace.workspace_name }} <Button icon="pi pi-github"
+									variant="text"></Button>
+							</template>
+							<template #content>
+								<ProgressBar :value="workspace.progress_status" severity="secondary" style="" />
 
-						<template #content>
-							<div class="flex gap-4 mt-1">
-								<ProgressBar :value="workspace.progress_status" class="primary" style="height:1rem" />
-								<Button icon="pi pi-github" variant="text"></Button>
-							</div>
-						</template>
-					</Card>
+							</template>
+						</Card>
+					</div>
 				</div>
 
 				<!-- Empty State -->
@@ -278,6 +278,9 @@ const emit = defineEmits(['update:project']);
 
 
 .workspace-card {
+	margin: 1rem;
+	border-radius: 1.2rem;
+	/* border: 0 solid #e5e7; */
 	gap: 2rem;
 
 }

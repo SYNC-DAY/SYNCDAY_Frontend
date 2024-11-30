@@ -42,31 +42,4 @@ const formatDate = (dateString) => {
 </script>
 
 // Card.vue
-<style scoped>
-.card {
-  /* existing styles */
-  min-width: 250px;
-  max-width: 100%;
-  overflow: hidden;
-  /* Prevent content overflow */
-}
-
-.card-title {
-  margin: 0.5rem 0;
-  font-size: 1rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.card-content {
-  font-size: 0.875rem;
-  color: #444;
-  margin-bottom: 1rem;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-</style>
+<style scoped></style>
