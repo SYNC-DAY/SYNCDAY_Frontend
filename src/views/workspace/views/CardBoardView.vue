@@ -5,9 +5,10 @@
       @rowClick="onRowClick" :selectionMode="null">
       <template #header>
         <div class="flex justify-between items-center mb-4">
-          <div class="flex gap-2">
-            <Button text icon="pi pi-plus" label="전체 펼치기" @click="expandAll" />
-            <Button text icon="pi pi-minus" label="전체 접기" @click="collapseAll" />
+          <div class="container-row justify-right">
+            <Button text icon="pi pi-plus" label="전체 펼치기" severity="contrast" @click="expandAll" />
+            <Button text icon="pi pi-minus" label="전체 접기" severity="contrast" @click="collapseAll" />
+            <Button icon="pi pi-plus" label="New" outlined style="margin-right:1rem"></Button>
           </div>
         </div>
       </template>
@@ -62,7 +63,7 @@
               <template #body="cardProps">
                 <div class="flex items-center gap-2">
                   <Avatar :src="cardProps.data.assignee_profile_url" class="w-6 h-6 rounded-full"
-                    :alt="cardProps.data.assignee_name" />
+                    :alt="cardProps.data.assignee_name" shape="circle" />
                   <span>{{ cardProps.data.assignee_name }}</span>
                 </div>
               </template>

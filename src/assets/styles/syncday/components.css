@@ -18,6 +18,10 @@
 	justify-content: center;
 }
 
+.justify-right {
+	justify-content: right;
+}
+
 .width-100 {
 	width: 100%;
 }
