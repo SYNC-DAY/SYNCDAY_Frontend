@@ -39,6 +39,7 @@ const searchQuery = ref('');
 const isPopupVisible = ref(false);
 const selectedRoom = ref(null);
 const authStore = useAuthStore();
+
 // 채팅방 목록 닫기
 const closePopup = () => {
   isVisible.value = false;
@@ -63,7 +64,6 @@ const openChatRoom = (chat) => {
   }
 };
 
-
 // 채팅방 닫기
 const closeChatRoom = () => {
   selectedRoom.value = null;
@@ -76,15 +76,22 @@ const fetchChatRooms = async () => {
     const response = await axios.get('/chat/room',{params: { userId: authStore.user.userId }});
     console.log('API 요청 URL: ', axios.defaults.baseURL + '/chat/room');
     console.log('응답데이터: ', response.data)
-    chatList.value = response.data;
+    // chatList.value = Array.isArray(response.data) ? response.data : [];
+    if (response.data.success) {
+      chatList.value = Array.isArray(response.data.data) ? response.data.data : [];
+    } else {
+      console.error('서버 오류:', response.data.error.message || '알 수 없는 오류');
+      chatList.value = []; // 실패 시 빈 배열로 설정
+    }
   } catch (error) {
     console.error('채팅방 목록을 가져오는 중 오류 발생:', error);
+    chatList.value = []; // 실패 시 빈 배열로 설정
   }
 };
 
 // 채팅방 필터링
 const filteredChatList = computed(() => {
-  if (!chatList.value || chatList.value.length === 0) {
+  if (!Array.isArray(chatList.value) || chatList.value.length === 0) {
     return []; 
   }
 
@@ -95,8 +102,11 @@ const filteredChatList = computed(() => {
 
 // 검색 필터링
 const searchChat = (event) => {
-  searchQuery.value = event.target.value.toLowerCase();
-};
+  if (event && event.target && event.target.value) {
+    searchQuery.value = event.target.value.toLowerCase();
+  } else {
+    console.error("유효하지 않은 검색:", event);
+  }};
 
 // 컴포넌트가 로드될 때 데이터 가져오기
 onMounted(() => {
@@ -194,7 +204,7 @@ onMounted(() => {
     background-color: #d6d5d5 ;
     font-size: 1rem;
     width: 90%;
-    margin-left: 1rem;
+    margin-left: 1.5rem;
   }
   .chatlist {
   margin-top: 1rem;

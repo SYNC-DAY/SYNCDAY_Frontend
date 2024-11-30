@@ -11,7 +11,7 @@
       </div>
       <div class="chat-input">
         <input 
-          v-model="newMessage"   type="text"   placeholder="메시지를 입력하세요"  @keyup.enter="sendMessage" />
+          v-model="newMessage"   type="text"   placeholder=" 메시지를 입력하세요"  @keyup.enter="sendMessage" />
       <button @click="sendMessage">전송</button>
     </div>
       </div>
@@ -101,26 +101,44 @@ const connectWebSocket = () => {
 
 
 const subscribeToRoom = (roomId) => {
-  if(subscriptions.value[props.roomId]) {
-    console.log(`이미 ${props.roomId} 채팅방 구독중`)
-    return
+  if (subscriptions.value[roomId]) {
+    console.warn(`이미 방 ${roomId}에 구독 중입니다.`);
+    return;
   }
 
-  subscriptions.value[roomId] = stompClient.value.subscribe(`/topic/chat/room/message/${roomId}`, messages => {
-    console.log('메세지 전송: ', messages)
-    if(!messagesInRoom.value[roomId]) {
-      messagesInRoom.value[roomId] =[]
+  subscriptions.value[roomId] = stompClient.value.subscribe(`/topic/room/${roomId}`, message => {
+    console.log('메시지 수신:', message)
+    if (!messagesInRoom.value[roomId]) {
+      messagesInRoom.value[roomId] = []
     }
-    messagesInRoom.value[roomId].push(JSON.parse(messages.body))
+    messagesInRoom.value[roomId].push(JSON.parse(message.body))
   })
-}
+  // const subscription = stompClient.value.subscribe(`/topic/room/${roomId}`, (message) => {
+  //   try {
+  //     const receivedMessage = JSON.parse(message.body); // 메시지 JSON 파싱
+  //     console.log(`방 ${roomId}에서 새 메시지 수신:`, receivedMessage);
+
+  //     // 메시지 상태 업데이트
+  //     if (!messagesInRoom.value[roomId]) {
+  //       messagesInRoom.value[roomId] = [];
+  //     }
+  //     messagesInRoom.value[roomId].push(receivedMessage);
+  //   } catch (error) {
+  //     console.error(`방 ${roomId}에서 메시지 처리 중 오류 발생:`, error);
+  //   }
+  // });
+
+  // subscriptions.value[roomId] = subscription;
+  // console.log(`방 ${roomId}에 구독 완료.`);
+};
+
+
 /** WebSocket 재연결 */
 const reconnectWebSocket = () => {
   setTimeout(() => {
     if (!isConnected.value) connectWebSocket();
   }, 5000);
 };
-
 
 
 const sendMessage = () => {
@@ -138,16 +156,17 @@ if (!isConnected.value) {
 }
 
 const chatMessage = {
-  senderId: authStore.user?.userId,
   message: newMessage.value.trim(),
+  roomId: props.roomId,
+  senderId: authStore.user?.userId,
   chatType: 'TALK',
   sentTime: new Date().toISOString(),
-  roomId: props.roomId
 };
 
 try {
+  console.log("publish")
   stompClient.value.publish({
-    destination: `/app/chat/room/message/room1`,
+    destination: `/app/room/${props.roomId}`,
     body: JSON.stringify(chatMessage),
   });
   newMessage.value = ''; // 메시지 초기화
@@ -157,24 +176,19 @@ try {
 
 };
 
-// const closeRoom = () => {
-//   isVisible.value = false;
-//   emit('close');
-// };
 
-// const leaveChat = async () => {
-//   try {
-//     const response = await axios.post(`/api/chat/room/${props.roomId}/leave`, null, {
-//       params: { userId: authStore.user?.userId },
-//     });
-//     console.log('채팅방을 나갑니다.')
-//     console.log('API 요청 URL: ', axios.defaults.baseURL + `/api/chat/room/${props.roomId}/leave`);
-//     console.log('응답 데이터: ', response.data);
-//     // 필요 시 추가 동작 (e.g., 채팅방 목록 갱신)
-//   } catch (error) {
-//     console.error('채팅방 나가는 중 오류 발생:', error);
-//   }
-// };
+const leaveChat = async () => {
+  try {
+    const response = await axios.post(`/room/${props.roomId}/leave`, null, {
+      params: { userId: authStore.user?.userId },
+    });
+    console.log('채팅방을 나갑니다.')
+    console.log('API 요청 URL: ', axios.defaults.baseURL + `/room/${props.roomId}/leave`);
+    console.log('응답 데이터: ', response.data);
+  } catch (error) {
+    console.error('채팅방 나가는 중 오류 발생:', error);
+  }
+};
 
 
 onMounted(() => {
@@ -267,16 +281,20 @@ h2 {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-.newMessage {
-  font-size: 1rem;
-}
 .chat-input {
   display: flex;
-  gap: 1px;
-  height: 3rem;
-  /* justify-content: space-between; */
+  gap: 10px;
+  height: 2.5rem;
+  border: none;
 }
 
+.chat-input input {
+  font-size: 0.9rem;
+  width: 24rem;
+  border-color: #c7c5c5;
+  border-style: solid;
+  border-radius: 3px;
+}
 .chat-input button {
   /* padding: 8px 16px; */
   background-color: #ff9d85;
@@ -284,7 +302,7 @@ h2 {
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 1.5rem;
+  font-size: 0.8rem;
 }
 
 .chat-input button:hover {
