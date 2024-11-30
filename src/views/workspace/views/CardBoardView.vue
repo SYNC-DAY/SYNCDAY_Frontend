@@ -26,7 +26,6 @@
               'bg-yellow-100': slotProps.data.progress_status >= 30 && slotProps.data.progress_status < 70,
               'bg-green-100': slotProps.data.progress_status >= 70
             }" />
-            <span class="text-sm">{{ slotProps.data.progress_status }}%</span>
           </div>
         </template>
       </Column>
@@ -93,6 +92,7 @@
       </template>
     </DataTable>
   </div>
+  <CardModal :show="showCardModal" :card="selectedCard" @close="closeCardModal" />
 </template>
 
 <script setup>
@@ -101,7 +101,7 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
 import ProgressBar from 'primevue/progressbar';
-
+import CardModal from '../components/layout/CardModal.vue';
 const props = defineProps({
   cardboards: {
     type: Array,
@@ -154,9 +154,7 @@ const onRowClick = (event) => {
   }
 };
 
-const onCardClick = (cardData) => {
-  emit('cardClick', cardData);
-};
+
 
 const formatDate = (dateString) => {
   if (!dateString) return '';
@@ -171,5 +169,20 @@ const openVcsLink = (url) => {
   if (url) {
     window.open(url, '_blank');
   }
+};
+
+const showCardModal = ref(false);
+const selectedCard = ref(null);
+
+const onCardClick = (cardData) => {
+  console.log(cardData)
+  selectedCard.value = cardData;
+  showCardModal.value = true;
+};
+
+// Modal close handler
+const closeCardModal = () => {
+  showCardModal.value = false;
+  selectedCard.value = null;
 };
 </script>
