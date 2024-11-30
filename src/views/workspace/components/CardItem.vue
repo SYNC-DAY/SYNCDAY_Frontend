@@ -65,7 +65,7 @@ const formatDate = (dateString) => {
 }
 
 .tag-indicator {
-  width: 4px;
+  width: 1rem;
   height: auto;
   border-radius: 2px;
 }

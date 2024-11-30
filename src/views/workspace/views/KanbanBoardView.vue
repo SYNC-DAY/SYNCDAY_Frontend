@@ -2,9 +2,12 @@
 	<div class="kanban-container container-row">
 		<div class="kanban-column">
 			<strong>To Do</strong>
-			<Card>
+			<Card class="kanban-background container-col">
 				<template #content>
-					<CardItem v-for="card in organizedCards.todo" :key="card.card_id" :card="card" />
+					<div v-for="card in organizedCards.todo" :key="card.card_id" class="card-wrapper">
+						<div class="tag-indicator" :style="{ backgroundColor: card.tag_color }"></div>
+						<CardItem :card="card" />
+					</div>
 				</template>
 			</Card>
 		</div>
@@ -12,18 +15,23 @@
 		<div class="kanban-column">
 			<strong>In Progress</strong>
 			<Card>
-				<template>
-					<CardItem v-for="card in organizedCards.inProgress" :key="card.card_id" :card="card" />
+				<template #content>
+					<div v-for="card in organizedCards.inProgress" :key="card.card_id" class="card-wrapper">
+						<div class="tag-indicator" :style="{ backgroundColor: card.tag_color }"></div>
+						<CardItem :card="card" />
+					</div>
 				</template>
 			</Card>
 		</div>
-
 
 		<div class="kanban-column">
 			<strong>Done</strong>
 			<Card>
 				<template #content>
-					<CardItem v-for="card in organizedCards.done" :key="card.card_id" :card="card" />
+					<div v-for="card in organizedCards.done" :key="card.card_id" class="card-wrapper">
+						<div class="tag-indicator" :style="{ backgroundColor: card.tag_color }"></div>
+						<CardItem :card="card" />
+					</div>
 				</template>
 			</Card>
 		</div>
@@ -67,9 +75,7 @@ const organizedCards = computed(() => {
 	gap: 1.5rem;
 }
 
-.kanban-background {
-	margin-top: 1rem;
-}
+.kanban-background {}
 
 .kanban-column {
 	display: flex;
@@ -77,56 +83,20 @@ const organizedCards = computed(() => {
 	flex: 1;
 }
 
-
-.card {
-	background: white;
-	border-radius: 8px;
-	margin-bottom: 12px;
-	display: flex;
-	overflow: hidden;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+.card-wrapper {
+	position: relative;
+	margin-bottom: 1rem;
 }
 
-.card-tag {
-	width: 4px;
+
+.tag-indicator {
+	width: 1rem;
 	height: auto;
-}
-
-.card-content {
-	flex: 1;
-	padding: 12px;
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-}
-
-.card-title {
-	font-size: 0.8rem;
-	color: #333;
-}
-
-.assignee-avatar {
-	width: 1.5rem;
-	height: 1.5rem;
-	border-radius: 50%;
-	object-fit: cover;
-}
-
-/* Scrollbar styling */
-.column-content::-webkit-scrollbar {
-	width: 6px;
-}
-
-.column-content::-webkit-scrollbar-track {
-	background: transparent;
-}
-
-.column-content::-webkit-scrollbar-thumb {
-	background: var(--p-primary-100);
-	border-radius: 3px;
-}
-
-.column-content::-webkit-scrollbar-thumb:hover {
-	background: var(--p-primary-100);
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	border-top-left-radius: 4px;
+	border-bottom-left-radius: 4px;
 }
 </style>
