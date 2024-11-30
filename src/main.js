@@ -1,8 +1,12 @@
 import { createApp } from "vue";
+import { useAuthStore } from "./stores/auth";
 import App from "./App.vue";
 
 /* pinia */
 import { createPinia } from "pinia";
+
+/* pinia-persisted-state */
+import { createPersistedState } from "pinia-plugin-persistedstate";
 
 /* router */
 import { setupRouter } from "./router"; // 이름 변경
@@ -16,17 +20,30 @@ import Aura from "@primevue/themes/aura";
 import PrimeVue from "primevue/config";
 import ToastService from "primevue/toastservice";
 import Toast from "primevue/toast";
-
 import "primeicons/primeicons.css";
+import Accordion from "primevue/accordion";
+import AccordionTab from "primevue/accordiontab";
+import DataTable from "primevue/datatable";
+import Column from "primevue/column";
+import Button from "primevue/button";
+import Tag from "primevue/tag";
+import ProgressSpinner from "primevue/progressspinner";
+import Message from "primevue/message";
+import Dialog from "primevue/dialog";
 
 /* css */
 import "@/assets/styles/syncday/main.css";
-import { useAuthStore } from "@/stores/auth.js";
+
+/* authStore */
 
 const app = createApp(App);
 
 /* pinia */
 const pinia = createPinia();
+const pinia_persisted_state = createPersistedState({
+  storage: sessionStorage,
+});
+pinia.use(pinia_persisted_state);
 app.use(pinia);
 const authStore = useAuthStore();
 await authStore.initializeAuth(); // 초기 인증 상태 설정
@@ -66,7 +83,17 @@ app.use(PrimeVue, {
     },
   },
 });
+app.component("Accordion", Accordion);
+app.component("AccordionTab", AccordionTab);
+app.component("DataTable", DataTable);
+app.component("Column", Column);
+app.component("Button", Button);
+app.component("Tag", Tag);
+app.component("ProgressSpinner", ProgressSpinner);
+app.component("Message", Message);
 app.use(ToastService);
 app.component("Toast", Toast);
+app.component("Dialog", Dialog);
 
+/* mount */
 app.mount("#app");

@@ -1,4 +1,5 @@
-<template>
+로딩 표시를 포함한 전체 수정된 코드입니다:
+vueCopy<template>
   <div class="search-container">
     <!-- 뒤로가기 및 검색어 표시 -->
     <div class="search-header">
@@ -19,10 +20,10 @@
     <!-- 필터 버튼 -->
     <div class="filter-buttons">
       <button
-          v-for="filter in filters"
-          :key="filter.id"
-          :class="['filter-btn', { active: currentFilter === filter.id }]"
-          @click="currentFilter = filter.id"
+        v-for="filter in filters"
+        :key="filter.id"
+        :class="['filter-btn', { active: currentFilter === filter.id }]"
+        @click="currentFilter = filter.id"
       >
         <i :class="filter.icon"></i>
         {{ filter.name }}
@@ -33,12 +34,43 @@
     <!-- 검색 결과 -->
     <div class="search-results">
       <div v-if="filteredResults.length > 0">
-        <div v-for="result in filteredResults" :key="result.id" class="result-item">
-          <component
+        <!-- 전체 결과 모드 -->
+        <div v-if="currentFilter === 'all'">
+          <div v-for="domain in domains" :key="domain">
+            <div v-if="domainResults[domain].length > 0" class="domain-section">
+              <div class="domain-header">
+                <h2>{{ getDomainTitle(domain) }}</h2>
+                <button 
+                  v-if="domainResults[domain].length > 5" 
+                  @click="showMore(domain)" 
+                  class="more-button"
+                >
+                  더보기 →
+                </button>
+              </div>
+              <div v-for="result in limitedResults(domain)" 
+                  :key="result.id" 
+                  class="result-item">
+                <component
+                  :is="getResultComponent(result.type)"
+                  :result="result"
+                  @click="handleResultClick(result)"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- 특정 도메인 결과 모드 -->
+        <div v-else>
+          <div v-for="result in filteredResults" 
+              :key="result.id" 
+              class="result-item">
+            <component
               :is="getResultComponent(result.type)"
               :result="result"
               @click="handleResultClick(result)"
-          />
+            />
+          </div>
         </div>
       </div>
       <div v-else-if="!isLoading" class="no-results">
@@ -55,8 +87,8 @@ import { useAuthStore } from "@/stores/auth.js";
 import axios from 'axios';
 
 // 도메인별 결과 컴포넌트 import
-import ProjectSearch from "@/views/search/projectsearch/ProjectSearch.vue";
-// import WorkspaceResult from './components/WorkspaceResult.vue';
+import ProjectSearch from "@/views/search/components/ProjectSearch.vue";
+import WorkspaceSearch from './components/WorkspaceSearch.vue';
 // import CardboardResult from './components/CardboardResult.vue';
 // import CardResult from './components/CardResult.vue';
 // import CommentResult from './components/CommentResult.vue';
@@ -70,11 +102,25 @@ const currentFilter = ref('all');
 const isLoading = ref(false);
 const searchResults = ref([]);
 
+const getDomainTitle = (domain) => {
+  const filterObj = filters.find(f => f.id === domain);
+  return filterObj ? filterObj.name : domain;
+};
+
+const limitedResults = (domain) => {
+  return domainResults.value[domain].slice(0, 5);
+};
+
+const showMore = (domain) => {
+  currentFilter.value = domain;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
 // 도메인별 컴포넌트 매핑
 const getResultComponent = (type) => {
   const components = {
     'projects': ProjectSearch,
-    // 'workspace': WorkspaceSearch,
+    'workspace': WorkspaceSearch,
     // 'cardboard': CardboardResult,
     // 'card': CardResult,
     // 'comments': CommentResult,
@@ -87,8 +133,8 @@ const getResultComponent = (type) => {
 // 결과 클릭 핸들러
 const handleResultClick = (result) => {
   const routes = {
-    'projects': `/projects/${result.projectId}`,
-    'workspace': `/workspace/${result.workspaceId}`,
+    'projects': `/project/${result.projectId}`,
+    'workspace': `/project/${result.projectId}/workspace/${result.workspaceId}`,
     'cardboard': `/cardboard/${result.boardId}`,
     'card': `/card/${result.cardId}`,
     'comments': `/comments/${result.commentId}`,
@@ -113,6 +159,8 @@ const filters = [
   { id: 'files', name: '파일', icon: 'pi pi-file' }
 ];
 
+const domains = ['projects', 'workspace', 'cardboard', 'card', 'comments', 'chats', 'files'];
+
 // 검색 결과를 도메인별로 저장
 const domainResults = ref({
   projects: [],
@@ -127,7 +175,7 @@ const domainResults = ref({
 // API 엔드포인트 설정
 const API_ENDPOINTS = {
   projects: '/projs/search',
-  // workspace: '/workspace/search',
+  workspace: '/workspaces/search',
   // cardboard: '/cardboard/search',
   // card: '/card/search',
   // comments: '/comments/search',
@@ -281,10 +329,35 @@ onMounted(() => {
   padding: 0 2rem;
 }
 
-.result-item {
-  padding: 1.5rem;
-  border-bottom: 1px solid #eee;
+.domain-section {
+  margin-bottom: 2rem;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.domain-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.domain-header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+
+.result-item {
+  margin-bottom: 1rem;
+}
+
+.result-item:last-child {
+  margin-bottom: 0;
 }
 
 .result-content h3 {
@@ -298,6 +371,20 @@ onMounted(() => {
   color: #666;
   font-size: 0.9rem;
   margin-top: 0.5rem;
+}
+
+.more-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: none;
+  color: #1a73e8;
+  cursor: pointer;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.more-button:hover {
+  opacity: 0.8;
 }
 
 .no-results {
