@@ -26,7 +26,7 @@
 				</div>
 
 				<div class="header-right">
-					<Button label="Organization" severity="secondary" icon="pi pi-building" @click="openVcsMenu"
+					<Button label="settings" severity="secondary" icon="pi pi-building" @click="openVcsMenu"
 						aria-haspopup="true" aria-controls="overlay-menu" />
 				</div>
 			</div>
