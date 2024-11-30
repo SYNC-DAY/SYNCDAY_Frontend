@@ -152,6 +152,10 @@ watch(
 );
 </script>
 <style scoped>
+.workspace-header {
+  padding: 0 2rem;
+}
+
 .workspace-header h4 {
   font-size: 1.4rem;
 }

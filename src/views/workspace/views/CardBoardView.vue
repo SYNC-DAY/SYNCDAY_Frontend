@@ -2,7 +2,7 @@
   <div class="cardboard-container p-4">
     <DataTable :expandedRows="computedExpandedRows" @update:expandedRows="updateExpandedRows" :value="cardboards"
       dataKey="cardboard_id" class="shadow-sm rounded-lg" :rowHover="true" responsiveLayout="scroll"
-      @rowClick="onRowClick" :selectionMode="null">
+      columnResizeMode="fit" @rowClick="onRowClick" :selectionMode="null">
       <template #header>
         <div class="flex justify-between items-center mb-4">
           <div class="container-row justify-right">
@@ -18,7 +18,7 @@
           <div class="font-medium">{{ slotProps.data.title }}</div>
         </template>
       </Column>
-      <Column field="progress_status" header="진척도" sortable style="width: 200px">
+      <Column field="progress_status" header="진척도" sortable style="width: 10rem">
         <template #body="slotProps">
           <div class="flex items-center gap-2">
             <ProgressBar :value="slotProps.data.progress_status" class="w-32" :class="{
@@ -47,9 +47,9 @@
       </Column>
 
       <template #expansion="slotProps">
-        <div class="p-4 bg-gray-50 rounded-lg">
+        <div class="bg-gray-50 rounded-lg">
           <DataTable :value="slotProps.data.cards" class="bg-white shadow-sm" :rowHover="true"
-            @rowClick="(event) => onCardClick(event.data)">
+            @rowClick="(event) => onCardClick(event.data)" columnResizeMode="fit">
             <Column field="card_title" header="제목" sortable>
               <template #body="cardProps">
                 <div class="flex items-center gap-2">
