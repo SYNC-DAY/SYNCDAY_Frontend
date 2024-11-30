@@ -8,7 +8,7 @@
 		</div>
 
 		<!-- Project Content -->
-		<div v-else class="proj-container">
+		<div v-else class="proj-container ph-1rem">
 
 			<!-- Header Section -->
 			<div class="container-row header underline-gray">
@@ -32,10 +32,10 @@
 			</div>
 
 			<!-- Workspaces Section -->
-			<div class="workspaces-container container-col">
+			<div class="ph-1rem container-col">
 
 				<!-- workspaces-header -->
-				<div class="container-row">
+				<div class="container-row header">
 					<h3 class="semibold">Workspaces</h3>
 					<Button label="New Workspace" icon="pi pi-plus" severity="secondary"
 						@click="openNewWorkspaceDialog" />
@@ -250,14 +250,6 @@ const emit = defineEmits(['update:project']);
 </script>
 
 <style scoped>
-.proj-container {
-	padding: 1rem;
-}
-
-
-
-
-
 .role {}
 
 .role img {
@@ -275,14 +267,7 @@ const emit = defineEmits(['update:project']);
 
 /* Workspace Styles */
 
-.workspaces-container {
-	padding: 1rem;
-}
 
-.workspaces-header>.container-row {
-	gap: 1rem;
-	justify-content: center;
-}
 
 .workspaces-grid {
 	display: grid;

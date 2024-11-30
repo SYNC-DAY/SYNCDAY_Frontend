@@ -1,5 +1,5 @@
 <template>
-  <div class="workspace-container container-col width-100">
+  <div class="ph-1rem container-col width-100">
     <div v-if="isLoading" class="loading-state">
       Loading...
     </div>
@@ -152,14 +152,6 @@ watch(
 );
 </script>
 <style scoped>
-.workspace-container {
-  padding: 1rem;
-}
-
-.workspace-header {
-  padding: 0 1rem;
-}
-
 .workspace-header h4 {
   font-size: 1.4rem;
 }

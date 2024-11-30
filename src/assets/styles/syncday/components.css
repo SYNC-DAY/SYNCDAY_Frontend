@@ -35,7 +35,7 @@
 }
 
 .header {
-	padding: 0 1rem;
+	padding: 0 1.5rem;
 }
 
 .header-left {
@@ -46,4 +46,12 @@
 .header-right {
 	justify-content: left;
 	gap: 1rem;
+}
+
+.ph-1rem {
+	padding: 0 1rem;
+}
+
+.pv-1rem {
+	padding: 1rem 0;
 }
