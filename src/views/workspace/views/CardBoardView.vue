@@ -9,22 +9,29 @@
         </div>
       </template>
       <Column expander style="width:5rem" />
-      <Column field="title" header="이름" />
-      <Column field="progress_status" header="진척도">
+      <Column field="title" header="이름" sortable />
+      <Column field="progress_status" header="진척도" sortable>
         <template #body="slotProps">
           <ProgressBar :value="slotProps.data.progress_status" />
         </template>
       </Column>
-      <Column field="start_time" header="시작">
+      <Column field="start_time" header="시작" sortable>
         <template #body="slotProps">
           {{ formatDate(slotProps.data.start_time) }}
         </template>
       </Column>
-      <Column field="end_time" header="끝">
+      <Column field="end_time" header="끝" sortable>
         <template #body="slotProps">
           {{ formatDate(slotProps.data.end_time) }}
         </template>
       </Column>
+      <template #expansion="slotProps">
+        <div class="p-4">
+          <DataTable :value="slotProps.data.cards">
+            <Column field="card_id" sortable></Column>
+          </DataTable>
+        </div>
+      </template>
     </DataTable>
   </div>
 </template>
