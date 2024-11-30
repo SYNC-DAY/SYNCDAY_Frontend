@@ -11,7 +11,7 @@
 		<div v-else class="proj-container">
 
 			<!-- Header Section -->
-			<div class="container-row proj-header underline-gray">
+			<div class="container-row header underline-gray">
 
 				<!-- header-left -->
 				<div class="header-left container-row">
@@ -26,8 +26,8 @@
 				</div>
 
 				<div class="header-right">
-					<Button label="settings" severity="secondary" icon="pi pi-cog" @click="openProjectSettings"
-						aria-haspopup="true" aria-controls="overlay-menu" />
+					<Button label="VCS Integration" severity="secondary" icon="pi pi-github"
+						@click="openProjectSettings" aria-haspopup="true" aria-controls="overlay-menu" />
 				</div>
 			</div>
 
@@ -35,7 +35,7 @@
 			<div class="workspaces-container container-col">
 
 				<!-- workspaces-header -->
-				<div class="container-row workspaces-header">
+				<div class="container-row">
 					<h3 class="semibold">Workspaces</h3>
 					<Button label="New Workspace" icon="pi pi-plus" severity="secondary"
 						@click="openNewWorkspaceDialog" />
@@ -254,9 +254,7 @@ const emit = defineEmits(['update:project']);
 	padding: 1rem;
 }
 
-.proj-header {
-	gap: 2rem;
-}
+
 
 
 
@@ -272,10 +270,6 @@ const emit = defineEmits(['update:project']);
 
 }
 
-.header-right {
-	align-items: center;
-	margin-right: 3rem;
-}
 
 
 
@@ -298,7 +292,6 @@ const emit = defineEmits(['update:project']);
 
 
 .workspace-card {
-	margin: 1rem;
 	border-radius: 1.2rem;
 	/* border: 0 solid #e5e7; */
 	gap: 2rem;

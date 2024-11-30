@@ -34,7 +34,16 @@
 	border-bottom: 1px solid var(--outline-gray);
 }
 
+.header {
+	padding: 0 1rem;
+}
+
 .header-left {
+	justify-content: left;
+	gap: 1rem;
+}
+
+.header-right {
 	justify-content: left;
 	gap: 1rem;
 }

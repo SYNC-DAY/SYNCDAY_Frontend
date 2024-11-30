@@ -18,7 +18,11 @@
           <i class="pi pi-github"></i>
         </div>
 
-        <Button icon="pi pi-cog" label="Settings" severity="secondary" </Button>
+        <div class="container-row header-right">
+
+          <Button icon="pi pi-cog" severity="secondary" </Button>
+            <Button icon="pi pi-tag"></Button>
+        </div>
       </div>
 
       <!-- select view mode -->
