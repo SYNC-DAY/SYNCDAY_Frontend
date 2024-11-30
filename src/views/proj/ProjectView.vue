@@ -42,18 +42,18 @@
 				</div>
 
 				<!-- Workspaces Grid -->
-				<div v-if="currentProject.workspaces?.length"
-					class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-					<div v-for="workspace in currentProject.workspaces" :key="workspace.workspace_id"
-						class="workspace-card p-4 border rounded-lg hover:shadow-md transition-all cursor-pointer"
+				<div v-if="currentProject.workspaces?.length" class="workspaces-grid">
+					<Card v-for="workspace in currentProject.workspaces" :key="workspace.workspace_id"
+						style="height: 10rem" class="workspace-card cursor-pointer gap-1 container-column"
 						@click="navigateToWorkspace(workspace.workspace_id)">
-						<h4 class="text-md font-medium mb-2">{{ workspace.workspace_name }}</h4>
-						<div class="bg-gray-200 rounded-full h-2 mb-2">
-							<div class="bg-primary h-full rounded-full"
-								:style="{ width: `${workspace.progress_status}%` }"></div>
-						</div>
-						<span class="text-sm text-gray-600">{{ workspace.progress_status }}% Complete</span>
-					</div>
+						<template #title>
+							<div class="">{{ workspace.workspace_name }}</div>
+						</template>
+						<template #subtitle>{{ workspace.start_time }}</template>
+						<template #content>
+							<ProgressBar :value="workspace.progress_status" class="primary" style="height:1rem" />
+						</template>
+					</Card>
 				</div>
 
 				<!-- Empty State -->
@@ -265,9 +265,15 @@ const emit = defineEmits(['update:project']);
 	justify-content: center;
 }
 
-.workspaces-section .workspace-card {
-	background: white;
-	transition: all 0.2s ease-in-out;
+.workspaces-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	grid-gap: 1rem;
+}
+
+
+.workspace-card {
+	gap: 2rem;
 }
 
 .workspace-card:hover {

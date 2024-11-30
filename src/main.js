@@ -31,6 +31,9 @@ import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
 import Dialog from "primevue/dialog";
 import Card from "primevue/card";
+
+import ProgressBar from "primevue/progressbar";
+
 /* css */
 import "@/assets/styles/syncday/main.css";
 
@@ -95,5 +98,6 @@ app.use(ToastService);
 app.component("Toast", Toast);
 app.component("Dialog", Dialog);
 app.component("Card", Card);
+app.component("ProgressBar", ProgressBar);
 /* mount */
 app.mount("#app");
