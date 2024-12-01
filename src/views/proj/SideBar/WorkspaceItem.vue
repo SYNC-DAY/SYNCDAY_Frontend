@@ -43,6 +43,7 @@ const props = defineProps({
   }
 });
 
+
 const emit = defineEmits(['select', 'bookmark-changed']);
 
 const isBookmarked = ref(props.initialBookmarked);

@@ -64,12 +64,12 @@ span {
 
 :root {
 	font-family: 'Arial', 'Spoqa Han Sans Neo', 'sans-serif';
-	font-size: 15px;
+	font-size: 14px;
 }
 
 @media screen and (max-width: 1600px) {
 	:root {
-		font-size: 15px;
+		font-size: 14px;
 	}
 }
 

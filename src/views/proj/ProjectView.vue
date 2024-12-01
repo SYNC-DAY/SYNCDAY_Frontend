@@ -1,5 +1,5 @@
 <template>
-	<div class="container-column">
+	<div class="container-col">
 		<!-- Not Found State -->
 		<div v-if="!currentProject" class="flex flex-column items-center justify-center p-6">
 			<h2>Project Not Found</h2>
@@ -8,15 +8,15 @@
 		</div>
 
 		<!-- Project Content -->
-		<div v-else class="proj-container">
+		<div v-else class="proj-container ph-1rem">
 
 			<!-- Header Section -->
-			<div class="container-row proj-header">
+			<div class="container-row header underline-gray">
 
 				<!-- header-left -->
 				<div class="header-left container-row">
 					<div class="project-title">
-						<h2>{{ currentProject.proj_name }}</h2>
+						<h3>{{ currentProject.proj_name }}</h3>
 					</div>
 					<div class="container-row role">
 						<img v-if="currentProject.participation_status === 'OWNER'" src="@/assets/icons/Crown.svg"
@@ -26,31 +26,34 @@
 				</div>
 
 				<div class="header-right">
-					<Button label="Organization" severity="secondary" icon="pi pi-building" @click="openVcsMenu"
-						aria-haspopup="true" aria-controls="overlay-menu" />
+					<Button label="VCS Integration" severity="secondary" icon="pi pi-github"
+						@click="openProjectSettings" aria-haspopup="true" aria-controls="overlay-menu" />
 				</div>
 			</div>
 
 			<!-- Workspaces Section -->
-			<div class="workspaces-section mt-6">
-				<div class="flex justify-between items-center mb-4">
-					<h3 class="text-lg font-semibold m-0">Workspaces</h3>
+			<div class="ph-1rem container-col">
+
+				<!-- workspaces-header -->
+				<div class="container-row header">
+					<h3 class="semibold">Workspaces</h3>
 					<Button label="New Workspace" icon="pi pi-plus" severity="secondary"
 						@click="openNewWorkspaceDialog" />
 				</div>
 
 				<!-- Workspaces Grid -->
-				<div v-if="currentProject.workspaces?.length"
-					class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+				<div v-if="currentProject.workspaces?.length" class="workspaces-grid">
 					<div v-for="workspace in currentProject.workspaces" :key="workspace.workspace_id"
-						class="workspace-card p-4 border rounded-lg hover:shadow-md transition-all cursor-pointer"
-						@click="navigateToWorkspace(workspace.workspace_id)">
-						<h4 class="text-md font-medium mb-2">{{ workspace.workspace_name }}</h4>
-						<div class="bg-gray-200 rounded-full h-2 mb-2">
-							<div class="bg-primary h-full rounded-full"
-								:style="{ width: `${workspace.progress_status}%` }"></div>
-						</div>
-						<span class="text-sm text-gray-600">{{ workspace.progress_status }}% Complete</span>
+						class="workspace-card" @click="navigateToWorkspace(workspace.workspace_id)">
+						<Card style="">
+							<template #title>{{ workspace.workspace_name }} <Button icon="pi pi-github"
+									variant="text"></Button>
+							</template>
+							<template #content>
+								<ProgressBar :value="workspace.progress_status" severity="secondary" style="" />
+
+							</template>
+						</Card>
 					</div>
 				</div>
 
@@ -70,6 +73,11 @@
 
 
 		<OrgSelectMenu v-model:visible="showOrgProjSelectionModal" @select="handleProjectSelect" />
+
+
+		<ProjectSettingsModal v-model:visible="showProjectSettings" :projectId="props.projectId"
+			:projectData="currentProject" @project-updated="handleProjectUpdate"
+			@project-deleted="handleProjectDelete" />
 		<template>
 		</template>
 
@@ -77,18 +85,19 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
 import axios from 'axios';
+import { storeToRefs } from 'pinia';
+import { ref, computed } from 'vue';
+import { useAuthStore } from '@/stores/auth';
+import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import Button from 'primevue/button';
-import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
-import { useAuthStore } from '@/stores/auth';
 import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
 import GithubAuthModal from '@/views/vcs/github/GithubAuthModal.vue';
 import OrgSelectMenu from '../vcs/github/OrgSelectMenu.vue';
-import { storeToRefs } from 'pinia';
-
+import ProjectSettingsModal from './components/ProjectSettingsModal.vue';
+// props
 const props = defineProps({
 	projectId: {
 		type: [String, Number],
@@ -106,11 +115,12 @@ const toast = useToast();
 const githubAuthStore = useGithubAuthStore();
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
+
 // Refs
 const vcsMenu = ref(null);
 const showGithubAuthModal = ref(false);
 const showOrgProjSelectionModal = ref(false);
-
+const showProjectSettings = ref(false);
 // Computed
 const currentProject = computed(() =>
 	props.projects.find(p => p.proj_id === parseInt(props.projectId))
@@ -128,6 +138,11 @@ const navigateToWorkspace = (workspaceId) => {
 const openVcsMenu = (event) => {
 	vcsMenu.value?.toggle(event);
 };
+
+const openProjectSettings = (project) => {
+	showProjectSettings.value = true;
+}
+
 
 const handleVcsSelection = async (vcsType) => {
 	try {
@@ -147,7 +162,17 @@ const handleVcsSelection = async (vcsType) => {
 		});
 	}
 };
+const handleProjectUpdate = (updatedProject) => {
+	const index = projects.value.findIndex(p => p.proj_id === updatedProject.proj_id);
+	if (index !== -1) {
+		projects.value[index] = { ...projects.value[index], ...updatedProject };
+	}
+};
 
+const handleProjectDelete = (projectId) => {
+	projects.value = projects.value.filter(p => p.proj_id !== projectId);
+	router.push('/');
+};
 const handleGithubLoginSuccess = () => {
 	showGithubAuthModal.value = false;
 	showOrgProjSelectionModal.value = true;
@@ -162,11 +187,11 @@ const handleGithubLoginError = (error) => {
 	});
 };
 
-const handleProjectUpdate = (updatedProject) => {
-	// Emit event to update parent state
-	emit('update:project', updatedProject);
-	showOrgProjSelectionModal.value = false;
-};
+// const handleProjectUpdate = (updatedProject) => {
+// 	// Emit event to update parent state
+// 	emit('update:project', updatedProject);
+// 	showOrgProjSelectionModal.value = false;
+// };
 
 // Update the handleProjectSelect method in ProjectView.vue
 
@@ -225,18 +250,6 @@ const emit = defineEmits(['update:project']);
 </script>
 
 <style scoped>
-.proj-container {
-	padding: 1rem;
-}
-
-.proj-header {
-	gap: 2rem;
-}
-
-.header-left {
-	gap: 1rem;
-}
-
 .role {}
 
 .role img {
@@ -249,14 +262,25 @@ const emit = defineEmits(['update:project']);
 
 }
 
-.header-right {
-	align-items: center;
-	margin-right: 3rem;
+
+
+
+/* Workspace Styles */
+
+
+
+.workspaces-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	grid-gap: 1rem;
 }
 
+
 .workspace-card {
-	background: white;
-	transition: all 0.2s ease-in-out;
+	border-radius: 1.2rem;
+	/* border: 0 solid #e5e7; */
+	gap: 2rem;
+
 }
 
 .workspace-card:hover {

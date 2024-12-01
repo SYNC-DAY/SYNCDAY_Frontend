@@ -1,5 +1,5 @@
 <template>
-  <div class="workspace-container container-column width-100">
+  <div class="ph-1rem container-col width-100">
     <div v-if="isLoading" class="loading-state">
       Loading...
     </div>
@@ -13,7 +13,16 @@
 
     <template v-else-if="workspaceDetails">
       <div class="workspace-header container-row underline-gray">
-        <h3>{{ workspaceDetails.workspace_name }}</h3>
+        <div class="container-row header-left">
+          <h4>{{ workspaceDetails.workspace_name }}</h4>
+          <i class="pi pi-github"></i>
+        </div>
+
+        <div class="container-row header-right">
+
+          <Button icon="pi pi-cog" severity="secondary" </Button>
+            <Button icon="pi pi-tag"></Button>
+        </div>
       </div>
 
       <!-- select view mode -->
@@ -143,8 +152,16 @@ watch(
 );
 </script>
 <style scoped>
-.workspace-container {
-  padding: 1rem;
+.workspace-header {
+  padding: 0 2rem;
+}
+
+.workspace-header h4 {
+  font-size: 1.4rem;
+}
+
+.workspace-header>h3 {
+  font-size: 2rem;
 }
 
 .workspace-content {}

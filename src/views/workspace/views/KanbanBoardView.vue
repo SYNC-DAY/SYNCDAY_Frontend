@@ -1,49 +1,55 @@
 <template>
-	<div class="kanban-container width-100">
-		<div class="kanban-columns container-row">
-			<!-- To Do Column -->
-			<div class="kanban-column container-column">
-				<div class="column-header">To Do</div>
-				<div class="column-content">
-					<template v-for="board in cardboards" :key="board.cardboard_id">
-						<template v-for="card in board.cards" :key="card.card_id">
-							<div class="card">
-								<div class="card-tag" :style="{ backgroundColor: card.tag_color }"></div>
-								<div class="card-content">
-									<div class="card-title">{{ card.card_title }}</div>
-									<div class="card-assignee">
-										<img :src="card.assignee_profile_url" :alt="card.assignee_name"
-											class="assignee-avatar" />
-									</div>
-								</div>
-							</div>
-						</template>
-					</template>
-				</div>
-			</div>
+	<div class="kanban-container container-row">
+		<div class="kanban-column">
+			<strong>To Do</strong>
+			<Card class="kanban-background container-col">
+				<template #content>
+					<div v-for="card in organizedCards.todo" :key="card.card_id" class="card-wrapper">
+						<div class="tag-indicator" :style="{ backgroundColor: card.tag_color }"></div>
+						<CardItem :card="card" />
+					</div>
+					<div class="container-row justify-center">
+						<Button icon="pi pi-plus" rounded severity="secondary"></Button>
+					</div>
+				</template>
+			</Card>
+		</div>
 
-			<!-- In Progress Column -->
-			<div class="kanban-column">
-				<div class="column-header">In Progress</div>
-				<div class="column-content">
-					<!-- Cards will be dynamically added here -->
-				</div>
-			</div>
+		<div class="kanban-column">
+			<strong>In Progress</strong>
+			<Card>
+				<template #content>
+					<div v-for="card in organizedCards.inProgress" :key="card.card_id" class="card-wrapper">
+						<div class="tag-indicator" :style="{ backgroundColor: card.tag_color }"></div>
+						<CardItem :card="card" />
+					</div>
+					<div class="container-row justify-center">
+						<Button icon="pi pi-plus" rounded severity="secondary"></Button>
+					</div>
+				</template>
+			</Card>
+		</div>
 
-			<!-- Done Column -->
-			<div class="kanban-column">
-				<div class="column-header">Done</div>
-				<div class="column-content">
-					<!-- Cards will be dynamically added here -->
-				</div>
-			</div>
+		<div class="kanban-column">
+			<strong>Done</strong>
+			<Card>
+				<template #content>
+					<div v-for="card in organizedCards.done" :key="card.card_id" class="card-wrapper">
+						<div class="tag-indicator" :style="{ backgroundColor: card.tag_color }"></div>
+						<CardItem :card="card" />
+					</div>
+					<div class="container-row justify-center">
+						<Button icon="pi pi-plus" rounded severity="secondary"></Button>
+					</div>
+				</template>
+			</Card>
 		</div>
 	</div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
-
+import CardItem from '../components/CardItem.vue';
 const props = defineProps({
 	cardboards: {
 		type: Array,
@@ -73,83 +79,33 @@ const organizedCards = computed(() => {
 
 <style scoped>
 .kanban-container {
-	gap: 3rem;
+	margin-top: 1rem;
+	align-items: start;
+	gap: 1.5rem;
 }
 
-.kanban-columns {
-	gap: 1rem
-}
+.kanban-background {}
 
 .kanban-column {
-	flex: 1;
-	background-color: var(--p-primary-100);
-	/* Light pink background from your design */
-	border-radius: 1rem;
-	padding: 1rem;
-
-}
-
-.column-header {
-	font-size: 1rem;
-	font-weight: bold;
-	margin-bottom: 16px;
-
-}
-
-.column-content {
-	height: calc(100% - 40px);
-	overflow-y: auto;
-}
-
-.card {
-	background: white;
-	border-radius: 8px;
-	margin-bottom: 12px;
 	display: flex;
-	overflow: hidden;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+	flex-direction: column;
+	flex: 1;
 }
 
-.card-tag {
-	width: 4px;
+.card-wrapper {
+	position: relative;
+	margin-bottom: 1rem;
+}
+
+
+.tag-indicator {
+	width: 1rem;
 	height: auto;
-}
-
-.card-content {
-	flex: 1;
-	padding: 12px;
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-}
-
-.card-title {
-	font-size: 0.8rem;
-	color: #333;
-}
-
-.assignee-avatar {
-	width: 1.5rem;
-	height: 1.5rem;
-	border-radius: 50%;
-	object-fit: cover;
-}
-
-/* Scrollbar styling */
-.column-content::-webkit-scrollbar {
-	width: 6px;
-}
-
-.column-content::-webkit-scrollbar-track {
-	background: transparent;
-}
-
-.column-content::-webkit-scrollbar-thumb {
-	background: #ffa5b5;
-	border-radius: 3px;
-}
-
-.column-content::-webkit-scrollbar-thumb:hover {
-	background: #ff7b93;
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	border-top-left-radius: 4px;
+	border-bottom-left-radius: 4px;
 }
 </style>
