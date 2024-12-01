@@ -25,6 +25,7 @@
       <div class="widget-container">
         <div class="title-container">
           <p class="widget-title">팀 게시판</p>
+          <TeamBoardList/>
         </div>
         <div class="content-container">
         </div>
@@ -43,7 +44,8 @@
     import MainCalendar from './components/MainCalendar.vue';
     import dayGridPlugin from '@fullcalendar/daygrid';
     import timeGridPlugin from '@fullcalendar/timegrid';
-import ScheduleInvitaion from './components/ScheduleInvitaion.vue';
+    import ScheduleInvitaion from './components/ScheduleInvitaion.vue';
+    import TeamBoardList from './components/TeamBoardList.vue';
     
     const authStore = useAuthStore();
     const router = useRouter();
