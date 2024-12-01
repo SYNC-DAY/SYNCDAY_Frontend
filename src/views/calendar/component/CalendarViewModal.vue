@@ -1,10 +1,16 @@
 <template>
     <div class="modal-overlay" @click="handleOutsideClick">
         <div class="modal-content">
-            <!-- 닫기 버튼 -->
-            <div class="close-btn-wrapper">
-                <button class="close-btn" @click="$emit('close')">×</button>
+            <div>
+                <img src="@/assets/images/update.svg" alt="수정">
             </div>
+            <div @click="deleteSchedule(scheduleId)">
+                <img src="@/assets/images/delete.svg" alt="삭제">
+            </div>
+            <!-- 닫기 버튼 -->
+            <span class="close-btn-wrapper">
+                <button class="close-btn" @click="$emit('close')">×</button>
+            </span>
             <h3>상세조회</h3>
             <div>scheduleId: {{ scheduleId }}</div>
             <div>title: {{ title }}</div>
@@ -65,7 +71,25 @@ const handleOutsideClick = (event) => {
 
 const emit = defineEmits();
 
-onMounted(() => {});
+// 삭제 메소드
+const deleteSchedule = async (scheduleId) => {
+    try {
+        // DELETE 요청 보내기
+        const response = await axios.delete(`/schedule/${scheduleId}`);
+        console.log('삭제 성공:', response.data);
+
+        emit('close');
+
+        // 성공 알림 (선택 사항)
+        alert('스케줄이 삭제되었습니다.');
+    } catch (error) {
+        console.error('삭제 실패:', error.response?.data || error.message);
+
+        // 실패 알림
+        alert('스케줄 삭제에 실패했습니다. 다시 시도해주세요.');
+    }
+};
+
 </script>
 
 <style scoped>

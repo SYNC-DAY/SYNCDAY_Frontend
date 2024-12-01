@@ -15,9 +15,17 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction'; // 클릭/드래그 기능
 import CalendarViewModal from './component/CalendarViewModal.vue';
 import CalendarModal from './component/CalendarModal.vue';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc'; // UTC 플러그인
+import timezone from 'dayjs/plugin/timezone'; // 타임존 플러그인
+import 'dayjs/locale/ko';
 
 import { useAuthStore } from '@/stores/auth';
 const authStore = useAuthStore();
+
+dayjs.extend(utc); // UTC 플러그인 사용
+dayjs.extend(timezone); // 타임존 플러그인 사용
+dayjs.locale('ko');
 
 // 조회 모달 관련
 const showEventModal = ref(false);
@@ -105,6 +113,16 @@ const calendarOptions = ref({
         showEventModal.value = true;
         console.log('showEventModal:', showEventModal.value);
     },
+    eventDrop: async (info) => {
+        console.log('DROP', info);
+        console.log('DROP_id', info.event.id);
+        console.log('DROP_START', info.event.start);
+        console.log('DROP_END', info.event.end);
+        await updateSchedule(info);
+    },
+    eventResize: (info) => {
+        console.log('Resize', info);
+    },
     events: events,
 });
 
@@ -158,6 +176,8 @@ const fetchSchedules = async () => {
                 borderColor: '#FF9D85',
                 extendedProps: {
                     content: schedule.content,
+                    meetingStatus: schedule.meeting_status,
+                    publicStatus: schedule.public_status,
                     // 필요하면 더 추가
                 },
             };
@@ -199,6 +219,28 @@ const fetchDetailSchedules = async (scheduleId, userId) => {
         console.error('Error fetching schedules:', error);
     }
 };
+
+const updateSchedule = async(info) => {
+    try {
+        const response = await axios.put(`/schedule/${scheduleId}`, {
+            schedule_id: info.event.id,
+            start_time: dayjs(info.event.start).tz('Asia/Seoul').toISOString(),
+            end_time: dayjs(info.event.end).tz('Asia/Seoul').toISOString(),
+            meeting_status: info.event.extendedProps.meetingStatus,
+            public_status: info.event.extendedProps.publicStatus,
+            user_id: authStore.user.userId,
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        console.log('스케줄 변경 성공:', response.data);
+    } catch (error) {
+        console.error('스케줄 변경 실패:', error.response?.data || error.message);
+        alert('스케줄 변경에 실패했습니다. 다시 시도해주세요.');
+    }
+};
+
 
 onMounted(async () => {
     await fetchSchedules();
