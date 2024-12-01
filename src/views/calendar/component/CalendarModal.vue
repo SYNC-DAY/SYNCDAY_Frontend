@@ -10,6 +10,18 @@
             </div>
 
             <!-- 날짜/시간 -->
+            <div>
+                <div>
+                    <span>시작 : </span>
+                    <span>{{ startDateView }}</span>
+                    <span v-if="isAllDay == false"> {{ startDateTimeView }} </span>
+                </div>
+                <div>
+                    <span>종료 : </span>
+                    <span>{{ endDateView }}</span>
+                    <span v-if="isAllDay == false"> {{ endDateTimeView }} </span>
+                </div>
+            </div>
 
             <!-- 종일 체크 -->
             <div class="flex items-center mb-4">
@@ -100,16 +112,18 @@
 <script setup>
 import { ref, watch, onMounted, computed } from 'vue';
 import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';  // UTC 플러그인
-import timezone from 'dayjs/plugin/timezone';  // 타임존 플러그인
+import utc from 'dayjs/plugin/utc'; // UTC 플러그인
+import timezone from 'dayjs/plugin/timezone'; // 타임존 플러그인
+import 'dayjs/locale/ko';
 import axios from 'axios';
 import { DatePicker } from 'v-calendar';
 import 'v-calendar/style.css';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
-dayjs.extend(utc);  // UTC 플러그인 사용
-dayjs.extend(timezone);  // 타임존 플러그인 사용
+dayjs.extend(utc); // UTC 플러그인 사용
+dayjs.extend(timezone); // 타임존 플러그인 사용
+dayjs.locale('ko');
 
 const authStore = useAuthStore();
 
@@ -124,37 +138,160 @@ const props = defineProps({
 
 console.log('모달로 넘어온 값:', props.selectedInfo);
 
-// 캘린더에서 받은 날짜 초기값 / 후에 DatePicker에서 받을 날짜 넣을거다!
-const startDate = ref(dayjs(props.selectedInfo.start).tz('Asia/Seoul').format('YYYY-MM-DD'));
-const startDateTime = ref(dayjs(props.selectedInfo.start).tz('Asia/Seoul').format('HH:mm'));
-const endDate = ref(dayjs(props.selectedInfo.end).tz('Asia/Seoul').format('YYYY-MM-DD'));
-const endDateTime = ref(dayjs(props.selectedInfo.end).tz('Asia/Seoul').format('HH:mm'));
+// 캘린더에서 받은 날짜
+const start = ref(props.selectedInfo.start);
+const end = ref(props.selectedInfo.end);
 
 // 종일 체크 여부 -> 날짜냐? 날짜+시간이냐? 차이!!!!!!
-const isAllDay = ref(true);
+const isAllDay = ref('');
 
-// // 날짜만 비교하여 isAllDay 설정
-// const updateIsAllDay = () => {
-//     // 오늘의 일정을 받을 때 여기서 end를 한시간 추가하게 할 수 있을 듯?
+// DatePicker와 v-binding 및 template에 포맷팅하여 보여줄 변수
+// 날짜 (YYYY-MM-DD)
+// 시간 (HH:mm)
+const startDate = ref('');
+const startDateTime = ref('');
+const endDate = ref('');
+const endDateTime = ref('');
 
-//     // start와 end를 날짜만 비교하려면 시간 부분을 00:00로 설정하여 비교
-//     const startDate = new Date(start.value).setHours(0, 0, 0, 0);
-//     const endDate = new Date(end.value).setHours(0, 0, 0, 0);
-//     isAllDay.value = startDate !== endDate; // 날짜가 다르면 true, 같으면 false
-// };
+// template에 보여줄 변수
+// 날짜 (MM월 DD일 (dddd))
+// 시간 (오전 or 오후 HH:mm)
+const startDateView = ref();
+const startDateTimeView = ref();
+const endDateView = ref();
+const endDateTimeView = ref();
 
-// // 'start'와 'end' 값이 변경될 때마다 updateIsAllDay 실행되게!
-// watch([start, end], updateIsAllDay, { immediate: true });
+// DB에 저장할 변수
+// 날짜 (YYYY-MM-DD)
+// 시간 (HH:mm)
+const startDateRegist = ref('');
+const startDateTimeRegist = ref('');
+const endDateRegist = ref('');
+const endDateTimeRegist = ref('');
 
-// console.log('isAllDay:', isAllDay);
+// 시간 포맷 함수 (오전/오후 HH:mm) -> template에 보여줄 때 사용!
+function formatTime(date) {
+    const hour = dayjs(date).hour();
+    const minute = dayjs(date).minute();
+    const period = hour < 12 ? '오전' : '오후';
+    const formattedHour = hour % 12 === 0 ? 12 : hour % 12; // 12시간제로 변환
+    const formattedMinute = minute.toString().padStart(2, '0'); // 분을 2자리로
+    return `${period} ${formattedHour}:${formattedMinute}`;
+}
 
-// // 시작 날짜와 시간 포맷팅
-// const startDate = dayjs(start.value).tz('Asia/Seoul').format('YYYY-MM-DD');
-// const startDateTime = dayjs(start.value).tz('Asia/Seoul').format('HH:mm');
-// const endDate = dayjs(end.value).tz('Asia/Seoul').format('YYYY-MM-DD');
-// const endDateTime = dayjs(end.value).tz('Asia/Seoul').format('HH:mm');
+// isAllDay가 true일 때 처리
+function handleAllDayTrue() {
+    startDateTime.value = '00:00';
+    endDateTime.value = '00:00';
 
-// startDate, startDateTime, endDate, endDateTime을 이용해서 화면에 보여주게 하자!
+    startDateTimeRegist.value = '00:00';
+    endDateTimeRegist.value = '00:00';
+
+    // View 변수 업데이트
+    startDateTimeView.value = '오전 00:00';
+    endDateTimeView.value = '오전 00:00';
+
+    // endDateRegist를 하루 더하기
+    const currentEndDate = new Date(endDateRegist.value); // 기존 종료 날짜 가져오기
+    currentEndDate.setDate(currentEndDate.getDate() + 1); // 하루 더하기
+    endDateRegist.value = currentEndDate.toISOString().split('T')[0]; // YYYY-MM-DD 형식으로 변환
+
+    // View 변수 업데이트
+    endDateView.value = dayjs(endDate.value).format('MM월 DD일 (dddd)');
+
+    updateFormData();
+}
+
+// isAllDay가 false일 때 처리
+function handleAllDayFalse() {
+    const now = dayjs(); // 현재 시간
+    const nextHour = now.add(1, 'hour').startOf('hour'); // 다음 정시
+    const twoHoursLater = nextHour.add(1, 'hour'); // 다다음 정시
+
+    startDateTime.value = nextHour.format('HH:mm');
+    endDateTime.value = twoHoursLater.format('HH:mm');
+
+    // View 변수 업데이트
+    startDateTimeView.value = formatTimeView(nextHour);
+    endDateTimeView.value = formatTimeView(twoHoursLater);
+
+    startDateTimeRegist.value = nextHour.format('HH:mm');
+    endDateTimeRegist.value = twoHoursLater.format('HH:mm');
+
+    // endDateRegist 값을 하루 전으로 설정
+    endDateRegist.value = dayjs(endDateRegist.value).subtract(1, 'day').format('YYYY-MM-DD');
+
+    // View 변수 업데이트
+    endDateView.value = dayjs(endDate.value).format('MM월 DD일 (dddd)');
+
+    updateFormData();
+}
+
+// formData 업데이트
+function updateFormData() {
+    formData.value.startTime = `${startDateRegist.value}T${startDateTimeRegist.value}+09:00`;
+    formData.value.endTime = `${endDateRegist.value}T${endDateTimeRegist.value}+09:00`;
+}
+
+// // 날짜와 시간 포맷팅 함수
+// function formatDateView(date) {
+//     return dayjs(date).format('MM월 DD일 (dddd)');
+// }
+
+function formatTimeView(time) {
+    const timeObj = dayjs(time, 'HH:mm');
+    const meridiem = timeObj.hour() < 12 ? '오전' : '오후';
+    const formattedHour = timeObj.hour() % 12 || 12; // 12시간제로 표시
+    return `${meridiem} ${String(formattedHour).padStart(2, '0')}:${timeObj.format('mm')}`;
+}
+
+// 초기값 설정!!
+const formatDateTime = (start, end, isAllDay) => {
+    if (isAllDay) {
+        // 종일: 날짜는 `YYYY-MM-DD`, 시간은 00:00
+        startDate.value = dayjs(start).format('YYYY-MM-DD');
+        endDate.value = dayjs(end).subtract(1, 'day').format('YYYY-MM-DD'); // 하루 빼기
+        // 시간은 캘린더와 다르게 작성!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        startDateTime.value = '00:00';
+        endDateTime.value = '00:00';
+
+        // View 변수 업데이트
+        startDateView.value = dayjs(start).format('MM월 DD일 (dddd)');
+        endDateView.value = dayjs(end).subtract(1, 'day').format('MM월 DD일 (dddd)');
+        startDateTimeView.value = '오전 00:00';
+        endDateTimeView.value = '오전 00:00';
+
+        // Regist 변수에 담기 (하루를 더해서 endDate 담기)
+        startDateRegist.value = dayjs(start).format('YYYY-MM-DD');
+        startDateTimeRegist.value = '00:00';
+        endDateRegist.value = dayjs(end).format('YYYY-MM-DD');
+        endDateTimeRegist.value = '00:00';
+
+        // 처음 formData에 저장
+        updateFormData();
+    } else {
+        // 날짜 + 시간: 날짜는 `YYYY-MM-DD`, 시간은 오전/오후 HH:mm
+        startDate.value = dayjs(start).format('YYYY-MM-DD');
+        endDate.value = dayjs(end).format('YYYY-MM-DD');
+        startDateTime.value = dayjs(start).format('HH:mm');
+        endDateTime.value = dayjs(end).format('HH:mm');
+
+        // View 변수 업데이트
+        startDateView.value = dayjs(start).format('MM월 DD일 (dddd)');
+        endDateView.value = dayjs(end).format('MM월 DD일 (dddd)');
+        startDateTimeView.value = formatTimeView(start);
+        endDateTimeView.value = formatTimeView(end);
+
+        // Regist 변수에 담기 (그대로 담기)
+        startDateRegist.value = dayjs(start).format('YYYY-MM-DD');
+        startDateTimeRegist.value = dayjs(start).format('HH:mm');
+        endDateRegist.value = dayjs(end).format('YYYY-MM-DD');
+        endDateTimeRegist.value = dayjs(end).format('HH:mm');
+
+        // 처음 formData에 저장
+        updateFormData();
+    }
+};
 
 // 회의 여부
 const isMeeting = ref(false);
@@ -225,8 +362,8 @@ const formData = ref({
     id: authStore.user.userId,
     title: null,
     content: null,
-    startTime: `${startDate.value}T${startDateTime.value}+09:00`,
-    endTime: `${endDate.value}T${endDateTime.value}+09:00`,
+    startTime: `${startDateRegist.value}T${startDateTimeRegist.value}+09:00`,
+    endTime: `${endDateRegist.value}T${endDateTimeRegist.value}+09:00`,
     publicStatus: 'PRIVATE',
     scheduleRepeatId: null,
     repeatOrder: null,
@@ -237,29 +374,55 @@ const formData = ref({
 });
 
 // 상태 변경을 formData에 반영
-watch(isMeeting, (newValue) => {
-    formData.value.meetingStatus = newValue ? 'ACTIVE' : 'INACTIVE';
-}, { immediate: true });
+watch(
+    isMeeting,
+    (newValue) => {
+        formData.value.meetingStatus = newValue ? 'ACTIVE' : 'INACTIVE';
+    },
+    { immediate: true }
+);
 
-watch(isPublic, (newValue) => {
-    formData.value.publicStatus = newValue ? 'PUBLIC' : 'PRIVATE';
-}, { immediate: true });
-
-console.log('startTime:', formData.value.startTime);
-console.log('endTime:', formData.value.endTime);
+watch(
+    isPublic,
+    (newValue) => {
+        formData.value.publicStatus = newValue ? 'PUBLIC' : 'PRIVATE';
+    },
+    { immediate: true }
+);
 
 onMounted(() => {
-    // updateIsAllDay();
+    isAllDay.value = 
+        dayjs(start.value).format('HH:mm') === '00:00' && 
+        dayjs(end.value).format('HH:mm') === '00:00';
+
+    // 함수 호출
+    formatDateTime(start.value, end.value, isAllDay.value);
+
+    console.log('SR:', formData.value.startTime);
+    console.log('ER:', formData.value.endTime);
+
+    console.log('startDate:', startDate.value);
+    console.log('startDateTime:', startDateTime.value);
+    console.log('endDate:', endDate.value);
+    console.log('endDateTime:', endDateTime.value);
+
+    // watch 설정
+    watch(isAllDay, (newVal) => {
+        if (newVal) {
+            handleAllDayTrue();
+        } else {
+            handleAllDayFalse();
+        }
+        console.log('startDate?:', startDate.value);
+        console.log('startDateTime?:', startDateTime.value);
+        console.log('endDate?:', endDate.value);
+        console.log('endDateTime?:', endDateTime.value);
+        console.log('startDateView:', startDateView.value);
+        console.log('startDateTimeView:', startDateTimeView.value);
+        console.log('endDateView:', endDateView.value);
+        console.log('endDateTimeView:', endDateTimeView.value);
+    });
 });
-
-// const componentInstance = ref(null);
-
-// onMounted(() => {
-//     console.log(componentInstance.value); // 컴포넌트 인스턴스 확인
-//     if (componentInstance.value && typeof componentInstance.value.update === 'function') {
-//         componentInstance.value.update();
-//     }
-// });
 </script>
 
 <style scoped>

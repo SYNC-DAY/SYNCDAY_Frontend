@@ -2,11 +2,7 @@
     <div style="height: 100%; width: 100%">
         <FullCalendar :options="calendarOptions" />
         <CalendarViewModal v-if="showEventModal" :schedule="selectedEvent" @close="closeModal" />
-        <CalendarModal
-            v-if="isModalVisible"
-            :selectedInfo="selectedInfo"
-            @close="closeModal"
-        />
+        <CalendarModal v-if="isModalVisible" :selectedInfo="selectedInfo" @close="closeModal" />
     </div>
 </template>
 
@@ -56,9 +52,24 @@ const calendarOptions = ref({
     customButtons: {
         addEventButton: {
             text: '일정 추가',
-            click: (info) => {
-                selectedInfo.value = info;
+            click: () => {
+                // 현재 날짜와 시간을 기준으로 시작 시간(start) 설정 (정시)
+                const start = new Date();
+                start.setMinutes(0); // 분을 0으로 설정
+                start.setSeconds(0); // 초를 0으로 설정
+                start.setMilliseconds(0); // 밀리초를 0으로 설정
+                start.setHours(start.getHours() + 1); // 한 시간 뒤로 설정
+
+                // 끝 시간(end)은 시작 시간의 한 시간 뒤
+                const end = new Date(start);
+                end.setHours(end.getHours() + 1); // 끝 시간을 시작 시간 +1시간으로 설정
+                selectedInfo.value = {
+                    start: start,
+                    end: end,
+                };
                 isModalVisible.value = true;
+
+                console.log('selectedInfo', selectedInfo.value);
             },
         },
     },
