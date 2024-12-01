@@ -5,9 +5,21 @@
 	align-items: center;
 }
 
-.container-column {
+.container-col {
 	display: flex;
 	flex-direction: column;
+}
+
+.align-center {
+	align-items: center;
+}
+
+.justify-center {
+	justify-content: center;
+}
+
+.justify-right {
+	justify-content: right;
 }
 
 .width-100 {
@@ -24,4 +36,26 @@
 
 .underline-gray {
 	border-bottom: 1px solid var(--outline-gray);
+}
+
+.header {
+	padding: 0 1.5rem;
+}
+
+.header-left {
+	justify-content: left;
+	gap: 1rem;
+}
+
+.header-right {
+	justify-content: left;
+	gap: 1rem;
+}
+
+.ph-1rem {
+	padding: 0 1rem;
+}
+
+.pv-1rem {
+	padding: 1rem 0;
 }

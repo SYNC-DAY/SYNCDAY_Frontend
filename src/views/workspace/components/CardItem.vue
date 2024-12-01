@@ -1,8 +1,13 @@
 // Card.vue (업데이트)
 <template>
   <Card @click="openModal">
-    <template #titlie>{{ card.card_title }}</template>
-    <template #content> {{ card.card_content }} </template>
+    <template #content>
+      <div class="tag-indicator" :style="{ backgroundColor: card.tag_color }"></div>
+      <div class="card-content">
+        <span> {{ card.card_title }}</span>
+      </div>
+    </template>
+
   </Card>
 
 
@@ -42,31 +47,54 @@ const formatDate = (dateString) => {
 </script>
 
 // Card.vue
+
 <style scoped>
-.card {
-  /* existing styles */
-  min-width: 250px;
-  max-width: 100%;
-  overflow: hidden;
-  /* Prevent content overflow */
+.card-item {
+  cursor: pointer;
 }
 
-.card-title {
-  margin: 0.5rem 0;
-  font-size: 1rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+
+
+.card-item:last-child {
+  margin-bottom: 0;
+}
+
+.card-container {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.tag-indicator {
+  width: 1rem;
+  height: auto;
+  border-radius: 2px;
+}
+
+.p-card {
+  margin-top: 1rem;
 }
 
 .card-content {
-  font-size: 0.875rem;
-  color: #444;
-  margin-bottom: 1rem;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.card-title {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.card-description {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* Override PrimeVue Card styles */
+:deep(.p-card) {
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+:deep(.p-card-content) {
+  padding: 1rem;
 }
 </style>

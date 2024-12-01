@@ -18,6 +18,7 @@ import { setupAxiosInterceptors } from "../src/plugins/axios.js";
 import { definePreset } from "@primevue/themes";
 import Aura from "@primevue/themes/aura";
 import PrimeVue from "primevue/config";
+import { ConfirmationService } from "primevue";
 import ToastService from "primevue/toastservice";
 import Toast from "primevue/toast";
 import "primeicons/primeicons.css";
@@ -30,7 +31,9 @@ import Tag from "primevue/tag";
 import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
 import Dialog from "primevue/dialog";
-
+import Card from "primevue/card";
+import ProgressBar from "primevue/progressbar";
+import Avatar from "primevue/avatar";
 /* css */
 import "@/assets/styles/syncday/main.css";
 
@@ -91,9 +94,12 @@ app.component("Button", Button);
 app.component("Tag", Tag);
 app.component("ProgressSpinner", ProgressSpinner);
 app.component("Message", Message);
+app.use(ConfirmationService);
 app.use(ToastService);
 app.component("Toast", Toast);
 app.component("Dialog", Dialog);
-
+app.component("Card", Card);
+app.component("ProgressBar", ProgressBar);
+app.component("Avatar", Avatar);
 /* mount */
 app.mount("#app");

@@ -5,7 +5,7 @@
 			<i class="pi" :class="{ 'pi-chevron-right': isCollapsed, 'pi-chevron-left': !isCollapsed }"></i>
 		</button>
 
-		<div v-show="!isCollapsed" class="sidebar-content container-column">
+		<div v-show="!isCollapsed" class="sidebar-content container-col">
 			<slot></slot>
 		</div>
 	</aside>
