@@ -21,7 +21,7 @@ const error = ref('');
 const isLoading = ref(true);
 
 onMounted(async () => {
-	console("callback mounted")
+	console.log("callback mounted")
 	try {
 		// URL에서 파라미터 추출
 		const urlParams = new URLSearchParams(window.location.search);
@@ -31,6 +31,7 @@ onMounted(async () => {
 		console.log('Installation callback received:', {
 			installationId,
 			setupAction,
+
 		});
 
 		if (!installationId) {
@@ -46,7 +47,6 @@ onMounted(async () => {
 			body: JSON.stringify({
 				installation_id: installationId,
 				setup_action: setupAction,
-				state: state
 			})
 		});
 
