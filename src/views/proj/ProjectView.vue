@@ -26,8 +26,8 @@
 				</div>
 
 				<div class="header-right">
-					<Button label="VCS Integration" severity="secondary" icon="pi pi-github"
-						@click="openProjectSettings" aria-haspopup="true" aria-controls="overlay-menu" />
+					<Button label="Project Setting" severity="secondary" icon="pi pi-cog" @click="openProjectSettings"
+						aria-haspopup="true" aria-controls="overlay-menu" />
 				</div>
 			</div>
 
@@ -68,11 +68,7 @@
 		<!-- Modals -->
 		<VcsTypeMenu ref="vcsMenu" @vcs-selected="handleVcsSelection" />
 
-		<GithubAuthModal :visible="showGithubAuthModal" @update:visible="showGithubAuthModal = $event"
-			@login-success="handleGithubLoginSuccess" @login-error="handleGithubLoginError" />
 
-
-		<OrgSelectMenu v-model:visible="showOrgProjSelectionModal" @select="handleProjectSelect" />
 
 
 		<ProjectSettingsModal v-model:visible="showProjectSettings" :projectId="props.projectId"
@@ -94,8 +90,6 @@ import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import Button from 'primevue/button';
 import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
-import GithubAuthModal from '@/views/vcs/github/GithubAuthModal.vue';
-import OrgSelectMenu from '../vcs/github/OrgSelectMenu.vue';
 import ProjectSettingsModal from './components/ProjectSettingsModal.vue';
 // props
 const props = defineProps({

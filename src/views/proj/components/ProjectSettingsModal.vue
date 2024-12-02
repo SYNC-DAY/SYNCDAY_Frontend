@@ -1,6 +1,6 @@
 <template>
 	<Dialog :visible="visible" @update:visible="handleVisibilityChange" modal header="프로젝트 설정"
-		:style="{ width: '70vw' }" class="p-0">
+		:style="{ width: '70vw', height: '50vh' }" class="p-0">
 
 		<Tabs value="0">
 			<TabList>
@@ -17,7 +17,11 @@
 					Members
 				</TabPanel>
 				<TabPanel value="2">
-					VCS
+					<div class="container-row justify-right">
+						<Button label="VCS" severity="secondary" @click="toggleVcsMenu"></Button>
+						<VcsTypeMenu ref="vcsMenu" @vcs-selected="handleVcsSelection" />
+
+					</div>
 				</TabPanel>
 
 
@@ -40,17 +44,16 @@ import Tab from 'primevue/tab';
 import TabPanels from 'primevue/tabpanels';
 import TabPanel from 'primevue/tabpanel';
 
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import ColumnGroup from 'primevue/columngroup';   // optional
-import Row from 'primevue/row';                   // optional
-
+import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
 
 import { useConfirm } from "primevue/useconfirm";
 
 import { useToast } from 'primevue/usetoast';
 import axios from 'axios';
-
+const vcsMenu = ref(null);
+const toggleVcsMenu = (event) => {
+	vcsMenu.value.toggle(event);
+}
 const props = defineProps({
 	visible: Boolean,
 	projectId: Number,
@@ -250,6 +253,27 @@ const deleteProject = async () => {
 	}
 };
 
+
+
+
+const handleVcsSelection = async (vcsType) => {
+	try {
+		if (vcsType === 'GITHUB') {
+			if (!githubAuthStore.isAuthenticated) {
+				showGithubAuthModal.value = true;
+			} else {
+				showOrgProjSelectionModal.value = true;
+			}
+		}
+	} catch (error) {
+		toast.add({
+			severity: 'error',
+			summary: 'VCS Connection Failed',
+			detail: error.message,
+			life: 3000
+		});
+	}
+};
 // Lifecycle
 onMounted(() => {
 	if (props.visible) {
