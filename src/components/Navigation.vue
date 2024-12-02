@@ -101,6 +101,7 @@ const currentRoute = computed(() => route.path);
 // 검색 처리 함수 추가
 const handleSearch = () => {
 	if (searchText.value.trim()) { // 검색어가 비어있지 않은 경우에만 검색 실행
+    console.log("검색된 단어: ", searchText.value)
 		router.push({
 			path: '/search',
 			query: {

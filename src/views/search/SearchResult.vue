@@ -39,7 +39,10 @@ vueCopy<template>
           <div v-for="domain in domains" :key="domain">
             <div v-if="domainResults[domain].length > 0" class="domain-section">
               <div class="domain-header">
-                <h2>{{ getDomainTitle(domain) }}</h2>
+                <h2>
+                  {{ getDomainTitle(domain) }}
+                  <span class="domain-count">{{ domainResults[domain].length }}</span>
+                </h2>
                 <button 
                   v-if="domainResults[domain].length > 5" 
                   @click="showMore(domain)" 
@@ -89,7 +92,7 @@ import axios from 'axios';
 // 도메인별 결과 컴포넌트 import
 import ProjectSearch from "@/views/search/components/ProjectSearch.vue";
 import WorkspaceSearch from './components/WorkspaceSearch.vue';
-// import CardboardResult from './components/CardboardResult.vue';
+import CardboardSearch from './components/CardboardSearch.vue';
 // import CardResult from './components/CardResult.vue';
 // import CommentResult from './components/CommentResult.vue';
 // import ChatResult from './components/ChatResult.vue';
@@ -121,7 +124,7 @@ const getResultComponent = (type) => {
   const components = {
     'projects': ProjectSearch,
     'workspace': WorkspaceSearch,
-    // 'cardboard': CardboardResult,
+    'cardboard': CardboardSearch,
     // 'card': CardResult,
     // 'comments': CommentResult,
     // 'chats': ChatResult,
@@ -154,8 +157,8 @@ const filters = [
   { id: 'workspace', name: '워크스페이스', icon: 'pi pi-share-alt' },
   { id: 'cardboard', name: '카드보드', icon: 'pi pi-credit-card' },
   { id: 'card', name: '카드', icon: 'pi pi-th-large' },
-  { id: 'comments', name: '댓글', icon: 'pi pi-comments' },
-  { id: 'chats', name: '채팅', icon: 'pi pi-comment' },
+  { id: 'comments', name: '댓글', icon: 'pi pi-comment' },
+  { id: 'chats', name: '채팅', icon: 'pi pi-comments' },
   { id: 'files', name: '파일', icon: 'pi pi-file' }
 ];
 
@@ -176,8 +179,8 @@ const domainResults = ref({
 const API_ENDPOINTS = {
   projects: '/projs/search',
   workspace: '/workspaces/search',
-  // cardboard: '/cardboard/search',
-  // card: '/card/search',
+  cardboard: '/cardboards/search',
+  // card: '/cards/search',
   // comments: '/comments/search',
   // chats: '/chats/search',
   // files: '/files/search'
@@ -351,6 +354,11 @@ onMounted(() => {
   color: #333;
 }
 
+.domain-count {
+  color: #FE5D86;
+  font-size: 1.4rem;
+  margin-left: 0.2rem;
+}
 
 .result-item {
   margin-bottom: 1rem;
