@@ -25,34 +25,28 @@ export const useGithubAppAuthStore = defineStore("githubAppAuth", {
       window.location.href = `https://github.com/apps/${clientId}/installations/new`;
     },
 
-    async handleInstallationCallback(installationId) {
-      this.isInstalling = true;
-      this.error = null;
-
+    // In your store or component
+    // In your store or component
+    async handleInstallation(installationId, code) {
       try {
-        // Call backend to complete installation
-        const response = await axios.post("/api/github/installation/callback", {
-          installationId,
-          setupAction,
+        const response = await axios({
+          method: "POST",
+          url: "/user/oauth2/github/installation",
+          data: {
+            installation_id: installationId,
+            code: code,
+            setup_action: "install", // If needed
+          },
         });
 
         if (response.data.success) {
-          this.installationId = installationId;
-
-          // Get redirect path or default to home
-          const redirectPath = localStorage.getItem("github_app_redirect") || "/";
-          localStorage.removeItem("github_app_redirect");
-
-          return redirectPath;
+          return response.data.data;
         } else {
-          throw new Error("Failed to complete installation");
+          throw new Error("Failed to handle installation");
         }
       } catch (error) {
         console.error("Installation error:", error);
-        this.error = error.message || "Installation failed";
         throw error;
-      } finally {
-        this.isInstalling = false;
       }
     },
 

@@ -31,7 +31,7 @@
 								<i class="pi pi-github text-4xl mb-3"></i>
 								<h4 class="text-xl font-medium mb-2">GitHub App Installation Required</h4>
 								<p class="text-gray-600 mb-4">
-									To connect your GitHub organizations, you need to install our GitHub App first.
+									To connect your GitHub organizations, you need to install SyncDay GitHub App first.
 								</p>
 								<Button label="Install GitHub App" severity="primary"
 									:loading="githubAppAuth.isInstalling" @click="handleInstallApp" />
