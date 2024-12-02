@@ -108,7 +108,6 @@ const fetchWorkspace = async () => {
 
     if (response.data.success) {
       workspaceDetails.value = response.data.data;
-
       const updatedProjects = JSON.parse(JSON.stringify(props.projects));
       const project = updatedProjects.find(p => p.proj_id === parseInt(props.projectId));
 

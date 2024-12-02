@@ -56,6 +56,7 @@
     padding: 1rem;
     border-radius: 8px;
     transition: background-color 0.2s;
+    width: 100%; /* 전체 너비 사용 */
   }
   
   .result-meta {
@@ -94,8 +95,9 @@
 
   .result-header h3 {
   margin: 0;
-  color: #1a73e8;
-  font-size: x-large;
+  color: #FE5D86;
+  font-size: large;
+  margin-bottom: 0.3rem;
 }
 
   

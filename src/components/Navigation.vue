@@ -39,7 +39,10 @@
 
 		<!-- search -->
 		<div class="nav-search">
-			<InputText v-model="searchText" placeholder="검색어를 입력하세요" @keyup.enter="handleSearch" />
+			<div class="p-input-icon-right">
+				<i class="pi pi-search cursor-pointer" @click="handleSearch"></i>
+				<InputText v-model="searchText" placeholder="검색어를 입력하세요" @keyup.enter="handleSearch" />
+			</div>
 		</div>
 
 		<!-- icon,profile -->
@@ -241,15 +244,32 @@ const isRouteActive = (routeName) => {
 	padding: 0.5rem;
 }
 
-.nav-search input {
+.nav-search .p-input-icon-right {
 	width: 100%;
-	/* 부모 컨테이너 기준으로 최대 너비 */
-	max-width: 25rem;
-	/* 최대 너비 제한 */
-	height: 2.4rem;
-	font-size: 1rem;
-	border-radius: 1.2rem;
-	padding: 0 1rem;
+    max-width: 25rem;
+    position: relative;
+}
+
+.nav-search .p-input-icon-right i {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  right: 1rem;
+  color: #6c757d;  /* 아이콘 색상을 원하는 대로 조정하세요 */
+}
+
+.nav-search .p-input-icon-right input {
+  width: 100%;
+  height: 2.4rem;
+  font-size: 1rem;
+  border-radius: 1.2rem;
+  padding: 0 2.5rem 0 1rem;  /* 오른쪽 패딩을 늘려서 아이콘 공간 확보 */
+  z-index: 1; /* 클릭 가능하도록 z-index 설정 */
+}
+
+.p-input-icon-right i:hover {
+	cursor: pointer;
+  	color: #495057;
 }
 
 /* 우측 아이콘/프로필 영역 */
