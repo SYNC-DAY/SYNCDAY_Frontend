@@ -70,7 +70,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, onUnmounted, ref, computed,watch } from 'vue';
 import { useAssistantStore } from '@/stores/assistant';
 import { useAuthStore } from '@/stores/auth';
 import { EventSourcePolyfill } from 'event-source-polyfill';
@@ -78,9 +78,10 @@ import { EventSourcePolyfill } from 'event-source-polyfill';
 const assistantStore = useAssistantStore();
 const authStore = useAuthStore();
 const isAssistantVisible = ref(false);
-const todaySchedules = assistantStore.todaySchedules;
-// const notiedSchedules = assistantStore.notiedSchedules;
-const notiedSchedules = assistantStore.notiedSchedules;
+
+const todaySchedules = computed(() => assistantStore.todaySchedules);
+const notiedSchedules = computed(() => assistantStore.notiedSchedules);
+
 const tab = ref("today");
 
 const isPastSchedule = (start_time) => {
@@ -131,8 +132,8 @@ eventSource.value = new EventSourcePolyfill(
         Authorization: `Bearer ${token}`,
         
     },
-    connectionTimeout: 300000, 
-    heartbeatTimeout: 100000, 
+    connectionTimeout: 24*60*1000, 
+    heartbeatTimeout: 24*60*1000, 
     }
 );
 
@@ -143,11 +144,32 @@ eventSource.value.onmessage = (event) => {
     isAssistantVisible.value = true;
 };
 
+const MAX_RETRY = 5;
+let retryCount = 0;
+let isConnecting = false;
+
 eventSource.value.onerror = (error) => {
     console.error("SSE connection error:", error);
     disconnect();
-    setTimeout(() => connect(userId, token), 3000); 
+
+    if (retryCount >= MAX_RETRY) {
+        console.error("Max retry attempts reached. Stopping reconnection.");
+        return;
+    }
+
+    if (isConnecting) return; // 중복 방지
+    isConnecting = true;
+
+    const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 30000);
+    console.log(`Reconnecting in ${retryDelay / 1000} seconds...`);
+
+    setTimeout(() => {
+        connect(userId, token);
+        retryCount++;
+        isConnecting = false;
+    }, retryDelay);
 };
+
 };
 
 const disconnect = () => {
@@ -160,7 +182,7 @@ if (eventSource.value) {
 
 
 onMounted(()=>{
-    const userId = authStore.user.id;
+    const userId = authStore.user.userId;
     const token = authStore.accessToken;
 
     if(assistantStore.isFirst){
@@ -170,6 +192,9 @@ onMounted(()=>{
 
     connect(userId,token);
     console.log("sse 연결 시도");
+})
+onUnmounted(()=>{
+    disconnect();
 })
 </script>
 
