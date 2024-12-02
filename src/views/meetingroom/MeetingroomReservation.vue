@@ -131,22 +131,22 @@ const cancel = async () => {
 }
 
 // 예약 취소 함수
-const cancelReservation = async () => {
-  const scheduleId = router.currentRoute.value.query.scheduleId;
-  if (!scheduleId) {
-    alert("취소할 예약 정보가 없습니다.");
-    return;
-  }
+// const cancelReservation = async () => {
+//   const scheduleId = router.currentRoute.value.query.scheduleId;
+//   if (!scheduleId) {
+//     alert("취소할 예약 정보가 없습니다.");
+//     return;
+//   }
 
-  try {
-    await axios.delete(`/meetingroom_reservation/${scheduleId}`);
-    alert("예약이 성공적으로 취소되었습니다!");
-    router.push("/meetingroom");
-  } catch (error) {
-    console.error("예약 취소 중 오류 발생:", error);
-    alert("예약 취소 중 오류가 발생했습니다.");
-  }
-};
+//   try {
+//     await axios.delete(`/meetingroom_reservation/${scheduleId}`);
+//     alert("예약이 성공적으로 취소되었습니다!");
+//     router.push("/meetingroom");
+//   } catch (error) {
+//     console.error("예약 취소 중 오류 발생:", error);
+//     alert("예약 취소 중 오류가 발생했습니다.");
+//   }
+// };
 
 // 라우트 파라미터 설정
 onMounted(() => {
