@@ -20,13 +20,14 @@
 </template>
 
 <script setup>
+import { useGithubAppAuthStore } from '@/stores/useGithubAppAuthstore';
 import { onMounted } from 'vue'
-import { useGithubAppStore } from '@/stores/useGithubAppstore';
+useGithubAppAuthStore
 
-const githubAppStore = useGithubAppStore()
+const githubAppStore = useGithubAppAuthStore()
 
 const installGithubApp = () => {
-	githubAppStore.initiateGithubAppInstallation()
+	githubAppStore.initiateInstallation()
 }
 
 onMounted(async () => {

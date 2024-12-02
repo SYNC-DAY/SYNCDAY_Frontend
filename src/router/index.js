@@ -2,7 +2,7 @@ import { createRouter, createWebHashHistory, createWebHistory } from "vue-router
 import GithubOrganization from "@/views/github/GithubOrganization.vue";
 import GithubAppCallback from "@/views/github/GithubAppCallback.vue";
 const router = createRouter({
-  history: createWebHashHistory(),
+  history: createWebHistory(),
 
   routes: [
     {
@@ -10,7 +10,7 @@ const router = createRouter({
       component: GithubOrganization,
     },
     {
-      path: "/github/callback",
+      path: "/oauth/github/callback",
       component: GithubAppCallback,
     },
     {
@@ -20,7 +20,10 @@ const router = createRouter({
     },
   ],
 });
-
+router.beforeEach((to, from, next) => {
+  console.log("Route change:", to.fullPath);
+  next();
+});
 export default router;
 
 const routes = [];
