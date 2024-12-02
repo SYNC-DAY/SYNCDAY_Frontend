@@ -47,7 +47,7 @@
 			<!-- icons -->
 			<div class="icons">
 				<RouterLink to="/meetingroom">
-					<i class="pi pi-calendar"></i>
+					<i class="pi pi-users"></i>
 				</RouterLink>
 				<button class="icon-button" @click="toggleChatPop">
 					<i class="pi pi-send"></i>
