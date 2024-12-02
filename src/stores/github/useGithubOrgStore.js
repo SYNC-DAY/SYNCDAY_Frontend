@@ -1,143 +1,62 @@
-// useGithubOrgStore.js
 import { defineStore } from "pinia";
-import { useGithubAuthStore } from "./useGithubAuthStore";
-import { Octokit } from "@octokit/rest";
-import { ref, computed } from "vue";
+import { useGithubAppAuthStore } from "./useGithubAppAuthstore";
+import axios from "axios";
 
-export const useGithubOrgStore = defineStore("githubOrg", () => {
-  const organizations = ref({});
-  const selectedOrg = ref(null);
-  const selectedProject = ref(null);
-  const octokit = ref(null);
-  const isLoading = ref(false);
-  const error = ref(null);
+export const useGithubOrgStore = defineStore("githubOrg", {
+  state: () => ({
+    organizations: [],
+    selectedOrg: null,
+    isLoading: false,
+    error: null,
+    lastFetchTime: null,
+  }),
 
-  function initializeOctokit() {
-    if (!octokit.value) {
-      const authStore = useGithubAuthStore();
-      const token = authStore.accessToken;
+  getters: {
+    hasOrganizations: state => state.organizations.length > 0,
+    shouldRefetch: state => {
+      if (!state.lastFetchTime) return true;
+      return Date.now() - state.lastFetchTime > 5 * 60 * 1000; // 5 minutes cache
+    },
+  },
 
-      if (!token) {
-        throw new Error("No access token available");
+  actions: {
+    async fetchOrganizations(forceRefresh = false) {
+      const githubAppAuth = useGithubAppAuthStore();
+
+      if (!githubAppAuth.isInstalled) {
+        throw new Error("GitHub App not installed");
       }
 
-      octokit.value = new Octokit({
-        auth: token,
-      });
-    }
-    return octokit.value;
-  }
-
-  async function fetchOrganizations(forceRefresh = false) {
-    try {
-      if (!octokit.value) {
-        initializeOctokit();
+      if (!forceRefresh && !this.shouldRefetch && this.organizations.length > 0) {
+        return this.organizations;
       }
 
-      isLoading.value = true;
-      const { data: orgs } = await octokit.value.rest.orgs.listForAuthenticatedUser();
+      this.isLoading = true;
+      this.error = null;
 
-      // Transform organizations data structure
-      const orgsMap = {};
-      for (const org of orgs) {
-        // Preserve existing projects if they exist
-        const existingOrg = organizations.value[org.login];
-        orgsMap[org.login] = {
-          ...org,
-          projects: existingOrg?.projects || [],
-          projectsFetched: existingOrg?.projectsFetched || false,
-        };
+      try {
+        const response = await axios.get("/api/github/organizations");
+        this.organizations = response.data;
+        this.lastFetchTime = Date.now();
+        return this.organizations;
+      } catch (error) {
+        console.error("Error fetching organizations:", error);
+        this.error = error.message;
+        throw error;
+      } finally {
+        this.isLoading = false;
       }
+    },
 
-      organizations.value = orgsMap;
-      return Object.values(organizations.value);
-    } catch (error) {
-      console.error("Error fetching organizations:", error);
-      throw error;
-    } finally {
-      isLoading.value = false;
-    }
-  }
+    setSelectedOrg(org) {
+      this.selectedOrg = org;
+    },
 
-  async function fetchOrgProjects(orgName) {
-    if (!orgName || !organizations.value[orgName]) {
-      throw new Error("Invalid organization");
-    }
-
-    try {
-      isLoading.value = true;
-
-      const query = `
-        query($orgName: String!) {
-          organization(login: $orgName) {
-            projectsV2(first: 100) {
-              nodes {
-                id
-                title
-                shortDescription
-                url
-                closed
-                updatedAt
-                number
-                items {
-                  nodes {
-                    id
-                  }
-                }
-              }
-            }
-          }
-        }
-      `;
-
-      const response = await octokit.value.graphql(query, { orgName });
-      const projects = response.organization.projectsV2.nodes;
-
-      // Update organization with projects
-      organizations.value[orgName] = {
-        ...organizations.value[orgName],
-        projects,
-        projectsFetched: true,
-      };
-
-      return projects;
-    } catch (error) {
-      console.error(`Error fetching projects for ${orgName}:`, error);
-      throw error;
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  function selectOrg(orgName) {
-    selectedOrg.value = orgName ? organizations.value[orgName] : null;
-  }
-
-  function selectProject(orgName, projectId) {
-    const org = organizations.value[orgName];
-    if (org) {
-      selectedProject.value = org.projects.find(p => p.id === projectId) || null;
-    }
-  }
-
-  function clearState() {
-    organizations.value = {};
-    selectedOrg.value = null;
-    selectedProject.value = null;
-    error.value = null;
-    octokit.value = null;
-  }
-
-  return {
-    organizations,
-    selectedOrg,
-    selectedProject,
-    isLoading,
-    error,
-    fetchOrganizations,
-    fetchOrgProjects,
-    selectOrg,
-    selectProject,
-    clearState,
-  };
+    clearState() {
+      this.organizations = [];
+      this.selectedOrg = null;
+      this.error = null;
+      this.lastFetchTime = null;
+    },
+  },
 });
