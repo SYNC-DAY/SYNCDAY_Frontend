@@ -29,7 +29,7 @@ export const useGithubAppStore = defineStore("githubAppAuth", {
           installation_id: installationId,
           vcs_type: "GITHUB",
           user_id: 1,
-          org_login: "three-ping",
+          org_login: "1etterh",
         });
 
         if (response.data.success) {
