@@ -54,10 +54,19 @@ export const useGithubOrgStore = defineStore("githubOrg", {
         // }
 
         this.isLoading = true;
-
+        // const { data: rateLimit } = await this.octokit.rest.rateLimit.get();
         // Fetch user's organizations using Octokit
         const { data: orgs } = await this.octokit.rest.orgs.listForAuthenticatedUser();
+        const { data: user } = await this.octokit.rest.users.getAuthenticated();
+        console.log(orgs);
+        console.log("Authenticated User:", user);
 
+        const response = await this.octokit.rest.users.getAuthenticated();
+
+        const _orgs = await this.octokit.paginate(this.octokit.rest.orgs.listForAuthenticatedUser, {
+          per_page: 100,
+        });
+        console.log("Organizations:", _orgs);
         // Fetch detailed information for each organization
         const detailedOrgs = await Promise.all(
           orgs.map(async org => {

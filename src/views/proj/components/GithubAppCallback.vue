@@ -27,7 +27,7 @@ onMounted(async () => {
 	const installationId = route.query.installation_id;
 	try {
 		if (!code || !installationId) {
-			await githubAuthStore.handleOAuthCallback(code);
+			await githubAuthStore.handleAuthCallback(code);
 			return;
 		} else if (installationId) {
 			await githubAppStore.handleAppInstallation(installationId, code);
