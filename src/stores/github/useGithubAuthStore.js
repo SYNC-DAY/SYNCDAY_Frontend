@@ -1,87 +1,42 @@
+// stores/github/useGithubAuthStore.js
 import { defineStore } from "pinia";
 import axios from "axios";
 
+// stores/github/useGithubAuthStore.js
 export const useGithubAuthStore = defineStore("githubAuth", {
-  state: () => ({
-    accessToken: localStorage.getItem("github_token"),
-    userInfo: null,
-    isLoading: false,
-    error: null,
-  }),
-
-  getters: {
-    isAuthenticated: state => !!state.accessToken,
-    username: state => state.userInfo?.login,
-    avatarUrl: state => state.userInfo?.avatar_url,
-    hasError: state => !!state.error,
-    getAccessToken: state => {
-      if (!state.accessToken) {
-        const storedToken = localStorage.getItem("github_token");
-        if (storedToken) {
-          state.accessToken = storedToken;
-        }
-      }
-      return state.accessToken;
-    },
-  },
-
   actions: {
-    loginWithGithub(returnPath = null) {
+    initiateGithubIntegration() {
+      const currentPath = window.location.pathname + window.location.search;
+      localStorage.setItem("github_auth_redirect", currentPath);
+
+      const state = Math.random().toString(36).substring(7);
+      localStorage.setItem("github_auth_state", state);
+
       const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
       const redirectUri = import.meta.env.VITE_GITHUB_REDIRECT_URI;
-      const scope = "read:user read:repo read:org read:project";
+      const scope = "read:user read:repo read:org";
 
-      // Store the return path or current path for redirect after login
-      const redirectPath = returnPath || window.location.pathname + window.location.search;
-      localStorage.setItem("github_auth_redirect", redirectPath);
-
-      window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
+      window.location.href = `https://github.com/login/oauth/authorize?` + `client_id=${clientId}&` + `redirect_uri=${redirectUri}&` + `scope=${scope}&` + `state=${state}`;
     },
-
-    async validateToken() {
-      if (!this.accessToken) return false;
-
-      try {
-        const response = await fetch("https://api.github.com/user", {
-          headers: {
-            Authorization: `Bearer ${this.accessToken}`,
-            Accept: "application/vnd.github.v3+json",
-          },
-        });
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            this.handleInvalidToken();
-            return false;
-          }
-          throw new Error("Token validation failed");
-        }
-
-        return true;
-      } catch (error) {
-        console.error("Token validation error:", error);
-        return false;
-      }
-    },
-
-    handleInvalidToken() {
-      this.logout();
-      const currentPath = window.location.pathname + window.location.search;
-      this.loginWithGithub(currentPath);
-    },
-
-    async handleAuthCallback(code) {
+    async handleOAuthCallback(code) {
       this.isLoading = true;
       this.error = null;
 
       try {
-        const response = await axios.get(`user/oauth2/github/access_token?code=${code}`);
+        const savedState = localStorage.getItem("github_auth_state");
+        // First get the access token using the code
+        const response = await axios.post("/user/oauth2/github/access_token", {
+          code: code,
+          state: savedState,
+        });
 
         if (response.data.success) {
           const accessToken = response.data.data;
           this.setAccessToken(accessToken);
-          await this.fetchUserInfo();
-          return true;
+
+          // After getting the token, redirect to GitHub App installation
+          const appId = import.meta.env.VITE_GITHUB_APP_ID;
+          window.location.href = `https://github.com/apps/${appId}/installations/new`;
         } else {
           throw new Error("Failed to get access token");
         }
@@ -94,73 +49,28 @@ export const useGithubAuthStore = defineStore("githubAuth", {
       }
     },
 
-    async ensureAuthenticated() {
-      if (!this.isAuthenticated) {
-        this.loginWithGithub();
-        return false;
-      }
-
-      const isValid = await this.validateToken();
-      if (!isValid) {
-        return false;
-      }
-
-      return true;
-    },
-
-    setAccessToken(token) {
-      this.accessToken = token;
-      if (token) {
-        localStorage.setItem("github_token", token);
-      }
-    },
-
-    async fetchUserInfo() {
-      if (!this.accessToken) {
-        throw new Error("No access token available");
-      }
-
+    // This will be called after GitHub App installation
+    async handleAppInstallation(installationId) {
       this.isLoading = true;
+      this.error = null;
 
       try {
-        const response = await fetch("https://api.github.com/user", {
-          headers: {
-            Authorization: `Bearer ${this.accessToken}`,
-            Accept: "application/vnd.github.v3+json",
-          },
+        const response = await axios.post("/user/oauth2/github/app/install", {
+          installationId: installationId,
         });
 
-        if (!response.ok) {
-          if (response.status === 401) {
-            this.handleInvalidToken();
-            throw new Error("Invalid token");
-          }
-          throw new Error("Failed to fetch user info");
+        if (response.data.success) {
+          this.setInstallationId(installationId);
+          await this.fetchUserInfo();
+          return true;
         }
-
-        const userData = await response.json();
-        this.userInfo = userData;
-        localStorage.setItem("github_user_info", JSON.stringify(userData));
-        return userData;
       } catch (error) {
-        console.error("Error fetching user info:", error);
-        this.error = error.response?.data?.message || error.message;
+        console.error("Installation error:", error);
+        this.error = error.message || "Installation failed";
         throw error;
       } finally {
         this.isLoading = false;
       }
-    },
-
-    logout() {
-      localStorage.removeItem("github_token");
-      localStorage.removeItem("github_user_info");
-      this.accessToken = null;
-      this.userInfo = null;
-      this.error = null;
-    },
-
-    clearError() {
-      this.error = null;
     },
   },
 });

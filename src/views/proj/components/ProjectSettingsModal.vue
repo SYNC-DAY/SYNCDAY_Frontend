@@ -26,15 +26,14 @@
 						<h3 class="text-lg font-medium mb-4">GitHub Integration</h3>
 
 						<!-- Installation Status -->
-						<div v-if="!githubAppAuth.isInstalled" class="installation-required">
+						<div class="installation-required">
 							<div class="text-center py-6">
 								<i class="pi pi-github text-4xl mb-3"></i>
 								<h4 class="text-xl font-medium mb-2">GitHub App Installation Required</h4>
 								<p class="text-gray-600 mb-4">
 									To connect your GitHub organizations, you need to install SyncDay GitHub App first.
 								</p>
-								<Button label="Install GitHub App" severity="primary"
-									:loading="githubAppAuth.isInstalling" @click="handleInstallApp" />
+								<Button label="Install GitHub App" severity="primary" @click="handleInstallClick" />
 							</div>
 						</div>
 					</div>
@@ -54,7 +53,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import axios from 'axios';
-import { useGithubAppAuthStore } from '@/stores/github/useGithubAppAuthstore';
+
 import { useGithubOrgStore } from '@/stores/github/useGithubOrgStore';
 import { useGithubRepoStore } from '@/stores/github/useGithubRepoStore';
 
@@ -68,9 +67,10 @@ import { useConfirm } from "primevue/useconfirm";
 import { useToast } from 'primevue/usetoast';
 
 import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
+import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 
 /* store */
-const githubAppAuth = useGithubAppAuthStore();
+const githubAuthstore = useGithubAuthStore();
 const githubOrgStore = useGithubOrgStore();
 const githubRepoStore = useGithubRepoStore();
 
@@ -104,38 +104,30 @@ const toggleVcsMenu = (event) => {
 
 const handleVcsSelection = async (vcsType) => {
 	selectedVcs.value = vcsType;
-	if (vcsType === 'GITHUB' && githubAppAuth.isInstalled) {
-		await fetchOrganizations();
+	if (vcsType === 'GITHUB') {
+		// await fetchOrganizations();
 	}
 };
 
-const handleInstallApp = async () => {
-	try {
-		await githubAppAuth.initiateInstallation();
-	} catch (err) {
-		error.value = 'Failed to initiate GitHub App installation';
-	}
-};
-const handleConfigureApp = () => {
-	// Redirect to GitHub App configuration page
-	const appName = import.meta.env.VITE_GITHUB_APP_NAME;
-	window.location.href = `https://github.com/apps/${appName}/installations/new`;
-};
-const fetchOrganizations = async () => {
-	if (!githubAppAuth.isInstalled) return;
 
-	isLoading.value = true;
-	error.value = null;
-	try {
-		const orgs = await githubOrgStore.fetchOrganizations(true);
-		organizations.value = orgs;
-	} catch (err) {
-		console.error('Error fetching organizations:', err);
-		error.value = 'Failed to fetch organizations. Please try again.';
-	} finally {
-		isLoading.value = false;
-	}
-};
+const handleInstallClick = () => {
+	githubAuthstore.initiateGithubIntegration();
+}
+// const fetchOrganizations = async () => {
+// 	if (!githubAppAuth.isInstalled) return;
+
+// 	isLoading.value = true;
+// 	error.value = null;
+// 	try {
+// 		const orgs = await githubOrgStore.fetchOrganizations(true);
+// 		organizations.value = orgs;
+// 	} catch (err) {
+// 		console.error('Error fetching organizations:', err);
+// 		error.value = 'Failed to fetch organizations. Please try again.';
+// 	} finally {
+// 		isLoading.value = false;
+// 	}
+// };
 
 const selectOrganization = async (org) => {
 	selectedOrg.value = org;

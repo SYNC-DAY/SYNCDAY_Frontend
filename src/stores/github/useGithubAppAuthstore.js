@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import axios from "axios";
 
-export const useGithubAppAuthStore = defineStore("githubAppAuth", {
+export const useGithubAppAuthStore = defineStore("githubAppAuthStore", {
   state: () => ({
     installationId: null,
     isInstalling: false,
@@ -15,27 +15,26 @@ export const useGithubAppAuthStore = defineStore("githubAppAuth", {
 
   actions: {
     async initiateInstallation() {
-      const clientId = import.meta.env.VITE_GITHUB_APP_NAME;
+      const clientId = import.meta.env.VITE_GITHUB_APP_CLIENT_ID;
       const redirectUri = import.meta.env.VITE_GITHUB_APP_REDIRECT_URI;
 
       // Save current path for redirect after installation
       localStorage.setItem("github_app_redirect", window.location.pathname + window.location.search);
 
       // Redirect to GitHub App installation
-      window.location.href = `https://github.com/apps/${clientId}/installations/new`;
+      window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}`;
     },
 
     // In your store or component
     // In your store or component
-    async handleInstallation(installationId, code) {
+    async handleInstallation(code) {
       try {
         const response = await axios({
           method: "POST",
-          url: "/user/oauth2/github/installation",
+          url: "/user/oauth2/github/access_token",
           data: {
-            installation_id: installationId,
             code: code,
-            setup_action: "install", // If needed
+            // setup_action: "install", // If needed
           },
         });
 
@@ -51,7 +50,6 @@ export const useGithubAppAuthStore = defineStore("githubAppAuth", {
     },
 
     clearInstallation() {
-      this.installationId = null;
       this.error = null;
     },
   },
