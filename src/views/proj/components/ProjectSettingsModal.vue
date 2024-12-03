@@ -3,11 +3,11 @@
 		:style="{ width: '70vw', height: '50vh' }" class="p-0">
 		<div class="settings-content">
 			<!-- Auth Check Step -->
-			<template v-if="!githubAuthStore.isAuthenticated">
+			<template v-if="!selectedOrg">
 				<div class="flex flex-column align-items-center gap-3 p-4">
-					<h3 class="text-xl">GitHub 계정 연동</h3>
-					<p class="text-gray-600">GitHub 저장소 연동을 위해 계정을 연결해주세요</p>
-					<Button @click="handleGithubAuth" severity="secondary" class="github-auth-btn">
+					<h3 class="text-xl">Github Organization 연동</h3>
+					<p class="text-gray-600">GitHub 연동을 위해 SyncDayApp을 설치해주세요</p>
+					<Button @click="installGithubApp" severity="secondary" class="github-auth-btn">
 						<i class="pi pi-github mr-2"></i>
 						GitHub으로 로그인
 					</Button>
@@ -85,11 +85,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 import { useGithubOrgStore } from '@/stores/github/useGithubOrgStore';
 import { useGithubRepoStore } from '@/stores/github/useGithubRepoStore';
-
+import { useGithubAppStore } from '@/stores/github/useGithubAppStore';
 const props = defineProps({
 	visible: {
 		type: Boolean,
@@ -111,7 +111,7 @@ const emit = defineEmits(['update:visible', 'saved']);
 const githubAuthStore = useGithubAuthStore();
 const githubOrgStore = useGithubOrgStore();
 const githubRepoStore = useGithubRepoStore();
-
+const githubAppStore = useGithubAppStore();
 // Component state
 const selectedOrg = ref(null);
 const selectedRepo = ref(null);
@@ -128,12 +128,32 @@ const handleVisibilityChange = (value) => {
 	emit('update:visible', value);
 };
 
-const handleGithubAuth = () => {
-	localStorage.setItem('returnToProjectSettings', 'true');
-	localStorage.setItem('projectSettingsId', props.projectId);
-	githubAuthStore.loginWithGithub();
+const installGithubApp = () => {
+	githubAppStore.openInstallationWindow();
 };
 
+const handleInstallationMessage = async (event) => {
+	// Verify origin for security
+	if (event.origin !== window.location.origin) return;
+
+	if (event.data.type === 'github-installation-complete') {
+		try {
+			// Handle the installation with the received installation_id
+			await githubAppStore.handleInstallationCallback(event.data.installationId);
+			// Additional logic after successful installation
+		} catch (error) {
+			console.error('Failed to handle installation:', error);
+		}
+	}
+};
+
+onMounted(() => {
+	window.addEventListener('message', handleInstallationMessage);
+});
+
+onUnmounted(() => {
+	window.removeEventListener('message', handleInstallationMessage);
+});
 const handleChangeOrg = () => {
 	selectedOrg.value = null;
 	selectedRepo.value = null;
@@ -186,34 +206,7 @@ const handleSaveSettings = async () => {
 };
 
 // Lifecycle hooks
-onMounted(async () => {
-	if (githubAuthStore.isAuthenticated) {
-		loadingOrgs.value = true;
-		try {
-			await githubOrgStore.fetchOrganizations();
 
-			if (props.currentVcsSettings?.orgName) {
-				const org = organizations.value.find(
-					o => o.login === props.currentVcsSettings.orgName
-				);
-				if (org) {
-					selectedOrg.value = org;
-					await loadOrgRepositories(org);
-
-					if (props.currentVcsSettings.repoName) {
-						selectedRepo.value = repositories.value.find(
-							r => r.name === props.currentVcsSettings.repoName
-						);
-					}
-				}
-			}
-		} catch (error) {
-			console.error('Failed to initialize:', error);
-		} finally {
-			loadingOrgs.value = false;
-		}
-	}
-});
 </script>
 
 <style scoped>

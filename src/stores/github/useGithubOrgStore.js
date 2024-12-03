@@ -42,71 +42,23 @@ export const useGithubOrgStore = defineStore("githubOrg", {
       });
     },
 
-    async fetchOrganizations(forceRefresh = false) {
+    async fetchOrganizations() {
       try {
-        if (!this.octokit) {
-          this.initializeOctokit();
-        }
+        const accessToken = localStorage.getItem("github_access_token");
 
-        // Return cached data if it's fresh enough
-        // if (!forceRefresh && !this.shouldRefetch && this.organizations.length > 0) {
-        //   return this.organizations;
-        // }
-
-        this.isLoading = true;
-        // const { data: rateLimit } = await this.octokit.rest.rateLimit.get();
-        // Fetch user's organizations using Octokit
-        const { data: orgs } = await this.octokit.rest.orgs.listForAuthenticatedUser();
-        const { data: user } = await this.octokit.rest.users.getAuthenticated();
-        console.log(orgs);
-        console.log("Authenticated User:", user);
-
-        const response = await this.octokit.rest.users.getAuthenticated();
-
-        const _orgs = await this.octokit.paginate(this.octokit.rest.orgs.listForAuthenticatedUser, {
-          per_page: 100,
+        const response = await fetch("https://api.github.com/user/orgs", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            Accept: "application/vnd.github.v3+json",
+          },
         });
-        console.log("Organizations:", _orgs);
-        // Fetch detailed information for each organization
-        const detailedOrgs = await Promise.all(
-          orgs.map(async org => {
-            try {
-              // Get detailed org info
-              const { data: orgDetail } = await this.octokit.rest.orgs.get({
-                org: org.login,
-              });
 
-              // Get user's membership status in the org
-              const { data: membership } = await this.octokit.rest.orgs.getMembershipForAuthenticatedUser({
-                org: org.login,
-              });
-
-              return {
-                ...orgDetail,
-                membershipRole: membership.role,
-              };
-            } catch (error) {
-              console.error(`Error fetching details for org ${org.login}:`, error);
-              // Return basic org info if detailed fetch fails
-              return {
-                ...org,
-                membershipRole: "member",
-              };
-            }
-          })
-        );
-
-        this.organizations = detailedOrgs;
-        this.lastFetchTime = Date.now();
-        this.saveToLocalStorage();
-
-        return this.organizations;
+        // Response will contain array of organizations
+        const organizations = response.data;
+        return organizations;
       } catch (error) {
-        console.error("Error fetching organizations:", error);
-        this.error = error.message;
+        console.error("Failed to fetch organizations:", error);
         throw error;
-      } finally {
-        this.isLoading = false;
       }
     },
 

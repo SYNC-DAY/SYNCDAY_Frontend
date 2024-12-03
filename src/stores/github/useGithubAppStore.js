@@ -1,76 +1,149 @@
+// stores/github/useGithubAppStore.js
 import { defineStore } from "pinia";
 import axios from "axios";
-import { useGithubAuthStore } from "./useGithubAuthStore";
-
-export const useGithubAppStore = defineStore("githubAppStore", {
+import { useAuthStore } from "../auth";
+export const useGithubAppStore = defineStore("githubApp", {
   state: () => ({
+    installationId: localStorage.getItem("github_installation_id"),
+    installationToken: null,
+    installations: [],
     isLoading: false,
     error: null,
-    currentInstallation: null,
   }),
 
-  actions: {
-    async initiateInstallation(orgName) {
-      const authStore = useGithubAuthStore();
-      if (!authStore.isAuthenticated) {
-        throw new Error("User must be authenticated");
-      }
+  getters: {
+    isInstalled: state => !!state.installationId,
+    hasError: state => !!state.error,
+    getInstallationToken: state => state.installationToken,
+    getInstallations: state => state.installations,
+  },
 
-      try {
-        // Get installation URL from backend
-        const response = await axios.get(`/api/github/installation-url/${orgName}`);
-        // Redirect to GitHub installation flow
-        window.location.href = response.data.url;
-      } catch (error) {
-        console.error("Failed to initiate installation:", error);
-        this.error = error.message;
-        throw error;
-      }
+  actions: {
+    openInstallationWindow() {
+      // Replace with your GitHub App's URL
+      const installUrl = `https://github.com/apps/${import.meta.env.VITE_GITHUB_APP_NAME}/installations/new`;
+
+      const callbackUrl = `${window.location.origin}/github/callback`;
+      const fullUrl = `${installUrl}?callback_url=${encodeURIComponent(callbackUrl)}`;
+
+      // Store the current path for redirect after installation
+      localStorage.setItem("installation_redirect", window.location.pathname);
+
+      // Open GitHub installation page in a new window
+      const width = 1020;
+      const height = 618;
+      const left = (window.innerWidth - width) / 2;
+      const top = (window.innerHeight - height) / 2;
+
+      this.installationWindow = window.open(fullUrl, "Install GitHub App", `width=${width},height=${height},top=${top},left=${left}`);
+      this.checkWindowInterval = setInterval(() => {
+        if (this.installationWindow?.closed) {
+          clearInterval(this.checkWindowInterval);
+          this.handleInstallationComplete();
+        }
+      }, 500);
     },
 
-    async handleInstallationCallback(installationId, orgName) {
+    async handleInstallationCallback(installationId, code) {
       this.isLoading = true;
+      this.error = null;
+
       try {
-        // Notify backend about new installation
-        await axios.post("/api/github/installations", {
-          installationId,
-          orgName,
+        const authStore = useAuthStore();
+        const response = await axios.post("/vcs/install", {
+          installation_id: installationId,
+          vcs_type: "GITHUB",
+          user_id: authStore.user.userId,
         });
 
-        // Refresh organizations in auth store
-        const authStore = useGithubAuthStore();
-        await authStore.fetchOrganizations();
+        if (response.data.success) {
+          this.installationId = response.data.installationId;
+          localStorage.setItem("github_installation_id", this.installationId);
 
-        this.currentInstallation = {
-          installationId,
-          orgName,
-        };
+          // Fetch initial installation token
+          await this.refreshInstallationToken();
+          return true;
+        }
+        throw new Error("Installation failed");
       } catch (error) {
-        console.error("Failed to handle installation:", error);
-        this.error = error.message;
+        console.error("Installation error:", error);
+        this.error = error.response?.data?.message || "Installation failed";
         throw error;
       } finally {
         this.isLoading = false;
       }
     },
 
-    async removeInstallation(orgName) {
-      this.isLoading = true;
+    async refreshInstallationToken() {
+      if (!this.installationId) {
+        throw new Error("No installation ID available");
+      }
+
       try {
-        await axios.delete(`/api/github/installations/${orgName}`);
+        const response = await axios.get(`/api/github/installation/${this.installationId}/token`);
 
-        // Refresh organizations in auth store
-        const authStore = useGithubAuthStore();
-        await authStore.fetchOrganizations();
-
-        this.currentInstallation = null;
+        if (response.data.success) {
+          this.installationToken = response.data.token;
+          return this.installationToken;
+        }
+        throw new Error("Failed to get installation token");
       } catch (error) {
-        console.error("Failed to remove installation:", error);
-        this.error = error.message;
+        console.error("Token refresh error:", error);
+        this.error = error.response?.data?.message || "Token refresh failed";
+        throw error;
+      }
+    },
+
+    async fetchInstallations() {
+      this.isLoading = true;
+      this.error = null;
+
+      try {
+        const response = await axios.get("/api/github/installations");
+        this.installations = response.data;
+        return this.installations;
+      } catch (error) {
+        console.error("Error fetching installations:", error);
+        this.error = error.response?.data?.message || "Failed to fetch installations";
         throw error;
       } finally {
         this.isLoading = false;
       }
+    },
+
+    async removeInstallation(installationId) {
+      this.isLoading = true;
+      this.error = null;
+
+      try {
+        await axios.delete(`/api/github/installations/${installationId}`);
+
+        if (this.installationId === installationId) {
+          this.installationId = null;
+          this.installationToken = null;
+          localStorage.removeItem("github_installation_id");
+        }
+
+        await this.fetchInstallations();
+      } catch (error) {
+        console.error("Error removing installation:", error);
+        this.error = error.response?.data?.message || "Failed to remove installation";
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    clearError() {
+      this.error = null;
+    },
+
+    reset() {
+      this.installationId = null;
+      this.installationToken = null;
+      this.installations = [];
+      this.error = null;
+      localStorage.removeItem("github_installation_id");
     },
   },
 });
