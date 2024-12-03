@@ -7,7 +7,7 @@
 				<div class="flex flex-column align-items-center gap-3 p-4">
 					<h3 class="text-xl">Github Organization 연동</h3>
 					<p class="text-gray-600">GitHub 연동을 위해 SyncDayApp을 설치해주세요</p>
-					<Button @click="installGithubApp" severity="secondary" class="github-auth-btn">
+					<Button @click="openInstallationWindow" severity="secondary" class="github-auth-btn">
 						<i class="pi pi-github mr-2"></i>
 						GitHub으로 로그인
 					</Button>
@@ -132,27 +132,72 @@ const installGithubApp = () => {
 	githubAppStore.openInstallationWindow();
 };
 
+const installationWindow = ref(null);
+const checkWindowInterval = ref(null);
+
+const openInstallationWindow = () => {
+	const installUrl = `https://github.com/apps/${import.meta.env.VITE_GITHUB_APP_NAME}/installations/new`;
+	const callbackUrl = `${window.location.origin}/github/callback`;
+	const fullUrl = `${installUrl}?callback_url=${encodeURIComponent(callbackUrl)}`;
+
+	const width = 1020;
+	const height = 618;
+	const left = (window.innerWidth - width) / 2;
+	const top = (window.innerHeight - height) / 2;
+
+	// Open new window
+	installationWindow.value = window.open(
+		fullUrl,
+		'Install GitHub App',
+		`width=${width},height=${height},top=${top},left=${left}`
+	);
+
+	// Clear any existing interval
+	if (checkWindowInterval.value) {
+		clearInterval(checkWindowInterval.value);
+	}
+
+	// Start new interval to check window status
+	checkWindowInterval.value = setInterval(() => {
+		if (installationWindow.value?.closed) {
+			clearInterval(checkWindowInterval.value);
+			checkWindowInterval.value = null;
+			installationWindow.value = null;
+		}
+	}, 500);
+};
+
 const handleInstallationMessage = async (event) => {
-	// Verify origin for security
 	if (event.origin !== window.location.origin) return;
 
-	if (event.data.type === 'github-installation-complete') {
+	if (event.data.type === 'github-installation-complete' && event.data.data?.installationId) {
 		try {
-			// Handle the installation with the received installation_id
-			await githubAppStore.handleInstallationCallback(event.data.installationId);
-			// Additional logic after successful installation
+			await githubAppStore.handleInstallationCallback(event.data.data.installationId);
+			// Handle successful installation
 		} catch (error) {
 			console.error('Failed to handle installation:', error);
+			// Handle error
+		} finally {
+			// Cleanup
+			if (checkWindowInterval.value) {
+				clearInterval(checkWindowInterval.value);
+				checkWindowInterval.value = null;
+			}
+			installationWindow.value = null;
 		}
 	}
 };
 
-onMounted(() => {
-	window.addEventListener('message', handleInstallationMessage);
-});
+// Setup message listener
+window.addEventListener('message', handleInstallationMessage);
 
+// Cleanup on component unmount
 onUnmounted(() => {
 	window.removeEventListener('message', handleInstallationMessage);
+	if (checkWindowInterval.value) {
+		clearInterval(checkWindowInterval.value);
+	}
+	installationWindow.value = null;
 });
 const handleChangeOrg = () => {
 	selectedOrg.value = null;

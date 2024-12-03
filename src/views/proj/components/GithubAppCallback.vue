@@ -1,3 +1,4 @@
+<!-- GithubCallback.vue -->
 <template>
 	<div>Processing installation...</div>
 </template>
@@ -6,19 +7,20 @@
 import { onMounted } from 'vue';
 
 onMounted(() => {
-	// Get installation_id from URL parameters
 	const params = new URLSearchParams(window.location.search);
 	const installationId = params.get('installation_id');
 
 	if (installationId) {
-		// Send message to opener window
-		window.opener.postMessage({
+		// Send only plain data, not reactive objects
+		window.opener?.postMessage({
 			type: 'github-installation-complete',
-			installationId: installationId
+			data: {
+				installationId: installationId
+			}
 		}, window.location.origin);
 
-		// Close this window
-		window.close();
+		// Close after a short delay to ensure message is sent
+		setTimeout(() => window.close(), 100);
 	}
 });
 </script>

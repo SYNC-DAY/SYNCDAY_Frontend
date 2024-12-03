@@ -14,54 +14,23 @@ export const useGithubAppStore = defineStore("githubApp", {
   getters: {
     isInstalled: state => !!state.installationId,
     hasError: state => !!state.error,
-    getInstallationToken: state => state.installationToken,
-    getInstallations: state => state.installations,
   },
 
   actions: {
-    openInstallationWindow() {
-      // Replace with your GitHub App's URL
-      const installUrl = `https://github.com/apps/${import.meta.env.VITE_GITHUB_APP_NAME}/installations/new`;
-
-      const callbackUrl = `${window.location.origin}/github/callback`;
-      const fullUrl = `${installUrl}?callback_url=${encodeURIComponent(callbackUrl)}`;
-
-      // Store the current path for redirect after installation
-      localStorage.setItem("installation_redirect", window.location.pathname);
-
-      // Open GitHub installation page in a new window
-      const width = 1020;
-      const height = 618;
-      const left = (window.innerWidth - width) / 2;
-      const top = (window.innerHeight - height) / 2;
-
-      this.installationWindow = window.open(fullUrl, "Install GitHub App", `width=${width},height=${height},top=${top},left=${left}`);
-      this.checkWindowInterval = setInterval(() => {
-        if (this.installationWindow?.closed) {
-          clearInterval(this.checkWindowInterval);
-          this.handleInstallationComplete();
-        }
-      }, 500);
-    },
-
-    async handleInstallationCallback(installationId, code) {
+    async handleInstallationCallback(installationId) {
       this.isLoading = true;
       this.error = null;
-
+      const authStore = useAuthStore();
       try {
-        const authStore = useAuthStore();
         const response = await axios.post("/vcs/install", {
-          installation_id: installationId,
           vcs_type: "GITHUB",
           user_id: authStore.user.userId,
+          installation_id: installationId,
         });
 
         if (response.data.success) {
-          this.installationId = response.data.installationId;
-          localStorage.setItem("github_installation_id", this.installationId);
-
-          // Fetch initial installation token
-          await this.refreshInstallationToken();
+          this.installationId = installationId;
+          localStorage.setItem("github_installation_id", installationId);
           return true;
         }
         throw new Error("Installation failed");
