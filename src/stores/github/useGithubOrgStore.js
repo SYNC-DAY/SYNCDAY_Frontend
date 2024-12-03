@@ -2,17 +2,23 @@
 import { defineStore } from "pinia";
 import { useGithubAuthStore } from "./useGithubAuthStore";
 import axios from "axios";
+import { Octokit } from "@octokit/rest";
 
 const ORGS_STORAGE_KEY = "github_organizations";
 const SELECTED_ORG_KEY = "github_selected_org";
+const USER_INFO_KEY = "github_user_info";
 
 export const useGithubOrgStore = defineStore("githubOrg", {
   state: () => ({
     organizations: JSON.parse(localStorage.getItem(ORGS_STORAGE_KEY) || "[]"),
     selectedOrg: JSON.parse(localStorage.getItem(SELECTED_ORG_KEY) || "null"),
+    orgRepositories: {},
     isLoading: false,
     error: null,
     lastFetchTime: null,
+    octokit: null,
+    // Add installation status tracking
+    installationStatus: {},
   }),
 
   getters: {
@@ -24,64 +30,89 @@ export const useGithubOrgStore = defineStore("githubOrg", {
       // Refetch if last fetch was more than 5 minutes ago
       return Date.now() - state.lastFetchTime > 5 * 60 * 1000;
     },
+    getInstallationStatus: state => orgLogin => state.installationStatus[orgLogin] || null,
   },
 
   actions: {
-    async fetchOrganizations(forceRefresh = false) {
+    initializeOctokit() {
+      const authStore = useGithubAuthStore();
+      const token = authStore.accessToken;
+
+      if (!token) {
+        throw new Error("No access token available");
+      }
+
+      this.octokit = new Octokit({
+        auth: token,
+      });
+    },
+    // New method to check installation status
+    async checkInstallationStatus(orgLogin) {
       try {
-        const authStore = useGithubAuthStore();
-        if (!authStore.accessToken) {
-          throw new Error("No access token available");
+        if (!this.octokit) {
+          this.initializeOctokit();
         }
 
-        // Return cached data if available and recent
+        const response = await this.octokit.request("GET", `/orgs/${orgLogin}/installation`, {
+          headers: {
+            "X-GitHub-Api-Version": "2022-11-28",
+          },
+        });
+
+        this.installationStatus[orgLogin] = response.data;
+        return response.data;
+      } catch (error) {
+        if (error.status === 404) {
+          // App is not installed
+          this.installationStatus[orgLogin] = null;
+          return null;
+        }
+        console.error(`Error checking installation status for ${orgLogin}:`, error);
+        throw error;
+      }
+    },
+    async fetchOrganizations(forceRefresh = false) {
+      try {
+        if (!this.octokit) {
+          this.initializeOctokit();
+        }
+
         if (!forceRefresh && !this.shouldRefetch && this.organizations.length > 0) {
           return this.organizations;
         }
 
         this.isLoading = true;
 
-        // Fetch user's organizations
-        const response = await fetch("https://api.github.com/user/orgs", {
-          headers: {
-            Authorization: `Bearer ${authStore.accessToken}`,
-            Accept: "application/vnd.github.v3+json",
-          },
-        });
+        const { data: orgs } = await this.octokit.rest.orgs.listForAuthenticatedUser();
+        console.log("Fetched orgs:", orgs);
 
-        // Fetch detailed information for each organization
+        // Check installation status for each organization
         const detailedOrgs = await Promise.all(
-          response.data.map(async org => {
+          orgs.map(async org => {
             try {
-              // Get detailed org info
-              const orgDetailResponse = await fetch(`https://api.github.com/orgs/${org.login}`, {
-                headers: {
-                  Authorization: `Bearer ${authStore.accessToken}`,
-                  Accept: "application/vnd.github.v3+json",
-                },
-              });
-
-              // Get user's membership status in the org
-              const membershipResponse = await fetch(`https://api.github.com/user/memberships/orgs/${org.login}`, {
-                headers: {
-                  Authorization: `Bearer ${authStore.accessToken}`,
-                  Accept: "application/vnd.github.v3+json",
-                },
-              });
-
-              // Check if the GitHub App is installed for this organization
+              const [orgDetail, membership, installationStatus] = await Promise.all([
+                this.octokit.rest.orgs
+                  .get({ org: org.login })
+                  .then(response => response.data)
+                  .catch(() => org),
+                this.octokit.rest.orgs
+                  .getMembershipForAuthenticatedUser({ org: org.login })
+                  .then(response => response.data)
+                  .catch(() => ({ role: "member" })),
+                this.checkInstallationStatus(org.login),
+              ]);
 
               return {
-                ...orgDetailResponse.data,
-                membershipRole: membershipResponse.data.role,
+                ...orgDetail,
+                membershipRole: membership.role,
+                installationStatus,
               };
             } catch (error) {
               console.error(`Error fetching details for org ${org.login}:`, error);
-              // Return basic org info if detailed fetch fails
               return {
                 ...org,
                 membershipRole: "member",
-                isInstalled: false,
+                installationStatus: null,
               };
             }
           })
