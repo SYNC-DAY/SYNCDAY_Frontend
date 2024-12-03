@@ -4,6 +4,18 @@ import axios from "axios";
 
 // stores/github/useGithubAuthStore.js
 export const useGithubAuthStore = defineStore("githubAuth", {
+  state: () => ({
+    accessToken: localStorage.getItem("github_token") || null,
+    githubInstallationId: localStorage.getItem("github_installation_id") || null,
+    isLoading: false,
+    error: null,
+  }),
+
+  getters: {
+    getGithubAccessToken: state => state.accessToken,
+    getGithubInstallationId: state => state.githubInstallationId,
+    hasGithubToken: state => !!state.accessToken,
+  },
   actions: {
     initiateGithubIntegration() {
       const currentPath = window.location.pathname + window.location.search;
@@ -35,7 +47,7 @@ export const useGithubAuthStore = defineStore("githubAuth", {
           this.setAccessToken(accessToken);
 
           // After getting the token, redirect to GitHub App installation
-          const appId = import.meta.env.VITE_GITHUB_APP_ID;
+          const appId = import.meta.env.VITE_GITHUB_APP_NAME;
           window.location.href = `https://github.com/apps/${appId}/installations/new`;
         } else {
           throw new Error("Failed to get access token");
@@ -55,7 +67,7 @@ export const useGithubAuthStore = defineStore("githubAuth", {
       this.error = null;
 
       try {
-        const response = await axios.post("/user/oauth2/github/app/install", {
+        const response = await axios.post("/user/oauth2/github/installation", {
           installationId: installationId,
         });
 
@@ -71,6 +83,12 @@ export const useGithubAuthStore = defineStore("githubAuth", {
       } finally {
         this.isLoading = false;
       }
+    },
+    setAccessToken(token) {
+      this.accessToken = token;
+    },
+    setGithubInstallationId(id) {
+      this.installationId = id;
     },
   },
 });
