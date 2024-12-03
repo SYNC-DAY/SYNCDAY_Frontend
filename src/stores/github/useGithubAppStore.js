@@ -17,7 +17,7 @@ export const useGithubAppStore = defineStore("githubApp", {
   },
 
   actions: {
-    async handleInstallationCallback(installationId) {
+    async handleInstallationCallback(projectId, installationId) {
       this.isLoading = true;
       this.error = null;
       const authStore = useAuthStore();
@@ -26,6 +26,7 @@ export const useGithubAppStore = defineStore("githubApp", {
           vcs_type: "GITHUB",
           user_id: authStore.user.userId,
           installation_id: installationId,
+          proj_id: projectId,
         });
 
         if (response.data.success) {

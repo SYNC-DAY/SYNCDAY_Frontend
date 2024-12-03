@@ -172,7 +172,7 @@ const handleInstallationMessage = async (event) => {
 
 	if (event.data.type === 'github-installation-complete' && event.data.data?.installationId) {
 		try {
-			await githubAppStore.handleInstallationCallback(event.data.data.installationId);
+			await githubAppStore.handleInstallationCallback(props.projectId, event.data.data.installationId);
 			// Handle successful installation
 		} catch (error) {
 			console.error('Failed to handle installation:', error);
