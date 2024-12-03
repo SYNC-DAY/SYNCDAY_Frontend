@@ -24,7 +24,10 @@
 
 					<div v-if="selectedVcs === 'GITHUB'" class="mt-4">
 						<h3 class="text-lg font-medium mb-4">GitHub Integration</h3>
-
+						<div v-if="!githubAuthstore.accessToken">
+							<Button label="Initiate Github Integration"
+								@click.stop="githubAuthstore.initiateGithubIntegration"></Button>
+						</div>
 						<!-- Installation Status -->
 						<div class="org-selector-container">
 							<!-- Organization List -->
@@ -363,10 +366,12 @@ const selectOrganization = async (org) => {
 	}
 	// Lifecycle
 	onMounted(() => {
+		console.log('ProjectSettingsModal: onMounted')
 		if (props.visible) {
 			resetForm();
 		}
 		githubOrgStore.fetchOrganizations();
+		githubAuthstore.fetchUserInfo();
 		selectedVcs.value = "GITHUB"
 	});
 

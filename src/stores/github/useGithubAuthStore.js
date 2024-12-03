@@ -9,6 +9,7 @@ export const useGithubAuthStore = defineStore("githubAuth", {
     githubInstallationId: localStorage.getItem("github_installation_id") || null,
     isLoading: false,
     error: null,
+    userInfo: null,
   }),
 
   getters: {
@@ -46,9 +47,7 @@ export const useGithubAuthStore = defineStore("githubAuth", {
           const accessToken = response.data.data;
           this.setAccessToken(accessToken);
 
-          // After getting the token, redirect to GitHub App installation
-          const appId = import.meta.env.VITE_GITHUB_APP_NAME;
-          window.location.href = `https://github.com/apps/${appId}/installations/new`;
+          this.fetchUserInfo();
         } else {
           throw new Error("Failed to get access token");
         }
@@ -62,28 +61,33 @@ export const useGithubAuthStore = defineStore("githubAuth", {
     },
 
     // This will be called after GitHub App installation
-    async handleAppInstallation(installationId) {
+    async fetchUserInfo() {
       this.isLoading = true;
-      this.error = null;
-
       try {
-        const response = await axios.post("/user/oauth2/github/installation", {
-          installationId: installationId,
+        const response = await fetch("https://api.github.com/user", {
+          headers: {
+            Authorization: `Bearer ${this.accessToken}`,
+            Accept: "application/vnd.github.v3+json",
+          },
         });
 
-        if (response.data.success) {
-          this.setInstallationId(installationId);
-          await this.fetchUserInfo();
-          return true;
+        if (!response.ok) {
+          if (response.status === 401) {
+            this.handleInvalidToken();
+            throw new Error("Invalid token");
+          }
+          throw new Error("Failed to fetch user info");
         }
+
+        const userData = await response.json();
+        this.userInfo = userData;
+        localStorage.setItem("github_user_info", JSON.stringify(userData));
+        return userData;
       } catch (error) {
-        console.error("Installation error:", error);
-        this.error = error.message || "Installation failed";
-        throw error;
-      } finally {
-        this.isLoading = false;
+        console.error(error);
       }
     },
+
     setAccessToken(token) {
       this.accessToken = token;
     },

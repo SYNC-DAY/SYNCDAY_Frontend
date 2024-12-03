@@ -1,6 +1,6 @@
 // stores/github/useGithubRepoStore.js
 import { defineStore } from "pinia";
-import { useGithubAppAuthStore } from "./useGithubAppAuthStore";
+import { useGithubAppAuthStore } from "./useGithubAppStore";
 import axios from "axios";
 
 export const useGithubRepoStore = defineStore("githubRepo", {
