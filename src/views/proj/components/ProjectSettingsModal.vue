@@ -26,14 +26,9 @@
 						<h3 class="text-lg font-medium mb-4">GitHub Integration</h3>
 
 						<!-- Installation Status -->
-						<div class="installation-required">
-							<div class="text-center py-6">
-								<i class="pi pi-github text-4xl mb-3"></i>
-								<h4 class="text-xl font-medium mb-2">GitHub App Installation Required</h4>
-								<p class="text-gray-600 mb-4">
-									To connect your GitHub organizations, you need to install SyncDay GitHub App first.
-								</p>
-								<Button label="Install GitHub App" severity="primary" @click="handleInstallClick" />
+						<div v-if="githubAuthstore.isAuthenticated" class="installation-required">
+							<div v-for="org in githubOrgStore.organizations">
+								<span>{{ org }}</span>
 							</div>
 						</div>
 					</div>
@@ -54,8 +49,8 @@
 import { ref, onMounted, watch } from 'vue';
 import axios from 'axios';
 
+import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 import { useGithubOrgStore } from '@/stores/github/useGithubOrgStore';
-import { useGithubRepoStore } from '@/stores/github/useGithubRepoStore';
 
 
 import Tabs from 'primevue/tabs';
@@ -67,13 +62,11 @@ import { useConfirm } from "primevue/useconfirm";
 import { useToast } from 'primevue/usetoast';
 
 import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
-import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
+
 
 /* store */
 const githubAuthstore = useGithubAuthStore();
 const githubOrgStore = useGithubOrgStore();
-const githubRepoStore = useGithubRepoStore();
-
 
 /* props */
 const props = defineProps({
@@ -113,38 +106,9 @@ const handleVcsSelection = async (vcsType) => {
 const handleInstallClick = () => {
 	githubAuthstore.initiateGithubIntegration();
 }
-// const fetchOrganizations = async () => {
-// 	if (!githubAppAuth.isInstalled) return;
 
-// 	isLoading.value = true;
-// 	error.value = null;
-// 	try {
-// 		const orgs = await githubOrgStore.fetchOrganizations(true);
-// 		organizations.value = orgs;
-// 	} catch (err) {
-// 		console.error('Error fetching organizations:', err);
-// 		error.value = 'Failed to fetch organizations. Please try again.';
-// 	} finally {
-// 		isLoading.value = false;
-// 	}
-// };
 
-const selectOrganization = async (org) => {
-	selectedOrg.value = org;
-	await fetchRepositories(org.login);
-};
-const fetchRepositories = async (orgName) => {
-	isLoading.value = true;
-	try {
-		const repos = await githubOrgStore.fetchOrgRepositories(orgName);
-		repositories.value = repos;
-	} catch (err) {
-		console.error('Error fetching repositories:', err);
-		error.value = 'Failed to fetch repositories. Please try again.';
-	} finally {
-		isLoading.value = false;
-	}
-};
+
 // Services
 const confirm = useConfirm();
 const toast = useToast();
@@ -340,6 +304,7 @@ onMounted(() => {
 	if (props.visible) {
 		resetForm();
 	}
+	githubOrgStore.fetchOrganizations();
 });
 
 watch(() => props.visible, (newValue) => {

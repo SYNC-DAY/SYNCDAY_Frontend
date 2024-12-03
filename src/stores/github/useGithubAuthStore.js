@@ -14,7 +14,7 @@ export const useGithubAuthStore = defineStore("githubAuth", {
   getters: {
     getGithubAccessToken: state => state.accessToken,
     getGithubInstallationId: state => state.githubInstallationId,
-    hasGithubToken: state => !!state.accessToken,
+    isAuthenticated: state => !!state.accessToken,
   },
   actions: {
     initiateGithubIntegration() {
