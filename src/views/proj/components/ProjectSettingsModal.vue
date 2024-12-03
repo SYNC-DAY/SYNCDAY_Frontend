@@ -27,8 +27,8 @@
 
 						<!-- Installation Status -->
 						<div v-if="githubAuthstore.isAuthenticated" class="installation-required">
-							<div v-for="org in githubOrgStore.organizations">
-								<span>{{ org }}</span>
+							<div v-for="org in githubOrgStore.organizations.organizations">
+								<span>{{ org.login }}</span>
 							</div>
 						</div>
 					</div>
