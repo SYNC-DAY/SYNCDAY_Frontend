@@ -1,8 +1,18 @@
 <template>
     <div style="height: 100%; width: 100%">
         <FullCalendar :options="calendarOptions" />
-        <CalendarViewModal v-if="showEventModal" :schedule="selectedEvent" @close="closeModal" />
-        <CalendarModal v-if="isModalVisible" :selectedInfo="selectedInfo" @close="closeModal" />
+        <CalendarViewModal
+            v-if="showEventModal"
+            :schedule="selectedEvent"
+            @close="closeModal"
+            @submit="fetchSchedules"
+        />
+        <CalendarModal
+            v-if="isModalVisible"
+            :schedule="selectedInfo"
+            @close="closeModal"
+            @submit="fetchSchedules"
+        />
     </div>
 </template>
 
@@ -54,8 +64,9 @@ const calendarOptions = ref({
         },
     },
     dayCellContent: (info) => {
-        // 날짜 셀의 텍스트를 완전히 재정의
-        return { html: `<div class='date-circle'>${info.date.getDate()}</div>` }; // 원하는 HTML 삽입
+        if (info.view.type == 'dayGridMonth') {
+            return { html: `<div class='date-circle'>${info.date.getDate()}</div>` }; // 원하는 HTML 삽입
+        }
     },
     customButtons: {
         addEventButton: {
@@ -97,7 +108,6 @@ const calendarOptions = ref({
         console.log('selectInfo 보자!', info);
         console.log('start???:', info.start);
         console.log('end???:', info.end);
-        alert(`Selected from ${info.startStr} to ${info.endStr} allDay: ${info.allDay}`);
     },
     eventClick: async (info) => {
         await fetchDetailSchedules(info.event.id, authStore.user.userId);
@@ -105,7 +115,7 @@ const calendarOptions = ref({
         // 클릭된 이벤트의 allDay 값을 추가로 설정
         selectedEvent.value = {
             ...selectedEvent.value, // 기존의 상세 데이터 유지
-            allDay: info.event.allDay, // allDay 속성 추가
+            // allDay: info.event.allDay, // allDay 속성 추가
         };
         console.log('selectedEvent:', selectedEvent.value);
 
@@ -114,14 +124,10 @@ const calendarOptions = ref({
         console.log('showEventModal:', showEventModal.value);
     },
     eventDrop: async (info) => {
-        console.log('DROP', info);
-        console.log('DROP_id', info.event.id);
-        console.log('DROP_START', info.event.start);
-        console.log('DROP_END', info.event.end);
         await updateSchedule(info);
     },
-    eventResize: (info) => {
-        console.log('Resize', info);
+    eventResize: async (info) => {
+        await updateSchedule(info);
     },
     events: events,
 });
@@ -164,8 +170,6 @@ const fetchSchedules = async () => {
                 }
             }
 
-            console.log('isAllDay:', isAllDay);
-
             return {
                 id: schedule.schedule_id,
                 title: schedule.title ? schedule.title : '(제목 없음)',
@@ -177,7 +181,12 @@ const fetchSchedules = async () => {
                 extendedProps: {
                     content: schedule.content,
                     meetingStatus: schedule.meeting_status,
+                    meetingroomId: schedule.meetingroom_id,
                     publicStatus: schedule.public_status,
+                    scheduleRepeatId: schedule.schedule_repeat_id,
+                    repeatOrder: schedule.repeat_order,
+                    username: schedule.username,
+                    attendeeIds: schedule.attendee_ids,
                     // 필요하면 더 추가
                 },
             };
@@ -194,6 +203,8 @@ const fetchDetailSchedules = async (scheduleId, userId) => {
         const response = await axios.get(`/schedule/my/${scheduleId}?userId=${userId}`);
         const data = response.data.data[0];
 
+        console.log('data!!', data)
+
         // selectedEvent를 가져온 데이터로 업데이트
         selectedEvent.value = {
             scheduleId: data.schedule_id,
@@ -209,6 +220,7 @@ const fetchDetailSchedules = async (scheduleId, userId) => {
             meetingroomId: data.meetingroom_id,
             userId: data.user_id,
             username: data.username,
+            notificationTime: data.notification_time ? new Date(data.notification_time) : null,
             userInfo: data.user_info.map((user) => ({
                 userId: user.user_id,
                 username: user.username,
@@ -220,27 +232,52 @@ const fetchDetailSchedules = async (scheduleId, userId) => {
     }
 };
 
-const updateSchedule = async(info) => {
+const updateSchedule = async (info) => {
+    // 종일일정 여부 확인
+    const isAllDay = info.event.allDay; // FullCalendar에서 종일 일정 여부
+
+    // 날짜 포맷 처리: 종일 일정일 경우 시간을 00:00으로 설정
+    const startTime = isAllDay
+        ? dayjs(info.event.start).tz('Asia/Seoul').startOf('day').format('YYYY-MM-DDTHH:mmZ') // KST로 변환
+        : dayjs(info.event.start).tz('Asia/Seoul').format('YYYY-MM-DDTHH:mmZ'); // KST로 변환
+
+    const endTime = isAllDay
+        ? info.event.end
+            ? dayjs(info.event.end).tz('Asia/Seoul').startOf('day').format('YYYY-MM-DDTHH:mmZ')
+            : dayjs(info.event.start).tz('Asia/Seoul').add(1, 'hour').startOf('day').format('YYYY-MM-DDTHH:mmZ')
+        : info.event.end
+            ? dayjs(info.event.end).tz('Asia/Seoul').format('YYYY-MM-DDTHH:mmZ')
+            : dayjs(info.event.start).tz('Asia/Seoul').add(1, 'hour').format('YYYY-MM-DDTHH:mmZ');
+
     try {
-        const response = await axios.put(`/schedule/${scheduleId}`, {
-            schedule_id: info.event.id,
-            start_time: dayjs(info.event.start).tz('Asia/Seoul').toISOString(),
-            end_time: dayjs(info.event.end).tz('Asia/Seoul').toISOString(),
-            meeting_status: info.event.extendedProps.meetingStatus,
-            public_status: info.event.extendedProps.publicStatus,
-            user_id: authStore.user.userId,
-        }, {
-            headers: {
-                'Content-Type': 'application/json',
+        const response = await axios.put(
+            `/schedule/${info.event.id}`,
+            {
+                schedule_id: info.event.id,
+                title: info.event.title,
+                content: info.event.extendedProps.content,
+                // 종일일정일 경우 startOf('day')를 사용해 시간 00:00으로 설정
+                start_time: startTime,
+                end_time: endTime,
+                meeting_status: info.event.extendedProps.meetingStatus,
+                meetingroom_id: info.event.extendedProps.meetingroomId,
+                public_status: info.event.extendedProps.publicStatus,
+                user_id: authStore.user.userId,
+                attendee_ids: info.event.extendedProps.attendeeIds || [],
             },
-        });
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+
         console.log('스케줄 변경 성공:', response.data);
     } catch (error) {
         console.error('스케줄 변경 실패:', error.response?.data || error.message);
         alert('스케줄 변경에 실패했습니다. 다시 시도해주세요.');
     }
 };
-
 
 onMounted(async () => {
     await fetchSchedules();

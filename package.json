@@ -16,6 +16,7 @@
     "@fullcalendar/timegrid": "^6.1.15",
     "@fullcalendar/vue3": "^6.1.15",
     "@octokit/rest": "^21.0.2",
+    "@popperjs/core": "^2.11.8",
     "@primevue/themes": "^4.0.0",
     "@stomp/stompjs": "^7.0.0",
     "axios": "^1.7.7",
