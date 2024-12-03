@@ -20,9 +20,9 @@
                 </div>
             </form>
         </div> 
+        
         <div class="reservation-user">
           <p>주관자: {{ user.userName || "정보 없음" }}</p>
-          <!-- <p>부서명: {{ user.department || "정보 없음" }}</p> -->
           <p>이메일: {{ user.email || "정보 없음" }}</p>
           <p>전화번호: {{ user.phoneNumber || "정보 없음" }}</p>
         </div>
@@ -38,9 +38,12 @@ import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 import { useAuthStore } from "@/stores/auth";
+import Dialog from 'primevue/dialog';
 
 const authStore = useAuthStore();
 const user = ref({});
+const route = useRoute();
+const router = useRouter();
 // 폼 데이터
 const formData = ref({
   title: "",
@@ -54,10 +57,7 @@ const resourceId = ref("");
 const resourceName = ref("");
 const resourceCapacity = ref(0);
 const resourcePlace = ref("");
-// 사용자 정보
 
-// 라우터 객체
-const router = useRouter();
 
 // 한국 표준시(KST) 형식으로 변환하는 함수
 const formatKST = (utcTime) => {
@@ -119,7 +119,13 @@ const handleReservation = async () => {
     const response = await axios.post("/meetingroom_reservation", reservationData);
     console.log("API 응답: ", response.data);
     alert("회의실이 성공적으로 예약되었습니다!");
-    router.push("/meetingroom");
+    router.push({
+    path: "/meetingroom",
+    query: {
+      place: resourcePlace.value,
+      
+  },
+});
   } catch (error) {
     console.error("예약 중 오류 발생", error);
     alert("예약 중 오류가 발생했습니다.");
@@ -129,24 +135,6 @@ const handleReservation = async () => {
 const cancel = async () => {
   alert("취소되었습니다.")
 }
-
-// 예약 취소 함수
-// const cancelReservation = async () => {
-//   const scheduleId = router.currentRoute.value.query.scheduleId;
-//   if (!scheduleId) {
-//     alert("취소할 예약 정보가 없습니다.");
-//     return;
-//   }
-
-//   try {
-//     await axios.delete(`/meetingroom_reservation/${scheduleId}`);
-//     alert("예약이 성공적으로 취소되었습니다!");
-//     router.push("/meetingroom");
-//   } catch (error) {
-//     console.error("예약 취소 중 오류 발생:", error);
-//     alert("예약 취소 중 오류가 발생했습니다.");
-//   }
-// };
 
 // 라우트 파라미터 설정
 onMounted(() => {
