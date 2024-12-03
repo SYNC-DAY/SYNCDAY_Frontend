@@ -26,9 +26,45 @@
 						<h3 class="text-lg font-medium mb-4">GitHub Integration</h3>
 
 						<!-- Installation Status -->
-						<div v-if="githubAuthstore.isAuthenticated" class="installation-required">
-							<div v-for="org in githubOrgStore.organizations.organizations">
-								<span>{{ org.login }}</span>
+						<div class="org-selector-container">
+							<!-- Organization List -->
+							<div class="organization-list space-y-4">
+								<div v-for="org in githubOrgStore.organizations.organizations" :key="org.login"
+									class="org-item p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+									@click="selectOrganization(org)">
+									<div class="flex items-center justify-between">
+										<div class="flex items-center space-x-3">
+											<img :src="org.avatar_url || '/api/placeholder/40/40'" :alt="org.login"
+												class="w-10 h-10 rounded-full" />
+											<div>
+												<h3 class="font-medium">{{ org.login }}</h3>
+												<p class="text-sm text-gray-500">{{ org.membershipRole }}</p>
+											</div>
+										</div>
+										<div class="flex items-center">
+											<!-- Installation Status -->
+											<!-- <div v-if="installationStatus[org.login]"
+												class="text-green-600 flex items-center">
+												<span class="mr-2">Installed</span>
+												<CheckCircle class="w-5 h-5" />
+											</div>
+											<button v-else @click.stop="installApp(org)"
+												class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+												Install
+											</button> -->
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<!-- Loading State -->
+							<div v-if="isLoading" class="flex justify-center py-4">
+								<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+							</div>
+
+							<!-- Error Message -->
+							<div v-if="error" class="text-red-600 p-4 rounded-md bg-red-50 mt-4">
+								{{ error }}
 							</div>
 						</div>
 					</div>
