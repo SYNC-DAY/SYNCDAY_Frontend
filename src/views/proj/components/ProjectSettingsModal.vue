@@ -342,6 +342,7 @@ onMounted(() => {
 		resetForm();
 	}
 	githubOrgStore.fetchOrganizations();
+	selectedVcs.value = "GITHUB"
 });
 
 watch(() => props.visible, (newValue) => {
