@@ -341,13 +341,11 @@ const deleteProject = async () => {
 
 const selectOrganization = async (org) => {
 	try {
-		const isInstalled = await githubAppStore.checkInstallation({
-			orgId: org.id,
-			orgType: 'USER', // or 'ORGANIZATION'
-			login: org.login
-		});
+		const isInstalled = await githubAppStore.checkInstallation(org.login);
 		if (!isInstalled) {
-			githubAppStore.redirectToInstallation();
+			// githubAppStore.redirectToInstallation();
+			window.location.href = `https://github.com/apps/${import.meta.env.VITE_GITHUB_APP_NAME}/installations/new?target_type=Organization&target_id=${org.id}`;
+
 			return;
 		}
 		await githubAppStore.selectOrganization(org);

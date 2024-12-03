@@ -15,10 +15,12 @@
 import { defineComponent, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
+import { useGithubAppStore } from '@/stores/github/useGithubAppStore';
 
 const route = useRoute();
 const router = useRouter();
 const githubAuthStore = useGithubAuthStore();
+const githubAppStore = useGithubAppStore();
 const githubAuthRedirectPath = localStorage.getItem('github_auth_redirect')
 onMounted(async () => {
 	const code = route.query.code;
@@ -28,7 +30,7 @@ onMounted(async () => {
 			await githubAuthStore.handleOAuthCallback(code);
 			return;
 		} else if (installationId) {
-			await githubAuthStore.handleAppInstallation(installationId);
+			await githubAppStore.handleAppInstallation(installationId, code);
 			router.push(githubAuthRedirectPath)
 		}
 	} catch (error) {

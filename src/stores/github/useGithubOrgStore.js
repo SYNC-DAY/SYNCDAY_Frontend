@@ -1,7 +1,5 @@
-// stores/github/useGithubOrgStore.js
 import { defineStore } from "pinia";
 import { useGithubAuthStore } from "./useGithubAuthStore";
-import axios from "axios";
 import { Octokit } from "@octokit/rest";
 
 const ORGS_STORAGE_KEY = "github_organizations";
@@ -17,7 +15,6 @@ export const useGithubOrgStore = defineStore("githubOrg", {
     error: null,
     lastFetchTime: null,
     octokit: null,
-    // Add installation status tracking
     installationStatus: {},
   }),
 
@@ -25,9 +22,9 @@ export const useGithubOrgStore = defineStore("githubOrg", {
     allOrganizations: state => state.organizations,
     currentOrg: state => state.selectedOrg,
     hasError: state => !!state.error,
+    getOrgRepositories: state => orgName => state.orgRepositories[orgName] || [],
     shouldRefetch: state => {
       if (!state.lastFetchTime) return true;
-      // Refetch if last fetch was more than 5 minutes ago
       return Date.now() - state.lastFetchTime > 5 * 60 * 1000;
     },
     getInstallationStatus: state => orgLogin => state.installationStatus[orgLogin] || null,
@@ -46,65 +43,79 @@ export const useGithubOrgStore = defineStore("githubOrg", {
         auth: token,
       });
     },
-    // New method to check installation status
-    async checkInstallationStatus(orgLogin) {
+    // Add methods to check installation status
+    async checkInstallation(orgName) {
       try {
         if (!this.octokit) {
           this.initializeOctokit();
         }
-
-        const response = await this.octokit.request("GET", `/orgs/${orgLogin}/installation`, {
-          headers: {
-            "X-GitHub-Api-Version": "2022-11-28",
-          },
+        const { data: installations } = await this.octokit.rest.apps.getOrgInstallation({
+          org: orgName,
         });
-
-        this.installationStatus[orgLogin] = response.data;
-        return response.data;
+        return true;
       } catch (error) {
         if (error.status === 404) {
-          // App is not installed
-          this.installationStatus[orgLogin] = null;
-          return null;
+          return false;
         }
-        console.error(`Error checking installation status for ${orgLogin}:`, error);
         throw error;
       }
     },
+
     async fetchOrganizations(forceRefresh = false) {
       try {
-        if (!this.octokit) {
-          this.initializeOctokit();
-        }
-
         if (!forceRefresh && !this.shouldRefetch && this.organizations.length > 0) {
           return this.organizations;
         }
 
         this.isLoading = true;
+        const authStore = useGithubAuthStore();
 
-        const { data: orgs } = await this.octokit.rest.orgs.listForAuthenticatedUser();
+        // Fetch organizations using user's access token
+        const response = await fetch("https://api.github.com/user/orgs", {
+          headers: {
+            Authorization: `Bearer ${authStore.accessToken}`,
+            Accept: "application/vnd.github.v3+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch organizations");
+        }
+
+        const orgs = await response.json();
         console.log("Fetched orgs:", orgs);
 
-        // Check installation status for each organization
+        // Get detailed information for each organization
         const detailedOrgs = await Promise.all(
           orgs.map(async org => {
             try {
-              const [orgDetail, membership, installationStatus] = await Promise.all([
-                this.octokit.rest.orgs
-                  .get({ org: org.login })
-                  .then(response => response.data)
-                  .catch(() => org),
-                this.octokit.rest.orgs
-                  .getMembershipForAuthenticatedUser({ org: org.login })
-                  .then(response => response.data)
-                  .catch(() => ({ role: "member" })),
-                this.checkInstallationStatus(org.login),
-              ]);
+              // Get organization details
+              const orgResponse = await fetch(`https://api.github.com/orgs/${org.login}`, {
+                headers: {
+                  Authorization: `Bearer ${authStore.accessToken}`,
+                  Accept: "application/vnd.github.v3+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                },
+              });
+
+              // Get user's membership in the organization
+              const membershipResponse = await fetch(`https://api.github.com/user/memberships/orgs/${org.login}`, {
+                headers: {
+                  Authorization: `Bearer ${authStore.accessToken}`,
+                  Accept: "application/vnd.github.v3+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                },
+              });
+
+              const [orgData, membershipData] = await Promise.all([orgResponse.ok ? orgResponse.json() : org, membershipResponse.ok ? membershipResponse.json() : { role: "member" }]);
+
+              // Check installation status
+              const installationStatus = await this.checkInstallationStatus(org.login);
 
               return {
-                ...orgDetail,
-                membershipRole: membership.role,
+                ...orgData,
+                membershipRole: membershipData.role,
                 installationStatus,
               };
             } catch (error) {
@@ -131,12 +142,6 @@ export const useGithubOrgStore = defineStore("githubOrg", {
         this.isLoading = false;
       }
     },
-
-    setSelectedOrg(org) {
-      this.selectedOrg = org;
-      localStorage.setItem(SELECTED_ORG_KEY, JSON.stringify(org));
-    },
-
     saveToLocalStorage() {
       localStorage.setItem(
         ORGS_STORAGE_KEY,
@@ -152,7 +157,6 @@ export const useGithubOrgStore = defineStore("githubOrg", {
 
       if (stored) {
         const data = JSON.parse(stored);
-        // Only use cached data if less than 5 minutes old
         if (Date.now() - data.timestamp < 5 * 60 * 1000) {
           this.organizations = data.organizations;
           this.lastFetchTime = data.timestamp;
@@ -163,10 +167,16 @@ export const useGithubOrgStore = defineStore("githubOrg", {
     clearState() {
       this.organizations = [];
       this.selectedOrg = null;
+      this.orgRepositories = {};
       this.error = null;
       this.lastFetchTime = null;
+      this.octokit = null;
       localStorage.removeItem(ORGS_STORAGE_KEY);
       localStorage.removeItem(SELECTED_ORG_KEY);
+    },
+
+    clearError() {
+      this.error = null;
     },
   },
 });
