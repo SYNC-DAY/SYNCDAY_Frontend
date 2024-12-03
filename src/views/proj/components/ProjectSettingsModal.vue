@@ -87,7 +87,7 @@ import axios from 'axios';
 
 import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 import { useGithubOrgStore } from '@/stores/github/useGithubOrgStore';
-
+import { useGithubAppStore } from '@/stores/github/useGithubAppStore';
 
 import Tabs from 'primevue/tabs';
 import TabList from 'primevue/tablist';
@@ -104,6 +104,7 @@ import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
 /* store */
 const githubAuthstore = useGithubAuthStore();
 const githubOrgStore = useGithubOrgStore();
+const githubAppStore = useGithubAppStore();
 
 /* props */
 const props = defineProps({
@@ -335,19 +336,44 @@ const deleteProject = async () => {
 };
 
 
-
-// Lifecycle
-onMounted(() => {
-	if (props.visible) {
-		resetForm();
+const selectOrganization = async (org) => {
+	try {
+		const isInstalled = await githubAppStore.checkInstallation();
+		if (!isInstalled) {
+			githubAppStore.redirectToInstallation();
+			return;
+		}
+		await githubAppStore.selectOrganization(org);
+		emit('organization-selected', org);
 	}
-	githubOrgStore.fetchOrganizations();
-	selectedVcs.value = "GITHUB"
-});
-
-watch(() => props.visible, (newValue) => {
-	if (newValue) {
-		resetForm();
+	catch (error) {
+		console.error('Failed to select organization:', error);
+		// You might want to show an error message to the user
+		// If you're using a notification system
+		if (error.response?.status === 401) {
+			// Handle unauthorized - might need to re-authenticate
+			console.error('Authentication failed');
+		} else if (error.response?.status === 403) {
+			// Handle forbidden - might not have proper permissions
+			console.error('Permission denied');
+		} else {
+			// Handle other errors
+			console.error('An unexpected error occurred');
+		}
 	}
-});
+	// Lifecycle
+	onMounted(() => {
+		if (props.visible) {
+			resetForm();
+		}
+		githubOrgStore.fetchOrganizations();
+		selectedVcs.value = "GITHUB"
+	});
+
+	watch(() => props.visible, (newValue) => {
+		if (newValue) {
+			resetForm();
+		}
+	});
+}
 </script>
