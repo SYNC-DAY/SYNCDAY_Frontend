@@ -16,18 +16,17 @@ export const useGithubAppStore = defineStore("githubApp", {
 
   actions: {
     async checkInstallation({ orgId, orgType, login }) {
+      console.log("useGithubAppStore: checkInstallation");
       this.isLoading = true;
       this.error = null;
       const authStore = useAuthStore();
       try {
-        const response = await axios.get("/vcs/install/check", {
-          data: {
-            vcs_type: "GITHUB",
-            user_id: authStore.user.userId,
-            vcs_org_id: orgId,
-            vcs_org_type: orgType,
-            vcs_login: login,
-          },
+        const response = await axios.post("/vcs/install/check", {
+          vcs_type: "GITHUB",
+          user_id: authStore.user.userId,
+          vcs_org_id: orgId,
+          vcs_org_type: orgType,
+          vcs_login: login,
         });
 
         if (response.data.success) {

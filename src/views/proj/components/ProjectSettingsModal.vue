@@ -32,7 +32,7 @@
 						<div class="org-selector-container">
 							<!-- Organization List -->
 							<div class="organization-list space-y-4">
-								<div v-for="org in githubOrgStore.organizations.organizations" :key="org.login"
+								<div v-for="org in githubOrgStore.organizations" :key="org.login"
 									class="org-item p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
 									@click.stop="selectOrganization(org)">
 									<div class="flex items-center justify-between">
@@ -341,7 +341,11 @@ const deleteProject = async () => {
 
 const selectOrganization = async (org) => {
 	try {
-		const isInstalled = await githubAppStore.checkInstallation();
+		const isInstalled = await githubAppStore.checkInstallation({
+			orgId: org.id,
+			orgType: 'USER', // or 'ORGANIZATION'
+			login: org.login
+		});
 		if (!isInstalled) {
 			githubAppStore.redirectToInstallation();
 			return;
