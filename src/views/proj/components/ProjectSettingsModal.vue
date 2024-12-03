@@ -31,10 +31,10 @@
 							<div class="organization-list space-y-4">
 								<div v-for="org in githubOrgStore.organizations.organizations" :key="org.login"
 									class="org-item p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
-									@click="selectOrganization(org)">
+									@click.stop="selectOrganization(org)">
 									<div class="flex items-center justify-between">
 										<div class="flex items-center space-x-3">
-											<img :src="org.avatar_url || '/api/placeholder/40/40'" :alt="org.login"
+											<Avatar image="org.avatar_url || '/api/placeholder/40/40'" :alt="org.login"
 												class="w-10 h-10 rounded-full" />
 											<div>
 												<h3 class="font-medium">{{ org.login }}</h3>
@@ -96,6 +96,7 @@ import TabPanels from 'primevue/tabpanels';
 import TabPanel from 'primevue/tabpanel';
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from 'primevue/usetoast';
+
 
 import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
 
