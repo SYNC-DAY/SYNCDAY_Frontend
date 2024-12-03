@@ -41,8 +41,10 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
 import axios from 'axios';
 
+const authStore = useAuthStore();
 const router = useRouter();
 const boardList = ref([]);
 const editMode = ref(null); // 수정 중인 게시판 ID
@@ -50,7 +52,7 @@ const editedTitle = ref(''); // 수정 중인 제목
 
 // 게시판 목록 가져오기
 const getBoardList = async () => {
-    const response = await axios.get(`/teamboard/1/my`); // 1은 userId
+    const response = await axios.get(`/teamboard/${authStore.user.userId}/my`); // 1은 userId
     boardList.value = response.data.data;
 };
 

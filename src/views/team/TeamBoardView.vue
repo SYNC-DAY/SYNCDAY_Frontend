@@ -49,7 +49,7 @@ const newBoardName = ref(''); // 새로운 게시판 이름
 
 
 const getBoardList = async () => {
-    const response = await axios.get(`/teamboard/1/my`);
+    const response = await axios.get(`/teamboard/${authStore.user.userId}/my`);
     boardList.value = response.data.data;
 };
 
