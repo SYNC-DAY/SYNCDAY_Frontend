@@ -19,10 +19,6 @@ export const useGithubRepoStore = defineStore("githubRepo", {
     async fetchOrgRepositories(orgName) {
       const githubAppAuth = useGithubAppAuthStore();
 
-      if (!githubAppAuth.isInstalled) {
-        throw new Error("GitHub App not installed");
-      }
-
       this.isLoading = true;
       this.error = null;
 

@@ -1,11 +1,12 @@
 // stores/github/useGithubAuthStore.js
 import { defineStore } from "pinia";
 import axios from "axios";
+import { routerKey } from "vue-router";
 
 // stores/github/useGithubAuthStore.js
 export const useGithubAuthStore = defineStore("githubAuth", {
   state: () => ({
-    accessToken: localStorage.getItem("github_token") || null,
+    accessToken: localStorage.getItem("github_access_token") || null,
     githubInstallationId: localStorage.getItem("github_installation_id") || null,
     isLoading: false,
     error: null,
@@ -46,7 +47,6 @@ export const useGithubAuthStore = defineStore("githubAuth", {
         if (response.data.success) {
           const accessToken = response.data.data;
           this.setAccessToken(accessToken);
-
           this.fetchUserInfo();
         } else {
           throw new Error("Failed to get access token");
@@ -89,6 +89,7 @@ export const useGithubAuthStore = defineStore("githubAuth", {
     },
 
     setAccessToken(token) {
+      localStorage.setItem("github_access_token", token);
       this.accessToken = token;
     },
     setGithubInstallationId(id) {

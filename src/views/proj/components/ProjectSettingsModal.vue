@@ -124,7 +124,7 @@ const emit = defineEmits(['update:visible', 'project-updated', 'project-deleted'
 
 /* refs */
 const vcsMenu = ref(null);
-const selectedVcs = ref(null);
+const selectedVcs = ref('GITHUB');
 const selectedOrg = ref(null);
 const isLoading = ref(false);
 const error = ref(null);
@@ -365,20 +365,18 @@ const selectOrganization = async (org) => {
 		}
 	}
 	// Lifecycle
-	onMounted(() => {
-		console.log('ProjectSettingsModal: onMounted')
-		if (props.visible) {
-			resetForm();
-		}
-		githubOrgStore.fetchOrganizations();
-		githubAuthstore.fetchUserInfo();
-		selectedVcs.value = "GITHUB"
-	});
-
-	watch(() => props.visible, (newValue) => {
-		if (newValue) {
-			resetForm();
-		}
-	});
 }
+onMounted(() => {
+	console.log('ProjectSettingsModal: onMounted')
+	githubOrgStore.fetchOrganizations();
+	if (props.visible) {
+		resetForm();
+	}
+});
+
+watch(() => props.visible, (newValue) => {
+	if (newValue) {
+		resetForm();
+	}
+});
 </script>

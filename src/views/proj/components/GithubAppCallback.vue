@@ -19,18 +19,17 @@ import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 const route = useRoute();
 const router = useRouter();
 const githubAuthStore = useGithubAuthStore();
-
+const githubAuthRedirectPath = localStorage.getItem('github_auth_redirect')
 onMounted(async () => {
 	const code = route.query.code;
 	const installationId = route.query.installation_id;
 	try {
 		if (!code || !installationId) {
 			await githubAuthStore.handleOAuthCallback(code);
-			console.error('Missing required parameters');
 			return;
 		} else if (installationId) {
 			await githubAuthStore.handleAppInstallation(installationId);
-			router.push('/')
+			router.push(githubAuthRedirectPath)
 		}
 	} catch (error) {
 		console.log(error);

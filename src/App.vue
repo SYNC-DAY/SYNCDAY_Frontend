@@ -23,6 +23,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from "@/stores/auth.js";
+import { useGithubAuthStore } from './stores/github/useGithubAuthStore';
 import { useAssistantStore } from "@/stores/assistant.js";
 import { EventSourcePolyfill } from 'event-source-polyfill';
 import Navigation from "@/components/Navigation.vue";
@@ -31,10 +32,15 @@ import Assistant from './components/Assistant.vue';
 
 const route = useRoute();
 const authStore = useAuthStore();
+const githubAuthStore = useGithubAuthStore();
 console.log("App.vue에서 찍어보는 useAuthStore.user: ", authStore.user)
 
 // 현재 페이지가 로그인 페이지인지 확인
 const isLoginPage = computed(() => route.path === '/login');
+
+onMounted(() => {
+  githubAuthStore.fetchUserInfo();
+})
 </script>
 
 <style scoped>
