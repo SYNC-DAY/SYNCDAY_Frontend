@@ -1,65 +1,52 @@
-// stores/useGithubRepoStore.js
-import { defineStore } from 'pinia';
-import { useGithubAuthStore } from './useGithubAuthStore';
+// stores/github/useGithubRepoStore.js
+import { defineStore } from "pinia";
+import { useGithubAppAuthStore } from "./useGithubAppAuthstore";
+import axios from "axios";
 
-export const useGithubRepoStore = defineStore('githubRepo', {
+export const useGithubRepoStore = defineStore("githubRepo", {
   state: () => ({
-    repositories: JSON.parse(localStorage.getItem('github_repositories')) || [],
+    repositories: {},
+    selectedRepo: null,
     isLoading: false,
-    error: null
+    error: null,
   }),
 
   getters: {
-    allRepositories: (state) => state.repositories,
-    publicReposCount: (state) => state.repositories.length,
-    hasError: (state) => !!state.error
+    getOrgRepositories: state => orgName => state.repositories[orgName] || [],
   },
 
   actions: {
-    async fetchUserRepos() {
-      const authStore = useGithubAuthStore();
-      if (!authStore.accessToken) {
-        throw new Error('No access token available');
+    async fetchOrgRepositories(orgName) {
+      const githubAppAuth = useGithubAppAuthStore();
+
+      if (!githubAppAuth.isInstalled) {
+        throw new Error("GitHub App not installed");
       }
 
       this.isLoading = true;
-      
-      try {
-        const response = await fetch('https://api.github.com/user/repos', {
-          headers: {
-            'Authorization': `Bearer ${authStore.accessToken}`,
-            'Accept': 'application/vnd.github.v3+json'
-          }
-        });
+      this.error = null;
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Failed to fetch repositories');
-        }
-        
-        this.repositories = await response.json();
-        this.saveToLocalStorage();
-        return this.repositories;
+      try {
+        const response = await axios.get(`/api/github/organizations/${orgName}/repositories`);
+        this.repositories[orgName] = response.data;
+        return this.repositories[orgName];
       } catch (error) {
-        console.error('Error fetching repositories:', error);
-        this.error = error.message || 'An error occurred while fetching repositories';
+        console.error("Error fetching repositories:", error);
+        this.error = error.message;
         throw error;
       } finally {
         this.isLoading = false;
       }
     },
 
-    saveToLocalStorage() {
-      localStorage.setItem('github_repositories', JSON.stringify(this.repositories));
+    setSelectedRepo(repo) {
+      this.selectedRepo = repo;
     },
 
-    clearRepositories() {
-      this.repositories = [];
-      localStorage.removeItem('github_repositories');
-    },
-
-    clearError() {
+    clearState() {
+      this.repositories = {};
+      this.selectedRepo = null;
       this.error = null;
-    }
-  }
+    },
+  },
 });
