@@ -1,6 +1,5 @@
 <script setup>
-import { ref, watchEffect } from 'vue';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { ref, watchEffect, onMounted, onUnmounted } from 'vue';
 
 const props = defineProps({
 	isOpen: {
@@ -46,21 +45,20 @@ onUnmounted(() => {
 </script>
 
 <template>
-	<Dialog :open="isOpen" @update:open="emit('close')">
-		<DialogContent class="w-full max-w-4xl h-[80vh]">
-			<div class="flex flex-col h-full">
-				<div class="flex items-center justify-between mb-4">
-					<h2 class="text-lg font-semibold">Install GitHub App for {{ organization?.login }}</h2>
-					<button class="text-gray-500 hover:text-gray-700" @click="emit('close')">
-						<span class="sr-only">Close</span>
-						<XIcon class="h-6 w-6" />
-					</button>
-				</div>
-
-				<div class="flex-1 min-h-0">
-					<iframe v-if="iframeUrl" :src="iframeUrl" class="w-full h-full border-0" allow="popup"></iframe>
-				</div>
+	<Dialog :visible="isOpen" modal :style="{ width: '80vw', height: '80vh' }"
+		:header="`Install GitHub App for ${organization?.login}`" :draggable="false" @hide="emit('close')">
+		<div class="flex flex-col h-full">
+			<div class="flex-1 min-h-0">
+				<iframe v-if="iframeUrl" :src="iframeUrl" class="w-full h-full border-0" allow="popup"></iframe>
 			</div>
-		</DialogContent>
+		</div>
 	</Dialog>
 </template>
+
+<style scoped>
+:deep(.p-dialog-content) {
+	padding: 0;
+	height: calc(80vh - 4rem);
+	/* Account for header height */
+}
+</style>

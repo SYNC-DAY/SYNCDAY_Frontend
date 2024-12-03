@@ -2,103 +2,74 @@ import { defineStore } from "pinia";
 import axios from "axios";
 import { useGithubAuthStore } from "./useGithubAuthStore";
 
-export const useGithubAppStore = defineStore("githubAppAuth", {
+export const useGithubAppStore = defineStore("githubAppStore", {
   state: () => ({
-    installationId: null,
-    installationToken: null,
     isLoading: false,
     error: null,
+    currentInstallation: null,
   }),
 
-  getters: {
-    isInstalled: state => !!state.installationId,
-    hasError: state => !!state.error,
-  },
-
   actions: {
-    async handleAppInstallation(installationId, code) {
-      this.isLoading = true;
-      this.error = null;
+    async initiateInstallation(orgName) {
+      const authStore = useGithubAuthStore();
+      if (!authStore.isAuthenticated) {
+        throw new Error("User must be authenticated");
+      }
 
       try {
-        // 1. Store the installation ID
-        this.installationId = installationId;
-        this.code = code;
-        // 2. Exchange installation ID for an installation token
-        const response = await axios.post("/vcs/install", {
-          installation_id: installationId,
-          vcs_type: "GITHUB",
-          user_id: 1,
-          org_login: "1etterh",
+        // Get installation URL from backend
+        const response = await axios.get(`/api/github/installation-url/${orgName}`);
+        // Redirect to GitHub installation flow
+        window.location.href = response.data.url;
+      } catch (error) {
+        console.error("Failed to initiate installation:", error);
+        this.error = error.message;
+        throw error;
+      }
+    },
+
+    async handleInstallationCallback(installationId, orgName) {
+      this.isLoading = true;
+      try {
+        // Notify backend about new installation
+        await axios.post("/api/github/installations", {
+          installationId,
+          orgName,
         });
 
-        if (response.data.success) {
-          // 3. Store the installation token
-          this.installationToken = response.data.data.token;
+        // Refresh organizations in auth store
+        const authStore = useGithubAuthStore();
+        await authStore.fetchOrganizations();
 
-          // 4. Update the auth store with the new token
-          const authStore = useGithubAuthStore();
-
-          // 5. Fetch user info with new token
-
-          // 6. Store installation info in localStorage for persistence
-          localStorage.setItem("github_installation_id", installationId);
-          localStorage.setItem("github_installation_token", this.installationToken);
-
-          return true;
-        } else {
-          throw new Error("Failed to get installation token");
-        }
+        this.currentInstallation = {
+          installationId,
+          orgName,
+        };
       } catch (error) {
-        console.error("Installation error:", error);
-        this.error = error.response?.data?.message || error.message;
+        console.error("Failed to handle installation:", error);
+        this.error = error.message;
         throw error;
       } finally {
         this.isLoading = false;
       }
     },
 
-    clearInstallation() {
-      this.installationId = null;
-      this.installationToken = null;
-      this.error = null;
-      localStorage.removeItem("github_installation_id");
-      localStorage.removeItem("github_installation_token");
-
-      // Also clear the auth store
-      const authStore = useGithubAuthStore();
-      authStore.logout();
-    },
-
-    // Initialize from localStorage on app start
-    initializeFromStorage() {
-      const storedId = localStorage.getItem("github_installation_id");
-      const storedToken = localStorage.getItem("github_installation_token");
-
-      if (storedId && storedToken) {
-        this.installationId = storedId;
-        this.installationToken = storedToken;
-      }
-    },
-
-    // Check if installation is valid
-    async validateInstallation() {
-      if (!this.installationId || !this.installationToken) {
-        return false;
-      }
-
+    async removeInstallation(orgName) {
+      this.isLoading = true;
       try {
-        const response = await axios.post("vcs/github/install", {
-          headers: {
-            Authorization: `Bearer ${this.installationToken}`,
-          },
-        });
+        await axios.delete(`/api/github/installations/${orgName}`);
 
-        return response.data.success;
+        // Refresh organizations in auth store
+        const authStore = useGithubAuthStore();
+        await authStore.fetchOrganizations();
+
+        this.currentInstallation = null;
       } catch (error) {
-        console.error("Installation validation error:", error);
-        this.clearInstallation();
-        return false;
+        console.error("Failed to remove installation:", error);
+        this.error = error.message;
+        throw error;
+      } finally {
+        this.isLoading = false;
       }
     },
   },

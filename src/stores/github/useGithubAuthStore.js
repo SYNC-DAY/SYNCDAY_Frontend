@@ -1,99 +1,126 @@
-// stores/github/useGithubAuthStore.js
 import { defineStore } from "pinia";
 import axios from "axios";
-import { routerKey } from "vue-router";
 
-// stores/github/useGithubAuthStore.js
 export const useGithubAuthStore = defineStore("githubAuth", {
   state: () => ({
-    accessToken: localStorage.getItem("github_access_token") || null,
-    githubInstallationId: localStorage.getItem("github_installation_id") || null,
+    accessToken: localStorage.getItem("github_token"),
+    userInfo: null,
+    organizations: [],
     isLoading: false,
     error: null,
-    userInfo: null,
   }),
 
   getters: {
-    getGithubAccessToken: state => state.accessToken,
-    getGithubInstallationId: state => state.githubInstallationId,
     isAuthenticated: state => !!state.accessToken,
+    username: state => state.userInfo?.login,
+    avatarUrl: state => state.userInfo?.avatar_url,
+    hasError: state => !!state.error,
   },
+
   actions: {
-    initiateGithubIntegration() {
+    async loginWithGithub() {
+      const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
+      const redirectUri = import.meta.env.VITE_GITHUB_REDIRECT_URI;
+      // Include necessary scopes for org access
+      const scope = "read:user read:org read:repo";
+
       const currentPath = window.location.pathname + window.location.search;
       localStorage.setItem("github_auth_redirect", currentPath);
 
-      const state = Math.random().toString(36).substring(7);
-      localStorage.setItem("github_auth_state", state);
-
-      const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
-      const redirectUri = import.meta.env.VITE_GITHUB_REDIRECT_URI;
-      const scope = "read:user read:repo read:org";
-
-      window.location.href = `https://github.com/login/oauth/authorize?` + `client_id=${clientId}&` + `redirect_uri=${redirectUri}&` + `scope=${scope}&` + `state=${state}`;
+      window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
     },
-    async handleOAuthCallback(code) {
-      this.isLoading = true;
-      this.error = null;
 
+    async handleAuthCallback(code) {
+      this.isLoading = true;
       try {
-        const savedState = localStorage.getItem("github_auth_state");
-        // First get the access token using the code
-        const response = await axios.post("/user/oauth2/github/access_token", {
-          code: code,
-          state: savedState,
-        });
+        // Exchange code for token through backend
+        const response = await axios.get(`user/oauth2/github/access_token?code=${code}`);
 
         if (response.data.success) {
           const accessToken = response.data.data;
           this.setAccessToken(accessToken);
-          this.fetchUserInfo();
-        } else {
-          throw new Error("Failed to get access token");
+          await this.fetchUserInfo();
+          await this.fetchOrganizations();
+          return true;
         }
+        throw new Error("Failed to get access token");
       } catch (error) {
         console.error("Auth error:", error);
-        this.error = error.message || "Authentication failed";
+        this.error = error.message;
         throw error;
       } finally {
         this.isLoading = false;
       }
     },
 
-    // This will be called after GitHub App installation
     async fetchUserInfo() {
-      this.isLoading = true;
+      if (!this.accessToken) throw new Error("No access token");
+
       try {
-        const response = await fetch("https://api.github.com/user", {
+        const response = await axios.get("https://api.github.com/user", {
           headers: {
             Authorization: `Bearer ${this.accessToken}`,
             Accept: "application/vnd.github.v3+json",
           },
         });
 
-        if (!response.ok) {
-          if (response.status === 401) {
-            this.handleInvalidToken();
-            throw new Error("Invalid token");
-          }
-          throw new Error("Failed to fetch user info");
-        }
-
-        const userData = await response.json();
-        this.userInfo = userData;
-        localStorage.setItem("github_user_info", JSON.stringify(userData));
-        return userData;
+        this.userInfo = response.data;
+        return this.userInfo;
       } catch (error) {
-        console.error(error);
+        console.error("Error fetching user info:", error);
+        throw error;
+      }
+    },
+
+    async fetchOrganizations() {
+      if (!this.accessToken) throw new Error("No access token");
+
+      try {
+        const response = await axios.get("https://api.github.com/user/orgs", {
+          headers: {
+            Authorization: `Bearer ${this.accessToken}`,
+            Accept: "application/vnd.github.v3+json",
+          },
+        });
+
+        // Get installation status for each org from backend
+        const orgsWithInstallation = await Promise.all(
+          response.data.map(async org => {
+            try {
+              const installStatus = await axios.get(`/api/github/installations/${org.login}`);
+              return {
+                ...org,
+                isInstalled: installStatus.data.installed,
+                installationId: installStatus.data.installationId,
+              };
+            } catch (error) {
+              return {
+                ...org,
+                isInstalled: false,
+                installationId: null,
+              };
+            }
+          })
+        );
+
+        this.organizations = orgsWithInstallation;
+        return this.organizations;
+      } catch (error) {
+        console.error("Error fetching organizations:", error);
+        throw error;
       }
     },
 
     setAccessToken(token) {
-      localStorage.setItem("github_access_token", token);
       this.accessToken = token;
+      localStorage.setItem("github_token", token);
     },
-    setGithubInstallationId(id) {
-      this.installationId = id;
+
+    clearAuth() {
+      this.accessToken = null;
+      this.userInfo = null;
+      this.organizations = [];
+      localStorage.removeItem("github_token");
     },
   },
 });

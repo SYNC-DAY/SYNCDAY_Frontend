@@ -81,7 +81,8 @@
 
 		</template>
 	</Dialog>
-
+	<GithubAppInstallModal :is-open="installModalOpen" :organization="selectedOrg" @close="installModalOpen = false"
+		@installation-complete="handleInstallationComplete" />
 </template>
 
 <script setup>
@@ -102,7 +103,7 @@ import { useToast } from 'primevue/usetoast';
 
 
 import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
-
+import GithubAppInstallationModal from '@/views/vcs/github/GithubAppInstallationModal.vue';
 
 /* store */
 const githubAuthstore = useGithubAuthStore();
@@ -125,6 +126,7 @@ const emit = defineEmits(['update:visible', 'project-updated', 'project-deleted'
 /* refs */
 const vcsMenu = ref(null);
 const selectedVcs = ref('GITHUB');
+const installModalOpen = ref(false);
 const selectedOrg = ref(null);
 const isLoading = ref(false);
 const error = ref(null);
@@ -340,32 +342,39 @@ const deleteProject = async () => {
 
 
 const selectOrganization = async (org) => {
-	try {
-		window.location.href = `https://github.com/apps/${import.meta.env.VITE_GITHUB_APP_NAME}/installations/new?target_type=Organization&target_id=${org.id}`;
 
-		await githubAppStore.selectOrganization(org);
-		emit('organization-selected', org);
+	// window.location.href = `https://github.com/apps/${import.meta.env.VITE_GITHUB_APP_NAME}/installations/new?target_type=Organization&target_id=${org.id}`;
+
+	try {
+		selectedOrg.value = org;
+		installModalOpen.value = true;
+		// await githubAppStore.selectOrganization(org);
+	} catch (err) {
+		console.error(err)
 	}
-	catch (error) {
-		console.error('Failed to select organization:', error);
-		// You might want to show an error message to the user
-		// If you're using a notification system
-		if (error.response?.status === 401) {
-			// Handle unauthorized - might need to re-authenticate
-			console.error('Authentication failed');
-		} else if (error.response?.status === 403) {
-			// Handle forbidden - might not have proper permissions
-			console.error('Permission denied');
-		} else {
-			// Handle other errors
-			console.error('An unexpected error occurred');
-		}
-	}
+	// emit('organization-selected', org);
+
+
+
 	// Lifecycle
 }
+const handleInstallationComplete = async (org) => {
+	try {
+		await githubAppStore.selectOrganization(org);
+		emit('organization-selected', org);
+	} catch (error) {
+		console.error('Error completing installation:', error);
+		// You might want to add some error handling UI here
+	}
+};
+
 onMounted(() => {
 	console.log('ProjectSettingsModal: onMounted')
-	githubOrgStore.fetchOrganizations();
+
+	try { githubOrgStore.fetchOrganizations(); }
+	catch (error) {
+		console.error(error)
+	}
 	if (props.visible) {
 		resetForm();
 	}
