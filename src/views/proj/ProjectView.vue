@@ -111,6 +111,7 @@ const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
 
 // Refs
+const projects = ref([]);
 const vcsMenu = ref(null);
 const showGithubAuthModal = ref(false);
 const showOrgProjSelectionModal = ref(false);
@@ -156,12 +157,23 @@ const handleVcsSelection = async (vcsType) => {
 		});
 	}
 };
+
+// const handleProjectUpdate = (updatedProject) => {
+// 	const index = projects.value.findIndex(p => p.proj_id === updatedProject.proj_id);
+// 	if (index !== -1) {
+// 		projects.value[index] = { ...projects.value[index], ...updatedProject };
+// 	}
+// };
+
 const handleProjectUpdate = (updatedProject) => {
-	const index = projects.value.findIndex(p => p.proj_id === updatedProject.proj_id);
-	if (index !== -1) {
-		projects.value[index] = { ...projects.value[index], ...updatedProject };
-	}
+  const index = props.projects.findIndex((p) => p.proj_id === updatedProject.proj_id);
+  if (index !== -1) {
+    props.projects[index] = { ...props.projects[index], ...updatedProject }; // 데이터 업데이트
+  } else {
+    console.error(`Project with ID ${updatedProject.proj_id} not found.`);
+  }
 };
+
 
 const handleProjectDelete = (projectId) => {
 	projects.value = projects.value.filter(p => p.proj_id !== projectId);
