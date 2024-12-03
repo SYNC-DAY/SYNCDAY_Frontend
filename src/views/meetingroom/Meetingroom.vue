@@ -1,5 +1,9 @@
 <template>
     <div class="calendar-setting">
+
+      <div class="calender-1" >
+        <FullCalendar :options="calendarOptions" ref="calendar1" />
+      </div>
       <div class="filter-area">
         <select v-model="selectedRoomName" @change="filterRooms">
           <option value="">----</option>
@@ -8,20 +12,14 @@
           </option>
         </select>
       </div>
-      <div class="calender-1" >
-        <FullCalendar :options="calendarOptions" ref="calendar1" />
-      </div>
       <div class="calendar-section">
         <p v-if="selectedRoomName === ''" class="select-message">장소를 선택해주세요.</p>
         <p v-else class="selected-room">선택된 장소: {{ selectedRoomName }}</p>
         <p class="selected-date">
           날짜: {{ selectedDate }}
         </p>
-  
         <FullCalendar v-if="selectedRoomName !== ''" :options="calendarOptions2" ref="calendar2" />
       </div>
-
-      
     </div>
   </template>
   
@@ -83,15 +81,19 @@
     },
     methods: {
       // 회의실 데이터 가져오기
-      fetchRooms() {
-        axios.get("/meetingroom").then((response) => {
+      async fetchRooms() {
+        await axios.get("/meetingroom").then((response) => {
           this.rooms = response.data.data || [];
-          this.filteredRooms = [];
+
+          this.filteredRooms = this.rooms.filter(
+          room => room.meetingroom_place === this.selectedRoomName
+        );
+          console.log("fetchRooms: ", this.filteredRooms);
         });
       },
 
           // 이벤트 클릭 핸들러: 클릭 시 상세 페이지로 이동
-    handleEventClick(info) {
+      handleEventClick(info) {
       const event = info.event;
 
       // 라우터를 사용하여 예약 상세 페이지로 이동
@@ -112,9 +114,10 @@
             this.filteredRooms = this.rooms;
           } else {
             this.filteredRooms = this.rooms.filter(
-              (room) => room.meetingroom_place === this.selectedRoomName
+              (room) => room.meetingroom_place == this.selectedRoomName
             );
           }
+          console.log("filteredRooms: ", this.filteredRooms);
   
           this.fetchReservations(this.selectedRoomName);
           this.updateResources();
@@ -292,15 +295,16 @@
   
       
     },
-    mounted() {
+    mounted: async function() {
       const queryPlace = this.$route.query.place || "";
       this.selectedRoomName = queryPlace;
-      this.fetchRooms();
+      await this.fetchRooms();
   
       if (queryPlace) {
         this.filterRooms();
       }
     },
+    
   };
   </script> 
   

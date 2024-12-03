@@ -3,6 +3,7 @@
         <h1>예약 상세 정보</h1>
         <div v-if="details">
             <p><strong>제목:</strong> {{ details.title || "제목 없음" }}</p>
+            <p><strong>장소:</strong> {{ details.meetingroom_place || "제목 없음" }}</p>
             <p><strong>시작 시간:</strong> {{ details.start_time || "정보 없음" }}</p>
             <p><strong>종료 시간:</strong> {{ details.end_time || "정보 없음" }}</p>
             <p><strong>예약자 이름:</strong> {{ user.userName || "정보 없음" }}</p>
@@ -103,9 +104,14 @@ export default {
   
         // 확인 버튼: 이전 화면으로 돌아가기
         const goBack = () => {
-            router.push("/meetingroom"); // 이전 화면으로 이동
-        };
-  
+            router.push({
+                path: "/meetingroom",
+                query: {
+                place: details.value.meetingroom_place,
+      
+            },
+            });
+        } 
         // 삭제 버튼: 예약 삭제
         const deleteReservation = async () => {
             const confirmDelete = confirm("정말로 이 예약을 삭제하시겠습니까?");
@@ -113,7 +119,13 @@ export default {
                 try {
                     await axios.delete(`/meetingroom_reservation/${scheduleId}`);
                     alert("예약이 성공적으로 삭제되었습니다.");
-                    router.push("/meetingroom"); // 삭제 후 이전 화면으로 이동
+                    router.push({
+                        path: "/meetingroom",
+                        query: {
+                        place: details.value.meetingroom_place,
+      
+                    },
+            });
                 } catch (error) {
                     console.error("예약 삭제 중 오류 발생:", error);
                     alert("예약 삭제 중 오류가 발생했습니다.");
