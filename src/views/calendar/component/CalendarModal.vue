@@ -273,20 +273,20 @@ const formData = computed(() => ({
 }));
 
 // formData 확인용
-watch(formData, () => {
-    console.log('id', formData.value.id);
-    console.log('title', formData.value.title);
-    console.log('content', formData.value.content);
-    console.log('startTime', formData.value.startTime);
-    console.log('endTime', formData.value.endTime);
-    console.log('publicStatus', formData.value.publicStatus);
-    console.log('scheduleRepeatId', formData.value.scheduleRepeatId);
-    console.log('repeatOrder', formData.value.repeatOrder);
-    console.log('meetingStatus', formData.value.meetingStatus);
-    console.log('meetingRoomId', formData.value.meetingRoomId);
-    console.log('attendeeIds', formData.value.attendeeIds);
-    console.log('notificationTime', formData.value.notificationTime);
-});
+// watch(formData, () => {
+//     console.log('id', formData.value.id);
+//     console.log('title', formData.value.title);
+//     console.log('content', formData.value.content);
+//     console.log('startTime', formData.value.startTime);
+//     console.log('endTime', formData.value.endTime);
+//     console.log('publicStatus', formData.value.publicStatus);
+//     console.log('scheduleRepeatId', formData.value.scheduleRepeatId);
+//     console.log('repeatOrder', formData.value.repeatOrder);
+//     console.log('meetingStatus', formData.value.meetingStatus);
+//     console.log('meetingRoomId', formData.value.meetingRoomId);
+//     console.log('attendeeIds', formData.value.attendeeIds);
+//     console.log('notificationTime', formData.value.notificationTime);
+// });
 
 // 10분 단위로 시간을 생성하는 함수
 const generateTimeOptions = () => {

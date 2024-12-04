@@ -77,12 +77,6 @@
                         {{ notificationMessage }}
                     </span>
                     <span
-                        v-if="showSelectAlarm == false"
-                        class="pi pi-spin pi-refresh"
-                        style="margin-left: 1rem"
-                        @click="showSelectAlarm = !showSelectAlarm"
-                    ></span>
-                    <span
                         v-if="!notificationMessage && showSelectAlarm == false"
                         class="detail-content"
                         style="cursor: pointer"
@@ -90,6 +84,12 @@
                     >
                         알람 추가
                     </span>
+                    <span
+                        v-if="showSelectAlarm == false"
+                        class="pi pi-spin pi-refresh"
+                        style="margin-left: 1rem"
+                        @click="showSelectAlarm = !showSelectAlarm"
+                    ></span>
                     <div v-if="showSelectAlarm" class="dropdown-container">
                         <Select
                             v-model="notificationTime"
@@ -140,7 +140,7 @@ const schedule = props.schedule;
 console.log('schedule!!!', schedule);
 
 const scheduleId = props.schedule.scheduleId;
-const title = props.schedule.title;
+const title = props.schedule.title? props.schedule.title : '(제목 없음)';
 const content = props.schedule.content;
 const startTime = props.schedule.startTime;
 const endTime = props.schedule.endTime;
@@ -396,7 +396,7 @@ const deleteSchedule = async (scheduleId) => {
     padding: 2rem;
     border-radius: 8px;
     width: 80%;
-    max-width: 450px;
+    max-width: 500px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     position: relative;
 }
