@@ -34,7 +34,7 @@
   </template>
     
     <script setup>
-    import {defineProps, onMounted} from 'vue';
+    import {defineProps} from 'vue';
     import GitlabIcon from '@/assets/icons/Gitlab.svg';
     
     const props = defineProps({
@@ -42,10 +42,6 @@
         type: Object,
         required: true
       }
-    });
-    
-    onMounted(() => {
-      console.log('컴포넌트 마운트 시 props 데이터:', props.result);
     });
     </script>
     
@@ -56,6 +52,7 @@
     padding: 1rem;
     border-radius: 8px;
     transition: background-color 0.2s;
+    width: 100%; /* 전체 너비 사용 */
   }
   
   .result-meta {
@@ -94,8 +91,9 @@
 
   .result-header h3 {
   margin: 0;
-  color: #1a73e8;
-  font-size: x-large;
+  color: #FE5D86;
+  font-size: large;
+  margin-bottom: 0.3rem;
 }
 
   

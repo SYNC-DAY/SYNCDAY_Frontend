@@ -61,8 +61,9 @@
             <Column field="assignee_name" header="담당자" sortable>
               <template #body="cardProps">
                 <div class="flex items-center gap-2">
-                  <Avatar :src="cardProps.data.assignee_profile_url" class="w-6 h-6 rounded-full"
-                    :alt="cardProps.data.assignee_name" shape="circle" />
+                  <!-- Avatar 대신 임시로 img 태그 사용 -->
+                  <img :src="cardProps.data.assignee_profile_url" class="avator"
+                    :alt="cardProps.data.assignee_name" />
                   <span>{{ cardProps.data.assignee_name }}</span>
                 </div>
               </template>
@@ -96,12 +97,22 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
 import ProgressBar from 'primevue/progressbar';
 import CardModal from '../components/layout/CardModal.vue';
+import axios from 'axios';
+
+const route = useRoute();
+const router = useRouter();
+
+const expandedRowsMap = ref(new Map());
+const showCardModal = ref(false);
+const selectedCard = ref(null);
+
 const props = defineProps({
   cardboards: {
     type: Array,
@@ -116,7 +127,10 @@ const props = defineProps({
 
 const emit = defineEmits(['cardClick', 'addBoard', 'rowExpand', 'rowCollapse']);
 
-const expandedRowsMap = ref(new Map());
+defineExpose({
+  expandedRowsMap
+});
+
 
 const computedExpandedRows = computed(() => {
   const result = {};
@@ -142,19 +156,128 @@ const collapseAll = () => {
   expandedRowsMap.value.clear();
 };
 
-const onRowClick = (event) => {
+const onRowClick = async (event) => {
   const clickedCardboardId = event.data.cardboard_id;
 
   if (expandedRowsMap.value.get(clickedCardboardId)) {
     expandedRowsMap.value.delete(clickedCardboardId);
     emit('rowCollapse', event.data);
   } else {
-    expandedRowsMap.value.set(clickedCardboardId, true);
-    emit('rowExpand', event.data);
+    try {
+      // 1. 카드 정보 가져오기
+      const cardsResponse = await axios.get(`/cards/cardboards/${clickedCardboardId}`);
+      let cards = cardsResponse.data.data;
+
+      // 2. 각 카드에 대한 추가 정보 가져오기
+      cards = await Promise.all(cards.map(async card => {
+        // 태그 정보 가져오기
+        const tagResponse = card.tag_id ?
+          await axios.get(`/card-tags/${card.tag_id}`) : null;
+
+        // 담당자 정보 가져오기
+        const assigneeResponse = card.assignee ?
+          await axios.get(`/user/${card.assignee}`) : null;
+
+        // 생성자 정보 가져오기
+        const creatorResponse = card.created_by ?
+          await axios.get(`/user/${card.created_by}`) : null;
+
+        // 카드 정보 조립
+        return {
+          ...card,
+          card_title: card.title,        // title을 card_title로 매핑
+          assignee_name: assigneeResponse?.data.data.userName,
+          assignee_profile_url: assigneeResponse?.data.data.profilePhoto,
+          creator_name: creatorResponse?.data.data.userName,
+          tag_name: tagResponse?.data.data.tag_name,
+          tag_color: tagResponse?.data.data.color
+        };
+      }));
+
+      // 3. 조립된 카드 데이터를 카드보드에 저장
+      const cardboardIndex = props.cardboards.findIndex(
+        board => board.cardboard_id === clickedCardboardId
+      );
+      if (cardboardIndex !== -1) {
+        props.cardboards[cardboardIndex].cards = cards;
+      }
+
+      expandedRowsMap.value.set(clickedCardboardId, true);
+      emit('rowExpand', event.data);
+    } catch (error) {
+      console.error('Failed to fetch card data:', error);
+    }
   }
 };
 
+watch(
+  () => route.query.cardId,
+  async (newCardId) => {
+    if (newCardId) {
+      try {
+        // 1. 우선 현재 워크스페이스의 모든 카드보드를 순회하며 cardId가 일치하는 카드 찾기
+        const cardboardWithCard = props.cardboards.find(board => 
+          board.cards?.some(card => card.card_id === Number(newCardId))
+        );
 
+        if (cardboardWithCard) {
+          const cardboardId = cardboardWithCard.cardboard_id;
+          
+          // 2. 해당 카드보드 펼치기
+          expandedRowsMap.value.set(cardboardId, true);
+
+          // 3. 이미 카드 데이터가 있다면 그대로 사용, 없으면 새로 불러오기
+          if (!cardboardWithCard.cards) {
+            // 카드보드의 카드 목록 가져오기
+            const cardsResponse = await axios.get(`/cards/cardboards/${cardboardId}`);
+            let cards = cardsResponse.data.data;
+
+            // 카드 정보 조립
+            cards = await Promise.all(cards.map(async card => {
+              const tagResponse = card.tag_id ?
+                await axios.get(`/card-tags/${card.tag_id}`) : null;
+              const assigneeResponse = card.assignee ?
+                await axios.get(`/user/${card.assignee}`) : null;
+              const creatorResponse = card.created_by ?
+                await axios.get(`/user/${card.created_by}`) : null;
+
+              return {
+                ...card,
+                card_title: card.title,
+                assignee_name: assigneeResponse?.data.data.userName,
+                assignee_profile_url: assigneeResponse?.data.data.profilePhoto,
+                creator_name: creatorResponse?.data.data.userName,
+                tag_name: tagResponse?.data.data.tag_name,
+                tag_color: tagResponse?.data.data.color
+              };
+            }));
+
+            // 조립된 카드 데이터를 카드보드에 저장
+            const cardboardIndex = props.cardboards.findIndex(
+              board => board.cardboard_id === cardboardId
+            );
+            if (cardboardIndex !== -1) {
+              props.cardboards[cardboardIndex].cards = cards;
+            }
+          }
+
+          // 4. 모달에 표시할 카드 찾기
+          const selectedCardData = cardboardWithCard.cards.find(
+            card => card.card_id === Number(newCardId)
+          );
+          
+          if (selectedCardData) {
+            selectedCard.value = selectedCardData;
+            showCardModal.value = true;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to process card from URL:', error);
+      }
+    }
+  },
+  { immediate: true }
+);
 
 const formatDate = (dateString) => {
   if (!dateString) return '';
@@ -171,8 +294,7 @@ const openVcsLink = (url) => {
   }
 };
 
-const showCardModal = ref(false);
-const selectedCard = ref(null);
+
 
 const onCardClick = (cardData) => {
   console.log(cardData)
@@ -184,5 +306,22 @@ const onCardClick = (cardData) => {
 const closeCardModal = () => {
   showCardModal.value = false;
   selectedCard.value = null;
+  // URL에서 cardId 제거
+  const newQuery = { ...route.query };
+  delete newQuery.cardId;
+  router.replace({ query: newQuery });
 };
 </script>
+
+<style scoped>
+.avator {
+  width: 1.5rem;       
+  height: 1.5rem;    
+  border-radius: 50%; /* 원형으로 만들기 */
+  object-fit: cover;  /* 이미지 비율 유지하면서 영역 채우기 */
+  min-width: 1.5rem;    /* 최소 크기 제한 */
+  max-width: 1.5rem;    /* 최대 크기 제한 */
+  min-height: 1.5rem;   /* 최소 크기 제한 */
+  max-height: 1.5rem;   /* 최대 크기 제한 */
+}
+</style>
