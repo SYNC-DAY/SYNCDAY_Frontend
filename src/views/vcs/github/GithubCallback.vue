@@ -1,59 +1,69 @@
 <template>
-	<div class="flex flex-column align-items-center justify-content-center min-h-screen">
-		<ProgressSpinner v-if="isLoading" />
-		<div v-if="error" class="text-center">
-			<h2>Authentication Failed</h2>
-			<p class="text-red-500">{{ error }}</p>
-			<Button label="Try Again" @click="handleRetry" />
-		</div>
+	<div class="github-callback">
+		<ProgressSpinner v-if="loading" />
+		<div v-else-if="error" class="error">{{ error }}</div>
 	</div>
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
 import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
-import ProgressSpinner from 'primevue/progressspinner';
-import Button from 'primevue/button';
 
-const router = useRouter();
-const authStore = useGithubAuthStore();
-const isLoading = ref(true);
+const loading = ref(true);
 const error = ref(null);
+const githubAuthStore = useGithubAuthStore();
 
-const handleAuth = async () => {
+onMounted(async () => {
 	try {
+		// Get code from URL
 		const urlParams = new URLSearchParams(window.location.search);
 		const code = urlParams.get('code');
 
 		if (!code) {
-			throw new Error('No authorization code provided');
+			throw new Error('Authorization code not found');
 		}
 
-		// Handle the OAuth callback and get the token
-		await authStore.handleAuthCallback(code);
+		// Exchange code for token
+		await githubAuthStore.handleAuthCallback(code);
 
-		// Fetch user information
-		await authStore.fetchUserInfo();
-
-		// Get the saved redirect path
+		// Get redirect path or default to '/'
 		const redirectPath = localStorage.getItem('github_auth_redirect') || '/';
-		localStorage.removeItem('github_auth_redirect'); // Clean up
+		localStorage.removeItem('github_auth_redirect');
 
-		// Redirect back to the original page
-		router.replace(redirectPath);
+		// Notify opener window
+		if (window.opener) {
+			window.opener.postMessage({ type: 'github-auth-success' }, window.location.origin);
+			window.close();
+		} else {
+			// Fallback if opened directly
+			window.location.href = redirectPath;
+		}
 	} catch (err) {
 		error.value = err.message;
+		// Notify opener of error
+		if (window.opener) {
+			window.opener.postMessage({
+				type: 'github-auth-error',
+				error: err.message
+			}, window.location.origin);
+			setTimeout(() => window.close(), 1000);
+		}
 	} finally {
-		isLoading.value = false;
+		loading.value = false;
 	}
-};
-
-const handleRetry = () => {
-	authStore.loginWithGithub();
-};
-
-onMounted(() => {
-	handleAuth();
 });
 </script>
+
+<style scoped>
+.github-callback {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100vh;
+}
+
+.error {
+	color: red;
+	text-align: center;
+}
+</style>
