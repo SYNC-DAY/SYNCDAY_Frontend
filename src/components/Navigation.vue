@@ -79,7 +79,7 @@
 			</div>
 
 		</div>
-		<ChatPop :key="isPopupVisible" :isVisible="isPopupVisible" @update:isVisible="isPopupVisible = $event" />
+		<ChatPop :key="isPopupVisible" :isVisible="isPopupVisible" @update:isVisible="isPopupVisible = $event" @closePopup="closePopup" />
 	</nav>
 </template>
 
@@ -159,6 +159,11 @@ const handleLogout = async () => {
 		console.error('Logout failed:', error);
 	}
 };
+
+const closePopup = () => {
+	isPopupVisible.value = false;
+}
+
 onMounted(() => {
 	isPopupVisible.value = false;
 });

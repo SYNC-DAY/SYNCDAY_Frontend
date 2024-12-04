@@ -1,7 +1,7 @@
 <template>
     <div>
       <div v-if="isVisible" class="popup" :draggable="true">
-        <button class="close-button" @click="closePopup">X</button>
+        <button class="close-button" @click="emit('closePopup')">X</button>
         <div class="popup-content">
           <p>채팅</p>
           <div class="newchat">
@@ -13,8 +13,9 @@
             <div class= "chatlist">
               <ul>
                 <li v-for="chat in filteredChatList" :key="chat.roomId" @click="openChatRoom(chat)" class="chat-room">
-                  <h4>{{ chat.chatRoomName }}</h4>
-                  <p>{{ chat.lastMessage || '메시지가 없습니다' }}</p>
+                  <span class="roomName">{{ chat.chatRoomName }}</span>
+                  <span class="lastMessage">{{ chat.lastMessage || '메시지가 없습니다' }}</span>
+                  <span class="time">{{ chat.sentTime }}</span>
                 </li>
               </ul>
             </div>
@@ -33,17 +34,21 @@
   import NewChatRoom from '@/views/chat/chat_components/NewChatRoom.vue';
   import ChatRoom from './ChatRoom.vue';
 
-const isVisible = ref(true); 
+  const { isVisible } = defineProps({
+    isVisible: {
+      type: Boolean,
+      required: true
+    }
+  })
+
+  const emit = defineEmits(['closePopup'])
+
+// const isVisible = ref(true); 
 const chatList = ref([]);   
 const searchQuery = ref(''); 
 const isPopupVisible = ref(false);
 const selectedRoom = ref(null);
 const authStore = useAuthStore();
-
-// 채팅방 목록 닫기
-const closePopup = () => {
-  isVisible.value = false;
-};
 
 // 새채팅 모달
 const createNewChatRoom = () => {
@@ -203,17 +208,26 @@ onMounted(() => {
   .chat-search {
     border-radius: 7px;
     background-color: #d6d5d5 ;
-    font-size: 1rem;
+    font-size: 0.9rem;
     width: 90%;
     margin-left: 1.5rem;
   }
   .chatlist {
   margin-top: 1rem;
 }
-  .chatlist h4 {
-  font-size: 1rem;
+  .chatlist li {
+  display: flex;
+  gap: 50px ;
+  align-items: center
 }
+.roomName {
+  font-size: 15px;
 
+}
+.lastMessage {
+  font-size: 13px;
+  color: #444444;
+}
 .chatlist ul {
   list-style: none;
   padding: 0;
