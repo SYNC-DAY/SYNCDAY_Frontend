@@ -1,7 +1,7 @@
 // stores/github/useGithubAppStore.js
 import { defineStore } from "pinia";
 import axios from "axios";
-
+import { useAuthStore } from "../auth";
 export const useGithubAppStore = defineStore("githubApp", {
   state: () => ({
     installations: new Map(), // Map to store installations by installationId
@@ -24,6 +24,47 @@ export const useGithubAppStore = defineStore("githubApp", {
   },
 
   actions: {
+    async handleInstallationCallback(projectId, installationId) {
+      this.isLoading = true;
+      this.error = null;
+      const authStore = useAuthStore();
+
+      try {
+        console.log("Installation callback payload:", {
+          vcs_type: "GITHUB",
+          user_id: authStore.user.userId,
+          installation_id: installationId,
+          proj_id: projectId,
+        });
+
+        const response = await axios.post("/vcs/install", {
+          vcs_type: "GITHUB",
+          user_id: authStore.user.userId,
+          installation_id: installationId,
+          proj_id: projectId,
+        });
+
+        console.log("Installation response:", response.data);
+
+        if (response.data.success) {
+          this.installationId = installationId;
+          localStorage.setItem("github_installation_id", installationId);
+          return true;
+        }
+        throw new Error("Installation failed");
+      } catch (error) {
+        console.error("Installation error details:", {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status,
+        });
+        this.error = error.response?.data?.message || "Installation failed";
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
     async fetchProjectInstallation(installationId) {
       if (!installationId) return;
 
@@ -36,6 +77,7 @@ export const useGithubAppStore = defineStore("githubApp", {
       this.error = null;
 
       try {
+        console.log(installationId);
         const response = await axios.get(`/vcs/installations/${installationId}`);
 
         if (response.data.success) {
@@ -71,6 +113,21 @@ export const useGithubAppStore = defineStore("githubApp", {
     clearInstallations() {
       this.installations.clear();
       this.error = null;
+    },
+
+    async fetchOrganizationProjects(installationId) {
+      this.isLoading = true;
+      try {
+        const installation = this.getInstallationById(installationId);
+        if (!installation) {
+          throw new Error("no installation found");
+        }
+        const response = await axios.get(`vcs/installations/${installationId}/projects`);
+        const responseData = response.data.data;
+        console.log(responseData);
+      } catch (error) {
+        console.log(error);
+      }
     },
   },
 });

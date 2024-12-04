@@ -323,6 +323,8 @@ const cleanup = () => {
 
 // Lifecycle hooks
 onMounted(() => {
+
+	githubAppStore.fetchOrganizationProjects(props.projectData.vcs_installation_id)
 	window.addEventListener('message', handleInstallationMessage);
 });
 
