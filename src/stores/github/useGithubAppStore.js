@@ -19,7 +19,7 @@ export const useGithubAppStore = defineStore("githubApp", {
     },
 
     getAllInstallations: state => {
-      return Array.from(state.installations.values());
+      return Array.from(state.installations);
     },
   },
 
@@ -138,21 +138,25 @@ export const useGithubAppStore = defineStore("githubApp", {
         }
 
         const response = await axios.get(`vcs/installations/${vcs_installation_id}/installation-token`);
-        const { data: resData } = response.data;
+        const { data: responseData } = response; // Fix: Correct destructuring of response
 
-        if (resData.success) {
-          const token = resData.data;
+        if (responseData.success) {
+          // Fix: Use the correct data structure from the response
+          const token = responseData.data; // The token is in response.data
+          console.log(token);
           // Update the installation with the new token
+
           installation = {
             ...installation,
             installation_token: token,
           };
 
-          // Update the installation in the installations array
-          const index = this.installations.findIndex(inst => inst.id === installationId);
-          if (index !== -1) {
-            this.installations[index] = installation;
-          }
+          const updatedInstallation = { ...installation, installation_token: token };
+          this.installations = {
+            ...this.installations,
+            [vcs_installation_id]: updatedInstallation,
+          };
+          // Fix: Use the correct vcs_installation_id variable
 
           return token;
         }
