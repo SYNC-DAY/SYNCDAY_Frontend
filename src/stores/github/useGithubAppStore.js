@@ -168,5 +168,44 @@ export const useGithubAppStore = defineStore("githubApp", {
     getInstallationById(installationId) {
       return this.installations.get(installationId);
     },
+    async fetchProjects(installationId) {
+      this.isLoading = true;
+      this.error = null;
+
+      try {
+        let installation = this.getInstallationById(installationId);
+
+        if (!installation?.installation_token) {
+          installation = await this.fetchGithubInstallationToken(installationId);
+        }
+
+        const response = await fetch(`https://api.github.com/installation/repositories`, {
+          headers: {
+            Authorization: `Bearer ${installation}`,
+            Accept: "application/vnd.github.v3+json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        data.repositories.forEach(project => {
+          this.projects.set(project.full_name, {
+            ...project,
+            installationId,
+          });
+        });
+
+        return Array.from(this.projects.values());
+      } catch (error) {
+        this.error = `Failed to fetch projects: ${error.message}`;
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
   },
 });

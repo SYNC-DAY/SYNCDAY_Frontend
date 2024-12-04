@@ -327,7 +327,7 @@ const cleanup = () => {
 onMounted(() => {
 
 	githubAppStore.fetchGithubInstallationToken(props.projectData.vcs_installation_id)
-	githubProjStore.fetchProjects(props.projectData.vcs_installation_id);
+	githubAppStore.fetchProjects(props.projectData.vcs_installation_id);
 	window.addEventListener('message', handleInstallationMessage);
 });
 
