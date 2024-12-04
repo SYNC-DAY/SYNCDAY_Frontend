@@ -31,20 +31,11 @@
                 :value="user.userId"
                 v-model="selectedMembers"
               />
-              {{ user.userName }}
+              {{ user.name }}
             </label>
           </div>
         </div>
         </div>
-      </div>
-
-      <!-- 채팅방 이름 -->
-      <div class="chat-room-name">
-        <label for="chatRoomName">채팅방 이름</label>
-        <input
-          id="chatRoomName"
-          type="text"
-          v-model="chatRoomName" />
       </div>
 
       <!-- 생성 버튼 -->
@@ -56,14 +47,17 @@
 <script setup>
 import { ref, computed, watch } from "vue";
 import axios from "axios";
+import { useAuthStore } from '@/stores/auth';
+import { Subscript } from "lucide-vue-next";
+import { allowContextMenu } from "@fullcalendar/core/internal";
 
 // 상태 관리
 const users = ref([]); // 사용자 목록
 const searchQuery = ref(""); // 검색어
 const selectedMembers = ref([]); // 선택된 멤버
+const authStore = useAuthStore();
+const currentUserId = ref(authStore.user?.userId);
 const chatRoomName = ref(""); // 채팅방 이름
-
-
 const isLoading = ref(true);
 
 // 사용자 목록 로드
@@ -72,8 +66,8 @@ async function loadUsers() {
   try {
     const response = await axios.get("http://localhost:5000/api/user/select"); // API 주소 확인
     console.log("api 응답",response.data )
-    users.value = response.data;
-    console.log("사용자 목록: ", users.value)
+    users.value = response.data.data.filter(user => user.userId !== currentUserId.value);
+    console.log("필터링된 사용자 목록: ", users.value)
   } catch (error) {
     console.error("사용자 불러오기 실패:", error.response || error.message);
   } finally {
@@ -85,24 +79,32 @@ async function loadUsers() {
 const filteredUsers = computed(() => {
   if (Array.isArray(users.value)) {
     return users.value.filter(user =>
-      user.userName.toLowerCase().includes(searchQuery.value.toLowerCase())
+      user.name.toLowerCase().includes(searchQuery.value.toLowerCase())
     );
   } else {
     return [];
   }
 });
 
+const emit = defineEmits(["close"]);
 // 새 채팅방 생성
 async function createNewChat() {
   try {
-    const response = await axios.post("/api/chat/room/create", {
+    if (selectedMembers.value.length === 0) {
+      alert("채팅방에 추가할 멤버를 선택해주세요!");
+      return;
+    }
+    const response = await axios.post("http://localhost:5000/api/chat/room/create", {
       chatRoomName: chatRoomName.value,
       memberIds: selectedMembers.value,
     });
-    console.log("새 채팅방 생성 성공:", response.data);
-    $emit("close");
+    const newRoomId = response.data.data.id;
+    console.log("새 채팅방 생성 성공:", newRoomId);
+    emit("close");
+    routerKey.push({name: "ChatRoom", params: {roomId: newRoomId}});
   } catch (error) {
     console.error("채팅방 생성 실패:", error);
+    alert("채팅방 생성에 실패하였습니다. 다시 시도해주세요.");
   }
 }
 
@@ -110,7 +112,7 @@ async function createNewChat() {
 watch(selectedMembers, (newMembers) => {
   const memberNames = users.value
     .filter((user) => newMembers.includes(user.userId))
-    .map((user) => user.userName);
+    .map((user) => user.name);
   chatRoomName.value = memberNames.join(", ") || "새 채팅방";
 });
 
@@ -197,15 +199,15 @@ loadUsers();
 
 /* 생성 버튼 */
 .create-new {
-  background-color: #007bff;
+  background-color: #ff9d85;
   color: white;
-  padding: 10px 20px;
+  padding: 8px 10px;
   font-size: 1rem;
   border: none;
   border-radius: 4px;
   cursor: pointer;
 }
 .create-new:hover {
-  background-color: #0056b3;
+  background-color: #fc8d71;
 }
 </style>

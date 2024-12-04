@@ -5,9 +5,10 @@
     <div class="popup-content">
       <h2>{{ props.chatRoomName }}</h2>
       <div class="chat-messages">
-        <div v-for="(message, index) in messages" :key="index">
-        {{ message.senderName }} 
-          {{ message.content }}
+        <div v-for="(message, index) in messages" :key="index" class="message-line">
+          <span class="sender">{{ message.senderName }}</span>
+          <span class="content">{{ message.content }}</span>
+          <span class="time">{{ message.sentTime }}</span>
         </div>
       </div>
       <div class="chat-input">
@@ -281,6 +282,25 @@ h2 {
   margin: 8px 0;
   border-radius: 4px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.message-line {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.sender {
+font-weight: bold;
+font-size: 18px;
+}
+.content {
+  font-size: 17px;
+}
+.time {
+  color: #888;
+  font-size: 0.8rem;
+  margin-left: 10px;
 }
 
 .chat-input {

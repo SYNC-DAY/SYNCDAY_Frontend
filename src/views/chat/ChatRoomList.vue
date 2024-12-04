@@ -56,6 +56,7 @@ const closeNewChatRoom = () => {
 }
 // 채팅방 열기
 const openChatRoom = (chat) => {
+  console.log('chat', chat);
   if (chat && chat.roomId) { // 방어적 코드를 추가
     console.log(`${chat.roomId}번 채팅방 열기`);
     selectedRoom.value = chat;
