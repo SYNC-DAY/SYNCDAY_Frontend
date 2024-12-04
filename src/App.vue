@@ -9,7 +9,9 @@
       <div class="main-container">
         <template v-if="authStore.isAuthenticated">
           <main class="content">
+
             <router-view />
+            <Assistant />
           </main>
         </template>
       </div>
@@ -18,10 +20,13 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { useAuthStore } from "@/stores/auth.js";
+import { useAuthStore } from "@/stores/auth.js";;
 import Navigation from "@/components/Navigation.vue";
+import Assistant from './components/Assistant.vue';
+
+
 
 const route = useRoute();
 const authStore = useAuthStore();
@@ -35,7 +40,8 @@ const isLoginPage = computed(() => route.path === '/login');
 .app-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  max-width: 100vw;
 }
 
 .main-container {

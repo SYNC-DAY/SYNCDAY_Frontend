@@ -1,203 +1,248 @@
 <template>
-  <!-- Previous template sections remain the same until repository selector -->
-  
-  <!-- Repository Selector section -->
-  <div class="flex items-center space-x-4">
-    <!-- Login/Profile Section -->
-    <div v-if="!authStore.isAuthenticated" class="flex items-center">
-      <button
-        @click="authStore.loginWithGithub"
-        :disabled="authStore.isLoading"
-        class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
-      >
-        <Github class="h-5 w-5 mr-2 text-gray-500" />
-        Connect GitHub
+  <div class="ph-1rem container-col width-100">
+    <div v-if="isLoading" class="loading-state">
+      Loading...
+    </div>
+
+    <div v-else-if="error" class="error-state">
+      <p>{{ error }}</p>
+      <button @click="fetchWorkspace" class="retry-button">
+        Retry
       </button>
     </div>
 
-    <div v-else class="flex items-center space-x-4">
-      <!-- User Profile -->
-      <div class="flex items-center" v-if="authStore.username">
-        <img 
-          :src="authStore.avatarUrl" 
-          :alt="authStore.username"
-          class="h-8 w-8 rounded-full mr-2"
-        >
-        <span class="text-sm text-gray-700">{{ authStore.username }}</span>
+    <template v-else-if="workspaceDetails">
+      <div class="workspace-header container-row underline-gray">
+        <div class="container-row header-left">
+          <h4>{{ workspaceDetails.workspace_name }}</h4>
+          <i class="pi pi-github"></i>
+        </div>
+
+        <div class="container-row header-right">
+
+          <Button icon="pi pi-cog" severity="secondary"></Button>
+          <Button icon="pi pi-tag"></Button>
+        </div>
       </div>
 
-      <!-- PrimeVue Repository Selector -->
-      <div class="w-72">
-        <Select
-          v-model="selectedRepo"
-          :options="repoOptions"
-          optionLabel="name"
-          :loading="repoStore.isLoading"
-          placeholder="Select Repository"
-          class="w-full"
-          :pt="{
-            root: { class: 'w-full' },
-            input: { class: 'flex items-center' },
-            item: ({ context }) => ({
-              class: [
-                'flex items-center p-2',
-                'hover:bg-gray-100 cursor-pointer',
-                { 'bg-blue-50': context.selected }
-              ]
-            })
-          }"
-        >
-          <template #value="slotProps">
-            <div class="flex items-center">
-              <Github class="h-5 w-5 mr-2 text-gray-500" />
-              <span>{{ slotProps.value?.name || 'Select Repository' }}</span>
-            </div>
-          </template>
-          
-          <template #option="slotProps">
-            <div class="flex items-center">
-              <GitBranch class="h-4 w-4 mr-2 text-gray-500" />
-              <span class="flex-1">{{ slotProps.option.name }}</span>
-              <Check
-                v-if="slotProps.option.html_url === workspaceDetails?.vcs_repo_url"
-                class="h-4 w-4 text-blue-500"
-              />
-            </div>
-          </template>
-        </Select>
+      <!-- select view mode -->
+      <div>
+        <Tabs value="0">
+          <TabList>
+            <Tab value="0">CardBoard</Tab>
+            <Tab value="1">Kanban</Tab>
+            <Tab value="2">Calendar</Tab>
+          </TabList>
+
+          <TabPanels>
+            <TabPanel value="0">
+              <CardBoard :cardboards="workspaceDetails.cardboards || []"></CardBoard>
+            </TabPanel>
+            <TabPanel value="1">
+              <KanbanBoard :cardboards="workspaceDetails.cardboards || []" />
+
+            </TabPanel>
+            <TabPanel value="2">
+              <CalendarView :cardboards="workspaceDetails.cardboards" />
+
+            </TabPanel>
+            <!-- Calendar view -->
+          </TabPanels>
+        </Tabs>
+        <CardModal v-if="showCardModal" :show="showCardModal" :card="selectedCard" @close="handleCloseModal" />
       </div>
 
-      <!-- Logout Button -->
-      <button
-        @click="handleLogout"
-        class="p-2 text-gray-400 hover:text-gray-500"
-        title="Logout"
-      >
-        <LogOut class="h-5 w-5" />
-      </button>
+    </template>
+
+    <div v-else class="empty-state">
+      No workspace data available
     </div>
-
-    <!-- Refresh Button -->
-    <button
-      @click="refreshWorkspace"
-      class="inline-flex items-center p-2 border border-transparent rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-    >
-      <RefreshCw class="h-5 w-5" :class="{ 'animate-spin': isRefreshing }" />
-    </button>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
-import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
-import { useGithubRepoStore } from '@/stores/github/useGithubRepoStore';
-import { 
-  Github, 
-  RefreshCw, 
-  AlertCircle, 
-  Loader,
-  GitBranch,
-  Layout,
-  Plus,
-  Check,
-  LogOut
-} from 'lucide-vue-next';
-import Select from 'primevue/select';
-import CardBoardView from './views/CardBoardView.vue';
+import { ref, onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import axios from 'axios';
 
-// Previous props and emits remain the same...
+import Tabs from 'primevue/tabs';
+import TabList from 'primevue/tablist';
+import Tab from 'primevue/tab';
+import TabPanels from 'primevue/tabpanels';
+import TabPanel from 'primevue/tabpanel';
 
-// Store initialization
-const authStore = useGithubAuthStore();
-const repoStore = useGithubRepoStore();
+/* views */
+import CardBoard from './views/CardBoardView.vue';
+import KanbanBoard from './views/KanbanBoardView.vue';
+import CalendarView from './views/CalendarView.vue';
 
-// State
+
+const route = useRoute();
+const router = useRouter();
+const showCardModal = ref(false);
+const selectedCard = ref(null);
+
+const props = defineProps({
+  projectId: {
+    type: [String, Number],
+    required: true
+  },
+  workspaceId: {
+    type: [String, Number],
+    required: true
+  },
+  projects: {
+    type: Array,
+    required: true
+  }
+});
+
+const emit = defineEmits(['update:projects']);
 const isLoading = ref(false);
-const isRefreshing = ref(false);
 const error = ref(null);
 const workspaceDetails = ref(null);
-const selectedRepo = ref(null);
 
-// Computed
-const repoOptions = computed(() => {
-  return repoStore.allRepositories.map(repo => ({
-    id: repo.id,
-    name: repo.name,
-    html_url: repo.html_url,
-    full_name: repo.full_name,
-  }));
-});
-
-// Watch for selected repository changes
-watch(selectedRepo, async (newRepo) => {
-  if (newRepo) {
-    await handleRepoSelect(newRepo);
+const fetchWorkspace = async () => {
+  if (!props.workspaceId) {
+    error.value = 'No workspace ID provided';
+    return;
   }
-});
 
-// Methods
-const handleRepoSelect = async (repo) => {
+  isLoading.value = true;
+  error.value = null;
+
   try {
-    const response = await fetch(`/api/workspaces/${props.workspaceId}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        vcs_type: 'GITHUB',
-        vcs_repo_url: repo.html_url
-      })
-    });
+    const response = await axios.get(`/workspaces/${props.workspaceId}`);
 
-    if (!response.ok) {
-      throw new Error('Failed to update repository');
+    if (response.data.success) {
+      workspaceDetails.value = response.data.data;
+      const updatedProjects = JSON.parse(JSON.stringify(props.projects));
+      const project = updatedProjects.find(p => p.proj_id === parseInt(props.projectId));
+
+      if (project) {
+        const workspace = project.workspaces.find(
+          w => w.workspace_id === parseInt(props.workspaceId)
+        );
+        if (workspace) {
+          Object.assign(workspace, {
+            workspace_name: workspaceDetails.value.workspace_name,
+            progress_status: workspaceDetails.value.progress_status,
+            bookmark_status: workspaceDetails.value.bookmark_status,
+          });
+
+          emit('update:projects', updatedProjects);
+        }
+      }
+    } else {
+      throw new Error(response.data.error || 'Failed to fetch workspace data');
     }
-
-    await fetchWorkspace();
   } catch (err) {
-    error.value = 'Failed to update repository';
-    console.error('Failed to update repository:', err);
+    error.value = err.message || 'Failed to load workspace';
+    console.error('Failed to fetch workspace:', err);
+  } finally {
+    isLoading.value = false;
   }
 };
 
-// Initialize selected repository based on workspace details
-const initializeSelectedRepo = () => {
-  if (workspaceDetails.value?.vcs_repo_url) {
-    const currentRepo = repoOptions.value.find(
-      repo => repo.html_url === workspaceDetails.value.vcs_repo_url
-    );
-    if (currentRepo) {
-      selectedRepo.value = currentRepo;
+onMounted(() => {
+  fetchWorkspace();
+});
+
+const handleCloseModal = () => {
+  router.replace({ 
+    query: { 
+      ...route.query,
+      cardId: undefined 
+    }
+  });
+};
+
+watch(
+  [
+    () => props.workspaceId, 
+    () => props.projectId,
+    () => route.query.cardId
+  ],
+  async ([newWorkspaceId, newProjectId, newCardId], [oldWorkspaceId, oldProjectId, oldCardId]) => {
+    // 워크스페이스나 프로젝트가 변경되었을 때
+    if ((newWorkspaceId && newWorkspaceId !== oldWorkspaceId) ||
+        (newProjectId && newProjectId !== oldProjectId)) {
+      await fetchWorkspace();
+    }
+
+    // cardId가 변경되었을 때
+    if (newCardId !== oldCardId) {
+      if (newCardId) {
+        // 워크스페이스 데이터가 없다면 먼저 로드
+        if (!workspaceDetails.value) {
+          await fetchWorkspace();
+        }
+        
+        // 카드 데이터 찾기
+        const card = findCardInWorkspace(newCardId);
+        if (card) {
+          selectedCard.value = card;
+          showCardModal.value = true;
+        }
+      } else {
+        // cardId가 없어졌을 때 (모달 닫기)
+        showCardModal.value = false;
+        selectedCard.value = null;
+      }
     }
   }
-};
+);
 
-// Update watchers
-watch(workspaceDetails, initializeSelectedRepo);
-
-// Rest of the script remains the same...
-
-// Lifecycle hooks
-onMounted(async () => {
-  await initializeGitHub();
-  await fetchWorkspace();
-  initializeSelectedRepo();
-});
-</script>
-
-<style lang="scss">
-// Optional: Add custom styles for PrimeVue Select
-.p-select {
-  .p-select-label {
-    @apply text-sm;
-  }
+// 워크스페이스 내에서 카드 찾기 헬퍼 함수
+const findCardInWorkspace = (cardId) => {
+  if (!workspaceDetails.value?.cardboards) return null;
   
-  .p-select-items {
-    @apply py-1;
+  for (const cardboard of workspaceDetails.value.cardboards) {
+    const card = cardboard.cards?.find(c => c.card_id === Number(cardId));
+    if (card) return card;
   }
+  return null;
+};
+</script>
+<style scoped>
+.workspace-header {
+  padding: 0 2rem;
+}
 
-  .p-select-item {
-    @apply text-sm;
-  }
+.workspace-header h4 {
+  font-size: 1.4rem;
+}
+
+.workspace-header>h3 {
+  font-size: 2rem;
+}
+
+.workspace-content {}
+
+.boards-container {
+  height: 100%;
+  padding: 1rem;
+  overflow-x: auto;
+  display: flex;
+  gap: 1rem;
+}
+
+/* Add custom scrollbar styling */
+.boards-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.boards-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.boards-container::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.boards-container::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 </style>

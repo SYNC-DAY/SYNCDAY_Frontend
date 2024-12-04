@@ -1,26 +1,27 @@
 <!-- ProjItem.vue -->
 <template>
 	<div class="proj-item">
-		<div class="proj-section" @click="handleSelect">
-			<div class="proj-left" :class="{ 'active': isActive }"></div>
-			<div class="proj-title">
+		<div class="proj-section container-row" @click="handleSelect">
+			<div class="proj-left" :class="{ 'gradient-vertical': isActive }"></div>
+			<div class="proj-title container-row">
 				<span>{{ title }}</span>
 			</div>
-			<div class="proj-right">
+			<div class="proj-right container-col">
 				<div class="bookmark-section" @click.stop="toggleBookmark">
-					<i class="pi" :class="{ 'pi-bookmark': !isBookmarked, 'pi-bookmark-fill': isBookmarked }"></i>
+					<i class="pi gradient-vertical"
+						:class="{ 'pi-bookmark': !isBookmarked, 'pi-bookmark-fill': isBookmarked }"></i>
 				</div>
 				<div class="chevron-section">
 					<i class="pi" :class="{ 'pi-chevron-down': !isExpanded, 'pi-chevron-up': isExpanded }"
-						@click="handleExpand"></i>
+						@click.stop="handleExpand"></i>
 				</div>
 			</div>
-
-
 		</div>
-		<div v-show="isExpanded" class="proj-content">
-			<slot></slot>
-		</div>
+		<transition name="expand">
+			<div v-show="isExpanded" class="proj-content">
+				<slot></slot>
+			</div>
+		</transition>
 	</div>
 </template>
 
@@ -36,7 +37,7 @@ const props = defineProps({
 		type: Boolean,
 		default: false
 	},
-	isExpanded: {  // Changed from initialExpanded
+	isExpanded: {
 		type: Boolean,
 		default: false
 	},
@@ -67,35 +68,27 @@ const toggleBookmark = () => {
 	emit('bookmark-changed', isBookmarked.value)
 }
 </script>
+
 <style scoped>
 .proj-item {
 	border-bottom: 1px solid var(--outline-gray);
 }
 
 .proj-section {
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
-	align-items: center;
 	width: 100%;
 	height: 5rem;
 	overflow: hidden;
-
+	transition: background-color 0.3s ease;
 }
 
-.proj-section>* {
-	/* border: 1px solid var(--outline-gray) */
+.proj-section:hover {
+	background-color: rgba(0, 0, 0, 0.03);
 }
 
 .proj-left {
 	width: 1.5rem;
 	height: 100%;
-	/* fill: grad */
-}
-
-.active {
-	background: linear-gradient(to bottom, var(--pink-color),
-			var(--apricot-color));
+	transition: opacity 0.3s ease;
 }
 
 .proj-title {
@@ -103,8 +96,6 @@ const toggleBookmark = () => {
 	padding-left: 0.4rem;
 	height: 100%;
 	overflow-x: hidden;
-	display: flex;
-	align-items: center;
 	cursor: pointer;
 }
 
@@ -114,14 +105,10 @@ const toggleBookmark = () => {
 	height: 100%;
 	background-color: var(--background-gray);
 	position: relative;
-	display: flex;
-	flex-direction: column;
-
 }
 
 .proj-right div {
 	flex: 1;
-	/* border: 1px solid black; */
 	display: flex;
 	flex-direction: row;
 	justify-content: center;
@@ -136,15 +123,12 @@ const toggleBookmark = () => {
 	top: -3px;
 	font-size: 2rem;
 	color: transparent;
-	background: linear-gradient(180deg, var(--pink-color) 50%, var(--apricot-color));
 	background-clip: text;
+	transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
-.bookmark-section i.bookmarked {
-	background: linear-gradient(180deg, var(--pink-color) 50%, var(--apricot-color));
-	background-clip: text;
-	-webkit-background-clip: text;
-	-webkit-text-fill-color: transparent;
+.proj-right>.bookmark-section>i:hover {
+	transform: scale(1.1);
 }
 
 .chevron-section {
@@ -155,6 +139,37 @@ const toggleBookmark = () => {
 	position: absolute;
 	bottom: 0.2rem;
 	vertical-align: bottom;
-	/* border: 1px solid black; */
+	transition: transform 0.3s ease;
+}
+
+/* Expand/collapse transition */
+.expand-enter-active,
+.expand-leave-active {
+	transition: max-height 0.3s ease, opacity 0.3s ease;
+	max-height: 1000px;
+	overflow: hidden;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+	max-height: 0;
+	opacity: 0;
+}
+
+.expand-enter-to,
+.expand-leave-from {
+	max-height: 1000px;
+	opacity: 1;
+}
+
+/* Chevron rotation */
+.pi-chevron-down {
+	transform: rotate(0deg);
+	transition: transform 0.3s ease;
+}
+
+.pi-chevron-up {
+	transform: rotate(180deg);
+	transition: transform 0.3s ease;
 }
 </style>

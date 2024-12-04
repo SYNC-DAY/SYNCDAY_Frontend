@@ -1,5 +1,5 @@
 <template>
-	<nav class="nav-top container-row">
+	<nav class="nav-top container-row underline-gray">
 		<!-- logo -->
 		<div class="nav-logo">
 			<RouterLink to="/">
@@ -39,7 +39,10 @@
 
 		<!-- search -->
 		<div class="nav-search">
-			<InputText v-model="searchText" />
+			<div class="p-input-icon-right">
+				<i class="pi pi-search cursor-pointer" @click="handleSearch"></i>
+				<InputText v-model="searchText" placeholder="검색어를 입력하세요" @keyup.enter="handleSearch" />
+			</div>
 		</div>
 
 		<!-- icon,profile -->
@@ -47,13 +50,13 @@
 			<!-- icons -->
 			<div class="icons">
 				<RouterLink to="/meetingroom">
-					<i class="pi pi-calendar"></i>
+					<i class="pi pi-users"></i>
 				</RouterLink>
 				<button class="icon-button" @click="toggleChatPop">
 					<i class="pi pi-send"></i>
 				</button>
-				<RouterLink to="alarm">
-					<i class="pi pi-bell"></i>
+				<RouterLink to="/invitation">
+					<i class="pi pi-envelope"></i>
 				</RouterLink>
 			</div>
 
@@ -86,18 +89,49 @@ import { useAuthStore } from '@/stores/auth.js';
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import InputText from 'primevue/inputtext';
 import ChatPop from '@/views/chat/ChatRoomList.vue';
+import Swal from 'sweetalert2';  
 
-
-const isPopupVisible = ref(false);
 const router = useRouter();
 const route = useRoute();
 const isDropdownOpen = ref(false);
 const profileRef = ref(null);
 const authStore = useAuthStore();
-const searchText = ref("검색어를 입력하세요")
+const isPopupVisible = ref(false);
+const searchText = ref(''); // 초기값을 빈 문자열로 변경
 
 // 현재 라우트 경로 계산
 const currentRoute = computed(() => route.path);
+
+// 검색 처리 함수 수정
+const handleSearch = () => {
+  const trimmedSearch = searchText.value.trim();
+  
+  if (trimmedSearch.length === 0) {
+    return;
+  }
+  
+  if (trimmedSearch.length === 1) {
+    Swal.fire({
+      icon: 'warning',
+      title: '검색어가 너무 짧습니다',
+      text: '최소 2글자 이상 입력해주세요.',
+      confirmButtonText: '확인',
+      confirmButtonColor: '#FE5D86',  // SYNCDAY의 핑크색 테마
+	  heightAuto: false,        // 높이 자동조절 비활성화
+      scrollbarPadding: false
+	  
+    });
+    return;
+  }
+
+  console.log("검색된 단어: ", trimmedSearch);
+  router.push({
+    path: '/search',
+    query: {
+      keyword: trimmedSearch
+    }
+  });
+};
 
 // 드롭다운 토글
 const toggleDropdown = () => {
@@ -145,11 +179,7 @@ const isRouteActive = (routeName) => {
 
 <style scoped>
 .nav-top {
-	width: 100%;
-	height: 5rem;
-
-	padding: 0.5rem;
-	border-bottom: 1px solid var(--outline-gray);
+	padding: 1rem;
 }
 
 .nav-top>div,
@@ -166,8 +196,10 @@ const isRouteActive = (routeName) => {
 	width: 100%;
 }
 
+/* 로고 영역 */
 .nav-logo {
-	flex: 2;
+	flex: 0 0 auto;
+	/* 고정 크기 */
 	font-weight: 700;
 }
 
@@ -176,8 +208,12 @@ const isRouteActive = (routeName) => {
 }
 
 .nav-tabs {
-	flex: 2.5;
+	flex: 1;
+	/* 축소는 가능하지만 늘어나지는 않음 */
+	min-width: 15rem;
+	/* 최소 너비 설정 */
 }
+
 
 .nav-tabs ul {
 	width: 100%;
@@ -222,24 +258,53 @@ const isRouteActive = (routeName) => {
 }
 
 .nav-search {
-	flex: 2.5;
+	flex: 1 1 auto;
+	/* 남은 공간을 최대한 차지 */
 	padding: 0.5rem;
 }
 
-input[type=search] {
-	width: 15rem;
-	height: 2.4rem;
-	font-size: 1.2rem;
-	border-radius: 1.2rem;
-	padding: 0 1rem;
+.nav-search .p-input-icon-right {
+	width: 100%;
+    max-width: 25rem;
+    position: relative;
 }
 
+.nav-search .p-input-icon-right i {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  right: 1rem;
+  color: #6c757d;  /* 아이콘 색상을 원하는 대로 조정하세요 */
+}
+
+.nav-search .p-input-icon-right input {
+  width: 100%;
+  height: 2.4rem;
+  font-size: 1rem;
+  border-radius: 1.2rem;
+  padding: 0 2.5rem 0 1rem;  /* 오른쪽 패딩을 늘려서 아이콘 공간 확보 */
+  z-index: 1; /* 클릭 가능하도록 z-index 설정 */
+}
+
+.p-input-icon-right i:hover {
+	cursor: pointer;
+  	color: #495057;
+}
+
+/* 우측 아이콘/프로필 영역 */
 .nav-right {
-	flex: 2;
+	flex: 0 0 auto;
+	/* 고정 크기 */
+	display: flex;
+	align-items: center;
+	gap: 1rem;
 }
 
 .icons {
-	flex: 1;
+	display: flex;
+	gap: 1rem;
+	/* 아이콘 간 간격 */
+	align-items: center;
 }
 
 .icons img {

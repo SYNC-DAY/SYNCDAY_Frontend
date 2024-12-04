@@ -1,10 +1,12 @@
 <template>
   <SideBar>
+    <!-- Project List -->
     <template v-for="proj in projects" :key="proj.proj_id">
       <ProjItem :title="proj.proj_name" :isActive="activeProject === proj.proj_id"
         :initialBookmarked="proj.bookmark_status === 'BOOKMARKED'" :progress="proj.progress_status"
         :isExpanded="expandedProjects.includes(proj.proj_id)" @toggle-expansion="toggleProjectExpansion(proj.proj_id)"
         @select="selectProject(proj.proj_id)" @bookmark-changed="handleBookmarkChange(proj.proj_id, $event)">
+        <!-- Workspace List -->
         <template v-for="workspace in proj.workspaces" :key="workspace.workspace_id">
           <WorkspaceItem :workspaceId="workspace.workspace_id" :projectId="proj.proj_id"
             :title="workspace.workspace_name" :isActive="activeWorkspace === workspace.workspace_id"
@@ -14,40 +16,43 @@
       </ProjItem>
     </template>
 
-    <!-- Add New Project Section -->
-    <div class="new-project-section">
-
-      <!-- <button class="new-project-btn" @click="showNewProjectInput = true" v-if="!showNewProjectInput">
-        + New Project
-      </button> -->
-      <div v-if="showNewProjectInput" class="new-project-input-container">
-        <input v-model="newProjectName" @keyup.enter="createProject" @keyup.esc="cancelNewProject"
-          placeholder="Enter project name..." ref="newProjectInput" class="new-project-input" />
-      </div>
+    <!-- New Project Button -->
+    <div class="container-row justify-center" style="padding: 1rem">
+      <Button label="New Project" icon="pi pi-plus" @click="showNewProjModal = true" />
     </div>
   </SideBar>
 
+  <!-- New Project Modal -->
+  <NewProjModal v-model:visible="showNewProjModal" @submit="handleProjectSubmit" />
+
+  <!-- Project Settings Modal -->
+  <!-- Main Content Area -->
   <div class="proj-main">
     <router-view :projects="projects" />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, watch, provide } from 'vue';
+import { ref, onMounted, provide, nextTick } from 'vue';
 import { useAuthStore } from "@/stores/auth.js";
 import { storeToRefs } from "pinia";
 import { useRouter } from 'vue-router';
 import axios from 'axios';
+import { useToast } from 'primevue/usetoast';
 
 import SideBar from '@/components/SideBar.vue';
-import ProjItem from './components/SideBar/ProjItem.vue';
-import WorkspaceItem from './components/SideBar/WorkspaceItem.vue';
+import ProjItem from './SideBar/ProjItem.vue';
+import WorkspaceItem from './SideBar/WorkspaceItem.vue';
+import NewProjModal from './components/NewProjModal.vue';
 
+
+// Initialize services
+const toast = useToast();
 const router = useRouter();
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
 
-// State
+// State management
 const projects = ref([]);
 const workspaces = ref([]);
 provide('projects', projects);
@@ -56,19 +61,64 @@ provide('workspaces', workspaces);
 const activeWorkspace = ref(null);
 const activeProject = ref(null);
 const expandedProjects = ref([]);
-const isLoading = ref(false);
-const error = ref(null);
+const showNewProjModal = ref(false);
 
-// New state for project creation
-const showNewProjectInput = ref(false);
-const newProjectName = ref('');
-const newProjectInput = ref(null);
 
-// Methods
+// Project submission handler
+const handleProjectSubmit = async (projectData) => {
+  try {
+    console.log(projectData);
+    const response = await axios.post("/projs/", {
+      user_id: user.value.userId,
+      proj_name: projectData.name,
+      start_time: projectData.startDate ? new Date(projectData.startDate).toISOString() : null,
+      end_time: projectData.endDate ? new Date(projectData.endDate).toISOString() : null
+    });
+
+    if (response.data.success) {
+      // Add new project to local state
+      const newProject = {
+        proj_id: response.data.data.proj_id,
+        proj_name: projectData.name,
+        start_time: projectData.startDate,
+        end_time: projectData.endDate,
+        progress_status: 0,
+        bookmark_status: 'NONE',
+        participation_status: 'OWNER',
+        created_at: new Date().toISOString(),
+        workspaces: []
+      };
+
+      projects.value.push(newProject);
+
+      toast.add({
+        severity: 'success',
+        summary: '프로젝트 생성 성공',
+        detail: '새 프로젝트가 생성되었습니다.',
+        life: 3000
+      });
+
+      // Auto-select the new project
+      nextTick(() => {
+        selectProject(newProject.proj_id);
+      });
+
+    } else {
+      throw new Error(response.data.message || '프로젝트 생성에 실패했습니다.');
+    }
+  } catch (error) {
+    console.error('Project creation failed:', error);
+    toast.add({
+      severity: 'error',
+      summary: '프로젝트 생성 실패',
+      detail: error.message || '프로젝트 생성 중 오류가 발생했습니다.',
+      life: 3000
+    });
+  }
+};
+
+// Navigation handlers
 const selectWorkspace = async (workspaceId, projId) => {
-  isLoading.value = true;
-  error.value = null;
-
   try {
     activeWorkspace.value = workspaceId;
     activeProject.value = projId;
@@ -81,10 +131,13 @@ const selectWorkspace = async (workspaceId, projId) => {
       }
     });
   } catch (err) {
-    error.value = 'Navigation failed';
-    console.error('Navigation failed:', err);
-  } finally {
-    isLoading.value = false;
+    console.error('Workspace navigation failed:', err);
+    toast.add({
+      severity: 'error',
+      summary: '이동 실패',
+      detail: '워크스페이스로 이동하는 중 오류가 발생했습니다.',
+      life: 3000
+    });
   }
 };
 
@@ -98,9 +151,16 @@ const selectProject = async (projId) => {
     });
   } catch (err) {
     console.error('Project navigation failed:', err);
+    toast.add({
+      severity: 'error',
+      summary: '이동 실패',
+      detail: '프로젝트로 이동하는 중 오류가 발생했습니다.',
+      life: 3000
+    });
   }
 };
 
+// Project expansion handler
 const toggleProjectExpansion = (projId) => {
   const index = expandedProjects.value.indexOf(projId);
   if (index === -1) {
@@ -110,188 +170,107 @@ const toggleProjectExpansion = (projId) => {
   }
 };
 
+// Bookmark handlers
 const handleBookmarkChange = async (projId, isBookmarked) => {
   try {
-    await axios.put(`/proj-members/${projId}/bookmark`, {
-      bookmark_status: isBookmarked ? 'BOOKMARKED' : 'UNBOOKMARKED'
-    });
-
-    const projIndex = projects.value.findIndex(p => p.proj_id === projId);
-    if (projIndex !== -1) {
-      projects.value[projIndex] = {
-        ...projects.value[projIndex],
-        bookmark_status: isBookmarked ? 'BOOKMARKED' : 'UNBOOKMARKED'
-      };
-    }
-  } catch (err) {
-    console.error('Failed to update bookmark status:', err);
-  }
-};
-
-const handleWorkspaceBookmark = async (workspaceId, isBookmarked) => {
-  try {
-    await axios.put(`/workspaces/${workspaceId}/bookmark`, {
-      bookmark_status: isBookmarked ? 'BOOKMARKED' : 'UNBOOKMARKED'
-    });
-
-    // Update workspace in both workspaces ref and projects ref
-    const wsIndex = workspaces.value.findIndex(w => w.workspace_id === workspaceId);
-    if (wsIndex !== -1) {
-      workspaces.value[wsIndex] = {
-        ...workspaces.value[wsIndex],
-        bookmark_status: isBookmarked ? 'BOOKMARKED' : 'UNBOOKMARKED'
-      };
-    }
-
-    projects.value = projects.value.map(proj => ({
-      ...proj,
-      workspaces: proj.workspaces.map(ws =>
-        ws.workspace_id === workspaceId
-          ? { ...ws, bookmark_status: isBookmarked ? 'BOOKMARKED' : 'UNBOOKMARKED' }
-          : ws
-      )
-    }));
-  } catch (err) {
-    console.error('Failed to update workspace bookmark:', err);
-  }
-};
-
-const updateWorkspaces = (projectWorkspaces) => {
-  if (Array.isArray(projectWorkspaces)) {
-    // Update workspaces ref with the new workspace data
-    const updatedWorkspaces = [...workspaces.value];
-    projectWorkspaces.forEach(ws => {
-      const index = updatedWorkspaces.findIndex(w => w.workspace_id === ws.workspace_id);
-      if (index !== -1) {
-        updatedWorkspaces[index] = { ...ws };
-      } else {
-        updatedWorkspaces.push({ ...ws });
+    const response = await axios({
+      method: isBookmarked ? 'POST' : 'DELETE',
+      url: '/proj-members/bookmark',
+      params: {
+        userId: user.value.userId,
+        projId: projId
       }
     });
-    workspaces.value = updatedWorkspaces;
-  }
-};
-
-const fetchProjs = async () => {
-  try {
-    const response = await axios.get(`/projs/users/${user.value.userId}`);
-    if (response.data.success) {
-      projects.value = response.data.data;
-      // Extract and flatten all workspaces from projects
-      const allWorkspaces = projects.value.reduce((acc, proj) => {
-        return acc.concat(proj.workspaces.map(ws => ({
-          ...ws,
-          project_id: proj.proj_id
-        })));
-      }, []);
-      workspaces.value = allWorkspaces;
-    } else {
-      throw new Error(response.data.error || 'Failed to fetch Projects');
-    }
-  } catch (err) {
-    console.error('Failed to fetch projects:', err);
-    error.value = 'Failed to load projects';
-  }
-};
-
-const createProject = async () => {
-  if (!newProjectName.value.trim()) {
-    return;
-  }
-
-  try {
-    const response = await axios.post('/projs', {
-      proj_name: newProjectName.value.trim(),
-      user_id: user.value.userId
-    });
 
     if (response.data.success) {
-      const newProject = {
-        proj_id: response.data.data.proj_id,
-        proj_name: response.data.data.proj_name,
-        bookmark_status: 'UNBOOKMARKED',
-        progress_status: 'NOT_STARTED',
-        workspaces: [],
-        ...response.data.data
-      };
-
-      projects.value = [...projects.value, newProject];
-      newProjectName.value = '';
-      showNewProjectInput.value = false;
-      expandedProjects.value.push(newProject.proj_id);
-      await selectProject(newProject.proj_id);
-    } else {
-      throw new Error(response.data.error || 'Failed to create project');
-    }
-  } catch (err) {
-    console.error('Failed to create project:', err);
-    error.value = 'Failed to create project';
-  }
-};
-
-const createWorkspace = async (projectId, workspaceName) => {
-  try {
-    const response = await axios.post('/workspaces', {
-      workspace_name: workspaceName.trim(),
-      proj_id: projectId
-    });
-
-    if (response.data.success) {
-      const newWorkspace = {
-        workspace_id: response.data.data.workspace_id,
-        workspace_name: response.data.data.workspace_name,
-        project_id: projectId,
-        progress_status: 0,
-        bookmark_status: 'UNBOOKMARKED',
-        ...response.data.data
-      };
-
-      // Update workspaces ref
-      workspaces.value = [...workspaces.value, newWorkspace];
-
-      // Update projects ref
-      const projectIndex = projects.value.findIndex(p => p.proj_id === projectId);
-      if (projectIndex !== -1) {
-        projects.value[projectIndex] = {
-          ...projects.value[projectIndex],
-          workspaces: [...projects.value[projectIndex].workspaces, newWorkspace]
+      // Update local state
+      const projIndex = projects.value.findIndex(p => p.proj_id === projId);
+      if (projIndex !== -1) {
+        projects.value[projIndex] = {
+          ...projects.value[projIndex],
+          bookmark_status: isBookmarked ? 'BOOKMARKED' : 'NONE'
         };
       }
-
-      return newWorkspace;
+    } else {
+      throw new Error(response.data.error || '북마크 상태 변경에 실패했습니다');
     }
-    throw new Error(response.data.error || 'Failed to create workspace');
   } catch (err) {
-    console.error('Failed to create workspace:', err);
-    throw err;
+    console.error('Bookmark update failed:', err);
+    toast.add({
+      severity: 'error',
+      summary: '북마크 실패',
+      detail: '북마크 상태를 변경하는 중 오류가 발생했습니다.',
+      life: 3000
+    });
   }
 };
 
-const cancelNewProject = () => {
-  showNewProjectInput.value = false;
-  newProjectName.value = '';
-};
+// Initial data fetch
+const fetchProjs = async () => {
+  try {
+    const response = await axios.get(`/proj-members/users/${user.value.userId}`);
+    if (!response.data.success) {
+      throw new Error(response.data.error || '프로젝트 목록을 불러오는데 실패했습니다');
+    }
 
-watch(showNewProjectInput, async (newVal) => {
-  if (newVal) {
-    await nextTick();
-    newProjectInput.value?.focus();
+    const userProjMembers = response.data.data[0]?.proj_member_infos || [];
+    projects.value = userProjMembers.map(proj => ({
+      proj_id: proj.proj_id,
+      proj_name: proj.proj_name,
+      bookmark_status: proj.bookmark_status,
+      participation_status: proj.participation_status,
+      progress_status: proj.progress_status,
+      start_time: proj.start_time,
+      end_time: proj.end_time,
+      created_at: proj.created_at,
+      vcs_type: proj.vcs_type,
+      vcs_proj_url: proj.vcs_proj_url,
+      workspaces: proj.workspaces.map(ws => ({
+        workspace_id: ws.workspace_id,
+        workspace_name: ws.workspace_name,
+        created_at: ws.created_at,
+        progress_status: ws.progress_status,
+        vcs_type: ws.vcs_type,
+        vcs_repo_url: ws.vcs_repo_url,
+        proj_id: ws.proj_id
+      }))
+    }));
+
+    // Update workspaces ref
+    workspaces.value = userProjMembers.flatMap(proj =>
+      proj.workspaces.map(ws => ({
+        ...ws,
+        project_id: proj.proj_id
+      }))
+    );
+  } catch (err) {
+    console.error('Projects fetch failed:', err);
+    toast.add({
+      severity: 'error',
+      summary: '로딩 실패',
+      detail: '프로젝트 목록을 불러오는데 실패했습니다.',
+      life: 3000
+    });
   }
-});
+};
 
 onMounted(() => {
   fetchProjs();
 });
-</script>
 
+
+</script>
 
 <style scoped>
 .proj-main {
-  height: calc(100vh - 10vh);
   flex: 1;
-  padding: 1rem;
-  display: inline-block;
-  overflow-y: auto;
+}
+</style>
+
+<style scoped>
+.proj-main {
+  flex: 1;
+
 }
 
 .error-message {
@@ -308,11 +287,6 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   height: 100%;
-}
-
-.new-project-section {
-  padding: 0.75rem;
-  border-top: 1px solid #e5e7eb;
 }
 
 .new-project-btn {
