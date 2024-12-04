@@ -110,6 +110,7 @@ import { useGithubOrgStore } from '@/stores/github/useGithubOrgStore';
 import { useGithubRepoStore } from '@/stores/github/useGithubRepoStore';
 import { useGithubAppStore } from '@/stores/github/useGithubAppStore';
 import { useToast } from 'primevue/usetoast';
+import { useGithubProjStore } from '@/stores/github/useGithubProjStore';
 
 const props = defineProps({
 	visible: {
@@ -134,6 +135,7 @@ const emit = defineEmits(['update:visible', 'saved']);
 
 // Store instances
 const githubAuthStore = useGithubAuthStore();
+const githubProjStore = useGithubProjStore();
 const githubOrgStore = useGithubOrgStore();
 const githubRepoStore = useGithubRepoStore();
 const githubAppStore = useGithubAppStore();
@@ -325,6 +327,7 @@ const cleanup = () => {
 onMounted(() => {
 
 	githubAppStore.fetchGithubInstallationToken(props.projectData.vcs_installation_id)
+	githubProjStore.fetchProjects(props.projectData.vcs_installation_id);
 	window.addEventListener('message', handleInstallationMessage);
 });
 

@@ -10,10 +10,6 @@ export const useGithubAppStore = defineStore("githubApp", {
   }),
 
   getters: {
-    getInstallationById: state => installationId => {
-      return state.installations.get(installationId);
-    },
-
     hasInstallation: state => installationId => {
       return state.installations.has(installationId);
     },
@@ -168,6 +164,9 @@ export const useGithubAppStore = defineStore("githubApp", {
       } finally {
         this.isLoading = false;
       }
+    },
+    getInstallationById(installationId) {
+      return this.installations.get(installationId);
     },
   },
 });

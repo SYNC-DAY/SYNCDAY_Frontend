@@ -1,6 +1,5 @@
 // stores/useGithubProjStore.js
 import { defineStore } from "pinia";
-import axios from "axios";
 import { useGithubAppStore } from "./useGithubAppStore";
 import { Octokit } from "@octokit/rest";
 
@@ -18,57 +17,59 @@ export const useGithubProjStore = defineStore("githubProj", {
 
       try {
         const githubAppStore = useGithubAppStore();
-        const token = await githubAppStore.fetchGithubInstallationToken(vcs_installation_id);
-
+        const token = githubAppStore.getInstallationById(vcs_installation_id);
+        console.log(token);
+        console.log(typeof token.installation_token);
+        console.log(token.installation_token);
         if (!token) {
           throw new Error("Failed to get installation token");
         }
 
-        // Initialize Octokit with the installation token
         const octokit = new Octokit({
           auth: token,
         });
 
-        // Fetch repositories for the installation
-        const { data } = await octokit.apps.listReposAccessibleToInstallation();
+        // Get the installation
+        const installation = githubAppStore.getInstallationById(vcs_installation_id);
+        if (!installation) {
+          throw new Error("Installation not found");
+        }
 
-        // Store the repositories in our state
+        // Get the organization name from the installation
+        const orgName = installation.account.login;
+
+        // Fetch all projects for the organization
+        const { data } = await octokit.request("GET /orgs/{org}/projects", {
+          org: orgName,
+          state: "all",
+          headers: {
+            "X-GitHub-Api-Version": "2022-11-28",
+          },
+        });
+
+        const projectsData = data.map(project => ({
+          id: project.id,
+          name: project.name,
+          body: project.body,
+          number: project.number,
+          state: project.state,
+          creator: project.creator,
+          created_at: project.created_at,
+          updated_at: project.updated_at,
+          organization_permission: project.organization_permission,
+          html_url: project.html_url,
+        }));
+
+        // Update the store
         this.projects = {
           ...this.projects,
-          [vcs_installation_id]: data.repositories.map(repo => ({
-            id: repo.id,
-            name: repo.name,
-            full_name: repo.full_name,
-            private: repo.private,
-            description: repo.description,
-            html_url: repo.html_url,
-            default_branch: repo.default_branch,
-            created_at: repo.created_at,
-            updated_at: repo.updated_at,
-            pushed_at: repo.pushed_at,
-            git_url: repo.git_url,
-            ssh_url: repo.ssh_url,
-            clone_url: repo.clone_url,
-            size: repo.size,
-            stargazers_count: repo.stargazers_count,
-            watchers_count: repo.watchers_count,
-            language: repo.language,
-            has_issues: repo.has_issues,
-            has_projects: repo.has_projects,
-            has_downloads: repo.has_downloads,
-            has_wiki: repo.has_wiki,
-            has_pages: repo.has_pages,
-            forks_count: repo.forks_count,
-            archived: repo.archived,
-            disabled: repo.disabled,
-            visibility: repo.visibility,
-          })),
+          [vcs_installation_id]: projectsData,
         };
 
-        return this.projects[vcs_installation_id];
+        return projectsData;
       } catch (error) {
         console.error("Failed to fetch projects:", error);
-        this.error = error.message;
+        this.error = error.message || "Failed to fetch projects";
         throw error;
       } finally {
         this.isLoading = false;
