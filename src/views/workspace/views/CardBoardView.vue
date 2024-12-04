@@ -8,7 +8,25 @@
           <div class="container-row justify-right">
             <Button text icon="pi pi-plus" label="전체 펼치기" severity="contrast" @click="expandAll" />
             <Button text icon="pi pi-minus" label="전체 접기" severity="contrast" @click="collapseAll" />
-            <Button icon="pi pi-plus" label="New" outlined style="margin-right:1rem"></Button>
+            <!-- <Button icon="pi pi-plus" label="New" outlined style="margin-right:1rem"></Button> -->
+            <Button icon="pi pi-plus" label="New" outlined style="margin-right:1rem" @click="openNewCardboardDialog = true"/>
+            <Dialog v-model:visible="openNewCardboardDialog" header="Create New Cardboard" modal :style="{ width: '30rem' }">
+              <label for="cardboard-name">이름: </label>
+              <InputText id="cardboard-name" v-model="newCardboardName" placeholder="카드보드 입력" class="w-full mb-3" />
+            
+              <div class="field">
+                <label for="startDate">시작일: </label>
+                <Calendar id="startDate" v-model="startDate" placeholder="시작일 설정" dateFormat="yy-mm-dd" showIcon class="w-full mb-3"/>
+                <div>
+                  <label for="endDate">종료일: </label>
+                  <Calendar id="endDate" v-model="endDate" placeholder="종료일 설정" dateFormat="yy-mm-dd" showIcon class="w-full mb-3"/>
+                </div>
+              </div>
+              <div class="modal-footer mt-4">
+                <!-- <Button label="Cancel" icon="pi pi-times" @click="openNewCardboardDialog = false" class="p-button-text" /> -->
+                <Button label="생성" @click="createCardboard" class="p-button-primary" />
+              </div>
+            </Dialog>
           </div>
         </div>
       </template>
@@ -102,16 +120,23 @@ import { useRoute, useRouter } from 'vue-router';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
+import Calendar from 'primevue/calendar';
+import { InputText } from 'primevue';
+import { useToast } from 'primevue/usetoast';
 import ProgressBar from 'primevue/progressbar';
 import CardModal from '../components/layout/CardModal.vue';
 import axios from 'axios';
 
 const route = useRoute();
 const router = useRouter();
-
+const toast = useToast();
 const expandedRowsMap = ref(new Map());
 const showCardModal = ref(false);
 const selectedCard = ref(null);
+const openNewCardboardDialog = ref(false);
+const newCardboardName = ref('');
+const startDate = ref(null); // 시작일 초기화
+const endDate = ref(null); // 종료일 초기화
 
 const props = defineProps({
   cardboards: {
@@ -119,17 +144,88 @@ const props = defineProps({
     required: true,
     default: () => []
   },
+  cardboardId: {
+		type: [String, Number],
+		required: true
+  },
+  workspaceId: { // workspace_id를 직접 전달받도록 수정
+    type: [String, Number],
+    required: true
+  },
   loading: {
     type: Boolean,
     default: false
   }
 });
 
-const emit = defineEmits(['cardClick', 'addBoard', 'rowExpand', 'rowCollapse']);
+const emit = defineEmits(['cardClick', 'addBoard', 'rowExpand', 'rowCollapse', 'update:cardboards']);
 
 defineExpose({
   expandedRowsMap
 });
+
+// const currentProject = computed(() =>
+// 	props.projects.find(p => p.proj_id === parseInt(props.projectId))
+// );
+
+// const currentCardboard = computed(() =>
+//   props.cardboards.find(p => p.cardboard_id === parseInt(props.cardboardId))
+// )
+// 카드보드 생성 함수
+const createCardboard = async () => {
+  if (!newCardboardName.value.trim()) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Input Required',
+      detail: 'Please enter a name for the new cardboard.',
+      life: 3000,
+    });
+    return;
+  }
+
+  try {
+    // API 요청 보내기
+    const response = await axios.post('/cardboards/', {
+      title: newCardboardName.value.trim(),
+      workspace_id: props.workspaceId, 
+      start_time: startDate.value ? new Date(startDate.value).toISOString() : null,
+    end_time: endDate.value ? new Date(endDate.value).toISOString() : null,
+    });
+    console.log("새로운 카드보드 이름: ", newCardboardName.value);
+    console.log("워크스페이스 ID: ", props.workspaceId);
+    console.log("시작일: ", startDate.value);
+    console.log("종료일", endDate.value);
+    // 성공적으로 생성되었을 때
+    if (response.data.success) {
+      const newCardboard = response.data.data; // 생성된 카드보드 정보
+      props.cardboards.push(newCardboard); // 로컬 카드보드 리스트 업데이트
+      emit('update:cardboards', props.cardboards); // 부모 컴포넌트에 알림
+
+      toast.add({
+        severity: 'success',
+        summary: 'Cardboard Created',
+        detail: `Cardboard '${newCardboardName.value}' has been created.`,
+        life: 3000,
+      });
+
+      // 다이얼로그 닫기 및 입력 필드 초기화
+      openNewCardboardDialog.value = false;
+      newCardboardName.value = '';
+      startDate.value = null;
+      endDate.value = null;
+    } else {
+      throw new Error(response.data.message || 'Failed to create cardboard.');
+    }
+  } catch (error) {
+    console.error('Error creating cardboard:', error);
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Failed to create cardboard. Please try again later.',
+      life: 3000,
+    });
+  }
+};
 
 
 const computedExpandedRows = computed(() => {

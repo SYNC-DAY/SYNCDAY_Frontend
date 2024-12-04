@@ -1,39 +1,41 @@
 <template>
-
   <div class="mainpage-container">
     <div class="widget-container">
       <div class="content-container">
+        <div class="title-container">
+          <p class="widget-title">달력</p>
+        </div>
         <MainCalendar></MainCalendar>
       </div>
     </div>
     <div class="widget-container">
+      <div class="content-container">
         <div class="title-container">
           <p class="widget-title">북마크한 카드</p>
         </div>
-        <div class="content-container">
-        </div>
       </div>
-      <div class="widget-container">
+    </div>
+    <div class="widget-container">
+      <div class="content-container">
         <div class="title-container">
+          <p class="widget-title">일정 초대</p>
         </div>
-        <div class="content-container">
-          <div class="invitaion-container">
-            <ScheduleInvitaion></ScheduleInvitaion>
-          </div>
+        <div class="invitaion-container">
+          <ScheduleInvitaion class="invitation"></ScheduleInvitaion>
         </div>
       </div>
-      <div class="widget-container">
+    </div>
+    <div class="widget-container">
+      <div class="content-container">
         <div class="title-container">
           <p class="widget-title">팀 게시판</p>
         </div>
-        <div class="content-container">
-        </div>
+        <TeamBoardList/>
       </div>
+    </div>
   </div>
+</template>
 
-
-  
-  </template>
     
   <script setup>
   
@@ -43,7 +45,8 @@
     import MainCalendar from './components/MainCalendar.vue';
     import dayGridPlugin from '@fullcalendar/daygrid';
     import timeGridPlugin from '@fullcalendar/timegrid';
-import ScheduleInvitaion from './components/ScheduleInvitaion.vue';
+    import ScheduleInvitaion from './components/ScheduleInvitaion.vue';
+    import TeamBoardList from './components/TeamBoardList.vue';
     
     const authStore = useAuthStore();
     const router = useRouter();
@@ -59,46 +62,48 @@ import ScheduleInvitaion from './components/ScheduleInvitaion.vue';
   </script>
   
   <style scoped>
-  
-    .mainpage-container{
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: left;
-      gap: 2rem;
-      padding: 2rem;
-    }
-  
-    .widget-container{
-      width: calc(50% - 1rem);
-      height:calc(80% - 1rem);
-      box-sizing: border-box;
-      position: relative;
-      padding: 1rem;
-    }
-  
-    .title-container {
-      position: absolute; 
-      top: 1rem; 
-      left: 5rem; 
-      padding: 0 1rem; 
-      font-size: 1.5rem;
-      z-index: 1; 
-      background-color: white;
-  }
-  
-    .content-container{
-      padding: 2rem;
-      width:100%;
-      height:100%;
-      border: 1px solid #FF9D85;
-      border-radius: 2.5rem;
-      box-shadow: 0 4px 8px rgba(255, 157, 133, 0.5); /* 그림자 효과 */
-    }
+  .mainpage-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 1rem; /* 위젯 간 간격 */
+    overflow-y: auto;
+}
 
-  
-  
+.widget-container {
+    margin: 1rem;
+    width: calc(50% - 5rem);
+    height: 70vh; /* 고정 높이 */
+    max-height: 70vh; /* 위젯 최대 높이 제한 */
+    box-sizing: border-box;
+    position: relative;
+    flex-shrink: 0; /* 크기 변동 방지 */
+}
+
+.content-container {
+    width: 100%;
+    height: 100%;
+    border: 1px solid #FF9D85;
+    border-radius: 2.5rem;
+    box-shadow: 0 4px 8px rgba(255, 157, 133, 0.5);
+    overflow-y: auto; /* 스크롤 가능 */
+    display: flex;
+    flex-direction: column; /* 제목과 내용을 세로로 정렬 */
+    padding: 1rem;
+}
+
+.title-container {
+    padding: 0.5rem 1rem;
+    background-color: #ffffff;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border-bottom: 1px solid #FF9D85; /* 주황색 경계선 추가 */
+    border-radius: 2rem 2rem 0 0; /* 상단 둥근 모서리 */
+    margin-bottom: 1rem; /* 제목과 내용 간 여백 */
+}
+
+
   
   </style>

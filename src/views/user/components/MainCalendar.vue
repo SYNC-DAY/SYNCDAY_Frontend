@@ -24,7 +24,6 @@ const fetchSchedules = async () => {
     try {
         const response = await axios.get(`/schedule/my?userId=1`);
         const data = response.data.data;
-        console.log(data)
         events.value = data.map(schedule => ({
             id: schedule.schedule_id,
             title: schedule.title || '(제목 없음)',
