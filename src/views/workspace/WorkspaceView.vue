@@ -20,8 +20,8 @@
 
         <div class="container-row header-right">
 
-          <Button icon="pi pi-cog" severity="secondary" </Button>
-            <Button icon="pi pi-tag"></Button>
+          <Button icon="pi pi-cog" severity="secondary"></Button>
+          <Button icon="pi pi-tag"></Button>
         </div>
       </div>
 
@@ -36,7 +36,7 @@
 
           <TabPanels>
             <TabPanel value="0">
-              <CardBoard :cardboards="workspaceDetails.cardboards || []"></CardBoard>
+              <CardBoard :cardboards="workspaceDetails.cardboards || [] " :workspaceId="workspaceDetails.workspace_id"></CardBoard>
             </TabPanel>
             <TabPanel value="1">
               <KanbanBoard :cardboards="workspaceDetails.cardboards || []" />
@@ -49,6 +49,7 @@
             <!-- Calendar view -->
           </TabPanels>
         </Tabs>
+        <CardModal v-if="showCardModal" :show="showCardModal" :card="selectedCard" @close="handleCloseModal" />
       </div>
 
     </template>
@@ -60,7 +61,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 
 import Tabs from 'primevue/tabs';
@@ -73,6 +75,13 @@ import TabPanel from 'primevue/tabpanel';
 import CardBoard from './views/CardBoardView.vue';
 import KanbanBoard from './views/KanbanBoardView.vue';
 import CalendarView from './views/CalendarView.vue';
+import CardModal from './components/layout/CardModal.vue';
+
+
+const route = useRoute();
+const router = useRouter();
+const showCardModal = ref(false);
+const selectedCard = ref(null);
 
 const props = defineProps({
   projectId: {
@@ -108,7 +117,6 @@ const fetchWorkspace = async () => {
 
     if (response.data.success) {
       workspaceDetails.value = response.data.data;
-
       const updatedProjects = JSON.parse(JSON.stringify(props.projects));
       const project = updatedProjects.find(p => p.proj_id === parseInt(props.projectId));
 
@@ -141,15 +149,61 @@ onMounted(() => {
   fetchWorkspace();
 });
 
+const handleCloseModal = () => {
+  router.replace({ 
+    query: { 
+      ...route.query,
+      cardId: undefined 
+    }
+  });
+};
+
 watch(
-  [() => props.workspaceId, () => props.projectId],
-  ([newWorkspaceId, newProjectId], [oldWorkspaceId, oldProjectId]) => {
+  [
+    () => props.workspaceId, 
+    () => props.projectId,
+    () => route.query.cardId
+  ],
+  async ([newWorkspaceId, newProjectId, newCardId], [oldWorkspaceId, oldProjectId, oldCardId]) => {
+    // 워크스페이스나 프로젝트가 변경되었을 때
     if ((newWorkspaceId && newWorkspaceId !== oldWorkspaceId) ||
-      (newProjectId && newProjectId !== oldProjectId)) {
-      fetchWorkspace();
+        (newProjectId && newProjectId !== oldProjectId)) {
+      await fetchWorkspace();
+    }
+
+    // cardId가 변경되었을 때
+    if (newCardId !== oldCardId) {
+      if (newCardId) {
+        // 워크스페이스 데이터가 없다면 먼저 로드
+        if (!workspaceDetails.value) {
+          await fetchWorkspace();
+        }
+        
+        // 카드 데이터 찾기
+        const card = findCardInWorkspace(newCardId);
+        if (card) {
+          selectedCard.value = card;
+          showCardModal.value = true;
+        }
+      } else {
+        // cardId가 없어졌을 때 (모달 닫기)
+        showCardModal.value = false;
+        selectedCard.value = null;
+      }
     }
   }
 );
+
+// 워크스페이스 내에서 카드 찾기 헬퍼 함수
+const findCardInWorkspace = (cardId) => {
+  if (!workspaceDetails.value?.cardboards) return null;
+  
+  for (const cardboard of workspaceDetails.value.cardboards) {
+    const card = cardboard.cards?.find(c => c.card_id === Number(cardId));
+    if (card) return card;
+  }
+  return null;
+};
 </script>
 <style scoped>
 .workspace-header {
