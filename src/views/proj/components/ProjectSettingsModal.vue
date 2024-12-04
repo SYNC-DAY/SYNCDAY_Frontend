@@ -2,19 +2,19 @@
 	<Dialog :visible="visible" @update:visible="handleVisibilityChange" modal header="프로젝트 설정"
 		:style="{ width: '70vw', height: '50vh' }" class="p-0">
 		<div class="settings-content">
-			<!-- Auth Check Step -->
-			<template v-if="!selectedOrg">
+			<!-- Step 1: Initial GitHub Auth -->
+			<template v-if="!githubAuthStore.isAuthenticated">
 				<div class="flex flex-column align-items-center gap-3 p-4">
-					<h3 class="text-xl">Github Organization 연동</h3>
-					<p class="text-gray-600">GitHub 연동을 위해 SyncDayApp을 설치해주세요</p>
-					<Button @click="openInstallationWindow" severity="secondary" class="github-auth-btn">
+					<h3 class="text-xl">GitHub 연동</h3>
+					<p class="text-gray-600">프로젝트와 GitHub을 연동하기 위해 로그인해주세요</p>
+					<Button @click="handleGithubLogin" severity="secondary" class="github-auth-btn">
 						<i class="pi pi-github mr-2"></i>
 						GitHub으로 로그인
 					</Button>
 				</div>
 			</template>
 
-			<!-- Organization Selection Step -->
+			<!-- Step 2: Organization Selection -->
 			<template v-else-if="!selectedOrg">
 				<div class="org-section p-4">
 					<h3 class="text-xl mb-3">조직 선택</h3>
@@ -36,7 +36,7 @@
 				</div>
 			</template>
 
-			<!-- Repository Selection Step -->
+			<!-- Step 3: Repository Selection -->
 			<template v-else>
 				<div class="p-4">
 					<div class="selected-org flex align-items-center gap-3 p-3 surface-100 border-round mb-4">
@@ -52,7 +52,8 @@
 						<ProgressSpinner v-if="loadingRepos" class="loading-spinner" />
 						<div v-else class="repo-list">
 							<DataTable v-model:selection="selectedRepo" :value="repositories" selectionMode="single"
-								dataKey="id" class="p-datatable-sm">
+								dataKey="id" class="p-datatable-sm" :rows="10" :paginator="true"
+								paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink">
 								<Column field="name" header="저장소명">
 									<template #body="slotProps">
 										<div class="flex align-items-center gap-2">
@@ -77,7 +78,7 @@
 		<template #footer>
 			<div class="flex justify-content-end gap-2">
 				<Button label="취소" @click="handleVisibilityChange(false)" text />
-				<Button label="저장" @click="handleSaveSettings" :loading="saving" :disabled="!selectedRepo"
+				<Button label="저장" @click="handleSaveSettings" :loading="saving" :disabled="!canSave"
 					severity="primary" />
 			</div>
 		</template>
@@ -90,6 +91,8 @@ import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 import { useGithubOrgStore } from '@/stores/github/useGithubOrgStore';
 import { useGithubRepoStore } from '@/stores/github/useGithubRepoStore';
 import { useGithubAppStore } from '@/stores/github/useGithubAppStore';
+import { useToast } from 'primevue/usetoast';
+
 const props = defineProps({
 	visible: {
 		type: Boolean,
@@ -107,11 +110,13 @@ const props = defineProps({
 
 const emit = defineEmits(['update:visible', 'saved']);
 
-// Store instances
+// Store and service instances
 const githubAuthStore = useGithubAuthStore();
 const githubOrgStore = useGithubOrgStore();
 const githubRepoStore = useGithubRepoStore();
 const githubAppStore = useGithubAppStore();
+const toast = useToast();
+
 // Component state
 const selectedOrg = ref(null);
 const selectedRepo = ref(null);
@@ -119,21 +124,48 @@ const repositories = ref([]);
 const loadingOrgs = ref(false);
 const loadingRepos = ref(false);
 const saving = ref(false);
+const installationWindow = ref(null);
+const checkWindowInterval = ref(null);
 
 // Computed properties
 const organizations = computed(() => githubOrgStore.allOrganizations || []);
+const canSave = computed(() => selectedOrg.value && selectedRepo.value && !isLoading.value);
+const isLoading = computed(() => loadingOrgs.value || loadingRepos.value || saving.value);
 
 // Methods
 const handleVisibilityChange = (value) => {
+	if (!value) {
+		resetState();
+	}
 	emit('update:visible', value);
 };
 
-const installGithubApp = () => {
-	githubAppStore.openInstallationWindow();
-};
+const handleGithubLogin = () => {
+	const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
+	const redirectUri = import.meta.env.VITE_GITHUB_REDIRECT_URI;
+	const scope = "read:user read:org repo";
 
-const installationWindow = ref(null);
-const checkWindowInterval = ref(null);
+	// Store current path for redirect after auth
+	const currentPath = window.location.pathname + window.location.search;
+	localStorage.setItem('github_auth_redirect', currentPath);
+
+	// Open GitHub OAuth window
+	const width = 580;
+	const height = 600;
+	const left = (window.innerWidth - width) / 2;
+	const top = (window.innerHeight - height) / 2;
+
+	const authUrl = `https://github.com/login/oauth/authorize?` +
+		`client_id=${clientId}&` +
+		`redirect_uri=${encodeURIComponent(redirectUri)}&` +
+		`scope=${encodeURIComponent(scope)}`;
+
+	window.open(
+		authUrl,
+		'GitHub Login',
+		`width=${width},height=${height},top=${top},left=${left}`
+	);
+};
 
 const openInstallationWindow = () => {
 	const installUrl = `https://github.com/apps/${import.meta.env.VITE_GITHUB_APP_NAME}/installations/new`;
@@ -145,19 +177,16 @@ const openInstallationWindow = () => {
 	const left = (window.innerWidth - width) / 2;
 	const top = (window.innerHeight - height) / 2;
 
-	// Open new window
 	installationWindow.value = window.open(
 		fullUrl,
 		'Install GitHub App',
 		`width=${width},height=${height},top=${top},left=${left}`
 	);
 
-	// Clear any existing interval
 	if (checkWindowInterval.value) {
 		clearInterval(checkWindowInterval.value);
 	}
 
-	// Start new interval to check window status
 	checkWindowInterval.value = setInterval(() => {
 		if (installationWindow.value?.closed) {
 			clearInterval(checkWindowInterval.value);
@@ -172,37 +201,32 @@ const handleInstallationMessage = async (event) => {
 
 	if (event.data.type === 'github-installation-complete' && event.data.data?.installationId) {
 		try {
-			const result = await githubAppStore.handleInstallationCallback(props.projectId, event.data.data.installationId);
+			const result = await githubAppStore.handleInstallationCallback(
+				props.projectId,
+				event.data.data.installationId
+			);
 			if (result) {
-				// emit project information update
+				toast.add({
+					severity: 'success',
+					summary: '성공',
+					detail: 'GitHub App이 설치되었습니다',
+					life: 3000
+				});
 			}
-
-			// Handle successful installation
 		} catch (error) {
 			console.error('Failed to handle installation:', error);
-			// Handle error
+			toast.add({
+				severity: 'error',
+				summary: '오류',
+				detail: 'GitHub App 설치 처리 중 오류가 발생했습니다',
+				life: 3000
+			});
 		} finally {
-			// Cleanup
-			if (checkWindowInterval.value) {
-				clearInterval(checkWindowInterval.value);
-				checkWindowInterval.value = null;
-			}
-			installationWindow.value = null;
+			cleanup();
 		}
 	}
 };
 
-// Setup message listener
-window.addEventListener('message', handleInstallationMessage);
-
-// Cleanup on component unmount
-onUnmounted(() => {
-	window.removeEventListener('message', handleInstallationMessage);
-	if (checkWindowInterval.value) {
-		clearInterval(checkWindowInterval.value);
-	}
-	installationWindow.value = null;
-});
 const handleChangeOrg = () => {
 	selectedOrg.value = null;
 	selectedRepo.value = null;
@@ -210,13 +234,23 @@ const handleChangeOrg = () => {
 };
 
 const handleOrgSelect = async (org) => {
-	if (!org.isInstalled) {
-		await githubOrgStore.initializeApp(org.login);
-		return;
-	}
+	try {
+		if (!org.isInstalled) {
+			openInstallationWindow();
+			return;
+		}
 
-	selectedOrg.value = org;
-	await loadOrgRepositories(org);
+		selectedOrg.value = org;
+		await loadOrgRepositories(org);
+	} catch (error) {
+		console.error('Organization selection failed:', error);
+		toast.add({
+			severity: 'error',
+			summary: '오류',
+			detail: '조직 선택 중 오류가 발생했습니다',
+			life: 3000
+		});
+	}
 };
 
 const loadOrgRepositories = async (org) => {
@@ -228,13 +262,19 @@ const loadOrgRepositories = async (org) => {
 	} catch (error) {
 		console.error('Failed to load repositories:', error);
 		repositories.value = [];
+		toast.add({
+			severity: 'error',
+			summary: '오류',
+			detail: '저장소 목록을 불러오는데 실패했습니다',
+			life: 3000
+		});
 	} finally {
 		loadingRepos.value = false;
 	}
 };
 
 const handleSaveSettings = async () => {
-	if (!selectedOrg.value || !selectedRepo.value) return;
+	if (!canSave.value) return;
 
 	saving.value = true;
 	try {
@@ -247,20 +287,60 @@ const handleSaveSettings = async () => {
 
 		emit('saved', vcsSettings);
 		handleVisibilityChange(false);
+		toast.add({
+			severity: 'success',
+			summary: '성공',
+			detail: 'VCS 설정이 저장되었습니다',
+			life: 3000
+		});
 	} catch (error) {
 		console.error('Failed to save VCS settings:', error);
+		toast.add({
+			severity: 'error',
+			summary: '오류',
+			detail: '설정 저장 중 오류가 발생했습니다',
+			life: 3000
+		});
 	} finally {
 		saving.value = false;
 	}
 };
 
-// Lifecycle hooks
+const resetState = () => {
+	selectedOrg.value = null;
+	selectedRepo.value = null;
+	repositories.value = [];
+	loadingOrgs.value = false;
+	loadingRepos.value = false;
+	saving.value = false;
+};
 
+const cleanup = () => {
+	if (checkWindowInterval.value) {
+		clearInterval(checkWindowInterval.value);
+		checkWindowInterval.value = null;
+	}
+	if (installationWindow.value) {
+		installationWindow.value.close();
+	}
+	installationWindow.value = null;
+};
+
+// Lifecycle hooks
+onMounted(() => {
+	window.addEventListener('message', handleInstallationMessage);
+});
+
+onUnmounted(() => {
+	window.removeEventListener('message', handleInstallationMessage);
+	cleanup();
+});
 </script>
 
 <style scoped>
 .github-auth-btn {
 	background-color: #24292e;
+	color: white;
 }
 
 .github-auth-btn:hover {
@@ -278,7 +358,6 @@ const handleSaveSettings = async () => {
 	overflow-y: auto;
 }
 
-/* PrimeVue Dialog customization */
 :deep(.p-dialog-header) {
 	padding: 1rem 1.5rem;
 }
@@ -289,5 +368,10 @@ const handleSaveSettings = async () => {
 
 :deep(.p-dialog-footer) {
 	padding: 1rem 1.5rem;
+}
+
+.org-card:hover {
+	transform: translateY(-2px);
+	transition: transform 0.2s ease;
 }
 </style>
