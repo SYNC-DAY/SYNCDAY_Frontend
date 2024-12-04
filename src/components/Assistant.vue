@@ -18,7 +18,6 @@
                         <tr>
                             <th>제목</th>
                             <th>시작</th>
-                            <th>끝</th>
                             <th>알림여부</th>
                             <th></th>
                         </tr>
@@ -27,12 +26,11 @@
                         <tr v-for="(schedule, index) in todaySchedules" :key="index" :class="{'past-schedule': isPastSchedule(schedule.start_time)}">
                             <td>{{ schedule.title }}</td>
                             <td>{{ formatStart(schedule.start_time) }}</td>
-                            <td>{{ formatDate(schedule.end_time) }}</td>
                             <template v-if="isPastSchedule(schedule.start_time)">
                                 <td>이미 시작된 일정입니다.</td>
                             </template>
                             <template v-else>
-                                <td v-if="editingSchedule === schedule.schedule_id">
+                                <td class="edit-td" v-if="editingSchedule === schedule.schedule_id">
                                     <div class="dropdown-menu">
                                         <select v-model="selectedNotificationTimes[schedule.schedule_id]" class="dropdown-select">
                                             <option disabled value="">시간 선택</option>
@@ -42,16 +40,15 @@
                                             <option value="cancle">알림 취소</option>
                                         </select>
                                     </div>
+                                    <div v-if="editingSchedule === schedule.schedule_id">
+                                        <button @click="saveNotificationTime(schedule)">확인</button>
+                                        <button @click="cancelEditing()">취소</button>
+                                    </div>
                                 </td>
-                                <td v-if="editingSchedule === schedule.schedule_id">
-                                    <button @click="saveNotificationTime(schedule)">확인</button>
-                                    <button @click="cancelEditing()">취소</button>
-                                </td>
+
                                 <template v-else>
                                     <td>
                                         {{ schedule.notification_time ? formatStart(schedule.notification_time) : '알림 없음' }}
-                                    </td>
-                                    <td>
                                         <button @click="editNotification(schedule.schedule_id)">수정</button>
                                     </td>
                                 </template>
@@ -70,14 +67,12 @@
                         <tr>
                             <th>Title</th>
                             <th>Start Time</th>
-                            <th>End Time</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-for="(schedule, index) in notiedSchedules" :key="index">
                             <td>{{ schedule.title }}</td>
                             <td>{{ formatStart(schedule.start_time) }}</td>
-                            <td>{{ formatDate(schedule.end_time) }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -87,7 +82,6 @@
             </div>
         </div>
         <button @click="hide">닫기</button>
-        <div class="assistant-balloon-tail"></div>
     </div>
     <div class="assistant-avatar">
         <img src="@/assets/images/assistant.png" alt="Assistant" />
@@ -336,12 +330,13 @@ onUnmounted(()=>{
 /* 말풍선 스타일 */
 .assistant-balloon {
     position: relative;
-    margin-top: 8px;
+    margin-top: 0.5rem;
     background-color: #ffffff;
-    border-radius: 16px;
-    padding: 12px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    max-width: 30rem;
+    border-radius: 1rem;
+    padding: 1rem;
+    box-shadow: 0 0.2rem 0.6rem rgba(0, 0, 0, 0.2);
+    max-width: 50rem;
+    max-height: 30rem;
     text-align: left;
     font-size: 14px;
     color: #333333;
@@ -349,19 +344,9 @@ onUnmounted(()=>{
     display: flex;
     flex-direction: column;
     align-items: center;
+    overflow-y: auto;
 }
 
-/* 말풍선 꼬리 */
-.assistant-balloon-tail {
-    position: absolute;
-    bottom: -12px;
-    left: 20px;
-    width: 0;
-    height: 0;
-    border-style: solid;
-    border-width: 12px 12px 0;
-    border-color: #ffffff transparent transparent transparent;
-}
 
 /* 닫기 버튼 */
 .assistant-balloon button {
@@ -401,10 +386,29 @@ onUnmounted(()=>{
     height: 40px;
     object-fit: contain;
 }
-
-.past-schedule {
-  color: grey;
+.today-schedule-table {
+    width: 100%;
+    border-collapse: separate; /* 기본 테이블 간격 유지 */
+    border-spacing: 1rem; /* 요소 간 간격을 1rem으로 설정 */
 }
+
+
+
+.today-schedule-table th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+}
+
+
+
+.today-schedule-table tr.past-schedule {
+    color: grey;
+}
+
+.edit-td{
+    
+}
+
 
 
 
