@@ -15,45 +15,61 @@ const error = ref(null);
 const githubAuthStore = useGithubAuthStore();
 const githubAppStore = useGithubAppStore();
 
+
+const handleOAuthCallback = async (code, state) => {
+	// Validate state exists
+	if (!state) {
+		throw new Error('State parameter is missing');
+	}
+
+	// Get stored state
+
+
+	try {
+		// Decode and parse state data
+
+		// Handle OAuth
+		await githubAuthStore.handleAuthCallback(code);
+
+		// Clear stored state
+		sessionStorage.removeItem('github_auth_state');
+
+		// Notify opener with original context
+		notifyOpener('auth-success', {
+			redirect: stateData.redirect,
+			projectId: stateData.projectId
+		});
+
+	} catch (error) {
+		console.error('OAuth callback error:', error);
+		throw new Error('Failed to process OAuth callback');
+	}
+};
+
 onMounted(async () => {
 	try {
 		const urlParams = new URLSearchParams(window.location.search);
 		const code = urlParams.get('code');
-		const installationId = urlParams.get('installation_id');
-		const setupAction = urlParams.get('setup_action');
+		const state = urlParams.get('state');
 
-		// Handle OAuth login
-		if (code && !installationId) {
-			await handleOAuthCallback(code);
-		}
-		// Handle App installation
-		else if (installationId && setupAction) {
+		console.log(code)
+		console.log(state)
+		if (code && state) {
+			await handleOAuthCallback(code, state);
+		} else if (installationId && setupAction) {
 			await handleInstallationCallback(installationId);
-		}
-		else {
+		} else {
 			throw new Error('Invalid callback parameters');
 		}
 	} catch (err) {
 		error.value = err.message;
 		notifyOpener('error', err.message);
-		setTimeout(() => window.close(), 1000);
 	} finally {
 		loading.value = false;
+		// Close window after short delay
+		// setTimeout(() => window.close(), 1000);
 	}
 });
-
-const handleOAuthCallback = async (code) => {
-	await githubAuthStore.handleAuthCallback(code);
-
-	const redirectPath = localStorage.getItem('github_auth_redirect') || '/';
-	localStorage.removeItem('github_auth_redirect');
-
-	notifyOpener('auth-success');
-
-	if (!window.opener) {
-		window.location.href = redirectPath;
-	}
-};
 
 const handleInstallationCallback = async (installationId) => {
 	const projectId = localStorage.getItem('github_installation_project_id');
@@ -74,7 +90,7 @@ const notifyOpener = (type, data = null) => {
 			data: data
 		};
 		window.opener.postMessage(message, window.location.origin);
-		window.close();
+		// window.close();
 	}
 };
 </script>

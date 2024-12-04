@@ -143,22 +143,31 @@ const handleVisibilityChange = (value) => {
 const handleGithubLogin = () => {
 	const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
 	const redirectUri = import.meta.env.VITE_GITHUB_REDIRECT_URI;
-	const scope = "read:user read:org repo";
+	const scope = "read:user read:org repo admin:org";
 
-	// Store current path for redirect after auth
-	const currentPath = window.location.pathname + window.location.search;
-	localStorage.setItem('github_auth_redirect', currentPath);
+	// Generate a random state
+	const state = Math.random().toString(36).substring(2) + Date.now().toString(36);
 
-	// Open GitHub OAuth window
+	// Save state to localStorage
+	localStorage.setItem('github_auth_state', state);
+
+	// Store current path and project context
+	localStorage.setItem('github_auth_redirect', window.location.pathname);
+	if (props.projectId) {
+		localStorage.setItem('github_auth_project_id', props.projectId);
+	}
+
+	// Build OAuth URL with state
+	const authUrl = `https://github.com/login/oauth/authorize?` +
+		`client_id=${clientId}&` +
+		`redirect_uri=${encodeURIComponent(redirectUri)}&` +
+		`scope=${encodeURIComponent(scope)}&` +
+		`state=${encodeURIComponent(state)}`;
+
 	const width = 580;
 	const height = 600;
 	const left = (window.innerWidth - width) / 2;
 	const top = (window.innerHeight - height) / 2;
-
-	const authUrl = `https://github.com/login/oauth/authorize?` +
-		`client_id=${clientId}&` +
-		`redirect_uri=${encodeURIComponent(redirectUri)}&` +
-		`scope=${encodeURIComponent(scope)}`;
 
 	window.open(
 		authUrl,
@@ -166,7 +175,6 @@ const handleGithubLogin = () => {
 		`width=${width},height=${height},top=${top},left=${left}`
 	);
 };
-
 const openInstallationWindow = () => {
 	const installUrl = `https://github.com/apps/${import.meta.env.VITE_GITHUB_APP_NAME}/installations/new`;
 	const callbackUrl = `${window.location.origin}/github/callback`;
@@ -196,34 +204,35 @@ const openInstallationWindow = () => {
 	}, 500);
 };
 
-const handleInstallationMessage = async (event) => {
+const handleInstallationMessage = (event) => {
 	if (event.origin !== window.location.origin) return;
 
-	if (event.data.type === 'github-installation-complete' && event.data.data?.installationId) {
-		try {
-			const result = await githubAppStore.handleInstallationCallback(
-				props.projectId,
-				event.data.data.installationId
-			);
-			if (result) {
-				toast.add({
-					severity: 'success',
-					summary: '성공',
-					detail: 'GitHub App이 설치되었습니다',
-					life: 3000
-				});
+	switch (event.data.type) {
+		case 'github-auth-success':
+			const { redirect, projectId } = event.data.data || {};
+
+			// Validate returned project ID matches current context
+			if (projectId !== props.projectId) {
+				console.error('Project ID mismatch');
+				return;
 			}
-		} catch (error) {
-			console.error('Failed to handle installation:', error);
+
 			toast.add({
-				severity: 'error',
-				summary: '오류',
-				detail: 'GitHub App 설치 처리 중 오류가 발생했습니다',
+				severity: 'success',
+				summary: '성공',
+				detail: 'GitHub 로그인이 완료되었습니다',
 				life: 3000
 			});
-		} finally {
-			cleanup();
-		}
+
+			// Handle redirect if needed
+			if (redirect && redirect !== window.location.pathname) {
+				router.push(redirect);
+			} else {
+				loadOrganizations();
+			}
+			break;
+
+		// ... rest of the switch cases
 	}
 };
 

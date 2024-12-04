@@ -55,6 +55,7 @@ export const useGithubAuthStore = defineStore("githubAuth", {
 
       try {
         const savedState = localStorage.getItem("github_auth_state");
+        console.log(savedState);
         const response = await axios.post("user/oauth2/github/access_token", {
           code: code,
           state: savedState,
