@@ -1,7 +1,7 @@
 <template>
     <div>
       <div v-if="isVisible" class="popup" :draggable="true">
-        <button class="close-button" @click="closePopup">X</button>
+        <button class="close-button" @click="emit('closePopup')">X</button>
         <div class="popup-content">
           <p>채팅</p>
           <div class="newchat">
@@ -34,17 +34,21 @@
   import NewChatRoom from '@/views/chat/chat_components/NewChatRoom.vue';
   import ChatRoom from './ChatRoom.vue';
 
-const isVisible = ref(true); 
+  const { isVisible } = defineProps({
+    isVisible: {
+      type: Boolean,
+      required: true
+    }
+  })
+
+  const emit = defineEmits(['closePopup'])
+
+// const isVisible = ref(true); 
 const chatList = ref([]);   
 const searchQuery = ref(''); 
 const isPopupVisible = ref(false);
 const selectedRoom = ref(null);
 const authStore = useAuthStore();
-
-// 채팅방 목록 닫기
-const closePopup = () => {
-  isVisible.value = false;
-};
 
 // 새채팅 모달
 const createNewChatRoom = () => {
