@@ -11,14 +11,13 @@ export const useAssistantStore = defineStore('assistantStore', {
     actions: {
         initialize(userId) {
             this.isFirst = false;
-            this.todaySchedules.length = 0;
             this.notiedSchedules.length = 0;
             this.getTodaySchedule(userId);
         },
         async getTodaySchedule(userId) {
             try {
-                // const response = await axios.get(`/schedule/my?userId=${userId}`);
-                const response = await axios.get(`/schedule/my?userId=1`);
+                const response = await axios.get(`/schedule/my/today?userId=${userId}`);
+                this.todaySchedules.length = 0;
                 this.todaySchedules.push(...response.data.data);
             } catch (error) {
                 console.error("Error fetching schedules:", error);
