@@ -7,9 +7,9 @@
 				<div class="flex flex-column align-items-center gap-3 p-4">
 					<h3 class="text-xl">GitHub 연동</h3>
 					<p class="text-gray-600">프로젝트와 GitHub을 연동하기 위해 로그인해주세요</p>
-					<Button @click="handleGithubLogin" severity="secondary" class="github-auth-btn">
+					<Button @click="openInstallationWindow" severity="secondary" class="github-auth-btn">
 						<i class="pi pi-github mr-2"></i>
-						GitHub으로 로그인
+						GitHubApp 설치
 					</Button>
 				</div>
 			</template>
@@ -176,6 +176,9 @@ const handleGithubLogin = () => {
 	);
 };
 const openInstallationWindow = () => {
+
+	localStorage.setItem('github_installation_project_id', props.projectId);
+
 	const installUrl = `https://github.com/apps/${import.meta.env.VITE_GITHUB_APP_NAME}/installations/new`;
 	const callbackUrl = `${window.location.origin}/github/callback`;
 	const fullUrl = `${installUrl}?callback_url=${encodeURIComponent(callbackUrl)}`;

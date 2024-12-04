@@ -51,7 +51,8 @@ onMounted(async () => {
 		const urlParams = new URLSearchParams(window.location.search);
 		const code = urlParams.get('code');
 		const state = urlParams.get('state');
-
+		const installationId = urlParams.get('installation_id')
+		const setupAction = urlParams.get('setup_action')
 		console.log(code)
 		console.log(state)
 		if (code && state) {
