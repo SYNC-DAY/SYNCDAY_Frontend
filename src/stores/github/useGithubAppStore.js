@@ -129,5 +129,41 @@ export const useGithubAppStore = defineStore("githubApp", {
         console.log(error);
       }
     },
+    async fetchGithubInstallationToken(vcs_installation_id) {
+      this.isLoading = true;
+      try {
+        let installation = this.getInstallationById(vcs_installation_id);
+        if (!installation) {
+          throw new Error("No installation found");
+        }
+
+        const response = await axios.get(`vcs/installations/${vcs_installation_id}/installation-token`);
+        const { data: resData } = response.data;
+
+        if (resData.success) {
+          const token = resData.data;
+          // Update the installation with the new token
+          installation = {
+            ...installation,
+            installation_token: token,
+          };
+
+          // Update the installation in the installations array
+          const index = this.installations.findIndex(inst => inst.id === installationId);
+          if (index !== -1) {
+            this.installations[index] = installation;
+          }
+
+          return token;
+        }
+        return null;
+      } catch (error) {
+        console.error("Failed to fetch installation token:", error);
+        this.error = error.message;
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
   },
 });
