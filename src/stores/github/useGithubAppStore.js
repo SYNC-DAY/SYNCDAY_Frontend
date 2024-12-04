@@ -5,15 +5,22 @@ import { useAuthStore } from "../auth";
 
 export const useGithubAppStore = defineStore("githubApp", {
   state: () => ({
-    installationId: localStorage.getItem("github_installation_id"),
-    installationToken: null,
+    // Map to store installation info by project ID
+    projectInstallations: JSON.parse(localStorage.getItem("github_project_installations") || "{}"),
     installations: [],
     isLoading: false,
     error: null,
   }),
 
   getters: {
-    isInstalled: state => !!state.installationId,
+    getProjectInstallation: state => projectId => {
+      return state.projectInstallations[projectId] || null;
+    },
+
+    isProjectInstalled: state => projectId => {
+      return !!state.projectInstallations[projectId];
+    },
+
     hasError: state => !!state.error,
   },
 
@@ -25,10 +32,9 @@ export const useGithubAppStore = defineStore("githubApp", {
 
       try {
         console.log("Installation callback payload:", {
-          vcs_type: "GITHUB",
-          user_id: authStore.user.userId,
-          installation_id: installationId,
-          proj_id: projectId,
+          projectId,
+          installationId,
+          userId: authStore.user.userId,
         });
 
         const response = await axios.post("/vcs/install", {
@@ -41,17 +47,21 @@ export const useGithubAppStore = defineStore("githubApp", {
         console.log("Installation response:", response.data);
 
         if (response.data.success) {
-          this.installationId = installationId;
-          localStorage.setItem("github_installation_id", installationId);
+          // Save installation info for this project
+          const installationInfo = {
+            installationId,
+            timestamp: Date.now(),
+            orgName: response.data.orgName, // Assuming backend returns this
+            repoName: response.data.repoName, // Assuming backend returns this
+          };
+
+          this.projectInstallations[projectId] = installationInfo;
+          this.saveToLocalStorage();
           return true;
         }
         throw new Error("Installation failed");
       } catch (error) {
-        console.error("Installation error details:", {
-          message: error.message,
-          response: error.response?.data,
-          status: error.response?.status,
-        });
+        console.error("Installation error:", error);
         this.error = error.response?.data?.message || "Installation failed";
         throw error;
       } finally {
@@ -59,83 +69,82 @@ export const useGithubAppStore = defineStore("githubApp", {
       }
     },
 
-    async refreshInstallationToken() {
-      if (!this.installationId) {
-        throw new Error("No installation ID available");
+    async refreshInstallationToken(projectId) {
+      const installation = this.getProjectInstallation(projectId);
+      if (!installation?.installationId) {
+        throw new Error("No installation ID available for this project");
       }
 
       try {
-        console.log("Refreshing token for installation:", this.installationId);
-        const response = await axios.get(`/api/github/installation/${this.installationId}/token`);
+        console.log("Refreshing token for project:", projectId);
+        const response = await axios.get(`/api/github/installation/${installation.installationId}/token`);
+
         console.log("Token refresh response:", response.data);
 
         if (response.data.success) {
-          this.installationToken = response.data.token;
-          return this.installationToken;
+          // Update installation info with new token
+          this.projectInstallations[projectId] = {
+            ...installation,
+            token: response.data.token,
+            tokenTimestamp: Date.now(),
+          };
+          this.saveToLocalStorage();
+          return response.data.token;
         }
         throw new Error("Failed to get installation token");
       } catch (error) {
-        console.error("Token refresh error details:", {
-          message: error.message,
-          response: error.response?.data,
-          status: error.response?.status,
-        });
+        console.error("Token refresh error:", error);
         this.error = error.response?.data?.message || "Token refresh failed";
         throw error;
       }
     },
 
-    async fetchInstallations() {
+    async fetchProjectInstallation(projectId) {
       this.isLoading = true;
       this.error = null;
 
       try {
-        console.log("Fetching installations...");
-        const response = await axios.get("/api/github/installations");
-        console.log("Installations response:", response.data);
+        const response = await axios.get(`/api/projects/${projectId}/github/installation`);
+        console.log("Fetch project installation response:", response.data);
 
-        this.installations = response.data;
-        return this.installations;
+        if (response.data.success) {
+          this.projectInstallations[projectId] = {
+            installationId: response.data.installationId,
+            orgName: response.data.orgName,
+            repoName: response.data.repoName,
+            timestamp: Date.now(),
+          };
+          this.saveToLocalStorage();
+        }
+        return this.projectInstallations[projectId];
       } catch (error) {
-        console.error("Fetch installations error details:", {
-          message: error.message,
-          response: error.response?.data,
-          status: error.response?.status,
-        });
-        this.error = error.response?.data?.message || "Failed to fetch installations";
+        console.error("Error fetching project installation:", error);
+        this.error = error.response?.data?.message || "Failed to fetch installation";
         throw error;
       } finally {
         this.isLoading = false;
       }
     },
 
-    async removeInstallation(installationId) {
+    async removeProjectInstallation(projectId) {
       this.isLoading = true;
       this.error = null;
 
       try {
-        console.log("Removing installation:", installationId);
-        const response = await axios.delete(`/api/github/installations/${installationId}`);
-        console.log("Remove installation response:", response.data);
-
-        if (this.installationId === installationId) {
-          this.installationId = null;
-          this.installationToken = null;
-          localStorage.removeItem("github_installation_id");
-        }
-
-        await this.fetchInstallations();
+        await axios.delete(`/api/projects/${projectId}/github/installation`);
+        delete this.projectInstallations[projectId];
+        this.saveToLocalStorage();
       } catch (error) {
-        console.error("Remove installation error details:", {
-          message: error.message,
-          response: error.response?.data,
-          status: error.response?.status,
-        });
+        console.error("Error removing project installation:", error);
         this.error = error.response?.data?.message || "Failed to remove installation";
         throw error;
       } finally {
         this.isLoading = false;
       }
+    },
+
+    saveToLocalStorage() {
+      localStorage.setItem("github_project_installations", JSON.stringify(this.projectInstallations));
     },
 
     clearError() {
@@ -144,11 +153,10 @@ export const useGithubAppStore = defineStore("githubApp", {
 
     reset() {
       console.log("Resetting GitHub App store state");
-      this.installationId = null;
-      this.installationToken = null;
+      this.projectInstallations = {};
       this.installations = [];
       this.error = null;
-      localStorage.removeItem("github_installation_id");
+      localStorage.removeItem("github_project_installations");
     },
   },
 });

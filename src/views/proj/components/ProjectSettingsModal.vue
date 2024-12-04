@@ -2,11 +2,31 @@
 	<Dialog :visible="visible" @update:visible="handleVisibilityChange" modal header="프로젝트 설정"
 		:style="{ width: '70vw', height: '50vh' }" class="p-0">
 		<div class="settings-content">
-			<!-- Step 1: Initial GitHub Auth -->
-			<template v-if="!githubAuthStore.isAuthenticated">
+			<!-- Step 1: Current VCS Settings -->
+			<template v-if="currentVcsSettings?.vcsType === 'GITHUB' && !isChangingSettings">
+				<div class="current-settings p-4">
+					<h3 class="text-xl mb-3">현재 GitHub 연동 상태</h3>
+					<div class="installed-org flex align-items-center gap-3 p-3 surface-100 border-round">
+						<div class="org-info flex-grow-1">
+							<div class="flex align-items-center gap-2">
+								<i class="pi pi-github text-xl"></i>
+								<span class="font-bold">{{ currentVcsSettings.orgName }}</span>
+							</div>
+							<div class="text-sm text-500 mt-2">
+								저장소: {{ currentVcsSettings.repoName }}
+							</div>
+						</div>
+						<Button icon="pi pi-sync" severity="secondary" text @click="startChangeSettings"
+							tooltip="연동 설정 변경" />
+					</div>
+				</div>
+			</template>
+
+			<!-- Step 2: GitHub Auth -->
+			<template v-else-if="!githubAuthStore.isAuthenticated">
 				<div class="flex flex-column align-items-center gap-3 p-4">
 					<h3 class="text-xl">GitHub 연동</h3>
-					<p class="text-gray-600">프로젝트와 GitHub을 연동하기 위해 로그인해주세요</p>
+					<p class="text-gray-600">프로젝트와 GitHub을 연동하기 위해 GithubApp을 설치해주세요</p>
 					<Button @click="openInstallationWindow" severity="secondary" class="github-auth-btn">
 						<i class="pi pi-github mr-2"></i>
 						GitHubApp 설치
@@ -14,7 +34,7 @@
 				</div>
 			</template>
 
-			<!-- Step 2: Organization Selection -->
+			<!-- Step 3: Organization Selection -->
 			<template v-else-if="!selectedOrg">
 				<div class="org-section p-4">
 					<h3 class="text-xl mb-3">조직 선택</h3>
@@ -36,7 +56,7 @@
 				</div>
 			</template>
 
-			<!-- Step 3: Repository Selection -->
+			<!-- Step 4: Repository Selection -->
 			<template v-else>
 				<div class="p-4">
 					<div class="selected-org flex align-items-center gap-3 p-3 surface-100 border-round mb-4">
@@ -50,26 +70,23 @@
 					<div class="repo-section">
 						<h3 class="text-xl mb-3">저장소 선택</h3>
 						<ProgressSpinner v-if="loadingRepos" class="loading-spinner" />
-						<div v-else class="repo-list">
-							<DataTable v-model:selection="selectedRepo" :value="repositories" selectionMode="single"
-								dataKey="id" class="p-datatable-sm" :rows="10" :paginator="true"
-								paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink">
-								<Column field="name" header="저장소명">
-									<template #body="slotProps">
-										<div class="flex align-items-center gap-2">
-											<i class="pi pi-code text-primary"></i>
-											<span>{{ slotProps.data.name }}</span>
-										</div>
-									</template>
-								</Column>
-								<Column field="private" header="공개 여부">
-									<template #body="slotProps">
-										<Tag :severity="slotProps.data.private ? 'danger' : 'success'"
-											:value="slotProps.data.private ? 'Private' : 'Public'" />
-									</template>
-								</Column>
-							</DataTable>
-						</div>
+						<DataTable v-else v-model:selection="selectedRepo" :value="repositories" selectionMode="single"
+							dataKey="id" class="p-datatable-sm" :rows="10" :paginator="true">
+							<Column field="name" header="저장소명">
+								<template #body="slotProps">
+									<div class="flex align-items-center gap-2">
+										<i class="pi pi-code text-primary"></i>
+										<span>{{ slotProps.data.name }}</span>
+									</div>
+								</template>
+							</Column>
+							<Column field="private" header="공개 여부">
+								<template #body="slotProps">
+									<Tag :severity="slotProps.data.private ? 'danger' : 'success'"
+										:value="slotProps.data.private ? 'Private' : 'Public'" />
+								</template>
+							</Column>
+						</DataTable>
 					</div>
 				</div>
 			</template>
@@ -86,7 +103,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 import { useGithubOrgStore } from '@/stores/github/useGithubOrgStore';
 import { useGithubRepoStore } from '@/stores/github/useGithubRepoStore';
@@ -110,14 +127,18 @@ const props = defineProps({
 
 const emit = defineEmits(['update:visible', 'saved']);
 
-// Store and service instances
+// Store instances
 const githubAuthStore = useGithubAuthStore();
 const githubOrgStore = useGithubOrgStore();
 const githubRepoStore = useGithubRepoStore();
 const githubAppStore = useGithubAppStore();
 const toast = useToast();
 
+
+
+
 // Component state
+const isChangingSettings = ref(false);
 const selectedOrg = ref(null);
 const selectedRepo = ref(null);
 const repositories = ref([]);
@@ -133,50 +154,15 @@ const canSave = computed(() => selectedOrg.value && selectedRepo.value && !isLoa
 const isLoading = computed(() => loadingOrgs.value || loadingRepos.value || saving.value);
 
 // Methods
-const handleVisibilityChange = (value) => {
-	if (!value) {
-		resetState();
-	}
-	emit('update:visible', value);
+const startChangeSettings = () => {
+	isChangingSettings.value = true;
+	selectedOrg.value = null;
+	selectedRepo.value = null;
+	repositories.value = [];
 };
 
-const handleGithubLogin = () => {
-	const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
-	const redirectUri = import.meta.env.VITE_GITHUB_REDIRECT_URI;
-	const scope = "read:user read:org repo admin:org";
-
-	// Generate a random state
-	const state = Math.random().toString(36).substring(2) + Date.now().toString(36);
-
-	// Save state to localStorage
-	localStorage.setItem('github_auth_state', state);
-
-	// Store current path and project context
-	localStorage.setItem('github_auth_redirect', window.location.pathname);
-	if (props.projectId) {
-		localStorage.setItem('github_auth_project_id', props.projectId);
-	}
-
-	// Build OAuth URL with state
-	const authUrl = `https://github.com/login/oauth/authorize?` +
-		`client_id=${clientId}&` +
-		`redirect_uri=${encodeURIComponent(redirectUri)}&` +
-		`scope=${encodeURIComponent(scope)}&` +
-		`state=${encodeURIComponent(state)}`;
-
-	const width = 580;
-	const height = 600;
-	const left = (window.innerWidth - width) / 2;
-	const top = (window.innerHeight - height) / 2;
-
-	window.open(
-		authUrl,
-		'GitHub Login',
-		`width=${width},height=${height},top=${top},left=${left}`
-	);
-};
 const openInstallationWindow = () => {
-
+	// Save project ID for installation callback
 	localStorage.setItem('github_installation_project_id', props.projectId);
 
 	const installUrl = `https://github.com/apps/${import.meta.env.VITE_GITHUB_APP_NAME}/installations/new`;
@@ -203,6 +189,7 @@ const openInstallationWindow = () => {
 			clearInterval(checkWindowInterval.value);
 			checkWindowInterval.value = null;
 			installationWindow.value = null;
+			localStorage.removeItem('github_installation_project_id');
 		}
 	}, 500);
 };
@@ -210,39 +197,15 @@ const openInstallationWindow = () => {
 const handleInstallationMessage = (event) => {
 	if (event.origin !== window.location.origin) return;
 
-	switch (event.data.type) {
-		case 'github-auth-success':
-			const { redirect, projectId } = event.data.data || {};
-
-			// Validate returned project ID matches current context
-			if (projectId !== props.projectId) {
-				console.error('Project ID mismatch');
-				return;
-			}
-
-			toast.add({
-				severity: 'success',
-				summary: '성공',
-				detail: 'GitHub 로그인이 완료되었습니다',
-				life: 3000
-			});
-
-			// Handle redirect if needed
-			if (redirect && redirect !== window.location.pathname) {
-				router.push(redirect);
-			} else {
-				loadOrganizations();
-			}
-			break;
-
-		// ... rest of the switch cases
+	if (event.data.type === 'github-auth-success') {
+		toast.add({
+			severity: 'success',
+			summary: '성공',
+			detail: 'GitHub 연동이 완료되었습니다',
+			life: 3000
+		});
+		loadOrganizations();
 	}
-};
-
-const handleChangeOrg = () => {
-	selectedOrg.value = null;
-	selectedRepo.value = null;
-	repositories.value = [];
 };
 
 const handleOrgSelect = async (org) => {
@@ -285,6 +248,12 @@ const loadOrgRepositories = async (org) => {
 	}
 };
 
+const handleChangeOrg = () => {
+	selectedOrg.value = null;
+	selectedRepo.value = null;
+	repositories.value = [];
+};
+
 const handleSaveSettings = async () => {
 	if (!canSave.value) return;
 
@@ -318,7 +287,15 @@ const handleSaveSettings = async () => {
 	}
 };
 
+const handleVisibilityChange = (value) => {
+	if (!value) {
+		resetState();
+	}
+	emit('update:visible', value);
+};
+
 const resetState = () => {
+	isChangingSettings.value = false;
 	selectedOrg.value = null;
 	selectedRepo.value = null;
 	repositories.value = [];
@@ -347,9 +324,33 @@ onUnmounted(() => {
 	window.removeEventListener('message', handleInstallationMessage);
 	cleanup();
 });
+
+// Watch for current VCS settings
+watch(() => props.currentVcsSettings, (newSettings) => {
+	if (newSettings?.vcsType === 'GITHUB' && !isChangingSettings.value) {
+		githubOrgStore.fetchOrganizations().then(() => {
+			const currentOrg = githubOrgStore.allOrganizations.find(
+				org => org.login === newSettings.orgName
+			);
+			if (currentOrg) {
+				selectedOrg.value = currentOrg;
+				loadOrgRepositories(currentOrg).then(() => {
+					selectedRepo.value = repositories.value.find(
+						repo => repo.name === newSettings.repoName
+					);
+				});
+			}
+		});
+	}
+}, { immediate: true });
 </script>
 
 <style scoped>
+.settings-content {
+	height: calc(50vh - 12rem);
+	overflow-y: auto;
+}
+
 .github-auth-btn {
 	background-color: #24292e;
 	color: white;
@@ -363,11 +364,6 @@ onUnmounted(() => {
 	width: 50px;
 	height: 50px;
 	margin: 2rem auto;
-}
-
-.settings-content {
-	height: calc(50vh - 12rem);
-	overflow-y: auto;
 }
 
 :deep(.p-dialog-header) {
@@ -385,5 +381,13 @@ onUnmounted(() => {
 .org-card:hover {
 	transform: translateY(-2px);
 	transition: transform 0.2s ease;
+}
+
+.installed-org {
+	transition: all 0.2s;
+}
+
+.installed-org:hover {
+	background-color: var(--surface-200) !important;
 }
 </style>
