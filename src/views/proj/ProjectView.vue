@@ -26,7 +26,7 @@
 				</div>
 
 				<div class="header-right">
-					<Button label="Project Setting" severity="secondary" icon="pi pi-cog" @click="openProjectSettings"
+					<Button label="VCS" severity="contrast" icon="pi pi-github" @click="openProjectSettings"
 						aria-haspopup="true" aria-controls="overlay-menu" />
 				</div>
 			</div>

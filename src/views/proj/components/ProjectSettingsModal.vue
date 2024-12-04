@@ -174,7 +174,7 @@ const handleInstallationMessage = async (event) => {
 		try {
 			const result = await githubAppStore.handleInstallationCallback(props.projectId, event.data.data.installationId);
 			if (result) {
-				await githubOrgStore.fetchOrganizations(true);
+				// emit project information update
 			}
 
 			// Handle successful installation
