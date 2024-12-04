@@ -99,12 +99,12 @@ export const useGithubAppStore = defineStore("githubApp", {
       }
     },
 
-    async fetchProjectInstallation(projectId) {
+    async fetchProjectInstallation(installationId) {
       this.isLoading = true;
       this.error = null;
 
       try {
-        const response = await axios.get(`/api/projects/${projectId}/github/installation`);
+        const response = await axios.get(`/vcs/installations/${installationId}`);
         console.log("Fetch project installation response:", response.data);
 
         if (response.data.success) {

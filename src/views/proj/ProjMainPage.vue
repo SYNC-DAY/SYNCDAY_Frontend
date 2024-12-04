@@ -254,7 +254,8 @@ const fetchProjs = async () => {
     for (const project of projects.value) {
       if (project.vcs_installation_id) {
         try {
-          await githubAppStore.fetchProjectInstallation(project.proj_id);
+          await githubAppStore.fetchProjectInstallation(project.vcs_installation_id);
+
         } catch (error) {
           console.error(`Failed to fetch GitHub installation for project ${project.proj_id}:`, error);
         }
