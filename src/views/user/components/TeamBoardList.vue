@@ -7,8 +7,9 @@
         </template>
         <template v-else>
             <template v-if="teamBoards.length > 0">
-                <div v-for="teamBoard in teamBoards" :key="teamBoard.id" class="team-board-container">
-                    <p>{{ teamBoard.boardTitle }}</p>
+                <div v-for="teamBoard in teamBoards.slice(0,6)" :key="teamBoard.id" class="team-board-container"
+                    @click="updateBoardId(teamBoard.teamBoardId,teamBoard.boardTitle)">
+                        {{ teamBoard.boardTitle }}
                 </div>
             </template>
             <template v-else>
@@ -24,7 +25,11 @@
 import { onMounted, ref } from 'vue';
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
+import { useTeamStore } from '@/stores/team';
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
+const teamStore = useTeamStore();
 const authStore = useAuthStore();
 const userId = authStore.user?.userId; // userId가 정의되어 있는지 확인
 const teamBoards = ref([]);
@@ -34,7 +39,6 @@ const getTeamBoardList = async () => {
     try {
         const loadingStartTime = Date.now(); // 로딩 시작 시간 기록
         const response = await axios.get(`/teamboard/${userId}/my`);
-        console.log("API 응답:", response);
         const teamBoardList = response.data?.data || []; // 데이터가 없으면 빈 배열 설정
         teamBoards.value = teamBoardList;
 
@@ -51,6 +55,12 @@ const getTeamBoardList = async () => {
     }
 };
 
+const updateBoardId = (id,title) => {
+    console.log("id:",id)
+    teamStore.updateBoardId(id);
+    teamStore.updateBoardTitle(title);
+    router.push(`/team/post/view?boardTitle=${title}`)
+};
 
 
 onMounted(() => {
@@ -65,10 +75,12 @@ onMounted(() => {
 }
 
 .team-board-container {
-    margin: 10px 0;
+    margin: 1rem;
+    margin-bottom: 2rem;
     padding: 10px;
-    border: 1px solid #ccc;
+    border: 1px solid #FE5D86;
     border-radius: 5px;
+    cursor: pointer;
 }
 
 .no-boards-container {

@@ -28,8 +28,6 @@ import axios from 'axios';
 const router = useRouter();
 
 const route = useRoute();
-const isAccept = route.query.isAccept;
-const fromWho = route.query.fromWho;
 const scheduleId = route.query.scheduleId;
 const status = route.query.status;
 
