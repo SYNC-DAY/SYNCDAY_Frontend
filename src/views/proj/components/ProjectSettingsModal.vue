@@ -23,7 +23,7 @@
 			</template>
 
 			<!-- Step 2: GitHub Auth -->
-			<template v-else-if="!githubAuthStore.isAuthenticated">
+			<template v-else-if="!props.projectData.vcs_installation_id">
 				<div class="flex flex-column align-items-center gap-3 p-4">
 					<h3 class="text-xl">GitHub 연동</h3>
 					<p class="text-gray-600">프로젝트와 GitHub을 연동하기 위해 GithubApp을 설치해주세요</p>
@@ -37,7 +37,7 @@
 			<!-- Step 3: Organization Selection -->
 			<template v-else-if="!selectedOrg">
 				<div class="org-section p-4">
-					<h3 class="text-xl mb-3">조직 선택</h3>
+					<h3 class="text-xl mb-3">{{ props.projectData.vcs_installation_id }}</h3>
 					<ProgressSpinner v-if="loadingOrgs" class="loading-spinner" />
 					<div v-else class="grid">
 						<div v-for="org in organizations" :key="org.login" class="col-12 md:col-6 lg:col-4">
@@ -122,6 +122,10 @@ const props = defineProps({
 	currentVcsSettings: {
 		type: Object,
 		default: () => ({})
+	},
+	projectData: {
+		type: Object,
+		required: true
 	}
 });
 
@@ -314,6 +318,7 @@ const cleanup = () => {
 	}
 	installationWindow.value = null;
 };
+
 
 // Lifecycle hooks
 onMounted(() => {
