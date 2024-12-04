@@ -36,7 +36,7 @@
 
           <TabPanels>
             <TabPanel value="0">
-              <CardBoard :cardboards="workspaceDetails.cardboards || []"></CardBoard>
+              <CardBoard :cardboards="workspaceDetails.cardboards || [] " :workspaceId="workspaceDetails.workspace_id"></CardBoard>
             </TabPanel>
             <TabPanel value="1">
               <KanbanBoard :cardboards="workspaceDetails.cardboards || []" />
@@ -75,6 +75,7 @@ import TabPanel from 'primevue/tabpanel';
 import CardBoard from './views/CardBoardView.vue';
 import KanbanBoard from './views/KanbanBoardView.vue';
 import CalendarView from './views/CalendarView.vue';
+import CardModal from './components/layout/CardModal.vue';
 
 
 const route = useRoute();

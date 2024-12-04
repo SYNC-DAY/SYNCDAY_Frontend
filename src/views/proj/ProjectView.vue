@@ -61,7 +61,7 @@
       			<!-- </div> -->
 
       			<div class="modal-footer mt-4">
-        			<Button label="취소" icon="pi pi-times" @click="openNewWorkspaceDialog = false" class="p-button-text" />
+        			<!-- <Button label="취소" icon="pi pi-times" @click="openNewWorkspaceDialog = false" class="p-button-text" /> -->
         			<Button label="확인" icon="pi pi-check" @click="createWorkspace" class="p-button-primary" />
       			</div>
     			</Dialog>
@@ -313,6 +313,8 @@ const createWorkspace = async () => {
         detail: `워크스페이스 '${newWorkspaceName.value}'가 생성되었습니다.`,
         life: 3000,
       });
+
+	  alert(`워크스페이스 '${newWorkspaceName.value}'가 성공적으로 생성되었습니다!`);
       openNewWorkspaceDialog.value = false; // 모달 닫기
       newWorkspaceName.value = ""; // 입력 필드 초기화
     }
