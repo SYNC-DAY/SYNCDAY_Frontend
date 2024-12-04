@@ -13,8 +13,9 @@
             <div class= "chatlist">
               <ul>
                 <li v-for="chat in filteredChatList" :key="chat.roomId" @click="openChatRoom(chat)" class="chat-room">
-                  <h4>{{ chat.chatRoomName }}</h4>
-                  <p>{{ chat.lastMessage || '메시지가 없습니다' }}</p>
+                  <span class="roomName">{{ chat.chatRoomName }}</span>
+                  <span class="lastMessage">{{ chat.lastMessage || '메시지가 없습니다' }}</span>
+                  <span class="time">{{ chat.sentTime }}</span>
                 </li>
               </ul>
             </div>
@@ -203,17 +204,26 @@ onMounted(() => {
   .chat-search {
     border-radius: 7px;
     background-color: #d6d5d5 ;
-    font-size: 1rem;
+    font-size: 0.9rem;
     width: 90%;
     margin-left: 1.5rem;
   }
   .chatlist {
   margin-top: 1rem;
 }
-  .chatlist h4 {
-  font-size: 1rem;
+  .chatlist li {
+  display: flex;
+  gap: 50px ;
+  align-items: center
 }
+.roomName {
+  font-size: 15px;
 
+}
+.lastMessage {
+  font-size: 13px;
+  color: #444444;
+}
 .chatlist ul {
   list-style: none;
   padding: 0;
