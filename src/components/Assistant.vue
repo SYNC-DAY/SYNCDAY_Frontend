@@ -16,17 +16,46 @@
                 <table class="today-schedule-table">
                     <thead>
                         <tr>
-                            <th>Title</th>
-                            <th>Start Time</th>
-                            <th>End Time</th>
+                            <th>제목</th>
+                            <th>시작</th>
+                            <th>끝</th>
+                            <th>알림여부</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="(schedule, index) in todaySchedules" :key="index"
-                        :class="{'past-schedule': isPastSchedule(schedule.start_time)}">
+                        <tr v-for="(schedule, index) in todaySchedules" :key="index" :class="{'past-schedule': isPastSchedule(schedule.start_time)}">
                             <td>{{ schedule.title }}</td>
-                            <td>{{ formatDate(schedule.start_time) }}</td>
+                            <td>{{ formatStart(schedule.start_time) }}</td>
                             <td>{{ formatDate(schedule.end_time) }}</td>
+                            <template v-if="isPastSchedule(schedule.start_time)">
+                                <td>이미 시작된 일정입니다.</td>
+                            </template>
+                            <template v-else>
+                                <td v-if="editingSchedule === schedule.schedule_id">
+                                    <div class="dropdown-menu">
+                                        <select v-model="selectedNotificationTimes[schedule.schedule_id]" class="dropdown-select">
+                                            <option disabled value="">시간 선택</option>
+                                            <option v-for="time in notificationTimes" :key="time" :value="time">
+                                                {{ time }}분 전
+                                            </option>
+                                            <option value="cancle">알림 취소</option>
+                                        </select>
+                                    </div>
+                                </td>
+                                <td v-if="editingSchedule === schedule.schedule_id">
+                                    <button @click="saveNotificationTime(schedule)">확인</button>
+                                    <button @click="cancelEditing()">취소</button>
+                                </td>
+                                <template v-else>
+                                    <td>
+                                        {{ schedule.notification_time ? formatStart(schedule.notification_time) : '알림 없음' }}
+                                    </td>
+                                    <td>
+                                        <button @click="editNotification(schedule.schedule_id)">수정</button>
+                                    </td>
+                                </template>
+                            </template>
                         </tr>
                     </tbody>
                 </table>
@@ -47,7 +76,7 @@
                     <tbody>
                         <tr v-for="(schedule, index) in notiedSchedules" :key="index">
                             <td>{{ schedule.title }}</td>
-                            <td>{{ formatDate(schedule.start_time) }}</td>
+                            <td>{{ formatStart(schedule.start_time) }}</td>
                             <td>{{ formatDate(schedule.end_time) }}</td>
                         </tr>
                     </tbody>
@@ -74,10 +103,16 @@ import { onMounted, onUnmounted, ref, computed,watch } from 'vue';
 import { useAssistantStore } from '@/stores/assistant';
 import { useAuthStore } from '@/stores/auth';
 import { EventSourcePolyfill } from 'event-source-polyfill';
+import axios from 'axios';
 
 const assistantStore = useAssistantStore();
 const authStore = useAuthStore();
 const isAssistantVisible = ref(false);
+const notificationTimes = [10,20,30,40,50,60];
+const selectedNotificationTimes = ref({});
+const editingSchedule = ref(null); 
+
+
 
 const todaySchedules = computed(() => assistantStore.todaySchedules);
 const notiedSchedules = computed(() => assistantStore.notiedSchedules);
@@ -99,13 +134,86 @@ const formatDate = (dateString) => {
 
     let hours = date.getHours();
     const minutes = String(date.getMinutes()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const ampm = hours >= 12 ? '오후' : '오전';
 
     hours = hours % 12;
     hours = hours ? hours : 12; 
 
     return `${year}-${month}-${day} ${ampm} ${String(hours).padStart(2, '0')}:${minutes}`;
 };
+
+
+const formatStart = (dateString) => {
+    const date = new Date(dateString);
+
+
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? '오후' : '오전';
+
+    hours = hours % 12;
+    hours = hours ? hours : 12; 
+
+    if (hours == 12 && ampm == '오전' ) {
+        return "자정";
+    }
+
+    return `${ampm} ${String(hours).padStart(2, '0')}:${minutes}`;
+};
+
+
+const editNotification = (scheduleId) => {
+    editingSchedule.value = scheduleId; // 수정 모드로 전환
+    selectedNotificationTimes.value[scheduleId] = ""; // 초기화
+};
+
+const cancelEditing = () => {
+    editingSchedule.value = null; // 수정 모드 취소
+};
+
+const saveNotificationTime = async (schedule) => {
+    const selectedTime = selectedNotificationTimes.value[schedule.schedule_id];
+
+    if (!selectedTime) {
+        alert("알림 시간을 선택해주세요.");
+        return;
+    }
+
+    if (selectedTime === 'cancle'){
+        try{        
+            await axios.put(`/userschedule/notification`, {
+            notification_time: null,
+            schedule_id: schedule.schedule_id,
+            user_id: authStore.user.userId
+        });
+
+        // 업데이트 후 상태 변경
+        schedule.notification_time = null;
+        editingSchedule.value = null;
+        } catch{
+            console.error("Failed to set notification time:", error);
+        }
+    }
+
+    try {
+        const minutesBefore = selectedTime;
+        const notificationTime = new Date(new Date(schedule.start_time) - minutesBefore * 60000);
+
+        await axios.put(`/userschedule/notification`, {
+            notification_time: notificationTime.toISOString(),
+            schedule_id: schedule.schedule_id,
+            user_id: authStore.user.userId
+        });
+
+        // 업데이트 후 상태 변경
+        schedule.notification_time = notificationTime.toISOString();
+        editingSchedule.value = null;
+    } catch (error) {
+        console.error("Failed to set notification time:", error);
+    }
+};
+
+
 const selectTab = (selectedTab) => {
     tab.value = selectedTab;
 }
@@ -116,6 +224,7 @@ const show = () => {
     isAssistantVisible.value = true;
 };
 
+
 const eventSource = ref(null);
 
 const connect = (userId, token) => {
@@ -125,8 +234,8 @@ if (eventSource.value) {
 }
 
 eventSource.value = new EventSourcePolyfill(
-    `http://localhost:8080/sse/notification/subscribe/${authStore.user.userId}`,
-    // `http://localhost:5000/sse/notification/subscribe/1`,
+    // `http://localhost:8080/sse/notification/subscribe/${authStore.user.userId}`,
+    `http://localhost:5000/sse/notification/subscribe/1`,
     {
     headers: {
         Authorization: `Bearer ${token}`,
@@ -189,9 +298,9 @@ onMounted(()=>{
         assistantStore.initialize(userId);
         isAssistantVisible.value = true;
     }
+    assistantStore.getTodaySchedule(userId);
 
     connect(userId,token);
-    console.log("sse 연결 시도");
 })
 onUnmounted(()=>{
     disconnect();
@@ -296,4 +405,7 @@ onUnmounted(()=>{
 .past-schedule {
   color: grey;
 }
+
+
+
 </style>
