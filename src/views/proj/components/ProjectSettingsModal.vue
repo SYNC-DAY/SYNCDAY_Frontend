@@ -37,7 +37,8 @@
 			<!-- Step 3: Organization Selection -->
 			<template v-else-if="!selectedOrg">
 				<div class="org-section p-4">
-					<h3 class="text-xl mb-3">{{ props.projectData.vcs_installation_id }}</h3>
+					<h3 class="text-xl mb-3">{{
+						githubAppStore.installations.get(projectData.vcs_installation_id).vcsOrgLogin }}</h3>
 					<ProgressSpinner v-if="loadingOrgs" class="loading-spinner" />
 					<div v-else class="grid">
 						<div v-for="org in organizations" :key="org.login" class="col-12 md:col-6 lg:col-4">
@@ -57,7 +58,7 @@
 			</template>
 
 			<!-- Step 4: Repository Selection -->
-			<template v-else>
+			<!-- <template v-else>
 				<div class="p-4">
 					<div class="selected-org flex align-items-center gap-3 p-3 surface-100 border-round mb-4">
 						<Avatar :image="selectedOrg.avatar_url" shape="square" />
@@ -89,7 +90,7 @@
 						</DataTable>
 					</div>
 				</div>
-			</template>
+			</template> -->
 		</div>
 
 		<template #footer>

@@ -229,6 +229,7 @@ const fetchProjs = async () => {
       created_at: proj.created_at,
       // Add VCS installation information
       vcs_installation_id: proj.vcs_installation_id,
+      vcs_installation: proj.vcs_installation_id ? githubAppStore.getInstallationById(proj.vcs_installation_id) : null,
       vcs_type: proj.vcs_type,
       vcs_proj_url: proj.vcs_proj_url,
       workspaces: proj.workspaces.map(ws => ({
