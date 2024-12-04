@@ -38,8 +38,34 @@
 				<div class="container-row header">
 					<h3 class="semibold">Workspaces</h3>
 					<Button label="New Workspace" icon="pi pi-plus" severity="secondary"
-						@click="openNewWorkspaceDialog" />
+					@click="() => { openNewWorkspaceDialog = true} "/>
 				</div>
+
+				<!-- New Workspace Modal -->
+				<Dialog 
+      				:visible="openNewWorkspaceDialog" 
+      				@update:visible="openNewWorkspaceDialog = $event" 
+      				modal 
+      				header="새 워크스페이스 생성" 
+      				:style="{ width: '30rem' }"
+    			>
+      			<!-- <div> -->
+        		
+        		<InputText 
+					type="text"
+          			
+          			v-model="newWorkspaceName" 
+          			placeholder="워크스페이스 이름 입력" 
+				
+       			 />
+      			<!-- </div> -->
+
+      			<div class="modal-footer mt-4">
+        			<Button label="취소" icon="pi pi-times" @click="openNewWorkspaceDialog = false" class="p-button-text" />
+        			<Button label="확인" icon="pi pi-check" @click="createWorkspace" class="p-button-primary" />
+      			</div>
+    			</Dialog>
+				
 
 				<!-- Workspaces Grid -->
 				<div v-if="currentProject.workspaces?.length" class="workspaces-grid">
@@ -89,8 +115,10 @@ import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import Button from 'primevue/button';
+import InputText from 'primevue/inputtext';
 import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
 import ProjectSettingsModal from './components/ProjectSettingsModal.vue';
+
 // props
 const props = defineProps({
 	projectId: {
@@ -116,6 +144,10 @@ const vcsMenu = ref(null);
 const showGithubAuthModal = ref(false);
 const showOrgProjSelectionModal = ref(false);
 const showProjectSettings = ref(false);
+const openNewWorkspaceDialog = ref(false);
+const newWorkspaceName = ref('');
+const selectedProjectId = ref(null);
+
 // Computed
 const currentProject = computed(() =>
 	props.projects.find(p => p.proj_id === parseInt(props.projectId))
@@ -250,6 +282,49 @@ const handleProjectSelect = async ({ organization }) => {
 			life: 3000
 		});
 	}
+};
+
+const createWorkspace = async () => {
+  console.log("확인 버튼 클릭됨");
+  if (!newWorkspaceName.value.trim()) {
+    toast.add({
+      severity: "warn",
+      summary: "이름 입력 필요",
+      detail: "워크스페이스 이름을 입력해주세요.",
+      life: 3000,
+    });
+    return;
+  }
+
+  try {
+    const response = await axios.post("/workspaces", {
+      workspace_name: newWorkspaceName.value.trim(),
+	  proj_id: currentProject.value.proj_id,
+    });
+	console.log("현재 프로젝트id: ", currentProject.value);
+	console.log("새로운 워크스페이스 이름: ", newWorkspaceName.value);
+    if (response.data.success) {
+
+	  const newWorkspace = response.data.data; // API 응답에서 새 워크스페이스 정보 가져오기
+      currentProject.value.workspaces.push(newWorkspace);
+      toast.add({
+        severity: "success",
+        summary: "워크스페이스 생성",
+        detail: `워크스페이스 '${newWorkspaceName.value}'가 생성되었습니다.`,
+        life: 3000,
+      });
+      openNewWorkspaceDialog.value = false; // 모달 닫기
+      newWorkspaceName.value = ""; // 입력 필드 초기화
+    }
+  } catch (error) {
+    console.error("워크스페이스 생성 실패:", error);
+    toast.add({
+      severity: "error",
+      summary: "워크스페이스 생성 실패",
+      detail: "워크스페이스 생성 중 오류가 발생했습니다.",
+      life: 3000,
+    });
+  }
 };
 // Event emits
 const emit = defineEmits(['update:project']);

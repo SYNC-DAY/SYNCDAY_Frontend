@@ -60,6 +60,32 @@
     						</Column>
 						</DataTable>
 					</div>
+					<div class="plus-member">
+						<Button icon="pi pi-plus" @click="visible1 = true" rounded aria-label="Filter"></Button>
+						<Dialog 
+        					:visible="visible1" 
+        					@update:visible="visible1 = $event" 
+        					modal 
+        					header="사용자 추가" 
+        					:style="{ width: '25rem' }"
+    					>
+						<InputText type="text" v-model="value1" placeholder="이름 입력" @input="() => searchUsers(value1)"/>
+						
+						<!-- 검색 결과 목록 -->
+						<ul v-if="searchResults.length" class="user-list">
+							<li v-for="user in searchResults" :key="user.user_id" class="user-item">
+							<span>{{ user.name }}</span>
+							<!-- 사용자 추가 버튼 -->
+							<Button 
+								icon="pi pi-user-plus" 
+								@click="addUserToProject(user)" 
+								class="p-button-text p-button-success"
+							/>
+							</li>
+						</ul>
+						<p v-else-if="value1.trim() && !searchResults.length">검색 결과가 없습니다.</p>
+    					</Dialog>
+					</div>
 				</TabPanel>
 				<TabPanel value="2">
 					<div class="container-row justify-right">
@@ -98,13 +124,14 @@
 
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import axios from 'axios';
 import { useAuthStore } from "@/stores/auth";
 import { useGithubAppAuthStore } from '@/stores/github/useGithubAppAuthstore';
 import { useGithubOrgStore } from '@/stores/github/useGithubOrgStore';
 import { useGithubRepoStore } from '@/stores/github/useGithubRepoStore';
 
-
+import { debounce } from 'lodash';
 import Tabs from 'primevue/tabs';
 import TabList from 'primevue/tablist';
 import Tab from 'primevue/tab';
@@ -123,6 +150,12 @@ const githubAppAuth = useGithubAppAuthStore();
 const githubOrgStore = useGithubOrgStore();
 const githubRepoStore = useGithubRepoStore();
 const authStore = useAuthStore(); // 로그인된 사용자 정보
+const visible1 = ref(false);
+const value1 = ref('');
+
+const searchResults = ref([]);
+const searchQuery = ref('');
+const route = useRoute();
 
 const isOwner = computed(() => {
     return projectMembers.value.some(member => 
@@ -224,7 +257,7 @@ const formData = ref({
 
 const projectMembers = ref([]);
 const selectedUser = ref(null);
-const userSuggestions = ref([]);
+// const userSuggestions = ref([]);
 const errors = ref({});
 const isSaving = ref(false);
 
@@ -264,14 +297,38 @@ const loadProjectMembers = async () => {
 	}
 };
 
-const searchUsers = async (event) => {
-	try {
-		const response = await axios.get(`/users/search?query=${event.query}`);
-		userSuggestions.value = response.data.data;
-	} catch (error) {
-		console.error('User search failed:', error);
-	}
+const searchUsers = async (keyword) => {
+  try {
+    const sanitizedKeyword = keyword.trim();
+    if (!sanitizedKeyword) {
+      searchResults.value = [];
+      return;
+    }
+    
+    const response = await axios.get(`/user/search`, {
+      params: {
+        keyword: sanitizedKeyword
+      }
+    });
+
+	console.log("조회된 유저들: ", response)
+
+    if (response.data.data) {
+		searchResults.value = response.data.data.filter(user => user.name.includes(sanitizedKeyword));
+    //   searchResults.value = response.data.data;
+    } else {
+      searchResults.value = [];
+    }
+  } catch (error) {
+    console.error('Error fetching search results:', error);
+    searchResults.value = [];
+  }
 };
+
+// debounce를 사용하여 입력이 끝난 후 300ms 후에 검색 실행
+const handleInput = debounce(() => {
+	searchUsers(searchQuery.value);
+}, 300);
 
 const addMember = async () => {
 	try {
@@ -411,6 +468,7 @@ onMounted(() => {
 	}
 	
 	loadProjectMembers();
+
 });
 
 watch(() => props.visible, (newValue) => {
@@ -423,16 +481,22 @@ watch(() => props.visible, (newValue) => {
 <style scoped>
 .status-item {
     display: flex;
-    align-items: center; /* 수직 중앙 정렬 */
-    gap: 8px; /* 아이콘과 텍스트 사이 간격 */
+    align-items: center;
+    gap: 8px;
 }
 
 .status-icon {
-    width: 1.5rem; /* 아이콘 크기 */
-    height: 1.5rem; /* SVG 아이콘 크기 */
-    object-fit: contain; /* 아이콘 비율 유지 */
-    display: inline-block; /* 텍스트와 정렬 */
-    vertical-align: middle; /* 텍스트 기준으로 아이콘 중앙 정렬 */
+    width: 1.5rem;
+    height: 1.5rem; 
+    object-fit: contain;
+    display: inline-block; 
+    vertical-align: middle; 
+}
+
+.plus-member {
+	align-items: center;
+	text-align: center;
+	margin-top: 5%;
 }
 
 </style>
