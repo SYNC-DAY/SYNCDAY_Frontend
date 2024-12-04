@@ -27,6 +27,8 @@ import { onUnmounted, onMounted, ref, defineProps, computed } from 'vue';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 import { useAuthStore } from '@/stores/auth';
+import axios from 'axios';
+import { remove } from 'lodash';
 
 const props = defineProps({
   roomId: {
@@ -35,6 +37,10 @@ const props = defineProps({
   },
   chatRoomName: {
     type: String,
+    required: true
+  }, 
+  removeChatFromList: {
+    type: Function,
     required: true
   }
 });
@@ -49,6 +55,17 @@ const newMessage = ref(''); // 새 입력 메세지
 const subscriptions = ref({}) // 토픽 구독 채팅방 연결
 const messagesInRoom = ref({})  // 각 채팅방 당 메세지
 
+// 시간 설정
+const formatTime = (timeString) => {
+  const date = new Date(timeString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // 월은 0부터 시작하므로 +1
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+
+  return `${year}.${month}.${day} ${hours}시${minutes}분`; 
+};
 
 const connectWebSocket = () => {
   console.log('웹소켓 연결 시도 중...')
@@ -110,28 +127,13 @@ const subscribeToRoom = (roomId) => {
 
   subscriptions.value[roomId] = stompClient.value.subscribe(`/topic/room/${roomId}`, message => {
     console.log('메시지 수신:', message.body)
+        const receivedMessage = JSON.parse(message.body); // 메시지 JSON 파싱
+        receivedMessage.sentTime = formatTime(receivedMessage.sentTime);
     if (!messagesInRoom.value[roomId]) {
       messagesInRoom.value[roomId] = []
     }
-    messagesInRoom.value[roomId].push(JSON.parse(message.body))
+    messagesInRoom.value[roomId].push(receivedMessage)
   })
-  // const subscription = stompClient.value.subscribe(`/topic/room/${roomId}`, (message) => {
-  //   try {
-  //     const receivedMessage = JSON.parse(message.body); // 메시지 JSON 파싱
-  //     console.log(`방 ${roomId}에서 새 메시지 수신:`, receivedMessage);
-
-  //     // 메시지 상태 업데이트
-  //     if (!messagesInRoom.value[roomId]) {
-  //       messagesInRoom.value[roomId] = [];
-  //     }
-  //     messagesInRoom.value[roomId].push(receivedMessage);
-  //   } catch (error) {
-  //     console.error(`방 ${roomId}에서 메시지 처리 중 오류 발생:`, error);
-  //   }
-  // });
-
-  // subscriptions.value[roomId] = subscription;
-  // console.log(`방 ${roomId}에 구독 완료.`);
 };
 
 
@@ -182,12 +184,20 @@ try {
 
 const leaveChat = async () => {
   try {
-    const response = await axios.post(`/room/${props.roomId}/leave`, null, {
+    const response = await axios.post(`/chat/room/${props.roomId}/leave`, null, {
       params: { userId: authStore.user?.userId },
     });
-    console.log('채팅방을 나갑니다.')
-    console.log('API 요청 URL: ', axios.defaults.baseURL + `/room/${props.roomId}/leave`);
+    console.log('채팅방을 나가기: ', response.data )
+    console.log('API 요청 URL: ', axios.defaults.baseURL + `/chat/room/${props.roomId}/leave`);
     console.log('응답 데이터: ', response.data);
+
+    isVisible.value = false;
+    delete messagesInRoom.value[props.roomId];
+    if(subscriptions.value[props.roomId]) {
+      subscriptions.value[props.roomId].unsubscribe();
+      delete subscriptions.value[props.roomId];
+    }
+    removeChatFromList(props.roomId)
   } catch (error) {
     console.error('채팅방 나가는 중 오류 발생:', error);
   }

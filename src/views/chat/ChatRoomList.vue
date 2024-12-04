@@ -23,7 +23,8 @@
         </div>
         <NewChatRoom v-if="isPopupVisible" @close="closeNewChatRoom"/>
         <ChatRoom  v-if="selectedRoom" :roomId="selectedRoom.roomId"
-        :chatRoomName="selectedRoom.chatRoomName"  @close="closeChatRoom"/>
+        :chatRoomName="selectedRoom.chatRoomName"  
+        @close="closeChatRoom" :removeChatFromList="removeChatFromList"/>
     </div>
   </template>
   
@@ -33,13 +34,19 @@
   import axios from 'axios';
   import NewChatRoom from '@/views/chat/chat_components/NewChatRoom.vue';
   import ChatRoom from './ChatRoom.vue';
+import { onUnmounted } from 'vue';
 
-  const { isVisible } = defineProps({
+  const { isVisible, roomId } = defineProps({
     isVisible: {
       type: Boolean,
       required: true
-    }
+    }, 
+    roomId: {
+      type: String,
+      required: false,
+    },
   })
+
 
   const emit = defineEmits(['closePopup'])
 
@@ -114,12 +121,31 @@ const searchChat = (event) => {
     console.error("유효하지 않은 검색:", event);
   }};
 
+  // 채팅방 삭제
+  const removeChatFromList = (roomId) => {
+    chatList.value = chatList.value.filter(chat => chat.roomId !== roomId);
+    console.log(`채팅 목록에서 ${roomId} 삭제`);
+  };
+
 // 컴포넌트가 로드될 때 데이터 가져오기
 onMounted(() => {
   console.log("sfs", authStore.user.userId)
   fetchChatRooms();
 });
 
+onUnmounted(() => {
+  console.log(`채팅방 ${roomId}의 모든 데이터 초기화`);
+  if (roomId) { // roomId가 유효한 경우만 실행
+    console.log(`채팅방 ${roomId}의 모든 데이터 초기화`);
+    delete messagesInRoom.value[roomId];
+    if (subscriptions.value[roomId]) {
+      subscriptions.value[roomId].unsubscribe();
+      delete subscriptions.value[roomId];
+    }
+  } else {
+    console.error("onUnmounted: 유효하지 않은 roomId");
+  }
+});
   </script>
   
   <style scoped>
