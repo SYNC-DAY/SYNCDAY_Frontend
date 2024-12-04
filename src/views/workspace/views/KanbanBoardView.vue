@@ -53,7 +53,8 @@ import CardItem from '../components/CardItem.vue';
 const props = defineProps({
 	cardboards: {
 		type: Array,
-		required: true
+		required: true,
+		default: () => []
 	}
 });
 
@@ -65,13 +66,21 @@ const organizedCards = computed(() => {
 		done: []
 	};
 
-	props.cardboards.forEach(board => {
-		board.cards.forEach(card => {
-			// You can implement your own logic to determine card status
-			// For now, all cards go to todo
-			organized.todo.push(card);
-		});
+	// props.cardboards.forEach(board => {
+	// 	board.cards.forEach(card => {
+	// 		// You can implement your own logic to determine card status
+	// 		// For now, all cards go to todo
+	// 		organized.todo.push(card);
+	// 	});
+	// });
+
+	props.cardboards?.forEach(board => {
+	// board.cards가 undefined 또는 null이면 빈 배열로 대체
+	(board.cards || []).forEach(card => {
+		organized.todo.push(card);
 	});
+});
+
 
 	return organized;
 });
