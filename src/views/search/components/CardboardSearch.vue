@@ -34,7 +34,7 @@
   </template>
     
     <script setup>
-    import {defineProps, onMounted} from 'vue';
+    import {defineProps} from 'vue';
     import GitlabIcon from '@/assets/icons/Gitlab.svg';
     
     const props = defineProps({
@@ -42,10 +42,6 @@
         type: Object,
         required: true
       }
-    });
-    
-    onMounted(() => {
-      console.log('컴포넌트 마운트 시 props 데이터:', props.result);
     });
     </script>
     

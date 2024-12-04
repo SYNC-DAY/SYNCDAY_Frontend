@@ -18,7 +18,10 @@ const routes = [
         path: ":projectId/workspace/:workspaceId",
         name: "Workspace",
         component: WorkspaceView,
-        props: true,
+        props: route => ({
+          ...route.params,
+          cardId: route.query.cardId  // 쿼리 파라미터로 cardId 전달
+        })
       },
     ],
   },

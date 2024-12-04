@@ -89,6 +89,7 @@ import { useAuthStore } from '@/stores/auth.js';
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import InputText from 'primevue/inputtext';
 import ChatPop from '@/views/chat/ChatRoomList.vue';
+import Swal from 'sweetalert2';  
 
 const router = useRouter();
 const route = useRoute();
@@ -101,17 +102,35 @@ const searchText = ref(''); // 초기값을 빈 문자열로 변경
 // 현재 라우트 경로 계산
 const currentRoute = computed(() => route.path);
 
-// 검색 처리 함수 추가
+// 검색 처리 함수 수정
 const handleSearch = () => {
-	if (searchText.value.trim()) { // 검색어가 비어있지 않은 경우에만 검색 실행
-    console.log("검색된 단어: ", searchText.value)
-		router.push({
-			path: '/search',
-			query: {
-				keyword: searchText.value.trim()
-			}
-		});
-	}
+  const trimmedSearch = searchText.value.trim();
+  
+  if (trimmedSearch.length === 0) {
+    return;
+  }
+  
+  if (trimmedSearch.length === 1) {
+    Swal.fire({
+      icon: 'warning',
+      title: '검색어가 너무 짧습니다',
+      text: '최소 2글자 이상 입력해주세요.',
+      confirmButtonText: '확인',
+      confirmButtonColor: '#FE5D86',  // SYNCDAY의 핑크색 테마
+	  heightAuto: false,        // 높이 자동조절 비활성화
+      scrollbarPadding: false
+	  
+    });
+    return;
+  }
+
+  console.log("검색된 단어: ", trimmedSearch);
+  router.push({
+    path: '/search',
+    query: {
+      keyword: trimmedSearch
+    }
+  });
 };
 
 // 드롭다운 토글

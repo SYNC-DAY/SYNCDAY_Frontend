@@ -106,10 +106,11 @@
 <script setup>
 import { onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useSearch } from './components/useSearch';
+import { useSearch } from './useSearch';
 import ProjectSearch from "./components/ProjectSearch.vue";
 import WorkspaceSearch from './components/WorkspaceSearch.vue';
 import CardboardSearch from './components/CardboardSearch.vue';
+import CardSearch from './components/CardSearch.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -137,6 +138,7 @@ const getResultComponent = (type) => ({
   'projects': ProjectSearch,
   'workspace': WorkspaceSearch,
   'cardboard': CardboardSearch,
+  'card': CardSearch,
 }[type]);
 
 // 결과 클릭 핸들러
@@ -151,6 +153,17 @@ const handleResultClick = (result) => {
         workspaceId: result.workspaceId
       },
       query: { view: '0' }
+    },
+    'card': {
+      name: 'Workspace',
+      params: {
+        projectId: result.projectId,
+        workspaceId: result.workspaceId
+      },
+      query: {
+        view: '0',
+        cardId: result.cardId
+      }
     }
   };
 

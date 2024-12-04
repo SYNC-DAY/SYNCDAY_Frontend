@@ -36,7 +36,7 @@ export function useSearch() {
     projects: "/projs/search",
     workspace: "/workspaces/search",
     cardboard: "/cardboards/search",
-    // card: '/cards/search',
+    card: "/cards/search",
     // comments: '/comments/search',
     // chats: '/chats/search',
     // files: '/files/search'
@@ -121,14 +121,12 @@ export function useSearch() {
 
       const daysAgo = periods[selectedPeriod.value];
       const cutoffDate = new Date(now.setDate(now.getDate() - daysAgo));
-      const cutoffDateStr =
-        cutoffDate.getFullYear() +
-        String(cutoffDate.getMonth() + 1).padStart(2, "0") +
-        String(cutoffDate.getDate()).padStart(2, "0");
 
-      results = results.filter(
-        (item) => item.createdAt && item.createdAt >= cutoffDateStr
-      );
+      results = results.filter((item) => {
+        if (!item.createdAt) return false;
+        const itemDate = new Date(item.createdAt);
+        return itemDate >= cutoffDate;
+      });
     }
 
     // null check를 포함한 정렬
@@ -137,18 +135,12 @@ export function useSearch() {
       if (!a.createdAt) return 1;
       if (!b.createdAt) return -1;
 
-      const result =
-        sortOrder.value === "latest"
-          ? b.createdAt.localeCompare(a.createdAt)
-          : a.createdAt.localeCompare(b.createdAt);
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
 
-      console.log("Comparing:", {
-        a: a.createdAt,
-        b: b.createdAt,
-        result: result,
-      });
-
-      return result;
+      return sortOrder.value === "latest"
+        ? dateB - dateA // 최신순
+        : dateA - dateB; // 오래된순
     });
   });
 
@@ -167,14 +159,14 @@ export function useSearch() {
     // 도메인별 결과를 가져온 후 정렬 적용
     let results = domainResults.value[domain] || [];
 
-    // 정렬 로직 적용
     results = results.sort((a, b) => {
       if (!a.createdAt) return 1;
       if (!b.createdAt) return -1;
 
-      return sortOrder.value === "latest"
-        ? b.createdAt.localeCompare(a.createdAt)
-        : a.createdAt.localeCompare(b.createdAt);
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+
+      return sortOrder.value === "latest" ? dateB - dateA : dateA - dateB;
     });
 
     // 정렬된 결과의 상위 5개 반환
@@ -215,6 +207,6 @@ export function useSearch() {
     limitedResults,
     getDomainTitle,
     showMore,
-    resetAllFilters
+    resetAllFilters,
   };
 }
