@@ -20,14 +20,16 @@
                 </div>
             </form>
         </div> 
+        
         <div class="reservation-user">
-            <p>주관자: </p>
-            <p>부서명: </p>
-            <p>이메일: </p>
-            <p>전화번호: </p>
+          <p>주관자: {{ user.userName || "정보 없음" }}</p>
+          <p>이메일: {{ user.email || "정보 없음" }}</p>
+          <p>전화번호: {{ user.phoneNumber || "정보 없음" }}</p>
         </div>
-        <button type="submit">예약취소</button>
-        <button type="submit">확인</button>
+        <RouterLink to="/meetingroom">
+          <button @click="cancel">취소</button>  
+        </RouterLink>
+        <button @click="handleReservation">확인</button>
     </div>
 </template>
 
@@ -35,7 +37,13 @@
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
+import { useAuthStore } from "@/stores/auth";
+import Dialog from 'primevue/dialog';
 
+const authStore = useAuthStore();
+const user = ref({});
+const route = useRoute();
+const router = useRouter();
 // 폼 데이터
 const formData = ref({
   title: "",
@@ -49,14 +57,13 @@ const resourceId = ref("");
 const resourceName = ref("");
 const resourceCapacity = ref(0);
 const resourcePlace = ref("");
-// 라우터 객체
-const router = useRouter();
+
 
 // 한국 표준시(KST) 형식으로 변환하는 함수
 const formatKST = (utcTime) => {
   const date = new Date(utcTime); // UTC 시간 문자열을 Date 객체로 변환
   date.setHours(date.getHours()); 
-
+  
   // 'YYYY-MM-DD HH:mm:ss' 형식으로 변환
   return date.toLocaleString("ko-KR", {
     year: "numeric",
@@ -82,6 +89,22 @@ const fetchResourceName = async () => {
   }
 };
 
+
+// 사용자 정보 가져오기
+const fetchUserInfo = async () => {
+  if (!authStore.user.userId) {
+    console.error("userId가 없습니다.");
+    return;
+  }
+  try {
+    const userData = await axios.get(`/user/${authStore.user.userId}`);
+    console.log("userData: ", userData) // API에서 가져온 사용자 데이터를 저장
+    user.value = userData.data.data;
+  } catch (error) {
+    console.error("사용자 정보를 가져오는 중 오류가 발생했습니다:", error);
+  }
+};
+
 const handleReservation = async () => {
   const reservationData = {
     title: formData.value.title,
@@ -89,18 +112,29 @@ const handleReservation = async () => {
     startTime: new Date(start.value).toISOString(),
     endTime: new Date(end.value).toISOString(),
     meetingroomId: resourceId.value,
-    
+    userId: authStore.user.userId, 
 };
 
   try {
-    await axios.post("/meetingroom_reservation", reservationData);
+    const response = await axios.post("/meetingroom_reservation", reservationData);
+    console.log("API 응답: ", response.data);
     alert("회의실이 성공적으로 예약되었습니다!");
-    this.$router.push("/meetingroom");
+    router.push({
+    path: "/meetingroom",
+    query: {
+      place: resourcePlace.value,
+      
+  },
+});
   } catch (error) {
     console.error("예약 중 오류 발생", error);
     alert("예약 중 오류가 발생했습니다.");
   }
 };
+
+const cancel = async () => {
+  alert("취소되었습니다.")
+}
 
 // 라우트 파라미터 설정
 onMounted(() => {
@@ -109,7 +143,9 @@ onMounted(() => {
   end.value = route.query.end;
   resourceId.value = route.query.resourceId;
 
+
   fetchResourceName();
+  fetchUserInfo();
 });
 </script>
 

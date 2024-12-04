@@ -9,6 +9,8 @@ import projectRoutes from "./project.js";
 import userRoutes from "./user.js";
 import searchRoutes from "./search.js";
 import vcsRoutes from "./vcs.js";
+import inviationRoutes from "./inviation.js";
+import TeamRoutes from "./team.js"
 export async function setupRouter() {
   const router = createRouter({
     history: createWebHistory(),
@@ -25,6 +27,8 @@ export async function setupRouter() {
       ...calendarRoutes,
       ...meetingroomRoutes,
       ...searchRoutes,
+      ...inviationRoutes,
+      ...TeamRoutes,
     ],
   });
 

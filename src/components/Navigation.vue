@@ -39,7 +39,10 @@
 
 		<!-- search -->
 		<div class="nav-search">
-			<InputText v-model="searchText" placeholder="검색어를 입력하세요" @keyup.enter="handleSearch" />
+			<div class="p-input-icon-right">
+				<i class="pi pi-search cursor-pointer" @click="handleSearch"></i>
+				<InputText v-model="searchText" placeholder="검색어를 입력하세요" @keyup.enter="handleSearch" />
+			</div>
 		</div>
 
 		<!-- icon,profile -->
@@ -47,13 +50,13 @@
 			<!-- icons -->
 			<div class="icons">
 				<RouterLink to="/meetingroom">
-					<i class="pi pi-calendar"></i>
+					<i class="pi pi-users"></i>
 				</RouterLink>
 				<button class="icon-button" @click="toggleChatPop">
 					<i class="pi pi-send"></i>
 				</button>
-				<RouterLink to="alarm">
-					<i class="pi pi-bell"></i>
+				<RouterLink to="/invitation">
+					<i class="pi pi-envelope"></i>
 				</RouterLink>
 			</div>
 
@@ -86,6 +89,7 @@ import { useAuthStore } from '@/stores/auth.js';
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import InputText from 'primevue/inputtext';
 import ChatPop from '@/views/chat/ChatRoomList.vue';
+import Swal from 'sweetalert2';  
 
 const router = useRouter();
 const route = useRoute();
@@ -98,16 +102,35 @@ const searchText = ref(''); // 초기값을 빈 문자열로 변경
 // 현재 라우트 경로 계산
 const currentRoute = computed(() => route.path);
 
-// 검색 처리 함수 추가
+// 검색 처리 함수 수정
 const handleSearch = () => {
-	if (searchText.value.trim()) { // 검색어가 비어있지 않은 경우에만 검색 실행
-		router.push({
-			path: '/search',
-			query: {
-				keyword: searchText.value.trim()
-			}
-		});
-	}
+  const trimmedSearch = searchText.value.trim();
+  
+  if (trimmedSearch.length === 0) {
+    return;
+  }
+  
+  if (trimmedSearch.length === 1) {
+    Swal.fire({
+      icon: 'warning',
+      title: '검색어가 너무 짧습니다',
+      text: '최소 2글자 이상 입력해주세요.',
+      confirmButtonText: '확인',
+      confirmButtonColor: '#FE5D86',  // SYNCDAY의 핑크색 테마
+	  heightAuto: false,        // 높이 자동조절 비활성화
+      scrollbarPadding: false
+	  
+    });
+    return;
+  }
+
+  console.log("검색된 단어: ", trimmedSearch);
+  router.push({
+    path: '/search',
+    query: {
+      keyword: trimmedSearch
+    }
+  });
 };
 
 // 드롭다운 토글
@@ -240,15 +263,32 @@ const isRouteActive = (routeName) => {
 	padding: 0.5rem;
 }
 
-.nav-search input {
+.nav-search .p-input-icon-right {
 	width: 100%;
-	/* 부모 컨테이너 기준으로 최대 너비 */
-	max-width: 25rem;
-	/* 최대 너비 제한 */
-	height: 2.4rem;
-	font-size: 1rem;
-	border-radius: 1.2rem;
-	padding: 0 1rem;
+    max-width: 25rem;
+    position: relative;
+}
+
+.nav-search .p-input-icon-right i {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  right: 1rem;
+  color: #6c757d;  /* 아이콘 색상을 원하는 대로 조정하세요 */
+}
+
+.nav-search .p-input-icon-right input {
+  width: 100%;
+  height: 2.4rem;
+  font-size: 1rem;
+  border-radius: 1.2rem;
+  padding: 0 2.5rem 0 1rem;  /* 오른쪽 패딩을 늘려서 아이콘 공간 확보 */
+  z-index: 1; /* 클릭 가능하도록 z-index 설정 */
+}
+
+.p-input-icon-right i:hover {
+	cursor: pointer;
+  	color: #495057;
 }
 
 /* 우측 아이콘/프로필 영역 */
