@@ -108,6 +108,16 @@ defineProps({
   height: 16px;
 }
 
+.gitlab-icon {
+  width: 16px;
+  height: 16px;
+  filter: brightness(0); /* 기본 상태에서 검은색 */
+}
+
+.vcs-info:hover .gitlab-icon {
+  filter: invert(100%) brightness(100%) contrast(100%); /* hover 시 흰색으로 */
+}
+
 .result-date, .project-name {
   color: #666;
   font-size: 0.9rem;

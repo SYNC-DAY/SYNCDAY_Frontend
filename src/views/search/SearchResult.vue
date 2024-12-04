@@ -367,7 +367,7 @@ button {
 }
 
 .filter-options label:hover {
-  background-color: #f5f8ff;
+  background-color: #f5f5f5;
 }
 
 /* 초기화 버튼 스타일 */
