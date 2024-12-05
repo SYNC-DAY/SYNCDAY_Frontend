@@ -79,7 +79,7 @@
                     <div class="toggle-label">
                         <span class="pi pi-exclamation-circle"></span>
                         <span class="title-name">공개</span>
-                        <ToggleSwitch v-model="isPublic" />
+                        <ToggleSwitch v-model="isPublic" :readonly="isMeeting" />
                     </div>
                 </div>
             </div>
@@ -141,8 +141,8 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc'; // UTC 플러그인
 import timezone from 'dayjs/plugin/timezone'; // 타임존 플러그인
 import duration from 'dayjs/plugin/duration';
-import 'dayjs/locale/ko';
 import axios from 'axios';
+import 'dayjs/locale/ko';
 import DatePicker from 'primevue/datepicker';
 import Select from 'primevue/select';
 import Checkbox from 'primevue/checkbox';
@@ -345,6 +345,15 @@ watch([startDate, endDate], () => {
 watch(isMeeting, (newValue) => {
     if (newValue) {
         isPublic.value = true;
+    } else {
+        isPublic.value = false;
+    }
+});
+
+// isMeeting이 false일 때는 isPublic을 자유롭게 변경 가능
+watch(isPublic, (newValue) => {
+    if (isMeeting.value) {
+        isPublic.value = true; // isMeeting이 true일 때 isPublic을 강제로 true로 고정
     }
 });
 
@@ -363,7 +372,7 @@ const submitSchedule = async () => {
             meeting_status: formData.value.meetingStatus,
             meetingroom_id: formData.value.meetingRoomId,
             // attendee_ids: formData.value.attendeeIds,
-            attendee_ids: [1, 3, 5],
+            attendee_ids: [1, 3, 5, 12],
         };
 
         const schedule_id = props.schedule.scheduleId;

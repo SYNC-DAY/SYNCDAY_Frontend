@@ -7,12 +7,7 @@
             @close="closeModal"
             @submit="fetchSchedules"
         />
-        <CalendarModal
-            v-if="isModalVisible"
-            :schedule="selectedInfo"
-            @close="closeModal"
-            @submit="fetchSchedules"
-        />
+        <CalendarModal v-if="isModalVisible" :schedule="selectedInfo" @close="closeModal" @submit="fetchSchedules" />
     </div>
 </template>
 
@@ -170,23 +165,49 @@ const fetchSchedules = async () => {
                 }
             }
 
+            const backgroundColor = ref('#FF9D85');
+            const borderColor = ref('#FF9D85');
+            const textColor = ref('white');
+
+            if (schedule.status === 'ATTEND') {
+                if (schedule.meeting_status === 'ACTIVE') {
+                    backgroundColor.value = '#FE5D86';
+                    borderColor.value = '#FE5D86';
+                    textColor.value = 'white';
+                } else {
+                    backgroundColor.value = '#FF9D85';
+                    borderColor.value = '#FF9D85';
+                    textColor.value = 'white';
+                }
+            } else if (schedule.status === 'PENDING') {
+                if (schedule.meeting_status === 'ACTIVE') {
+                    backgroundColor.value = 'white';
+                    borderColor.value = '#FE5D86';
+                    textColor.value = 'black';
+                } else {
+                    backgroundColor.value = 'white';
+                    borderColor.value = '#FF9D85';
+                    textColor.value = 'black';
+                }
+            } else {
+                backgroundColor.value = 'white';
+                borderColor.value = '#646464';
+                textColor.value = 'black';
+            }
+
             return {
                 id: schedule.schedule_id,
                 title: schedule.title ? schedule.title : '(제목 없음)',
                 start: startDate,
                 end: endDate,
                 allDay: isAllDay,
-                backgroundColor: '#FF9D85',
-                borderColor: '#FF9D85',
+                backgroundColor: backgroundColor.value,
+                borderColor: borderColor.value,
+                textColor: textColor.value,
                 extendedProps: {
-                    content: schedule.content,
                     meetingStatus: schedule.meeting_status,
-                    meetingroomId: schedule.meetingroom_id,
-                    publicStatus: schedule.public_status,
-                    scheduleRepeatId: schedule.schedule_repeat_id,
-                    repeatOrder: schedule.repeat_order,
                     username: schedule.username,
-                    attendeeIds: schedule.attendee_ids,
+                    status: schedule.status,
                     // 필요하면 더 추가
                 },
             };
@@ -203,7 +224,12 @@ const fetchDetailSchedules = async (scheduleId, userId) => {
         const response = await axios.get(`/schedule/my/${scheduleId}?userId=${userId}`);
         const data = response.data.data[0];
 
-        console.log('data!!', data)
+        if (!data) {
+            console.error('No data found in the response');
+            return;
+        }
+
+        console.log('data??', data);
 
         // selectedEvent를 가져온 데이터로 업데이트
         selectedEvent.value = {
@@ -214,19 +240,23 @@ const fetchDetailSchedules = async (scheduleId, userId) => {
             endTime: new Date(data.end_time),
             updateTime: new Date(data.update_time),
             publicStatus: data.public_status,
-            scheduleRepeatId: data.schedule_repeat_id,
-            repeatOrder: data.repeat_order,
             meetingStatus: data.meeting_status,
             meetingroomId: data.meetingroom_id,
-            userId: data.user_id,
-            username: data.username,
-            notificationTime: data.notification_time ? new Date(data.notification_time) : null,
-            userInfo: data.user_info.map((user) => ({
-                userId: user.user_id,
-                username: user.username,
-                participationStatus: user.participationStatus,
-            })),
+            ownerUserId: data.owner_user_id,
+            ownerUsername: data.owner_username,
+            myNotificationTime: data.my_notification_time ? new Date(data.my_notification_time) : null,
+            userInfo:
+                Array.isArray(data.user_info) && data.user_info.length > 0
+                    ? data.user_info.map((user) => ({
+                          userId: user.user_id, // 그대로 null도 허용
+                          username: user.username, // 그대로 null도 허용
+                          participationStatus: user.participation_status, // 그대로 null도 허용
+                          notificationTime: user.notification_time, // 그대로 null도 허용
+                        }))
+                    : [], // user_info가 없으면 빈 배열로 처리
         };
+
+        console.log('잘 들어갔나?', selectedEvent.value);
     } catch (error) {
         console.error('Error fetching schedules:', error);
     }
@@ -246,8 +276,8 @@ const updateSchedule = async (info) => {
             ? dayjs(info.event.end).tz('Asia/Seoul').startOf('day').format('YYYY-MM-DDTHH:mmZ')
             : dayjs(info.event.start).tz('Asia/Seoul').add(1, 'hour').startOf('day').format('YYYY-MM-DDTHH:mmZ')
         : info.event.end
-            ? dayjs(info.event.end).tz('Asia/Seoul').format('YYYY-MM-DDTHH:mmZ')
-            : dayjs(info.event.start).tz('Asia/Seoul').add(1, 'hour').format('YYYY-MM-DDTHH:mmZ');
+        ? dayjs(info.event.end).tz('Asia/Seoul').format('YYYY-MM-DDTHH:mmZ')
+        : dayjs(info.event.start).tz('Asia/Seoul').add(1, 'hour').format('YYYY-MM-DDTHH:mmZ');
 
     try {
         const response = await axios.put(
