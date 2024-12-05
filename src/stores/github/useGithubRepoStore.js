@@ -1,6 +1,6 @@
 // stores/github/useGithubRepoStore.js
 import { defineStore } from "pinia";
-import { useGithubAppAuthStore } from "./useGithubAppAuthstore";
+// import { useGithubAppAuthStore } from "./useGithubAppStore";
 import axios from "axios";
 
 export const useGithubRepoStore = defineStore("githubRepo", {
@@ -18,10 +18,6 @@ export const useGithubRepoStore = defineStore("githubRepo", {
   actions: {
     async fetchOrgRepositories(orgName) {
       const githubAppAuth = useGithubAppAuthStore();
-
-      if (!githubAppAuth.isInstalled) {
-        throw new Error("GitHub App not installed");
-      }
 
       this.isLoading = true;
       this.error = null;
