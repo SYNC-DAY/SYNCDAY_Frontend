@@ -1,82 +1,92 @@
-// stores/githubAuthStore.js
+// stores/githubAuth.js
 import { defineStore } from "pinia";
-import axios from "axios";
 
 export const useGithubAuthStore = defineStore("githubAuth", {
   state: () => ({
-    hasGithubApp: false,
-    loading: false,
-    error: null,
-    installationWindow: null,
-    checkWindowInterval: null,
+    installationId: null,
+    accountId: null,
+    accountLogin: "",
+    repositorySelection: "",
+    targetType: "",
+    targetId: null,
+    permissions: {},
+    isInstalled: false,
   }),
 
   actions: {
-    async checkGithubAppInstallation() {
-      this.loading = true;
+    saveInstallationInfo(installationData) {
+      this.installationId = installationData.installationId;
+      this.accountId = installationData.accountId;
+      this.accountLogin = installationData.accountLogin;
+      this.repositorySelection = installationData.repositorySelection;
+      this.targetType = installationData.targetType;
+      this.targetId = installationData.targetId;
+      this.permissions = installationData.permissions;
+      this.isInstalled = true;
+    },
+
+    clearInstallationInfo() {
+      this.installationId = null;
+      this.accountId = null;
+      this.accountLogin = "";
+      this.repositorySelection = "";
+      this.targetType = "";
+      this.targetId = null;
+      this.permissions = {};
+      this.isInstalled = false;
+    },
+
+    async checkInstallationStatus() {
       try {
-        const response = await axios.get("/githuborg-member/check-githubapp-installation");
+        const response = await fetch("/api/vcs/github/installation/status");
+        const data = await response.json();
 
-        if (response.success) {
-          const res = response.data.data;
-          console.log(res);
+        if (data.installed) {
+          this.saveInstallationInfo(data.installationData);
+        } else {
+          this.clearInstallationInfo();
         }
-        this.hasGithubApp = response.data.installed;
+
+        return data.installed;
       } catch (error) {
-        console.error("Failed to check GitHub App installation:", error);
-        this.error = "Failed to check GitHub App installation status";
-        this.hasGithubApp = false;
-      } finally {
-        this.loading = false;
+        console.error("Error checking installation status:", error);
+        this.clearInstallationInfo();
+        return false;
       }
     },
 
-    openInstallationWindow(projectId = null) {
-      if (projectId) {
-        localStorage.setItem("github_installation_project_id", projectId);
-      }
+    async processInstallation(code) {
+      try {
+        const response = await fetch("/api/vcs/github/installation/process", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ code }),
+        });
 
-      const installUrl = `https://github.com/apps/${import.meta.env.VITE_GITHUB_APP_NAME}/installations/new`;
-      const callbackUrl = `${window.location.origin}/github/callback`;
-      const fullUrl = `${installUrl}?callback_url=${encodeURIComponent(callbackUrl)}`;
+        const data = await response.json();
 
-      const width = 1020;
-      const height = 618;
-      const left = (window.innerWidth - width) / 2;
-      const top = (window.innerHeight - height) / 2;
-
-      if (this.installationWindow) {
-        this.installationWindow.close();
-      }
-
-      this.installationWindow = window.open(fullUrl, "Install GitHub App", `width=${width},height=${height},top=${top},left=${left}`);
-
-      if (this.checkWindowInterval) {
-        clearInterval(this.checkWindowInterval);
-      }
-
-      this.checkWindowInterval = setInterval(() => {
-        if (this.installationWindow?.closed) {
-          clearInterval(this.checkWindowInterval);
-          this.checkWindowInterval = null;
-          this.installationWindow = null;
-          localStorage.removeItem("github_installation_project_id");
-          // Refresh installation status after window closes
-          this.checkGithubAppInstallation();
+        if (data.success) {
+          this.saveInstallationInfo(data.installationData);
+          return true;
         }
-      }, 500);
-    },
 
-    cleanup() {
-      if (this.checkWindowInterval) {
-        clearInterval(this.checkWindowInterval);
-        this.checkWindowInterval = null;
+        return false;
+      } catch (error) {
+        console.error("Error processing installation:", error);
+        return false;
       }
-      if (this.installationWindow) {
-        this.installationWindow.close();
-        this.installationWindow = null;
-      }
-      localStorage.removeItem("github_installation_project_id");
     },
+  },
+
+  getters: {
+    isGithubInstalled: state => state.isInstalled,
+    getInstallationDetails: state => ({
+      installationId: state.installationId,
+      accountLogin: state.accountLogin,
+      targetType: state.targetType,
+      permissions: state.permissions,
+    }),
   },
 });
