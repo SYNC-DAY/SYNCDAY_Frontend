@@ -657,6 +657,10 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+::v-deep(.fc-direction-ltr .fc-toolbar > * > :not(:first-child)) {
+    margin-left: 0;
+}
+
 .modal-container {
     position: fixed;
     top: 0;
@@ -677,7 +681,7 @@ onBeforeUnmount(() => {
     width: 80%;
     max-width: 500px;
     height: 100vh;
-    max-height: 90vh;
+    max-height: 85vh;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     position: relative;
     display: flex;
