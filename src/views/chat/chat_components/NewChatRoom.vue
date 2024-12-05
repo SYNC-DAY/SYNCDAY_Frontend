@@ -91,17 +91,21 @@ const emit = defineEmits(["close"]);
 async function createNewChat() {
   try {
     if (selectedMembers.value.length === 0) {
-      alert("채팅방에 추가할 멤버를 선택해주세요!");
+      alert("채팅할 멤버를 선택해주세요");
       return;
     }
+
     const response = await axios.post("http://localhost:5000/api/chat/room/create", {
       chatRoomName: chatRoomName.value,
       memberIds: selectedMembers.value,
     });
-    const newRoomId = response.data.data.roomId;
+    console.log("응답 데이터 확인: ",response)
+
+    const newRoomId = response.data.data ? response.data.data.roomId : response.data.roomId;
+    const newRoomName = chatRoomName.value;
     console.log("새 채팅방 생성 성공:", newRoomId);
     emit("close");
-    routerKey.push({name: "ChatRoom", params: {roomId: newRoomId}});
+    router.push({name: "ChatRoom", params: {roomId: newRoomId, chatRoomName: newRoomName}});
   } catch (error) {
     console.error("채팅방 생성 실패:", error);
     alert("채팅방 생성에 실패하였습니다. 다시 시도해주세요.");
@@ -174,8 +178,8 @@ loadUsers();
 
 /* 동그라미 체크박스 스타일 */
 .user-check-circle {
-  width: 15px;
-  height: 15px;
+  width: 10px;
+  height: 10px;
   border: 2px solid #ddd;
   border-radius: 50%;
   display: inline-block;
@@ -199,9 +203,9 @@ loadUsers();
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 10px;
-  height: 10px;
-  background-color: white;
+  width: 6px;
+  height: 6px;
+  /* background-color: #fff4f1; */
   border-radius: 50%;
 }
 

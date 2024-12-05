@@ -1,6 +1,6 @@
 <template>
     <div>
-      <div v-if="isVisible" class="popup" :draggable="true">
+      <div v-if="isVisible" class="popup">
         <button class="close-button" @click="emit('closePopup')">X</button>
         <div class="popup-content">
           <p>채팅</p>
@@ -34,12 +34,11 @@
   </template>
   
   <script setup>
-  import { ref, onMounted, computed } from 'vue';
+  import { ref, onMounted, onUnmounted, computed } from 'vue';
   import { useAuthStore } from '@/stores/auth';
   import axios from 'axios';
   import NewChatRoom from '@/views/chat/chat_components/NewChatRoom.vue';
   import ChatRoom from './ChatRoom.vue';
-import { onUnmounted } from 'vue';
 
   const { isVisible, roomId } = defineProps({
     isVisible: {
@@ -51,7 +50,6 @@ import { onUnmounted } from 'vue';
       required: false,
     },
   })
-
 
   const emit = defineEmits(['closePopup'])
 
@@ -94,7 +92,6 @@ const fetchChatRooms = async () => {
     const response = await axios.get('/chat/room',{params: { userId: authStore.user.userId }});
     console.log('API 요청 URL: ', axios.defaults.baseURL + '/chat/room');
     console.log('응답데이터: ', response.data)
-    // chatList.value = Array.isArray(response.data) ? response.data : [];
     if (Array.isArray(response.data)) {
       chatList.value = response.data;
     } else {
@@ -238,7 +235,8 @@ onUnmounted(() => {
   
   .chat-search {
     border-radius: 7px;
-    background-color: #d6d5d5 ;
+    background-color: #e9e9e9 ;
+    border-color: #d1d1d1;
     font-size: 0.9rem;
     width: 90%;
     margin-left: 1.5rem;
@@ -246,17 +244,11 @@ onUnmounted(() => {
   .chatlist {
   margin-top: 1rem;
 }
-  .chatlist li {
-  display: flex;
-  gap: 50px ;
-  align-items: center
-}
 .roomName {
-  font-size: 15px;
-
+  font-size: 14px;
 }
 .lastMessage {
-  font-size: 13px;
+  font-size: 11px;
   color: #444444;
 }
 .profile-line {
@@ -264,11 +256,9 @@ onUnmounted(() => {
   gap: 10px;
   align-items: start
 }
-.profile-img {
+.profile-img{
   width: 40px;
   height: 40px;
-  border-radius: 50%;
-  margin-left: 0.5rem;
 }
 .content-time {
   display: flex;

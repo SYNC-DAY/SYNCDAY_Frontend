@@ -93,7 +93,6 @@ const connectWebSocket = () => {
     return;
   }
 
-  // 환경변수나 설정에서 URL을 가져오는 것이 좋습니다
   const socket = new SockJS(`http://localhost:5000/ws?token=${authStore.accessToken}`, null, {
     transports: ['websocket', 'xhr-streaming', 'xhr-polling']
   });
@@ -137,7 +136,6 @@ const connectWebSocket = () => {
   }
 }
 
-
 const subscribeToRoom = (roomId) => {
   if (subscriptions.value[roomId]) {
     console.warn(`이미 방 ${roomId}에 구독 중입니다.`);
@@ -152,7 +150,8 @@ const subscribeToRoom = (roomId) => {
     if (!messagesInRoom.value[roomId]) {
       messagesInRoom.value[roomId] = []
     }
-    messagesInRoom.value[roomId].push(receivedMessage)
+    // messagesInRoom.value[roomId].push(receivedMessage)
+    messagesInRoom.value[roomId] = [...messagesInRoom.value[roomId], receivedMessage]
   })
 };
 
@@ -164,6 +163,24 @@ const reconnectWebSocket = () => {
   }, 5000);
 };
 
+const fetchMessages = async (roomId) => {
+  try {
+    const response = await axios.get(`/chat/room/${roomId}/message`);
+    messagesInRoom.value[roomId] = response.data.map(message => ({
+      ...message,
+      sentTime: formatDate(message.sentTime),
+      sentTime: formatTime(message.sentTime),
+    }));
+  } catch (error) {
+    console.error('채팅 메시지 불러오기 실패:', error);
+  }
+};
+
+// 컴포넌트가 마운트될 때 메시지 로드
+onMounted(() => {
+  fetchMessages(props.roomId);
+  connectWebSocket(); // WebSocket 연결
+});
 
 const sendMessage = () => {
   console.log('전송 시도~!')
@@ -226,7 +243,8 @@ const leaveChat = async () => {
 
 
 onMounted(() => {
-console.log('onMounted 실행');
+console.log('onMounted 실행')
+fetchMessages(props.roomId)
 connectWebSocket()
 })
 
