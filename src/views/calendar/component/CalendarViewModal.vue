@@ -57,7 +57,7 @@
 
                 <!-- 회의 여부 -->
                 <div class="text" v-if="meetingStatus === 'ACTIVE'">
-                    <span class="pi pi-users"></span>
+                    <span class="pi pi-book"></span>
                     <span class="detail-content">
                         {{ meetingStatus == 'ACTIVE' ? '회의' : null }}
                     </span>
@@ -164,7 +164,7 @@ const ownerUsername = props.schedule.ownerUsername;
 const userInfo = props.schedule.userInfo; // 이걸로 참석자 확인!!
 const myNotificationTime = ref(props.schedule.myNotificationTime);
 // const myNotificationTime = props.schedule.myNotificationTime;
-console.log('myNotificationTime', myNotificationTime.value);
+console.log('userInfo', userInfo);
 
 const emit = defineEmits(['close', 'submit']);
 

@@ -26,6 +26,7 @@ import timezone from 'dayjs/plugin/timezone'; // 타임존 플러그인
 import 'dayjs/locale/ko';
 
 import { useAuthStore } from '@/stores/auth';
+import { shade } from '@primevue/themes';
 const authStore = useAuthStore();
 
 dayjs.extend(utc); // UTC 플러그인 사용
@@ -208,6 +209,8 @@ const fetchSchedules = async () => {
                     meetingStatus: schedule.meeting_status,
                     username: schedule.username,
                     status: schedule.status,
+                    attendeeIds: schedule.attendee_ids,
+                    publicStatus: schedule.public_status,
                     // 필요하면 더 추가
                 },
             };
@@ -263,6 +266,7 @@ const fetchDetailSchedules = async (scheduleId, userId) => {
 };
 
 const updateSchedule = async (info) => {
+    console.log('이동 하자 ㅠㅠ', info.event);
     // 종일일정 여부 확인
     const isAllDay = info.event.allDay; // FullCalendar에서 종일 일정 여부
 
@@ -280,6 +284,7 @@ const updateSchedule = async (info) => {
         : dayjs(info.event.start).tz('Asia/Seoul').add(1, 'hour').format('YYYY-MM-DDTHH:mmZ');
 
     try {
+        console.log('PS', info.event.extendedProps);
         const response = await axios.put(
             `/schedule/${info.event.id}`,
             {
@@ -293,7 +298,7 @@ const updateSchedule = async (info) => {
                 meetingroom_id: info.event.extendedProps.meetingroomId,
                 public_status: info.event.extendedProps.publicStatus,
                 user_id: authStore.user.userId,
-                attendee_ids: info.event.extendedProps.attendeeIds || [],
+                attendee_ids: info.event.extendedProps.attendeeIds.map((p) => p.user_id) || [],
             },
             {
                 headers: {
