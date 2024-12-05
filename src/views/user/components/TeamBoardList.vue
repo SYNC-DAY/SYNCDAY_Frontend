@@ -6,10 +6,10 @@
             </div>
         </template>
         <template v-else>
-            <template v-if="teamBoards.length > 0">
-                <div v-for="teamBoard in teamBoards.slice(0,6)" :key="teamBoard.id" class="team-board-container"
-                    @click="updateBoardId(teamBoard.teamBoardId,teamBoard.boardTitle)">
-                        {{ teamBoard.boardTitle }}
+            <template v-if="teamPostList.length > 0">
+                <div v-for="teamPost in teamPostList" :key="teamPost.id" class="team-post-container"
+                @click="goToPost(teamPost)">
+                        [{{teamPost.boardTitle}}] {{teamPost.title}} ({{teamPost.comments}})
                 </div>
             </template>
             <template v-else>
@@ -31,16 +31,16 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 const teamStore = useTeamStore();
 const authStore = useAuthStore();
-const userId = authStore.user?.userId; // userId가 정의되어 있는지 확인
-const teamBoards = ref([]);
+const userId = authStore.user.userId; // userId가 정의되어 있는지 확인
+const teamPostList = ref([]);
 const isLoading = ref(true); // 로딩 상태 관리
 
-const getTeamBoardList = async () => {
+const getTeamPost = async () => {
     try {
         const loadingStartTime = Date.now(); // 로딩 시작 시간 기록
-        const response = await axios.get(`/teamboard/${userId}/my`);
-        const teamBoardList = response.data?.data || []; // 데이터가 없으면 빈 배열 설정
-        teamBoards.value = teamBoardList;
+        const response = await axios.get(`/teampost/myteam/${userId}`);
+        teamPostList.value = response.data.data;
+        console.log(teamPostList)
 
         // 최소 로딩 시간을 0.5초로 설정
         const elapsedTime = Date.now() - loadingStartTime;
@@ -55,37 +55,89 @@ const getTeamBoardList = async () => {
     }
 };
 
-const updateBoardId = (id,title) => {
-    console.log("id:",id)
-    teamStore.updateBoardId(id);
-    teamStore.updateBoardTitle(title);
-    router.push(`/team/post/view?boardTitle=${title}`)
+const goToPost = (teamPost) => {
+    teamStore.updatePostId(teamPost.teamPostId);
+    teamStore.updateBoardId(teamPost.teamBoardId);
+    router.push('/team/post/detail/view');
 };
 
 
+
 onMounted(() => {
-    getTeamBoardList();
+    getTeamPost();
 });
 </script>
 
 <style scoped>
 .loading-container {
-    text-align: center;
-    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 80px;
+    font-size: 1.2rem;
+    color: #444;
+    background-color: #f4f4f4;
+    border-radius: 4px;
+    border: 1px solid #ddd;
 }
 
-.team-board-container {
-    margin: 1rem;
-    margin-bottom: 2rem;
-    padding: 10px;
-    border: 1px solid #FE5D86;
-    border-radius: 5px;
+.team-post-container {
+    margin: 0.5rem 0;
+    padding: 0.8rem 1rem;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+    color: #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
     cursor: pointer;
 }
 
-.no-boards-container {
-    text-align: center;
-    margin-top: 20px;
-    color: #888;
+.team-post-container:hover {
+    border-color: #007bff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+.no-boards-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 80px;
+    font-size: 1.2rem;
+    color: #999;
+    background-color: #f4f4f4;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.team-post-container span {
+    font-weight: bold;
+    color: #007bff;
+}
+
+.team-post-container p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.team-post-container small {
+    font-size: 0.8rem;
+    color: #999;
+}
+
+.team-post-container .comments-count {
+    background-color: #007bff;
+    color: #fff;
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-align: center;
+}
+
+
 </style>
