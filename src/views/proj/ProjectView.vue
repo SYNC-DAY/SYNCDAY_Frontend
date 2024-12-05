@@ -29,7 +29,7 @@
 					<Button label="" severity="secondary" icon="pi pi-cog" @click="openProjectSettings"
 						aria-haspopup="true" aria-controls="overlay-menu" text />
 
-					<Button label="" icon="pi pi-github" text />
+					<Button label="" icon="pi pi-github" text @click="openProjVcsSettings" />
 				</div>
 			</div>
 
@@ -89,6 +89,11 @@
 		<ProjectSettingsModal v-model:visible="showProjectSettings" :projectId="props.projectId"
 			:projectData="currentProject" @project-updated="handleProjectUpdate"
 			@project-deleted="handleProjectDelete" />
+
+		<ProjVcsSettingsModal v-model:visible="showProjVcsSettings" :projectId="props.projectId"
+			:projectData="currentProject" @project-vcs-updated="" />
+
+
 		<template>
 		</template>
 
@@ -106,7 +111,7 @@ import { useToast } from 'primevue/usetoast';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import ProjectSettingsModal from './components/ProjectSettingsModal.vue';
-
+import ProjVcsSettingsModal from './components/ProjVcsSettingsModal.vue';
 // props
 const props = defineProps({
 	projectId: {
@@ -129,9 +134,8 @@ const { user } = storeToRefs(authStore);
 // Refs
 const projects = ref([]);
 const vcsMenu = ref(null);
-const showGithubAuthModal = ref(false);
-const showOrgProjSelectionModal = ref(false);
 const showProjectSettings = ref(false);
+const showProjVcsSettings = ref(false);
 const openNewWorkspaceDialog = ref(false);
 const newWorkspaceName = ref('');
 const selectedProjectId = ref(null);
@@ -158,7 +162,9 @@ const openProjectSettings = (project) => {
 	showProjectSettings.value = true;
 }
 
-
+const openProjVcsSettings = (project) => {
+	showProjVcsSettings.value = true;
+}
 const handleVcsSelection = async (vcsType) => {
 	try {
 		if (vcsType === 'GITHUB') {
