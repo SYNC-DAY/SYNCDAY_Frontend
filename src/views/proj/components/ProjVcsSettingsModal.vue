@@ -8,7 +8,7 @@
 			</div>
 
 
-			<div v-if="selectedVcs === 'GITHUB'" class="mt-4">
+			<div v-if="selectedVcs === 'GITHUB' && !githubAuthStore.isInstalled" class="mt-4">
 				<h3 class="text-lg font-medium mb-4">GitHub Integration</h3>
 
 				<!-- Installation Status -->
@@ -32,8 +32,9 @@ import { ref, onMounted, watch, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 import { useAuthStore } from "@/stores/auth";
-
+import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
+import { storeToRefs } from 'pinia';
 
 const props = defineProps({
 	visible: Boolean,
@@ -48,8 +49,10 @@ const props = defineProps({
 
 /* stores */
 const authStore = useAuthStore();
-
+const githubAuthStore = useGithubAuthStore();
 /* refs */
+
+const { user } = storeToRefs(authStore);
 const vcsMenu = ref(null);
 const selectedVcs = ref('GITHUB');
 
@@ -63,7 +66,10 @@ const handleVisibilityChange = (newValue) => {
 /* handling */
 const handleVcsSelection = async (vcsType) => {
 	selectedVcs.value = vcsType;
-	// if(vcsType ==='GITHUB')
+	if (vcsType === 'GITHUB') {
+		console.log(user.value.userId)
+		githubAuthStore.checkInstallationStatus(user.value.userId)
+	}
 }
 
 const toggleVcsMenu = (event) => {

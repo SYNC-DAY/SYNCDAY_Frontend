@@ -1,6 +1,6 @@
 // stores/githubAuth.js
 import { defineStore } from "pinia";
-
+import axios from "axios";
 export const useGithubAuthStore = defineStore("githubAuth", {
   state: () => ({
     installationId: null,
@@ -36,33 +36,65 @@ export const useGithubAuthStore = defineStore("githubAuth", {
       this.isInstalled = false;
     },
 
-    async checkInstallationStatus() {
+    async checkInstallationStatus(userId) {
       try {
-        const response = await fetch("/api/vcs/github/installation/status");
-        const data = await response.json();
+        console.log("Starting VCS check for userId:", userId);
 
-        if (data.installed) {
-          this.saveInstallationInfo(data.installationData);
-        } else {
-          this.clearInstallationInfo();
+        const response = await axios.get("/vcs/user/check", {
+          params: {
+            userId: userId,
+            vcsType: "GITHUB",
+          },
+          headers: {
+            "X-Request-ID": `vcs-check-${Date.now()}`,
+          },
+          timeout: 5000,
+        });
+
+        console.log("VCS check response:", {
+          status: response.status,
+          data: response.data,
+        });
+
+        return response.data;
+      } catch (error) {
+        const errorDetails = {
+          message: error.message,
+          status: error.response?.status,
+          data: error.response?.data,
+          requestParams: {
+            userId,
+            vcsType: "GITHUB",
+          },
+        };
+
+        console.error("VCS check failed:", errorDetails);
+
+        if (error.response) {
+          switch (error.response.status) {
+            case 400:
+              throw new Error("Invalid parameters. Check userId and vcsType.");
+            case 401:
+              throw new Error("Authentication failed.");
+            case 404:
+              throw new Error("VCS integration endpoint not found.");
+            default:
+              throw new Error(`VCS check failed: ${error.response.data?.message || error.message}`);
+          }
         }
 
-        return data.installed;
-      } catch (error) {
-        console.error("Error checking installation status:", error);
-        this.clearInstallationInfo();
-        return false;
+        throw error;
       }
     },
 
-    async processInstallation(code) {
+    async processInstallation(installationId) {
       try {
         const response = await fetch("/api/vcs/github/installation/process", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ code }),
+          body: JSON.stringify({ installationId }),
         });
 
         const data = await response.json();
