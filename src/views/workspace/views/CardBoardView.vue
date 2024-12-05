@@ -8,7 +8,25 @@
           <div class="container-row justify-right">
             <Button text icon="pi pi-plus" label="전체 펼치기" severity="contrast" @click="expandAll" />
             <Button text icon="pi pi-minus" label="전체 접기" severity="contrast" @click="collapseAll" />
-            <Button icon="pi pi-plus" label="New" outlined style="margin-right:1rem"></Button>
+            <!-- <Button icon="pi pi-plus" label="New" outlined style="margin-right:1rem"></Button> -->
+            <Button icon="pi pi-plus" label="New" outlined style="margin-right:1rem" @click="openNewCardboardDialog = true"/>
+            <Dialog v-model:visible="openNewCardboardDialog" header="Create New Cardboard" modal :style="{ width: '30rem' }">
+              <label for="cardboard-name">이름: </label>
+              <InputText id="cardboard-name" v-model="newCardboardName" placeholder="카드보드 입력" class="w-full mb-3" />
+            
+              <div class="field">
+                <label for="startDate">시작일: </label>
+                <Calendar id="startDate" v-model="startDate" placeholder="시작일 설정" dateFormat="yy-mm-dd" showIcon class="w-full mb-3"/>
+                <div>
+                  <label for="endDate">종료일: </label>
+                  <Calendar id="endDate" v-model="endDate" placeholder="종료일 설정" dateFormat="yy-mm-dd" showIcon class="w-full mb-3"/>
+                </div>
+              </div>
+              <div class="modal-footer mt-4">
+                <!-- <Button label="Cancel" icon="pi pi-times" @click="openNewCardboardDialog = false" class="p-button-text" /> -->
+                <Button label="생성" @click="createCardboard" class="p-button-primary" />
+              </div>
+            </Dialog>
           </div>
         </div>
       </template>
@@ -61,8 +79,9 @@
             <Column field="assignee_name" header="담당자" sortable>
               <template #body="cardProps">
                 <div class="flex items-center gap-2">
-                  <Avatar :src="cardProps.data.assignee_profile_url" class="w-6 h-6 rounded-full"
-                    :alt="cardProps.data.assignee_name" shape="circle" />
+                  <!-- Avatar 대신 임시로 img 태그 사용 -->
+                  <img :src="cardProps.data.assignee_profile_url" class="avator"
+                    :alt="cardProps.data.assignee_name" />
                   <span>{{ cardProps.data.assignee_name }}</span>
                 </div>
               </template>
@@ -96,17 +115,42 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
+import Calendar from 'primevue/calendar';
+import { InputText } from 'primevue';
+import { useToast } from 'primevue/usetoast';
 import ProgressBar from 'primevue/progressbar';
 import CardModal from '../components/layout/CardModal.vue';
+import axios from 'axios';
+
+const route = useRoute();
+const router = useRouter();
+const toast = useToast();
+const expandedRowsMap = ref(new Map());
+const showCardModal = ref(false);
+const selectedCard = ref(null);
+const openNewCardboardDialog = ref(false);
+const newCardboardName = ref('');
+const startDate = ref(null); // 시작일 초기화
+const endDate = ref(null); // 종료일 초기화
+
 const props = defineProps({
   cardboards: {
     type: Array,
     required: true,
     default: () => []
+  },
+  cardboardId: {
+		type: [String, Number],
+		required: true
+  },
+  workspaceId: { // workspace_id를 직접 전달받도록 수정
+    type: [String, Number],
+    required: true
   },
   loading: {
     type: Boolean,
@@ -114,9 +158,75 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['cardClick', 'addBoard', 'rowExpand', 'rowCollapse']);
+const emit = defineEmits(['cardClick', 'addBoard', 'rowExpand', 'rowCollapse', 'update:cardboards']);
 
-const expandedRowsMap = ref(new Map());
+defineExpose({
+  expandedRowsMap
+});
+
+// const currentProject = computed(() =>
+// 	props.projects.find(p => p.proj_id === parseInt(props.projectId))
+// );
+
+// const currentCardboard = computed(() =>
+//   props.cardboards.find(p => p.cardboard_id === parseInt(props.cardboardId))
+// )
+// 카드보드 생성 함수
+const createCardboard = async () => {
+  if (!newCardboardName.value.trim()) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Input Required',
+      detail: 'Please enter a name for the new cardboard.',
+      life: 3000,
+    });
+    return;
+  }
+
+  try {
+    // API 요청 보내기
+    const response = await axios.post('/cardboards/', {
+      title: newCardboardName.value.trim(),
+      workspace_id: props.workspaceId, 
+      start_time: startDate.value ? new Date(startDate.value).toISOString() : null,
+    end_time: endDate.value ? new Date(endDate.value).toISOString() : null,
+    });
+    console.log("새로운 카드보드 이름: ", newCardboardName.value);
+    console.log("워크스페이스 ID: ", props.workspaceId);
+    console.log("시작일: ", startDate.value);
+    console.log("종료일", endDate.value);
+    // 성공적으로 생성되었을 때
+    if (response.data.success) {
+      const newCardboard = response.data.data; // 생성된 카드보드 정보
+      props.cardboards.push(newCardboard); // 로컬 카드보드 리스트 업데이트
+      emit('update:cardboards', props.cardboards); // 부모 컴포넌트에 알림
+
+      toast.add({
+        severity: 'success',
+        summary: 'Cardboard Created',
+        detail: `Cardboard '${newCardboardName.value}' has been created.`,
+        life: 3000,
+      });
+
+      // 다이얼로그 닫기 및 입력 필드 초기화
+      openNewCardboardDialog.value = false;
+      newCardboardName.value = '';
+      startDate.value = null;
+      endDate.value = null;
+    } else {
+      throw new Error(response.data.message || 'Failed to create cardboard.');
+    }
+  } catch (error) {
+    console.error('Error creating cardboard:', error);
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Failed to create cardboard. Please try again later.',
+      life: 3000,
+    });
+  }
+};
+
 
 const computedExpandedRows = computed(() => {
   const result = {};
@@ -142,19 +252,128 @@ const collapseAll = () => {
   expandedRowsMap.value.clear();
 };
 
-const onRowClick = (event) => {
+const onRowClick = async (event) => {
   const clickedCardboardId = event.data.cardboard_id;
 
   if (expandedRowsMap.value.get(clickedCardboardId)) {
     expandedRowsMap.value.delete(clickedCardboardId);
     emit('rowCollapse', event.data);
   } else {
-    expandedRowsMap.value.set(clickedCardboardId, true);
-    emit('rowExpand', event.data);
+    try {
+      // 1. 카드 정보 가져오기
+      const cardsResponse = await axios.get(`/cards/cardboards/${clickedCardboardId}`);
+      let cards = cardsResponse.data.data;
+
+      // 2. 각 카드에 대한 추가 정보 가져오기
+      cards = await Promise.all(cards.map(async card => {
+        // 태그 정보 가져오기
+        const tagResponse = card.tag_id ?
+          await axios.get(`/card-tags/${card.tag_id}`) : null;
+
+        // 담당자 정보 가져오기
+        const assigneeResponse = card.assignee ?
+          await axios.get(`/user/${card.assignee}`) : null;
+
+        // 생성자 정보 가져오기
+        const creatorResponse = card.created_by ?
+          await axios.get(`/user/${card.created_by}`) : null;
+
+        // 카드 정보 조립
+        return {
+          ...card,
+          card_title: card.title,        // title을 card_title로 매핑
+          assignee_name: assigneeResponse?.data.data.userName,
+          assignee_profile_url: assigneeResponse?.data.data.profilePhoto,
+          creator_name: creatorResponse?.data.data.userName,
+          tag_name: tagResponse?.data.data.tag_name,
+          tag_color: tagResponse?.data.data.color
+        };
+      }));
+
+      // 3. 조립된 카드 데이터를 카드보드에 저장
+      const cardboardIndex = props.cardboards.findIndex(
+        board => board.cardboard_id === clickedCardboardId
+      );
+      if (cardboardIndex !== -1) {
+        props.cardboards[cardboardIndex].cards = cards;
+      }
+
+      expandedRowsMap.value.set(clickedCardboardId, true);
+      emit('rowExpand', event.data);
+    } catch (error) {
+      console.error('Failed to fetch card data:', error);
+    }
   }
 };
 
+watch(
+  () => route.query.cardId,
+  async (newCardId) => {
+    if (newCardId) {
+      try {
+        // 1. 우선 현재 워크스페이스의 모든 카드보드를 순회하며 cardId가 일치하는 카드 찾기
+        const cardboardWithCard = props.cardboards.find(board => 
+          board.cards?.some(card => card.card_id === Number(newCardId))
+        );
 
+        if (cardboardWithCard) {
+          const cardboardId = cardboardWithCard.cardboard_id;
+          
+          // 2. 해당 카드보드 펼치기
+          expandedRowsMap.value.set(cardboardId, true);
+
+          // 3. 이미 카드 데이터가 있다면 그대로 사용, 없으면 새로 불러오기
+          if (!cardboardWithCard.cards) {
+            // 카드보드의 카드 목록 가져오기
+            const cardsResponse = await axios.get(`/cards/cardboards/${cardboardId}`);
+            let cards = cardsResponse.data.data;
+
+            // 카드 정보 조립
+            cards = await Promise.all(cards.map(async card => {
+              const tagResponse = card.tag_id ?
+                await axios.get(`/card-tags/${card.tag_id}`) : null;
+              const assigneeResponse = card.assignee ?
+                await axios.get(`/user/${card.assignee}`) : null;
+              const creatorResponse = card.created_by ?
+                await axios.get(`/user/${card.created_by}`) : null;
+
+              return {
+                ...card,
+                card_title: card.title,
+                assignee_name: assigneeResponse?.data.data.userName,
+                assignee_profile_url: assigneeResponse?.data.data.profilePhoto,
+                creator_name: creatorResponse?.data.data.userName,
+                tag_name: tagResponse?.data.data.tag_name,
+                tag_color: tagResponse?.data.data.color
+              };
+            }));
+
+            // 조립된 카드 데이터를 카드보드에 저장
+            const cardboardIndex = props.cardboards.findIndex(
+              board => board.cardboard_id === cardboardId
+            );
+            if (cardboardIndex !== -1) {
+              props.cardboards[cardboardIndex].cards = cards;
+            }
+          }
+
+          // 4. 모달에 표시할 카드 찾기
+          const selectedCardData = cardboardWithCard.cards.find(
+            card => card.card_id === Number(newCardId)
+          );
+          
+          if (selectedCardData) {
+            selectedCard.value = selectedCardData;
+            showCardModal.value = true;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to process card from URL:', error);
+      }
+    }
+  },
+  { immediate: true }
+);
 
 const formatDate = (dateString) => {
   if (!dateString) return '';
@@ -171,8 +390,7 @@ const openVcsLink = (url) => {
   }
 };
 
-const showCardModal = ref(false);
-const selectedCard = ref(null);
+
 
 const onCardClick = (cardData) => {
   console.log(cardData)
@@ -184,5 +402,22 @@ const onCardClick = (cardData) => {
 const closeCardModal = () => {
   showCardModal.value = false;
   selectedCard.value = null;
+  // URL에서 cardId 제거
+  const newQuery = { ...route.query };
+  delete newQuery.cardId;
+  router.replace({ query: newQuery });
 };
 </script>
+
+<style scoped>
+.avator {
+  width: 1.5rem;       
+  height: 1.5rem;    
+  border-radius: 50%; /* 원형으로 만들기 */
+  object-fit: cover;  /* 이미지 비율 유지하면서 영역 채우기 */
+  min-width: 1.5rem;    /* 최소 크기 제한 */
+  max-width: 1.5rem;    /* 최대 크기 제한 */
+  min-height: 1.5rem;   /* 최소 크기 제한 */
+  max-height: 1.5rem;   /* 최대 크기 제한 */
+}
+</style>
