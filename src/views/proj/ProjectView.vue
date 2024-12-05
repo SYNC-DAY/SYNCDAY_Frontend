@@ -26,8 +26,10 @@
 				</div>
 
 				<div class="header-right">
-					<Button label="" severity="contrast" icon="pi pi-cog" @click="openProjectSettings"
-						aria-haspopup="true" aria-controls="overlay-menu" />
+					<Button label="" severity="secondary" icon="pi pi-cog" @click="openProjectSettings"
+						aria-haspopup="true" aria-controls="overlay-menu" text />
+
+					<Button label="" icon="pi pi-github" text />
 				</div>
 			</div>
 
