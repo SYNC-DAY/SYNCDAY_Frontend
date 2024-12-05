@@ -3,9 +3,10 @@
 		:style="{ width: '70vw', height: '50vh' }" class="p-0">
 		<!-- VCS Selection -->
 		<div class="flex justify-content-end mb-4">
-
-			<Button label="VCS Type" icon="pi pi-cog" @click="toggleVcsMenu" severity="secondary" />
-			<VcsTypeMenu ref="vcsMenu" @vcs-selected="handleVcsSelection" />
+			<div class="container-row justify-right">
+				<Button label="VCS Type" icon="pi pi-cog" @click="toggleVcsMenu" severity="secondary" />
+				<VcsTypeMenu ref="vcsMenu" @vcs-selected="handleVcsSelection" />
+			</div>
 		</div>
 
 		<!-- GitHub Installation Section -->
@@ -15,7 +16,7 @@
 			<div class="flex flex-column align-items-center py-6">
 				<h4 class="text-xl font-medium mb-2">GitHub App Installation Required</h4>
 				<p class="text-gray-600 mb-4">
-					To connect your GitHub organizations, you need to install our GitHub App first.
+					To connect your GitHub organizations, you need to install our GitHub App In your account first.
 				</p>
 				<Button label="Install GitHub App" severity="primary" @click="openInstallationWindow" />
 			</div>
