@@ -1,4 +1,4 @@
-import GithubAppCallback from "@/views/proj/components/GithubAppCallback.vue";
+import GithubAppCallback from "@/views/vcs/github/GithubAppCallback.vue";
 
 const routes = [
   {
