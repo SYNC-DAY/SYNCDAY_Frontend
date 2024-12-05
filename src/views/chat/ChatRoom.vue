@@ -5,11 +5,21 @@
     <div class="popup-content">
       <h2>{{ props.chatRoomName }}</h2>
       <div class="chat-messages">
-        <div v-for="(message, index) in messages" :key="index" class="message-line">
+        <template v-for="(message, index) in messages" :key="index" class="message-line">
+          <div v-if="shouldShowDate(index)" class="date-divider">
+            {{ formatDate(messages[index].sentTime) }}
+          </div>
+          <div class="message-line">
+        <img :src="message.userProfileImg" alt="프로필 이미지" class="profile-img" />
+        <div class="message-content">
           <span class="sender">{{ message.senderName }}</span>
-          <span class="content">{{ message.content }}</span>
-          <span class="time">{{ message.sentTime }}</span>
+          <div class="content-and-time">
+            <span class="content">{{ message.content }}</span>
+            <span class="time-right">{{ message.sentTime }}</span>
+          </div>
         </div>
+      </div>
+        </template>
       </div>
       <div class="chat-input">
         <input 
@@ -27,6 +37,7 @@ import { onUnmounted, onMounted, ref, defineProps, computed } from 'vue';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 import { useAuthStore } from '@/stores/auth';
+import axios from 'axios';
 
 const props = defineProps({
   roomId: {
@@ -35,6 +46,10 @@ const props = defineProps({
   },
   chatRoomName: {
     type: String,
+    required: true
+  }, 
+  removeChatFromList: {
+    type: Function,
     required: true
   }
 });
@@ -50,6 +65,27 @@ const subscriptions = ref({}) // 토픽 구독 채팅방 연결
 const messagesInRoom = ref({})  // 각 채팅방 당 메세지
 
 
+// 날짜 설정
+const formatDate = (timeString) => {
+  const date = new Date(timeString);
+  return `${date.getFullYear()}년 ${String(date.getMonth() + 1).padStart(2, "0")}월 ${String(date.getDate()).padStart(2, "0")}일`
+}
+// 시간 설정
+const formatTime = (timeString) => {
+  const date = new Date(timeString);
+  const hours = String(date.getHours() % 12 || 12).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const ampm = date.getHours() < 12 ? '오전' : '오후';
+
+  return `${ampm} ${hours}:${minutes}`; 
+};
+const shouldShowDate = (index) => {
+  if(index === 0) return true;
+  const currentDate = formatDate(messages.value[index].sentTime);
+  const previousDate = formatDate(messages.value[index - 1].sentTime);
+  return currentDate !== previousDate;
+};
+
 const connectWebSocket = () => {
   console.log('웹소켓 연결 시도 중...')
   if (stompClient.value?.connected) {
@@ -57,7 +93,6 @@ const connectWebSocket = () => {
     return;
   }
 
-  // 환경변수나 설정에서 URL을 가져오는 것이 좋습니다
   const socket = new SockJS(`http://localhost:5000/ws?token=${authStore.accessToken}`, null, {
     transports: ['websocket', 'xhr-streaming', 'xhr-polling']
   });
@@ -101,7 +136,6 @@ const connectWebSocket = () => {
   }
 }
 
-
 const subscribeToRoom = (roomId) => {
   if (subscriptions.value[roomId]) {
     console.warn(`이미 방 ${roomId}에 구독 중입니다.`);
@@ -110,28 +144,15 @@ const subscribeToRoom = (roomId) => {
 
   subscriptions.value[roomId] = stompClient.value.subscribe(`/topic/room/${roomId}`, message => {
     console.log('메시지 수신:', message.body)
+        const receivedMessage = JSON.parse(message.body); // 메시지 JSON 파싱
+        receivedMessage.sentTime = formatDate(receivedMessage.sentTime);
+        receivedMessage.sentTime = formatTime(receivedMessage.sentTime);
     if (!messagesInRoom.value[roomId]) {
       messagesInRoom.value[roomId] = []
     }
-    messagesInRoom.value[roomId].push(JSON.parse(message.body))
+    // messagesInRoom.value[roomId].push(receivedMessage)
+    messagesInRoom.value[roomId] = [...messagesInRoom.value[roomId], receivedMessage]
   })
-  // const subscription = stompClient.value.subscribe(`/topic/room/${roomId}`, (message) => {
-  //   try {
-  //     const receivedMessage = JSON.parse(message.body); // 메시지 JSON 파싱
-  //     console.log(`방 ${roomId}에서 새 메시지 수신:`, receivedMessage);
-
-  //     // 메시지 상태 업데이트
-  //     if (!messagesInRoom.value[roomId]) {
-  //       messagesInRoom.value[roomId] = [];
-  //     }
-  //     messagesInRoom.value[roomId].push(receivedMessage);
-  //   } catch (error) {
-  //     console.error(`방 ${roomId}에서 메시지 처리 중 오류 발생:`, error);
-  //   }
-  // });
-
-  // subscriptions.value[roomId] = subscription;
-  // console.log(`방 ${roomId}에 구독 완료.`);
 };
 
 
@@ -142,6 +163,24 @@ const reconnectWebSocket = () => {
   }, 5000);
 };
 
+const fetchMessages = async (roomId) => {
+  try {
+    const response = await axios.get(`/chat/room/${roomId}/message`);
+    messagesInRoom.value[roomId] = response.data.map(message => ({
+      ...message,
+      sentTime: formatDate(message.sentTime),
+      sentTime: formatTime(message.sentTime),
+    }));
+  } catch (error) {
+    console.error('채팅 메시지 불러오기 실패:', error);
+  }
+};
+
+// 컴포넌트가 마운트될 때 메시지 로드
+onMounted(() => {
+  fetchMessages(props.roomId);
+  connectWebSocket(); // WebSocket 연결
+});
 
 const sendMessage = () => {
   console.log('전송 시도~!')
@@ -162,6 +201,7 @@ const chatMessage = {
   roomId: props.roomId,
   senderId: authStore.user?.userId,
   senderName: authStore.user?.name,
+  userProfileImg: authStore.user?.userProfileImg,
   chatType: 'TALK',
   sentTime: new Date().toISOString(),
 };
@@ -182,12 +222,20 @@ try {
 
 const leaveChat = async () => {
   try {
-    const response = await axios.post(`/room/${props.roomId}/leave`, null, {
+    const response = await axios.post(`/chat/room/${props.roomId}/leave`, null, {
       params: { userId: authStore.user?.userId },
     });
-    console.log('채팅방을 나갑니다.')
-    console.log('API 요청 URL: ', axios.defaults.baseURL + `/room/${props.roomId}/leave`);
+    console.log('채팅방을 나가기: ', response.data )
+    console.log('API 요청 URL: ', axios.defaults.baseURL + `/chat/room/${props.roomId}/leave`);
     console.log('응답 데이터: ', response.data);
+
+    isVisible.value = false;
+    delete messagesInRoom.value[props.roomId];
+    if(subscriptions.value[props.roomId]) {
+      subscriptions.value[props.roomId].unsubscribe();
+      delete subscriptions.value[props.roomId];
+    }
+    removeChatFromList(props.roomId)
   } catch (error) {
     console.error('채팅방 나가는 중 오류 발생:', error);
   }
@@ -195,7 +243,8 @@ const leaveChat = async () => {
 
 
 onMounted(() => {
-console.log('onMounted 실행');
+console.log('onMounted 실행')
+fetchMessages(props.roomId)
 connectWebSocket()
 })
 
@@ -221,24 +270,7 @@ if (stompClient.value) {
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   z-index: 1000;
-}
-
-/* 팝업 콘텐츠 */
-.popup {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 400px;
-  height: 00px;
-  background-color: #ffffff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-}
+} 
 
 .leave-chat {
   position: absolute;
@@ -268,7 +300,10 @@ h2 {
 }
 
 .chat-messages {
+  display: flex;
+  flex-direction: column;
   flex-grow: 1;
+  gap: 15px;
   overflow-y: auto;
   padding: 10px;
   background-color: #f5f5f5;
@@ -276,32 +311,63 @@ h2 {
   margin-bottom: 20px;
 }
 
-.message {
-  background-color: white;
-  padding: 8px;
-  margin: 8px 0;
-  border-radius: 4px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+
+.date-divider {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #999;
+  margin: 10px 0;
 }
 
 .message-line {
   display: flex;
   gap: 10px;
-  align-items: center;
+  align-items: flex-start;
+}
+
+.profile-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-left: 0.5rem;
+}
+
+.message-content {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-left: 0.5rem;
 }
 
 .sender {
-font-weight: bold;
-font-size: 18px;
+  font-weight: bold;
+  font-size: 12px;
 }
+
+.content-and-time {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .content {
-  font-size: 17px;
+  padding: 10px;
+  border-radius: 8px;
+  max-width: 400px;
 }
-.time {
+
+.time-right {
+  font-size: 0.6rem;
   color: #888;
-  font-size: 0.8rem;
   margin-left: 10px;
+  align-self: flex-end;
 }
+
+.time {
+  font-size: 0.5rem;
+  color: #888;
+}
+
 
 .chat-input {
   display: flex;
@@ -312,7 +378,7 @@ font-size: 18px;
 
 .chat-input input {
   font-size: 0.9rem;
-  width: 24rem;
+  width: 23rem;
   border-color: #c7c5c5;
   border-style: solid;
   border-radius: 3px;
@@ -320,11 +386,11 @@ font-size: 18px;
 .chat-input button {
   /* padding: 8px 16px; */
   background-color: #ff9d85;
-  color: white;
+  color: rgb(34, 34, 34);
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 1rem;
 }
 
 .chat-input button:hover {

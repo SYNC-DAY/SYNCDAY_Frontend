@@ -22,7 +22,9 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { useAuthStore } from "@/stores/auth.js";;
+import { useAuthStore } from "@/stores/auth.js";
+import { useAssistantStore } from "@/stores/assistant.js";
+import { EventSourcePolyfill } from 'event-source-polyfill';
 import Navigation from "@/components/Navigation.vue";
 import Assistant from './components/Assistant.vue';
 
@@ -33,6 +35,8 @@ const authStore = useAuthStore();
 
 // 현재 페이지가 로그인 페이지인지 확인
 const isLoginPage = computed(() => route.path === '/login');
+
+
 </script>
 
 <style scoped>

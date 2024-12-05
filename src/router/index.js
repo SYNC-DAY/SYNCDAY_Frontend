@@ -8,9 +8,9 @@ import meetingroomRoutes from "./meetingroom.js";
 import projectRoutes from "./project.js";
 import userRoutes from "./user.js";
 import searchRoutes from "./search.js";
-import vcsRoutes from "./vcs.js";
+import oauthRoutes from "./oauth.js";
 import inviationRoutes from "./inviation.js";
-import TeamRoutes from "./team.js"
+import TeamRoutes from "./team.js";
 export async function setupRouter() {
   const router = createRouter({
     history: createWebHistory(),
@@ -21,12 +21,18 @@ export async function setupRouter() {
         component: () => import("@/views/user/Main.vue"),
         meta: { requiresAuth: true },
       },
+      // {
+      //   path: "/:roomId",
+      //   name: "ChatRoom",
+      //   component: () => import("@/views/chat/ChatRoom.vue"),
+      //   props: true,
+      // },
       ...userRoutes,
       ...projectRoutes,
-      ...vcsRoutes,
       ...calendarRoutes,
       ...meetingroomRoutes,
       ...searchRoutes,
+      ...oauthRoutes,
       ...inviationRoutes,
       ...TeamRoutes,
     ],
