@@ -88,7 +88,14 @@ const openInstallationWindow = () => {
 
 	const installUrl = `https://github.com/apps/${import.meta.env.VITE_GITHUB_APP_NAME}/installations/new`;
 	const callbackUrl = `${window.location.origin}/github/callback`;
-	const fullUrl = `${installUrl}?callback_url=${encodeURIComponent(callbackUrl)}`;
+
+	// Add target_type=user parameter to the URL
+	const params = new URLSearchParams({
+		callback_url: callbackUrl,
+		target_type: 'user'
+	});
+
+	const fullUrl = `${installUrl}?${params.toString()}`;
 
 	const width = 1020;
 	const height = 618;
