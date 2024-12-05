@@ -121,7 +121,7 @@
 </template>
 
 <script setup>
-import { ref, computed, defineProps, watch, onMounted } from 'vue';
+import { ref, computed, defineProps, watch, onMounted, onBeforeUnmount } from 'vue';
 import CalendarModal from './CalendarModal.vue';
 import Select from 'primevue/select';
 import dayjs from 'dayjs';
@@ -345,7 +345,6 @@ watch(
 
 // 알람 수정
 const updateSelectAlarm = async () => {
-    console.log('나오냐?')
     try {
         const response = await axios.put(
             `/userschedule/notification`,
@@ -369,7 +368,7 @@ const updateSelectAlarm = async () => {
         }
 
         emit('submit');
-        emit('close');
+        // emit('close');
     } catch (error) {
         console.error(
             props.isEditMode ? '스케줄 수정 실패' : '스케줄 등록 실패',
@@ -386,11 +385,11 @@ const deleteSchedule = async (scheduleId) => {
         const response = await axios.delete(`/schedule/${scheduleId}`);
         console.log('삭제 성공:', response.data);
 
-        emit('close');
         emit('submit');
+        emit('close');
 
         // 성공 알림 (선택 사항)
-        alert('스케줄이 삭제되었습니다.');
+        // alert('스케줄이 삭제되었습니다.');
     } catch (error) {
         console.error('삭제 실패:', error.response?.data || error.message);
 
@@ -398,6 +397,21 @@ const deleteSchedule = async (scheduleId) => {
         alert('스케줄 삭제에 실패했습니다. 다시 시도해주세요.');
     }
 };
+
+// 'Esc' 키를 눌렀을 때 모달을 닫는 함수
+const handleEscKey = (event) => {
+    if (event.key === 'Escape') {
+        emit('close');
+    }
+};
+
+onMounted(() => {
+    window.addEventListener('keydown', handleEscKey);
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('keydown', handleEscKey);
+});
 </script>
 
 <style scoped>

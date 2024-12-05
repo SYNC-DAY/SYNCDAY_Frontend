@@ -8,7 +8,7 @@
 
             <!-- 제목 -->
             <div class="title">
-                <input v-model="title" class="title-input" placeholder="제목을 입력해주세요." />
+                <input v-model="title" class="title-input" style="outline: none; cursor: text;" placeholder="제목을 입력해주세요." />
             </div>
 
             <br />
@@ -129,14 +129,14 @@
             <!-- 버튼 영역 -->
             <div class="button-section">
                 <Button label="취소" severity="secondary" @click="$emit('close')"></Button>
-                <Button label="저장" severity="Danger" @click="submitSchedule"></Button>
+                <Button label="저장" severity="Danger" @click="submitSchedule" @keydown.enter="submitSchedule"></Button>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted, computed } from 'vue';
+import { ref, watch, onMounted, computed, onBeforeUnmount } from 'vue';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc'; // UTC 플러그인
 import timezone from 'dayjs/plugin/timezone'; // 타임존 플러그인
@@ -367,8 +367,6 @@ const submitSchedule = async () => {
             start_time: formData.value.startTime,
             end_time: formData.value.endTime,
             public_status: formData.value.publicStatus,
-            schedule_repeat_id: formData.value.scheduleRepeatId,
-            repeat_order: formData.value.repeatOrder,
             meeting_status: formData.value.meetingStatus,
             meetingroom_id: formData.value.meetingRoomId,
             // attendee_ids: formData.value.attendeeIds,
@@ -484,14 +482,16 @@ const alarmOptions = [
 
 const notificationTime = ref(
     props.isEditMode
-        ? (props.schedule.notificationTime ? 
-        String(
-              ((dayjs(props.schedule.startTime).diff(dayjs(props.schedule.notificationTime)) % 60000) / 1000 / 60) * 60
-            ).padStart(2, '0') +
-                ':' +
-                String(
-                    Math.floor(dayjs(props.schedule.startTime).diff(dayjs(props.schedule.notificationTime)) / 1000 / 60)
-                ).padStart(2, '0') : '00:10')
+        ? props.schedule.notificationTime
+            ? String(
+                  ((dayjs(props.schedule.startTime).diff(dayjs(props.schedule.notificationTime)) % 60000) / 1000 / 60) *
+                      60
+              ).padStart(2, '0') +
+              ':' +
+              String(
+                  Math.floor(dayjs(props.schedule.startTime).diff(dayjs(props.schedule.notificationTime)) / 1000 / 60)
+              ).padStart(2, '0')
+            : '00:10'
         : '00:10'
 );
 
@@ -517,8 +517,29 @@ watch(
     { immediate: true }
 );
 
+// 'Esc' 키를 눌렀을 때 모달을 닫는 함수
+const handleEscKey = (event) => {
+    if (event.key === 'Escape') {
+        emit('close');
+    }
+};
+
+// 'Enter' 키를 눌렀을 때 버튼 클릭 이벤트를 트리거
+const handleEnterKey = (event) => {
+    if (event.key === 'Enter') {
+        submitSchedule();
+    }
+};
+
 onMounted(() => {
     changeToKorean(); // 한국어 설정 함수 호출
+    window.addEventListener('keydown', handleEscKey);
+    window.addEventListener('keydown', handleEnterKey);
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('keydown', handleEscKey);
+    window.removeEventListener('keydown', handleEnterKey);
 });
 </script>
 

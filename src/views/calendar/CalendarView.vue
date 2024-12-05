@@ -119,7 +119,6 @@ const calendarOptions = ref({
         console.log('showEventModal:', showEventModal.value);
     },
     eventDrop: async (info) => {
-        console.log('이동할때', info);
         await updateSchedule(info);
     },
     eventResize: async (info) => {
@@ -145,15 +144,6 @@ const fetchSchedules = async () => {
         events.value = data.map((schedule) => {
             const startDate = new Date(schedule.start_time); // new Date()를 사용하면 KST로 바뀐다?
             const endDate = new Date(schedule.end_time);
-
-            const differenceTime = ref(null);
-
-            if (schedule.notification_time) {
-                const notificationTime = new Date(schedule.notification_time);
-
-                // 시간 차이를 밀리초 단위로 계산
-                differenceTime.value = startDate.getTime() - notificationTime.getTime();
-            }
 
             // isAllDay를 True로 설정하는 조건
             let isAllDay = false;
@@ -215,19 +205,13 @@ const fetchSchedules = async () => {
                 borderColor: borderColor.value,
                 textColor: textColor.value,
                 extendedProps: {
-                    content: schedule.content,
                     meetingStatus: schedule.meeting_status,
-                    meetingroomId: schedule.meetingroom_id,
-                    notificationTime: schedule.notification_time,
-                    publicStatus: schedule.public_status,
+                    username: schedule.username,
                     status: schedule.status,
-                    attendeeIds: schedule.attendee_ids.map((attendee) => attendee.user_id),
-                    differenceTime: differenceTime.value,
                     // 필요하면 더 추가
                 },
             };
         });
-        console.log('오류잡자', events.value);
 
         console.log('Fetched Events:', events.value);
     } catch (error) {
@@ -239,8 +223,6 @@ const fetchDetailSchedules = async (scheduleId, userId) => {
     try {
         const response = await axios.get(`/schedule/my/${scheduleId}?userId=${userId}`);
         const data = response.data.data[0];
-
-        console.log('data!!:', data);
 
         if (!data) {
             console.error('No data found in the response');
@@ -270,7 +252,7 @@ const fetchDetailSchedules = async (scheduleId, userId) => {
                           username: user.username, // 그대로 null도 허용
                           participationStatus: user.participation_status, // 그대로 null도 허용
                           notificationTime: user.notification_time, // 그대로 null도 허용
-                      }))
+                        }))
                     : [], // user_info가 없으면 빈 배열로 처리
         };
 
@@ -281,8 +263,6 @@ const fetchDetailSchedules = async (scheduleId, userId) => {
 };
 
 const updateSchedule = async (info) => {
-    console.log('updateSche', info.event);
-
     // 종일일정 여부 확인
     const isAllDay = info.event.allDay; // FullCalendar에서 종일 일정 여부
 
@@ -299,25 +279,6 @@ const updateSchedule = async (info) => {
         ? dayjs(info.event.end).tz('Asia/Seoul').format('YYYY-MM-DDTHH:mmZ')
         : dayjs(info.event.start).tz('Asia/Seoul').add(1, 'hour').format('YYYY-MM-DDTHH:mmZ');
 
-    // info.event.extendedProps.differenceTime이 null이 아닌지 확인
-    const newNotificationTime = ref(null);
-    if (info.event.extendedProps.differenceTime !== null) {
-        // startTime을 Date 객체로 변환
-        const startDate = new Date(info.event.start); // ISO 8601 형식
-
-        // differenceTime을 밀리초로 사용하여 차이를 계산
-        const formattedDate = new Date(startDate.getTime() - info.event.extendedProps.differenceTime);
-
-        // dayjs로 변환하고 한국 시간대(KST)로 설정
-        newNotificationTime.value = dayjs(formattedDate)
-            .tz('Asia/Seoul') // 한국 시간대
-            .format('YYYY-MM-DDTHH:mmZ'); // '2024-12-17T02:00+09:00' 형식
-
-        console.log('변경 알람 시간', newNotificationTime.value); // 출력: 2024-12-17T02:00+09:00
-    } else {
-        console.log('변경 알람 시간', newNotificationTime.value);
-    }
-
     try {
         const response = await axios.put(
             `/schedule/${info.event.id}`,
@@ -333,9 +294,6 @@ const updateSchedule = async (info) => {
                 public_status: info.event.extendedProps.publicStatus,
                 user_id: authStore.user.userId,
                 attendee_ids: info.event.extendedProps.attendeeIds || [],
-
-                // 이건 계산해서 넣자...
-                // notification_time: info.event.notificationTime,
             },
             {
                 headers: {
@@ -343,18 +301,6 @@ const updateSchedule = async (info) => {
                 },
             }
         );
-
-        const responseNotification = await axios.put(
-            `/userschedule/notification`, {
-                schedule_id: info.event.id,
-                user_id: authStore.user.userId,
-                notification_time: newNotificationTime.value,
-            },{
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            }
-        )
 
         console.log('스케줄 변경 성공:', response.data);
     } catch (error) {
