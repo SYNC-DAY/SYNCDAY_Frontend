@@ -82,8 +82,6 @@
 			</div>
 		</div>
 
-		<!-- Modals -->
-		<VcsTypeMenu ref="vcsMenu" @vcs-selected="handleVcsSelection" />
 
 
 
@@ -107,7 +105,6 @@ import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
 import ProjectSettingsModal from './components/ProjectSettingsModal.vue';
 
 // props
