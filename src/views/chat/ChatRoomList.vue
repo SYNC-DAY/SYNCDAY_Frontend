@@ -11,13 +11,18 @@
               <input class="chat-search" type="text" placeholder="이름, 채팅방 명 검색 " @input="searchChat($event)"/>
             </div>
             <div class= "chatlist">
-              <ul>
-                <li v-for="chat in filteredChatList" :key="chat.roomId" @click="openChatRoom(chat)" class="chat-room">
+               <div v-for="chat in filteredChatList" :key="chat.roomId" @click="openChatRoom(chat)" class="chat-room">
+                <div class="profile-line">
+                  <img :src="userProfileImg" alt="프로필 이미지" class="profile-img"/>
+                  <div class="profile-content">
                   <span class="roomName">{{ chat.chatRoomName }}</span>
+                  <div class="content-time">
                   <span class="lastMessage">{{ chat.lastMessage || '메시지가 없습니다' }}</span>
                   <span class="time">{{ chat.sentTime }}</span>
-                </li>
-              </ul>
+                  </div>
+                </div>
+              </div>
+          </div>
             </div>
           </div>
         </div>
@@ -254,9 +259,20 @@ onUnmounted(() => {
   font-size: 13px;
   color: #444444;
 }
-.chatlist ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.profile-line {
+  display: flex;
+  gap: 10px;
+  align-items: start
+}
+.profile-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-left: 0.5rem;
+}
+.content-time {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
   </style>
