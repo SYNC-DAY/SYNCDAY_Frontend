@@ -26,7 +26,7 @@
 				</div>
 
 				<div class="header-right">
-					<Button label="VCS" severity="contrast" icon="pi pi-github" @click="openProjectSettings"
+					<Button label="" severity="contrast" icon="pi pi-cog" @click="openProjectSettings"
 						aria-haspopup="true" aria-controls="overlay-menu" />
 				</div>
 			</div>
@@ -38,34 +38,23 @@
 				<div class="container-row header">
 					<h3 class="semibold">Workspaces</h3>
 					<Button label="New Workspace" icon="pi pi-plus" severity="secondary"
-					@click="() => { openNewWorkspaceDialog = true} "/>
+						@click="() => { openNewWorkspaceDialog = true }" />
 				</div>
 
 				<!-- New Workspace Modal -->
-				<Dialog 
-      				:visible="openNewWorkspaceDialog" 
-      				@update:visible="openNewWorkspaceDialog = $event" 
-      				modal 
-      				header="새 워크스페이스 생성" 
-      				:style="{ width: '30rem' }"
-    			>
-      			<!-- <div> -->
-        		
-        		<InputText 
-					type="text"
-          			
-          			v-model="newWorkspaceName" 
-          			placeholder="워크스페이스 이름 입력" 
-				
-       			 />
-      			<!-- </div> -->
+				<Dialog :visible="openNewWorkspaceDialog" @update:visible="openNewWorkspaceDialog = $event" modal
+					header="새 워크스페이스 생성" :style="{ width: '30rem' }">
+					<!-- <div> -->
 
-      			<div class="modal-footer mt-4">
-        			<!-- <Button label="취소" icon="pi pi-times" @click="openNewWorkspaceDialog = false" class="p-button-text" /> -->
-        			<Button label="확인" icon="pi pi-check" @click="createWorkspace" class="p-button-primary" />
-      			</div>
-    			</Dialog>
-				
+					<InputText type="text" v-model="newWorkspaceName" placeholder="워크스페이스 이름 입력" />
+					<!-- </div> -->
+
+					<div class="modal-footer mt-4">
+						<!-- <Button label="취소" icon="pi pi-times" @click="openNewWorkspaceDialog = false" class="p-button-text" /> -->
+						<Button label="확인" icon="pi pi-check" @click="createWorkspace" class="p-button-primary" />
+					</div>
+				</Dialog>
+
 
 				<!-- Workspaces Grid -->
 				<div v-if="currentProject.workspaces?.length" class="workspaces-grid">
@@ -198,12 +187,12 @@ const handleVcsSelection = async (vcsType) => {
 // };
 
 const handleProjectUpdate = (updatedProject) => {
-  const index = props.projects.findIndex((p) => p.proj_id === updatedProject.proj_id);
-  if (index !== -1) {
-    props.projects[index] = { ...props.projects[index], ...updatedProject }; // 데이터 업데이트
-  } else {
-    console.error(`Project with ID ${updatedProject.proj_id} not found.`);
-  }
+	const index = props.projects.findIndex((p) => p.proj_id === updatedProject.proj_id);
+	if (index !== -1) {
+		props.projects[index] = { ...props.projects[index], ...updatedProject }; // 데이터 업데이트
+	} else {
+		console.error(`Project with ID ${updatedProject.proj_id} not found.`);
+	}
 };
 
 
@@ -285,48 +274,48 @@ const handleProjectSelect = async ({ organization }) => {
 };
 
 const createWorkspace = async () => {
-  console.log("확인 버튼 클릭됨");
-  if (!newWorkspaceName.value.trim()) {
-    toast.add({
-      severity: "warn",
-      summary: "이름 입력 필요",
-      detail: "워크스페이스 이름을 입력해주세요.",
-      life: 3000,
-    });
-    return;
-  }
+	console.log("확인 버튼 클릭됨");
+	if (!newWorkspaceName.value.trim()) {
+		toast.add({
+			severity: "warn",
+			summary: "이름 입력 필요",
+			detail: "워크스페이스 이름을 입력해주세요.",
+			life: 3000,
+		});
+		return;
+	}
 
-  try {
-    const response = await axios.post("/workspaces", {
-      workspace_name: newWorkspaceName.value.trim(),
-	  proj_id: currentProject.value.proj_id,
-    });
-	console.log("현재 프로젝트id: ", currentProject.value);
-	console.log("새로운 워크스페이스 이름: ", newWorkspaceName.value);
-    if (response.data.success) {
+	try {
+		const response = await axios.post("/workspaces", {
+			workspace_name: newWorkspaceName.value.trim(),
+			proj_id: currentProject.value.proj_id,
+		});
+		console.log("현재 프로젝트id: ", currentProject.value);
+		console.log("새로운 워크스페이스 이름: ", newWorkspaceName.value);
+		if (response.data.success) {
 
-	  const newWorkspace = response.data.data; // API 응답에서 새 워크스페이스 정보 가져오기
-      currentProject.value.workspaces.push(newWorkspace);
-      toast.add({
-        severity: "success",
-        summary: "워크스페이스 생성",
-        detail: `워크스페이스 '${newWorkspaceName.value}'가 생성되었습니다.`,
-        life: 3000,
-      });
+			const newWorkspace = response.data.data; // API 응답에서 새 워크스페이스 정보 가져오기
+			currentProject.value.workspaces.push(newWorkspace);
+			toast.add({
+				severity: "success",
+				summary: "워크스페이스 생성",
+				detail: `워크스페이스 '${newWorkspaceName.value}'가 생성되었습니다.`,
+				life: 3000,
+			});
 
-	  alert(`워크스페이스 '${newWorkspaceName.value}'가 성공적으로 생성되었습니다!`);
-      openNewWorkspaceDialog.value = false; // 모달 닫기
-      newWorkspaceName.value = ""; // 입력 필드 초기화
-    }
-  } catch (error) {
-    console.error("워크스페이스 생성 실패:", error);
-    toast.add({
-      severity: "error",
-      summary: "워크스페이스 생성 실패",
-      detail: "워크스페이스 생성 중 오류가 발생했습니다.",
-      life: 3000,
-    });
-  }
+			alert(`워크스페이스 '${newWorkspaceName.value}'가 성공적으로 생성되었습니다!`);
+			openNewWorkspaceDialog.value = false; // 모달 닫기
+			newWorkspaceName.value = ""; // 입력 필드 초기화
+		}
+	} catch (error) {
+		console.error("워크스페이스 생성 실패:", error);
+		toast.add({
+			severity: "error",
+			summary: "워크스페이스 생성 실패",
+			detail: "워크스페이스 생성 중 오류가 발생했습니다.",
+			life: 3000,
+		});
+	}
 };
 // Event emits
 const emit = defineEmits(['update:project']);
