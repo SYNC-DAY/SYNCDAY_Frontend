@@ -6,7 +6,6 @@
 			<TabList>
 				<Tab value="0">프로젝트</Tab>
 				<Tab value="1">멤버</Tab>
-				<Tab value="2">VCS</Tab>
 			</TabList>
 
 			<TabPanels>
@@ -77,31 +76,6 @@
 						</Dialog>
 					</div>
 				</TabPanel>
-				<TabPanel value="2">
-					<div class="container-row justify-right">
-						<Button label="VCS" severity="secondary" @click="toggleVcsMenu"></Button>
-						<VcsTypeMenu ref="vcsMenu" @vcs-selected="handleVcsSelection" />
-					</div>
-
-					<div v-if="selectedVcs === 'GITHUB'" class="mt-4">
-						<h3 class="text-lg font-medium mb-4">GitHub Integration</h3>
-
-						<!-- Installation Status -->
-						<div v-if="!githubAppAuth.isInstalled" class="installation-required">
-							<div class="text-center py-6">
-								<i class="pi pi-github text-4xl mb-3"></i>
-								<h4 class="text-xl font-medium mb-2">GitHub App Installation Required</h4>
-								<p class="text-gray-600 mb-4">
-									To connect your GitHub organizations, you need to install our GitHub App first.
-								</p>
-								<Button label="Install GitHub App" severity="primary"
-									:loading="githubAppAuth.isInstalling" @click="handleInstallApp" />
-							</div>
-						</div>
-					</div>
-				</TabPanel>
-
-
 			</TabPanels>
 		</Tabs>
 
@@ -131,7 +105,6 @@ import InputText from 'primevue/inputtext';
 import Calendar from 'primevue/calendar';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
 
 /* store */
 
@@ -165,70 +138,14 @@ const props = defineProps({
 const emit = defineEmits(['update:visible', 'project-updated', 'project-deleted']);
 
 /* refs */
-const vcsMenu = ref(null);
-const selectedVcs = ref(null);
-const selectedOrg = ref(null);
+
 const isLoading = ref(false);
 const error = ref(null);
 
 const organizations = ref([]);
 const repositories = ref([]);
 
-const toggleVcsMenu = (event) => {
-	vcsMenu.value.toggle(event);
-}
 
-const handleVcsSelection = async (vcsType) => {
-	selectedVcs.value = vcsType;
-	if (vcsType === 'GITHUB' && githubAppAuth.isInstalled) {
-		await fetchOrganizations();
-	}
-};
-
-const handleInstallApp = async () => {
-	try {
-		await githubAppAuth.initiateInstallation();
-	} catch (err) {
-		error.value = 'Failed to initiate GitHub App installation';
-	}
-};
-const handleConfigureApp = () => {
-	// Redirect to GitHub App configuration page
-	const appName = import.meta.env.VITE_GITHUB_APP_NAME;
-	window.location.href = `https://github.com/apps/${appName}/installations/new`;
-};
-const fetchOrganizations = async () => {
-	if (!githubAppAuth.isInstalled) return;
-
-	isLoading.value = true;
-	error.value = null;
-	try {
-		const orgs = await githubOrgStore.fetchOrganizations(true);
-		organizations.value = orgs;
-	} catch (err) {
-		console.error('Error fetching organizations:', err);
-		error.value = 'Failed to fetch organizations. Please try again.';
-	} finally {
-		isLoading.value = false;
-	}
-};
-
-const selectOrganization = async (org) => {
-	selectedOrg.value = org;
-	await fetchRepositories(org.login);
-};
-const fetchRepositories = async (orgName) => {
-	isLoading.value = true;
-	try {
-		const repos = await githubOrgStore.fetchOrgRepositories(orgName);
-		repositories.value = repos;
-	} catch (err) {
-		console.error('Error fetching repositories:', err);
-		error.value = 'Failed to fetch repositories. Please try again.';
-	} finally {
-		isLoading.value = false;
-	}
-};
 // Services
 const confirm = useConfirm();
 const toast = useToast();
