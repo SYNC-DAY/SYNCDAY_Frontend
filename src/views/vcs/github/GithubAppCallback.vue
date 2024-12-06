@@ -68,7 +68,7 @@ onMounted(async () => {
 	} finally {
 		loading.value = false;
 		// Close window after short delay
-		// setTimeout(() => window.close(), 1000);
+		setTimeout(() => window.close(), 1000);
 	}
 });
 
@@ -88,7 +88,7 @@ const notifyOpener = (type, data = null) => {
 			data: data
 		};
 		window.opener.postMessage(message, window.location.origin);
-		// window.close();
+		window.close();
 	}
 };
 </script>
