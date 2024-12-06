@@ -21,7 +21,15 @@
         <div class="container-row header-right">
 
           <Button icon="pi pi-cog" severity="secondary"></Button>
-          <Button icon="pi pi-tag"></Button>
+          <Button icon="pi pi-tag" @click="showTagDialog"></Button>
+          <!-- 태그 관리 Dialog -->
+          <Dialog v-model:visible="showTagDialog" header="태그 관리" :style="{ width: '30rem' }" modal>
+            <!-- 태그 선택 -->
+            <div class="field mb-4">
+              <label for="tags">태그 선택:</label>
+              <MultiSelect id="tags" v-model="selectedTags" :options="tags" optionLabel="name" placeholder="태그를 선택하세요" class="w-full"/>
+            </div>
+          </Dialog>
         </div>
       </div>
 
@@ -68,6 +76,7 @@ import axios from 'axios';
 import Tabs from 'primevue/tabs';
 import TabList from 'primevue/tablist';
 import Tab from 'primevue/tab';
+import { useToast } from "primevue/usetoast";
 import TabPanels from 'primevue/tabpanels';
 import TabPanel from 'primevue/tabpanel';
 
@@ -80,8 +89,12 @@ import CardModal from './components/layout/CardModal.vue';
 
 const route = useRoute();
 const router = useRouter();
+const toast = useToast();
 const showCardModal = ref(false);
 const selectedCard = ref(null);
+const showTagDialog = ref(false); // 태그 관리 다이얼로그 표시 여부
+const selectedTags = ref([]); // 선택된 태그
+const newTagName = ref(""); // 새 태그 이름 입력
 
 const props = defineProps({
   projectId: {
