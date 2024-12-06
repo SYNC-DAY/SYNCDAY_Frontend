@@ -279,16 +279,30 @@ const handleInstallationMessage = (event) => {
 		});
 	}
 };
+const handleAuthMessage = (event) => {
+	if (event.origin !== window.location.origin) return;
 
+	if (event.data.type === 'github-auth-success') {
+		// 인증 성공 처리
+		toast.add({
+			severity: 'success',
+			summary: '성공',
+			detail: 'GitHub 연동이 완료되었습니다.',
+			life: 3000
+		});
+	}
+};
 
 // Lifecycle hooks
 onMounted(() => {
 	githubAppStore.fetchInstallations();
+	window.addEventListener('message', handleAuthMessage);
 	window.addEventListener('message', handleInstallationMessage);
 });
 
 onUnmounted(() => {
 	window.removeEventListener('message', handleInstallationMessage);
+	window.removeEventListener('message', handleAuthMessage);
 	if (checkWindowInterval.value) {
 		clearInterval(checkWindowInterval.value);
 	}

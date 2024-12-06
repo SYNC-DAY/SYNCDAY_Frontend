@@ -13,6 +13,7 @@ export const useGithubAuthStore = defineStore("githubAuth", {
     // OAuth 상태
     state: localStorage.getItem("github_oauth_state"),
     stateTimestamp: localStorage.getItem("github_oauth_state_timestamp"),
+    authWindow: null,
 
     // 초기화 상태
     isInitialized: false,
@@ -66,8 +67,22 @@ export const useGithubAuthStore = defineStore("githubAuth", {
       authUrl.searchParams.append("redirect_uri", redirectUri);
       authUrl.searchParams.append("scope", scope);
       authUrl.searchParams.append("state", state);
+      // 새 창 크기 및 위치 계산
+      const width = 580;
+      const height = 600;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
 
-      window.location.href = authUrl.toString();
+      // 새 창 열기
+      this.authWindow = window.open(authUrl.toString(), "Github_Auth", `width=${width},height=${height},top=${top},left=${left}`);
+
+      // 창 닫힘 감지
+      const checkWindow = setInterval(() => {
+        if (this.authWindow?.closed) {
+          clearInterval(checkWindow);
+          this.authWindow = null;
+        }
+      }, 500);
     },
 
     // OAuth 콜백 처리
@@ -129,7 +144,7 @@ export const useGithubAuthStore = defineStore("githubAuth", {
       this.isLoading = true;
 
       try {
-        const response = await axios.get("https://api.github.com/user", {
+        const response = await fetch("https://api.github.com/user", {
           headers: {
             Authorization: `Bearer ${this.accessToken}`,
             Accept: "application/vnd.github.v3+json",
