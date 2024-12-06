@@ -111,7 +111,7 @@ import { useToast } from 'primevue/usetoast';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import ProjectSettingsModal from './components/ProjectSettingsModal.vue';
-import ProjVcsSettingsModal from './components/ProjVcsSettingsModal.vue';
+import ProjVcsSettingsModal from './components/ProjGithubIntegrationModal.vue';
 // props
 const props = defineProps({
 	projectId: {
