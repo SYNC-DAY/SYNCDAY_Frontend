@@ -1,74 +1,69 @@
-// stores/github/useGithubAppStore.js
+// stores/githubAppStore.js
 import { defineStore } from "pinia";
 import axios from "axios";
 import { useAuthStore } from "../auth";
 export const useGithubAppStore = defineStore("githubApp", {
   state: () => ({
-    installations: new Map(), // Map to store installations by installationId
+    installations: [],
     isLoading: false,
     error: null,
   }),
 
   getters: {
-    hasInstallation: state => installationId => {
-      return state.installations.has(installationId);
-    },
-
-    getAllInstallations: state => {
-      return Array.from(state.installations);
-    },
+    getInstallations: state => state.installations,
+    isInstallationsLoading: state => state.isLoading,
   },
 
   actions: {
-    async handleInstallationCallback(installationId, setupAction) {
+    async fetchInstallations() {
       this.isLoading = true;
       this.error = null;
-      const authStore = useAuthStore();
 
-      try {
-        console.log("Installation callback payload:", {
-          user_id: authStore.user.userId,
-          installation_id: installationId,
-          setup_action: setupAction,
-        });
-
-        const response = await axios.post("/github/install/", {
-          user_id: authStore.user.userId,
-          installation_id: installationId,
-          setup_action: setupAction,
-        });
-
-        console.log("Installation response:", response.data);
-
-        if (response.data.success) {
-          this.installationId = installationId;
-          localStorage.setItem("github_installation_id", installationId);
-          return true;
-        }
-        throw new Error("Installation failed");
-      } catch (error) {
-        console.error("Installation error details:", {
-          message: error.message,
-          response: error.response?.data,
-          status: error.response?.status,
-        });
-        this.error = error.response?.data?.message || "Installation failed";
-        throw error;
-      } finally {
-        this.isLoading = false;
-      }
-    },
-
-    async fetchInstallations() {
       try {
         const authStore = useAuthStore();
         const response = await axios.get(`/github/install/${authStore.user.userId}`);
 
         if (response.data.success) {
-          const data = response.data.data;
-          console.log(data);
+          // Process installations to remove duplicates
+          const installations = response.data.data;
+
+          // Create a map to track latest installation for each account_id
+          const latestInstallations = new Map();
+
+          installations.forEach(installation => {
+            const existingInstallation = latestInstallations.get(installation.account_id);
+
+            if (!existingInstallation || new Date(installation.createdAt) > new Date(existingInstallation.createdAt)) {
+              latestInstallations.set(installation.account_id, installation);
+            }
+          });
+
+          // Convert map values back to array and store
+          this.installations = Array.from(latestInstallations.values()).map(installation => ({
+            id: installation.id,
+            installationId: installation.installation_id,
+            accountId: installation.account_id,
+            accountName: installation.account_name,
+            accountType: installation.account_type,
+            avatarUrl: installation.avatar_url,
+            htmlUrl: installation.html_url,
+            status: installation.status,
+            createdAt: installation.createdAt,
+            updatedAt: installation.updatedAt,
+            userId: installation.user_id,
+          }));
         }
-      } catch (error) {}
+      } catch (error) {
+        console.error("Error fetching GitHub installations:", error);
+        this.error = error.response?.data?.error || "Failed to fetch installations";
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    clearInstallations() {
+      this.installations = [];
+      this.error = null;
     },
   },
 });
