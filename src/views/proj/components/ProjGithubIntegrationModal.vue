@@ -2,7 +2,7 @@
 	<Dialog :visible="visible" @update:visible="handleVisibilityChange" :modal="true" class="linear-dialog"
 		:style="{ width: '600px' }">
 		<template #header>
-			<div class="dialog-header">
+			<div class="dialog-header container-col gap-1rem">
 				<h3>GitHub Integration</h3>
 				<p class="subtitle">
 					Automate your pull request and commit workflows and keep issues synced both ways
@@ -60,12 +60,11 @@
 
 <style scoped>
 .linear-dialog {
-	background: #1c1c1c;
 	color: #fff;
 }
 
 .dialog-header {
-	margin-bottom: 2rem;
+	/* margin-bottom: 2rem; */
 }
 
 .dialog-header h3 {
@@ -74,14 +73,12 @@
 }
 
 .subtitle {
-	color: #888;
 	font-size: 0.9rem;
 }
 
 .section-container {
 	margin: 1.5rem 0;
 	padding: 1rem;
-	background: #252525;
 	border-radius: 8px;
 }
 
@@ -101,7 +98,6 @@
 }
 
 .text-secondary {
-	color: #888;
 	font-size: 0.9rem;
 }
 
@@ -111,7 +107,6 @@
 	align-items: center;
 	gap: 0.5rem;
 	padding: 0.5rem;
-	background: #333;
 	border-radius: 6px;
 	cursor: pointer;
 }
@@ -145,9 +140,7 @@
 	transition: background-color 0.2s;
 }
 
-.organization-item:hover {
-	background: #333;
-}
+
 
 .org-info {
 	display: flex;
