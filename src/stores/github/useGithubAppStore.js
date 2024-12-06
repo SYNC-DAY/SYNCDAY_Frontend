@@ -20,24 +20,22 @@ export const useGithubAppStore = defineStore("githubApp", {
   },
 
   actions: {
-    async handleInstallationCallback(projectId, installationId) {
+    async handleInstallationCallback(installationId, setupAction) {
       this.isLoading = true;
       this.error = null;
       const authStore = useAuthStore();
 
       try {
         console.log("Installation callback payload:", {
-          vcs_type: "GITHUB",
           user_id: authStore.user.userId,
           installation_id: installationId,
-          proj_id: projectId,
+          setup_action: setupAction,
         });
 
-        const response = await axios.post("/vcs/install", {
-          vcs_type: "GITHUB",
+        const response = await axios.post("/github/install/", {
           user_id: authStore.user.userId,
           installation_id: installationId,
-          proj_id: projectId,
+          setup_action: setupAction,
         });
 
         console.log("Installation response:", response.data);
