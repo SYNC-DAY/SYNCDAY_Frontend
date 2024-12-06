@@ -63,9 +63,7 @@
 	color: #fff;
 }
 
-.dialog-header {
-	/* margin-bottom: 2rem; */
-}
+
 
 .dialog-header h3 {
 	font-size: 1.5rem;
@@ -129,6 +127,8 @@
 	display: flex;
 	flex-direction: column;
 	gap: 0.75rem;
+	border: 1px solid var(--outline-gray);
+	border-radius: 5px;
 }
 
 .organization-item {
