@@ -1,63 +1,89 @@
 <template>
-    <div class="reservation-details">
-        <h1>예약 상세 정보</h1>
-        <div v-if="details">
-            <p><strong>제목:</strong> {{ details.title || "제목 없음" }}</p>
-            <p><strong>장소:</strong> {{ details.meetingroom_place || "제목 없음" }}</p>
-            <p><strong>시작 시간:</strong> {{ details.start_time || "정보 없음" }}</p>
-            <p><strong>종료 시간:</strong> {{ details.end_time || "정보 없음" }}</p>
-            <p><strong>예약자 이름:</strong> {{ user.userName || "정보 없음" }}</p>
-            <p><strong>예약자 이메일:</strong> {{ user.email || "정보 없음" }}</p>
-            <p><strong>예약자 전화번호:</strong> {{ user.phoneNumber || "정보 없음" }}</p>
-  
-            <!-- 현재 시간과 비교하여 버튼 렌더링 -->
-            <div class="button-group">
-                <button @click="goBack">확인</button>
-                <button 
-                  v-if="isFutureReservation && isOwner" 
-                  @click="deleteReservation" 
-                  class="delete-btn">
-                  삭제
-                </button>
-            </div>
+    <Dialog 
+      v-model:visible="isDialogVisible" 
+      header="예약 상세 정보" 
+      :style="{ width: '50vw' }"
+      :modal="true"
+      @hide="closeDialog"
+    >
+      <div v-if="details">
+        <p><strong>제목:</strong> {{ details.title || "제목 없음" }}</p>
+        <p><strong>장소:</strong> {{ details.meetingroom_place || "정보 없음" }}</p>
+        <p><strong>시작 시간:</strong> {{ details.start_time || "정보 없음" }}</p>
+        <p><strong>종료 시간:</strong> {{ details.end_time || "정보 없음" }}</p>
+        <p><strong>예약자 이름:</strong> {{ user.userName || "정보 없음" }}</p>
+        <p><strong>예약자 이메일:</strong> {{ user.email || "정보 없음" }}</p>
+        <p><strong>예약자 전화번호:</strong> {{ user.phoneNumber || "정보 없음" }}</p>
+        <div class="button-group">
+          <!-- <Button label="닫기" @click="closeDialog" /> -->
+          <Button 
+            v-if="isFutureReservation && isOwner" 
+            label="삭제" 
+            class="delete-btn p-button-danger"
+            @click="deleteReservation"
+          />
         </div>
-        <div v-else>
-            <p>로딩 중...</p>
-        </div>
-    </div>
-</template>
-
-<script>
-import { ref, computed, onMounted, watchEffect } from "vue"; // Vue 3 Composition API
-import axios from "axios";
-import { useRoute, useRouter } from "vue-router"; // Vue Router 사용
-import { useAuthStore } from "@/stores/auth";
-
-export default {
-    setup() {
-        const route = useRoute(); // URL 파라미터 접근
-        const router = useRouter();
-        const scheduleId = route.params.id; // URL 파라미터로 전달된 ID
+      </div>
+      <div v-else>
+        <p>로딩 중...</p>
+      </div>
+    </Dialog>
+  </template>
   
-        const authStore = useAuthStore();
-        const user = ref({}); // 현재 사용자 정보
-        const details = ref(null); // 예약 상세 정보
+  <script setup>
+  import { ref, computed, onMounted, watch } from "vue";
+  import axios from "axios";
+  import { useAuthStore } from "@/stores/auth";
   
-        // 예약 정보 가져오기
-        const fetchReservationDetails = async () => {
-          try {
-              const response = await axios.get(`meetingroom_reservation/${scheduleId}`);
-              const dataArray = response.data.data; // 응답 데이터가 배열로 반환
-              if (dataArray.length > 0) {
-                  details.value = dataArray[0]; // 첫 번째 항목 사용
-                  console.log("details: ", details);
-              } else {
-                  console.error("예약 정보가 비어 있습니다.");
-              }
-          } catch (error) {
-              console.error("예약 상세 정보를 가져오는 중 오류 발생:", error);
-          }
-      };
+  // Props와 Emits 정의
+  const props = defineProps({
+    scheduleId: { type: [String, Number], required: true },
+  });
+//   const emit = defineEmits(["closeDialog"]);
+const emit = defineEmits(["closeDialog", "reservationDeleted"])
+  // 상태 정의
+  const details = ref(null);
+  const user = ref({});
+  const authStore = useAuthStore();
+  const isDialogVisible = ref(true);
+  const { scheduleId } = props;
+
+  // 예약 정보 가져오기
+  const fetchReservationDetails = async () => {
+    try {
+        const response = await axios.get(`meetingroom_reservation/${scheduleId}`);
+        const dataArray = response.data.data; // 응답 데이터가 배열로 반환
+        if (dataArray.length > 0) {
+            const utcStartTime = dataArray[0].start_time; // UTC 시간
+            const utcEndTime = dataArray[0].end_time; // UTC 시간
+
+            // UTC -> KST 변환 (Date 객체로 유지)
+            const timeZone = 'Asia/Seoul';
+            const startTimeKST = new Date(
+                new Date(utcStartTime).toLocaleString('en-US', { timeZone })
+            );
+            const endTimeKST = new Date(
+                new Date(utcEndTime).toLocaleString('en-US', { timeZone })
+            );
+
+            details.value = {
+                ...dataArray[0],
+                start_time: startTimeKST, // Date 객체
+                end_time: endTimeKST,    // Date 객체
+            };
+
+            console.log("KST Start Time (Date): ", startTimeKST);
+            console.log("KST End Time (Date): ", endTimeKST);
+        } else {
+            console.error("예약 정보가 비어 있습니다.");
+        }
+    } catch (error) {
+        console.error("예약 상세 정보를 가져오는 중 오류 발생:", error);
+    }
+};
+
+
+
   
         // 사용자 정보 가져오기
         const fetchUserInfo = async () => {
@@ -73,79 +99,68 @@ export default {
             }
         };
 
-        
+  // 예약 삭제
+  const deleteReservation = async () => {
+    if (confirm("정말 삭제하시겠습니까?")) {
+      try {
+        await axios.delete(`/meetingroom_reservation/${props.scheduleId}`);
+        alert("예약이 삭제되었습니다.");
+        emit("reservationDeleted", props.scheduleId); // 부모에게 삭제된 ID 전달
+        emit("closeDialog"); // 부모 컴포넌트로 닫기 이벤트 전달
+      } catch (error) {
+        console.error("예약 삭제 중 오류 발생:", error);
+      }
+    }
+  };
+
+  // Dialog 닫기
+  const closeDialog = () => {
+    emit("closeDialog"); // 부모 컴포넌트로 닫기 이벤트 전달
+  };
   
-        // 현재 시간과 비교하여 과거 예약인지 확인
-        const isFutureReservation = computed(() => {
-            if (details.value && details.value.end_time) {
-                const currentTime = new Date();
-                const endTime = new Date(details.value.end_time);
-                return endTime > currentTime;
-            }
-            return false;
-        });
+  // 예약이 미래의 것인지 확인
+//   const isFutureReservation = computed(() => {
+//     if (details.value && details.value.end_time) {
+//       return new Date(details.value.end_time) > new Date();
+//     }
+//     return false;
+//   });
+  
+const isFutureReservation = computed(() => {
+    return details.value?.end_time > new Date();
+});
+  // 예약 소유자인지 확인
+  const isOwner = computed(() => {
+    return details.value && details.value.user_id === user.value.userId;
+  });
+
+  const cancel = () => {
+  emit("closeDialog");
 
 
-        // 본인 예약인지 확인
-        const isOwner = computed(() => {
-            if (details.value && user.value) {
-                console.log("User ID:", user.value.userId);
-                console.log("Reservation User ID:", details.value.user_id);
-                return details.value.user_id === user.value.userId; // 예약자 ID와 현재 사용자 ID 비교
-            }
-            return false;
-        });
-
-        // 데이터 로드 후 값 확인
-        watchEffect(() => {
-            console.log("User Data:", user.value);
-            console.log("Details Data:", details.value);
-        });
-  
-        // 확인 버튼: 이전 화면으로 돌아가기
-        const goBack = () => {
-            router.push({
-                path: "/meetingroom",
-                query: {
-                place: details.value.meetingroom_place,
-      
-            },
-            });
-        } 
-        // 삭제 버튼: 예약 삭제
-        const deleteReservation = async () => {
-            const confirmDelete = confirm("정말로 이 예약을 삭제하시겠습니까?");
-            if (confirmDelete) {
-                try {
-                    await axios.delete(`/meetingroom_reservation/${scheduleId}`);
-                    alert("예약이 성공적으로 삭제되었습니다.");
-                    router.push({
-                        path: "/meetingroom",
-                        query: {
-                        place: details.value.meetingroom_place,
-      
-                    },
-            });
-                } catch (error) {
-                    console.error("예약 삭제 중 오류 발생:", error);
-                    alert("예약 삭제 중 오류가 발생했습니다.");
-                }
-            }
-        };
-  
-        onMounted(() => {
-            fetchReservationDetails(); // 예약 정보 로드
-            fetchUserInfo(); // 사용자 정보 로드
-        });
-  
-        return {
-            user,
-            details,
-            goBack,
-            deleteReservation,
-            isFutureReservation,
-            isOwner, // 추가
-        };
-    },
+    
 };
-</script>
+  
+  // 컴포넌트 로드 시 데이터 가져오기
+  onMounted(() => {
+    fetchReservationDetails();
+    fetchUserInfo();
+  });
+  </script>
+  
+  <style scoped>
+  .button-group {
+    margin-top: 20px;
+  }
+  
+  .delete-btn {
+    background-color: #ff4d4f;
+    color: white;
+    border: none;
+  }
+  
+  .delete-btn:hover {
+    background-color: #ff7875;
+  }
+  </style>
+  
