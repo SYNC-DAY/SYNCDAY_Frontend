@@ -26,12 +26,12 @@
                         </td>
                         <td>
                             <button
-                                :class="['status-button', { 'active': invitation.status === 'ATTEND' }]"
+                                :class="['status-button', { 'active': invitation.status === 'ATTEND' }, 'accept-button']"
                                 @click="updateAttendance(invitation, 'ATTEND')">
                                 참석
                             </button>
                             <button
-                                :class="['status-button', { 'active': invitation.status === 'ABSENT' }]"
+                                :class="['status-button', { 'active': invitation.status === 'ABSENT' }, 'reject-button']"
                                 @click="updateAttendance(invitation, 'ABSENT')">
                                 불참
                             </button>
@@ -59,7 +59,8 @@ const getInvitationList = async () => {
     try {
         const response = await axios.get(`/userschedule/my?userId=${authStore.user.userId}`);
         const allList = response.data.data;
-        const pendingList = allList.filter(invitation => invitation.participation_status === 'PENDING');
+        const pendingList = allList.filter(invitation => invitation.participation_status === 'PENDING' 
+                                            &&new Date(invitation.start_time) >= new Date());
         invitationList.value = pendingList;
     } catch (error) {
         console.error("Failed to fetch invitations:", error);
@@ -123,7 +124,6 @@ width: 100%;
 border-collapse: separate;
 border-spacing: 0; /* 테두리 간격 제거 */
 font-size: 1.1rem;
-background-color: #f9f9f9;
 border: 1px solid #ddd; /* 테두리 */
 border-radius: 8px; /* 둥근 테두리 */
 overflow: hidden; /* 내용물이 벗어나지 않게 */
@@ -166,14 +166,21 @@ background-color: #f0f0f0;
 transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.status-button.active {
-background-color: #FF9D85;
-color: #fff;
+.accept-button.active {
+    background-color: #aef0d1;
 }
 
-.status-button:hover {
-background-color: rgb(255, 124, 242);
+.accept-button:hover {
+    background-color: #aef0d1;
 }
+.reject-button.active {
+    background-color: #ffc0c2;
+}
+.reject-button:hover {
+    background-color: #ffc0c2;
+}
+
+
 
 .invitation-details {
 display: flex;
