@@ -10,7 +10,14 @@
 		<!-- GitHub Installation Section -->
 		<div v-if="selectedVcs === 'GITHUB' && !githubAuthStore.isInstalled" class="mt-4">
 
-			<div v-for="installation in installations"></div>
+			<div v-for="installation in githubAppStore.installations" :key="installation.installationId"
+				@click.stop="selectOrganization(installation)">
+				<Avatar :image="installation.avatarUrl" :alt="installation.accountName" shape="circle" class="mr-3" />
+				<div class="flex-1">
+					<div class="font-medium">{{ installation.accountName }}</div>
+				</div>
+
+			</div>
 
 
 			<Button label="Install GitHub App" severity="primary" @click="openInstallationWindow" />
@@ -27,7 +34,6 @@ import { storeToRefs } from 'pinia';
 import { useToast } from 'primevue/usetoast';
 
 
-import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
 // Props
 const props = defineProps({
 	visible: {
@@ -58,7 +64,7 @@ const toast = useToast();
 const selectedVcs = ref('GITHUB');
 const installationWindow = ref(null);
 const checkWindowInterval = ref(null);
-
+const installations = ref(null);
 
 
 // Methods
