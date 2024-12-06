@@ -28,8 +28,8 @@
 				<div class="header-right">
 					<Button label="" severity="secondary" icon="pi pi-cog" @click="openProjectSettings"
 						aria-haspopup="true" aria-controls="overlay-menu" text />
-
-					<Button label="" icon="pi pi-github" text @click="openProjVcsSettings" />
+					<Button label="VCS Type" icon="pi pi-cog" @click="toggleVcsMenu" severity="secondary" />
+					<VcsTypeMenu ref="vcsMenu" @vcs-selected="handleVcsSelection" />
 				</div>
 			</div>
 
@@ -112,6 +112,8 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import ProjectSettingsModal from './components/ProjectSettingsModal.vue';
 import ProjVcsSettingsModal from './components/ProjGithubIntegrationModal.vue';
+import VcsTypeMenu from '../vcs/components/VcsTypeMenu.vue';
+
 // props
 const props = defineProps({
 	projectId: {
@@ -138,7 +140,6 @@ const showProjectSettings = ref(false);
 const showProjVcsSettings = ref(false);
 const openNewWorkspaceDialog = ref(false);
 const newWorkspaceName = ref('');
-const selectedProjectId = ref(null);
 
 // Computed
 const currentProject = computed(() =>
@@ -154,8 +155,8 @@ const navigateToWorkspace = (workspaceId) => {
 };
 
 // VCS Integration Methods
-const openVcsMenu = (event) => {
-	vcsMenu.value?.toggle(event);
+const toggleVcsMenu = (event) => {
+	vcsMenu.value.toggle(event);
 };
 
 const openProjectSettings = (project) => {
@@ -184,12 +185,7 @@ const handleVcsSelection = async (vcsType) => {
 	}
 };
 
-// const handleProjectUpdate = (updatedProject) => {
-// 	const index = projects.value.findIndex(p => p.proj_id === updatedProject.proj_id);
-// 	if (index !== -1) {
-// 		projects.value[index] = { ...projects.value[index], ...updatedProject };
-// 	}
-// };
+
 
 const handleProjectUpdate = (updatedProject) => {
 	const index = props.projects.findIndex((p) => p.proj_id === updatedProject.proj_id);
@@ -219,13 +215,7 @@ const handleGithubLoginError = (error) => {
 	});
 };
 
-// const handleProjectUpdate = (updatedProject) => {
-// 	// Emit event to update parent state
-// 	emit('update:project', updatedProject);
-// 	showOrgProjSelectionModal.value = false;
-// };
 
-// Update the handleProjectSelect method in ProjectView.vue
 
 const handleProjectSelect = async ({ organization }) => {
 	try {

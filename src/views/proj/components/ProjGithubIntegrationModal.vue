@@ -4,8 +4,6 @@
 		<!-- VCS Selection -->
 		<div class="flex justify-content-end mb-4">
 			<div class="container-row justify-right">
-				<Button label="VCS Type" icon="pi pi-cog" @click="toggleVcsMenu" severity="secondary" />
-				<VcsTypeMenu ref="vcsMenu" @vcs-selected="handleVcsSelection" />
 			</div>
 		</div>
 
@@ -61,7 +59,6 @@ const { user } = storeToRefs(authStore);
 const toast = useToast();
 
 // Refs
-const vcsMenu = ref(null);
 const selectedVcs = ref('GITHUB');
 const installationWindow = ref(null);
 const checkWindowInterval = ref(null);
@@ -73,16 +70,9 @@ const handleVisibilityChange = (newValue) => {
 	emit('update:visible', newValue);
 };
 
-const handleVcsSelection = async (vcsType) => {
-	selectedVcs.value = vcsType;
-	if (vcsType === 'GITHUB') {
-		await githubAppStore.fetchInstallations();
-	}
-};
 
-const toggleVcsMenu = (event) => {
-	vcsMenu.value.toggle(event);
-};
+
+
 
 const openInstallationWindow = () => {
 	// Save project ID for installation callback
