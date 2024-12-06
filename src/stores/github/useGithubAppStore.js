@@ -30,14 +30,12 @@ export const useGithubAppStore = defineStore("githubApp", {
           vcs_type: "GITHUB",
           user_id: authStore.user.userId,
           installation_id: installationId,
-          proj_id: projectId,
         });
 
         const response = await axios.post("/vcs/install", {
           vcs_type: "GITHUB",
           user_id: authStore.user.userId,
           installation_id: installationId,
-          proj_id: projectId,
         });
 
         console.log("Installation response:", response.data);
