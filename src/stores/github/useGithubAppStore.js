@@ -15,6 +15,44 @@ export const useGithubAppStore = defineStore("githubApp", {
   },
 
   actions: {
+    async handleInstallationCallback(installationId, setupAction) {
+      this.isLoading = true;
+      this.error = null;
+      const authStore = useAuthStore();
+
+      try {
+        console.log("Installation callback payload:", {
+          user_id: authStore.user.userId,
+          installation_id: installationId,
+          setup_action: setupAction,
+        });
+
+        const response = await axios.post("/github/install/", {
+          user_id: authStore.user.userId,
+          installation_id: installationId,
+          setup_action: setupAction,
+        });
+
+        console.log("Installation response:", response.data);
+
+        if (response.data.success) {
+          this.installationId = installationId;
+          localStorage.setItem("github_installation_id", installationId);
+          return true;
+        }
+        throw new Error("Installation failed");
+      } catch (error) {
+        console.error("Installation error details:", {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status,
+        });
+        this.error = error.response?.data?.message || "Installation failed";
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
     async fetchInstallations() {
       this.isLoading = true;
       this.error = null;
