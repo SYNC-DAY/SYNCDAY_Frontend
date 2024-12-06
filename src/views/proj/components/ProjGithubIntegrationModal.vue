@@ -1,6 +1,6 @@
 <template>
 	<Dialog :visible="visible" @update:visible="handleVisibilityChange" :modal="true" header="Github Integration"
-		:style="{ width: '70vw', height: '50vh' }" class="p-0">
+		:style="{ width: '70vw', padding: '1rem' }" class="p-0">
 		<!-- VCS Selection -->
 		<div class="flex justify-content-end mb-4">
 			<div class="container-row justify-right">
@@ -9,15 +9,11 @@
 
 		<!-- GitHub Installation Section -->
 		<div v-if="selectedVcs === 'GITHUB' && !githubAuthStore.isInstalled" class="mt-4">
-			<h3 class="text-lg font-medium mb-4">GitHub Integration</h3>
 
-			<div class="flex flex-column align-items-center py-6">
-				<h4 class="text-xl font-medium mb-2">GitHub App Installation Required</h4>
-				<p class="text-gray-600 mb-4">
-					To connect your GitHub organizations, you need to install our GitHub App In your account first.
-				</p>
-				<Button label="Install GitHub App" severity="primary" @click="openInstallationWindow" />
-			</div>
+			<div v-for="installation in installations"></div>
+
+
+			<Button label="Install GitHub App" severity="primary" @click="openInstallationWindow" />
 		</div>
 	</Dialog>
 </template>
@@ -124,15 +120,9 @@ const handleInstallationMessage = (event) => {
 			detail: 'GitHub 연동이 완료되었습니다',
 			life: 3000
 		});
-		loadOrganizations();
 	}
 };
 
-const loadOrganizations = async () => {
-	// Implement your organization loading logic here
-	// await 
-	// Additional organization loading if needed
-};
 
 // Lifecycle hooks
 onMounted(() => {
