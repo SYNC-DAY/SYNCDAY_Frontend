@@ -26,8 +26,9 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
-import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 import { useAuthStore } from '@/stores/auth';
+import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
+import { useGithubAppStore } from '@/stores/github/useGithubAppStore';
 import { storeToRefs } from 'pinia';
 import { useToast } from 'primevue/usetoast';
 
@@ -55,6 +56,7 @@ const emit = defineEmits(['update:visible']);
 // Stores and Services
 const authStore = useAuthStore();
 const githubAuthStore = useGithubAuthStore();
+const githubAppStore = useGithubAppStore();
 const { user } = storeToRefs(authStore);
 const toast = useToast();
 
@@ -74,7 +76,7 @@ const handleVisibilityChange = (newValue) => {
 const handleVcsSelection = async (vcsType) => {
 	selectedVcs.value = vcsType;
 	if (vcsType === 'GITHUB') {
-		await githubAuthStore.checkInstallationStatus(user.value.userId);
+		await githubAppStore.fetchInstallations();
 	}
 };
 
@@ -138,7 +140,7 @@ const handleInstallationMessage = (event) => {
 
 const loadOrganizations = async () => {
 	// Implement your organization loading logic here
-	await githubAuthStore.checkInstallationStatus(user.value.userId);
+	// await 
 	// Additional organization loading if needed
 };
 
