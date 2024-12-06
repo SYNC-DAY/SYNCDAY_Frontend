@@ -28,7 +28,7 @@
 				<div class="header-right">
 					<Button label="" severity="secondary" icon="pi pi-cog" @click="openProjectSettings"
 						aria-haspopup="true" aria-controls="overlay-menu" text />
-					<Button label="VCS Type" icon="pi pi-cog" @click="toggleVcsMenu" severity="secondary" />
+					<Button label="" icon="pi pi-cog" @click="toggleVcsMenu" severity="contrast" />
 					<VcsTypeMenu ref="vcsMenu" @vcs-selected="handleVcsSelection" />
 				</div>
 			</div>
@@ -91,7 +91,7 @@
 			@project-deleted="handleProjectDelete" />
 
 		<ProjVcsSettingsModal v-model:visible="showProjVcsSettings" :projectId="props.projectId"
-			:projectData="currentProject" @project-vcs-updated="" />
+			:projectData="currentProject" @project-vcs-updated="handleProjVcsUpdated" />
 
 
 		<template>
@@ -163,17 +163,10 @@ const openProjectSettings = (project) => {
 	showProjectSettings.value = true;
 }
 
-const openProjVcsSettings = (project) => {
-	showProjVcsSettings.value = true;
-}
 const handleVcsSelection = async (vcsType) => {
 	try {
 		if (vcsType === 'GITHUB') {
-			if (!githubAuthStore.isAuthenticated) {
-				showGithubAuthModal.value = true;
-			} else {
-				showOrgProjSelectionModal.value = true;
-			}
+			showProjVcsSettings.value = true;
 		}
 	} catch (error) {
 		toast.add({
@@ -201,19 +194,9 @@ const handleProjectDelete = (projectId) => {
 	projects.value = projects.value.filter(p => p.proj_id !== projectId);
 	router.push('/');
 };
-const handleGithubLoginSuccess = () => {
-	showGithubAuthModal.value = false;
-	showOrgProjSelectionModal.value = true;
-};
 
-const handleGithubLoginError = (error) => {
-	toast.add({
-		severity: 'error',
-		summary: 'GitHub Authentication Failed',
-		detail: error.message,
-		life: 3000
-	});
-};
+
+
 
 
 

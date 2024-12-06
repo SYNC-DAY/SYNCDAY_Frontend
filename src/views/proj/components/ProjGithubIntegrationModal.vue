@@ -1,5 +1,5 @@
 <template>
-	<Dialog :visible="visible" @update:visible="handleVisibilityChange" :modal="true" header="VCS Integration"
+	<Dialog :visible="visible" @update:visible="handleVisibilityChange" :modal="true" header="Github Integration"
 		:style="{ width: '70vw', height: '50vh' }" class="p-0">
 		<!-- VCS Selection -->
 		<div class="flex justify-content-end mb-4">
@@ -136,6 +136,7 @@ const loadOrganizations = async () => {
 
 // Lifecycle hooks
 onMounted(() => {
+	githubAppStore.fetchInstallations();
 	window.addEventListener('message', handleInstallationMessage);
 });
 
