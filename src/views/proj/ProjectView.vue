@@ -214,8 +214,7 @@
 	const updateProjectInfo = async () => {
 		await projectStore.fetchProjects();
 	};
-	onMounted(() => {
-	})
+
 </script>
 
 <style scoped>
