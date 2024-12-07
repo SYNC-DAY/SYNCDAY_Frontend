@@ -20,14 +20,14 @@
     <!-- Projects list -->
     <template v-else>
       <template v-for="(proj, id) in projStore.projects" :key="id">
-        <ProjItem :proj="proj" :isActive="activeProject === id" :isExpanded="expandedProjects.includes(id)"
+        <ProjItem :proj="proj" :isActive="activeProject == id" :isExpanded="expandedProjects.includes(id)"
           :projId="parseInt(id)" :userId="authStore.user.userId" @toggle-expansion="toggleProjectExpansion(id)"
           @select="selectProject(id)">
           <template v-for="workspace in proj.workspaces" :key="workspace.workspace_id">
-            <WorkspaceItem :workspaceId="workspace.workspace_id" :projectId="parseInt(id)"
-              :title="workspace.workspace_name" :isActive="activeWorkspace === workspace.workspace_id"
-              :progress="workspace.progress_status" :initialBookmarked="workspace.bookmark_status === 'BOOKMARKED'"
-              @select="selectWorkspace" @bookmark-changed="handleWorkspaceBookmark" />
+            <WorkspaceItem :workspaceId="workspace.workspace_id" :projectId="id" :title="workspace.workspace_name"
+              :isActive="activeWorkspace === workspace.workspace_id" :progress="workspace.progress_status"
+              :initialBookmarked="workspace.bookmark_status === 'BOOKMARKED'"
+              @select="selectWorkspace(id, workspace.workspace_id)" @bookmark-changed="handleWorkspaceBookmark" />
           </template>
         </ProjItem>
       </template>
@@ -146,10 +146,10 @@
       });
     }
   };
-  const selectWorkspace = async (workspaceId, projId) => {
+  const selectWorkspace = async (projId, workspaceId) => {
     try {
-      activeWorkspace.value = workspaceId;
       activeProject.value = projId;
+      activeWorkspace.value = workspaceId;
 
       await router.push({
         name: 'Workspace',
