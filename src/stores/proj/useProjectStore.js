@@ -102,6 +102,7 @@ export const useProjectStore = defineStore("projectStore", {
         throw error;
       }
     },
+    async modifyProject(projData) {},
   },
 
   getters: {

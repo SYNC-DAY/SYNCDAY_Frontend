@@ -8,9 +8,9 @@
 		</div>
 
 		<!-- Project Content -->
-		<div v-else class="proj-container ph-1rem">
+		<div v-else class="proj-container ph-1rem width-100">
 			<!-- Header Section -->
-			<div class="container-row header underline-gray">
+			<div class="container-row header underline-gray width-100">
 				<div class="header-left container-row">
 					<div class="project-title">
 						<h3>{{ projects[props.projectId].proj_name }}</h3>
@@ -202,18 +202,18 @@
 		}
 	};
 
-	const handleProjectUpdate = async () => {
-		await projectStore.fetchProjects();
-		showProjectSettings.value = false;
-	};
+	// const handleProjectUpdate = async () => {
+	// 	await projectStore.fetchProjects();
+	// 	showProjectSettings.value = false;
+	// };
 
-	const handleProjectDelete = () => {
-		router.push({ name: 'Projects' });
-	};
+	// const handleProjectDelete = () => {
+	// 	router.push({ name: 'Projects' });
+	// };
 
-	const updateProjectInfo = async () => {
-		await projectStore.fetchProjects();
-	};
+	// const updateProjectInfo = async () => {
+	// 	await projectStore.fetchProjects();
+	// };
 
 </script>
 

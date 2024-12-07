@@ -183,4 +183,8 @@
     align-items: center;
     min-height: 200px;
   }
+
+  .proj-main {
+    flex: 1
+  }
 </style>
