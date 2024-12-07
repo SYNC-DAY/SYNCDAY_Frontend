@@ -28,7 +28,8 @@
 				<div class="header-right">
 					<Button label="" severity="secondary" icon="pi pi-cog" @click="openProjectSettings"
 						aria-haspopup="true" aria-controls="overlay-menu" text />
-					<Button label="" icon="pi pi-cog" @click="toggleVcsMenu" severity="contrast" />
+
+					<Button label="" @click="toggleVcsMenu" icon='pi pi-code' severity=""> </Button>
 					<VcsTypeMenu ref="vcsMenu" @vcs-selected="handleVcsSelection" />
 				</div>
 			</div>
