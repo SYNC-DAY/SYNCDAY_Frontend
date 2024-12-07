@@ -6,7 +6,7 @@ export const useGithubAuthStore = defineStore("githubAuth", {
   state: () => ({
     // 인증 관련 상태
     accessToken: localStorage.getItem("github_token") || null,
-    userInfo: localStorage.getItem("github_user_info") || null,
+    userInfo: JSON.parse(localStorage.getItem("github_user_info")) || null,
     isLoading: false,
     error: null,
 
