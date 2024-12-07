@@ -108,9 +108,14 @@ export const useProjectStore = defineStore("projectStore", {
 
         if (response.data.success) {
           const resultData = response.data.data;
+          const projId = projData.proj_id;
+          this.projects[projId] = { ...this.projects[projId], ...resultData };
           return true;
         }
-      } catch (error) {}
+        return false;
+      } catch (error) {
+        console.error(error);
+      }
     },
   },
 

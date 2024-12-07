@@ -202,18 +202,7 @@
 		}
 	};
 
-	// const handleProjectUpdate = async () => {
-	// 	await projectStore.fetchProjects();
-	// 	showProjectSettings.value = false;
-	// };
 
-	// const handleProjectDelete = () => {
-	// 	router.push({ name: 'Projects' });
-	// };
-
-	// const updateProjectInfo = async () => {
-	// 	await projectStore.fetchProjects();
-	// };
 
 </script>
 
