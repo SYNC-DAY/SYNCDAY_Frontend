@@ -77,12 +77,24 @@ const calendarOptions = ref({
             dayNumber.style.height = '30px';
 
             if (todayEvents.length > 0) {
-                const intensity = Math.min(todayEvents.length / 10, 1); // 최대 10개 이벤트 기준
-                const red = 255; // 빨강값 유지
-                const green = Math.max(150 - Math.round(intensity * 200), 0); // 초록값을 더 낮은 범위로 설정
-                const blue = Math.max(50 - Math.round(intensity * 150), 0); // 파랑값도 낮춰 강렬하게
+                const intensity = Math.min(todayEvents.length / 5, 1); // 최대 5단계 기준
+                let color;
 
-                dayNumber.style.backgroundColor = `rgb(${red}, ${green}, ${blue})`;
+                if (intensity === 1 / 5) {
+                    color = "#FFDD00"; // 연핑크
+                } else if (intensity === 2 / 5) {
+                    color = "#FFB200"; // 핑크
+                } else if (intensity === 3 / 5) {
+                    color = "#FF9500"; // 연주황
+                } else if (intensity === 4 / 5) {
+                    color = "#FF5E00";   // 주황
+                } else if (intensity === 1) {
+                    color = "#FF0000";     // 빨강
+                }
+
+                // 배경색 설정
+                dayNumber.style.backgroundColor = color;
+
                 dayNumber.style.color = 'white';
 
                 // 마우스 오버 스타일 추가

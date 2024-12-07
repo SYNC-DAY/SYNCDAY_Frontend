@@ -1,73 +1,73 @@
 <template>
     <div class="board-container">
-        <div class="team-name-container">
-            {{ teamStore.teamName }} - {{ teamStore.boardTitle }}
+        <div class="team-container">
+            <Button 
+                :label="teamStore.teamName"  
+                icon="pi pi-user" 
+                disabled 
+                rounded 
+                class="team-name-container"
+            />- 
+            <Button 
+                :label="teamStore.boardTitle"  
+                icon="pi pi-user" 
+                disabled 
+                rounded 
+                class="board-name-container"
+            />
             <Button @click="goToBoardView">게시판 목록으로 돌아가기</Button>
         </div>
         <div class="board-actions">
-            <button @click="toCreateBoard" class="create-button">글 쓰기</button>
+            <Button @click="toCreateBoard" class="create-Button">글 쓰기</Button>
 
             <div class="search-bar">
-                <select v-model="searchType">
-                    <option value="TITLE">제목</option>
-                    <option value="USER">작성자</option>
-                    <option value="CONTENT">내용</option>
-                </select>
-                <input class="search-box"
-                        type="text"
-                        v-model="searchQuery" 
-                        placeholder="검색어를 입력하세요"
-                        @keyup.enter="search"
-                        >
-                <button @click="search" class="search-button" :disabled="!searchQuery.trim()">검색</button>
+                <Select v-model="searchType" 
+                :options="searchTypes" 
+                optionLabel="name" 
+                placeholder="---"
+                class="w-full md:w-56" />
+                <IconField>
+                    <InputIcon class="pi pi-search" />
+                    <InputText v-model="searchQuery" placeholder="검색어를 입력하세요"
+                    @keyup.enter="search" />
+                </IconField>
+                <Button @click="search" class="search-Button" :disabled="!searchQuery.trim()">검색</Button>
             </div>
             <div v-if="isSearchResult">
-                <button @click="getPostList" class="back-button">전체글목록</button>
+                <Button @click="getPostList" class="back-Button">전체글목록</Button>
                 <h1>검색결과</h1>
             </div>
         </div>
         <div class="board">
-            <table class="board-table">
-                <thead class="board-table-header">
-                    <tr class="board-tr">
-                        <th>번호</th>
-                        <th>제목</th>
-                        <th>작성자</th>
-                        <th>작성일</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="(post, index) in postList.list" :key="post.teamPostId" class="board-tr">
-                        <td>{{ postList.list.length - index }}</td>
-                        <a 
-                            href="javascript:void(0)" 
-                            @click="toPostDetail(post.teamPostId, searchType, searchQuery)"
-                        >
-                            {{ post.title }} ({{ post.comments }})
-                        </a>
-                        <td>{{ post.userName }}({{ post.userPosition }})</td>
-                        <td>{{ formatDate(post.createdAt) }}</td>
-                    </tr>
-                </tbody>
-            </table>
+            <DataTable
+                class="board-table" :value="postList.list" 
+                stripedRows tableStyle="min-width: 50rem"
+                @row-click="goToPost"
+            >
+                <Column field="title" header="제목"></Column>
+                <Column field="comments" header="댓글수"></Column>
+                <Column field="createdAt" header="작성시각"></Column>
+                <Column field="userName" header="작성자"></Column>
+                <Column field="userPosition" header="직책"></Column>
+            </DataTable>
         </div>
 
         <!-- Pagination -->
         <div class="pagination">
-            <button @click="changePage(1)" :disabled="postList.isFirstPage">처음</button>
-            <button @click="changePage(postList.prePage)" :disabled="!postList.hasPreviousPage">이전</button>
+            <Button @click="changePage(1)" :disabled="postList.isFirstPage">처음</Button>
+            <Button @click="changePage(postList.prePage)" :disabled="!postList.hasPreviousPage">이전</Button>
 
-            <button
+            <Button
                 v-for="page in postList.navigatepageNums"
                 :key="page"
                 :class="{ active: page === postList.pageNum }"
                 @click="changePage(page)"
             >
                 {{ page }}
-            </button>
+            </Button>
 
-            <button @click="changePage(postList.nextPage)" :disabled="!postList.hasNextPage">다음</button>
-            <button @click="changePage(postList.pages)" :disabled="postList.isLastPage">마지막</button>
+            <Button @click="changePage(postList.nextPage)" :disabled="!postList.hasNextPage">다음</Button>
+            <Button @click="changePage(postList.pages)" :disabled="postList.isLastPage">마지막</Button>
         </div>
     </div>
 </template>
@@ -78,6 +78,7 @@ import { useRouter} from 'vue-router';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 import { useTeamStore } from '@/stores/team';
+import { IconField,InputIcon, InputText, Select } from 'primevue';
 
 const route = useRoute();
 const searchType = ref('TITLE');
@@ -87,18 +88,39 @@ const postList = ref({});
 const pageNum = ref(1);
 const isSearchResult = ref(false);
 const router = useRouter();
+const searchTypes = [
+{
+    option:"TITLE",
+    name:"제목"
+    },    
+    {
+    option:"CONTENT",
+    name:"내용"
+    },
+    {
+    option:"USER",
+    name:"작성자"
+    },
+];
 
 // 게시글 리스트 가져오기
 const getPostList = async (page = 1) => {
     isSearchResult.value =false;
     try {
-        const response = await axios.get(`/teampost/${teamStore.boardId}`);
+        const response = await axios.get(`/teampost/${teamStore.boardId}?page=${page}`);
         postList.value = response.data.data;
     } catch (error) {
         console.error('Failed to fetch post list:', error);
     }
 };
 
+const goToPost = (event) => {
+    const post = event.data;
+    console.log(post)
+    teamStore.updateBoardId(post.teamBoardId);
+    teamStore.updatePostId(post.teamPostId);
+    router.push("/team/post/detail/view");
+}
 // 검색 기능
 const search = async () => {
     isSearchResult.value = true;
@@ -120,6 +142,7 @@ const search = async () => {
 const changePage = async (page) => {
     if (page > 0 && page <= postList.value.pages) {
         pageNum.value = page;
+        console.log("page:",page)
         await getPostList(page);
     }
 };
@@ -170,6 +193,24 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.team-name-container {
+    margin-top: 1rem;
+    margin-right: 1rem;
+    background-color: #FDC387;
+    border-color: #FDC387;
+    cursor: default;
+    color: black;
+    opacity:1;
+}
+.board-name-container {
+    margin-top: 1rem;
+    margin-right: 1rem;
+    background-color: #FDC387;
+    border-color: #FDC387;
+    cursor: default;
+    color: black;
+    opacity:1;
+}
 .board-container {
     margin: 20px;
 }
@@ -180,7 +221,7 @@ onMounted(async () => {
     margin-bottom: 20px;
 }
 
-.create-button {
+.create-Button {
     background-color: #007bff;
     color: white;
     border: none;
@@ -199,7 +240,7 @@ onMounted(async () => {
     border-radius: 4px;
 }
 
-.search-button {
+.search-Button {
     background-color: #28a745;
     color: white;
     border: none;
@@ -225,22 +266,23 @@ onMounted(async () => {
     margin-top: 20px;
 }
 
-.pagination button {
+.pagination Button {
     margin: 0 5px;
     padding: 5px 10px;
     cursor: pointer;
     border: 1px solid #ccc;
     background-color: white;
     transition: background-color 0.3s, color 0.3s;
+    color:black;
 }
 
-.pagination button.active {
+.pagination Button.active {
     background-color: #007bff;
     color: white;
     font-weight: bold;
 }
 
-.pagination button:disabled {
+.pagination Button:disabled {
     cursor: not-allowed;
     opacity: 0.6;
 }

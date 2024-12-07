@@ -58,7 +58,7 @@ onMounted(async () => {
 		if (code && state) {
 			await handleOAuthCallback(code, state);
 		} else if (installationId && setupAction) {
-			await handleInstallationCallback(installationId);
+			await handleInstallationCallback(installationId, setupAction);
 		} else {
 			throw new Error('Invalid callback parameters');
 		}
@@ -68,17 +68,14 @@ onMounted(async () => {
 	} finally {
 		loading.value = false;
 		// Close window after short delay
-		// setTimeout(() => window.close(), 1000);
+		setTimeout(() => window.close(), 1000);
 	}
 });
 
-const handleInstallationCallback = async (installationId) => {
-	const projectId = localStorage.getItem('github_installation_project_id');
-	if (!projectId) {
-		throw new Error('Project ID not found');
-	}
+const handleInstallationCallback = async (installationId, setupAction) => {
 
-	await githubAppStore.handleInstallationCallback(projectId, installationId);
+
+	await githubAppStore.handleInstallationCallback(installationId, setupAction);
 	localStorage.removeItem('github_installation_project_id');
 
 	notifyOpener('installation-success', { installationId });
@@ -91,7 +88,7 @@ const notifyOpener = (type, data = null) => {
 			data: data
 		};
 		window.opener.postMessage(message, window.location.origin);
-		// window.close();
+		window.close();
 	}
 };
 </script>
