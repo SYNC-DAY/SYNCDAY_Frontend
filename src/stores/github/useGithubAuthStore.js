@@ -108,6 +108,10 @@ export const useGithubAuthStore = defineStore("githubAuth", {
           this.setAccessToken(tokenData.access_token);
           await this.fetchUserInfo();
 
+          const verificationResult = await this.verifyUserData();
+          if (!verificationResult.hasStoreData || !verificationResult.hasLocalStorage) {
+            console.warn("Data might not be properly saved:", verificationResult);
+          }
           // state 초기화
           this.clearOAuthState();
           return true;
@@ -206,6 +210,33 @@ export const useGithubAuthStore = defineStore("githubAuth", {
     // 초기화 상태 설정
     setInitialized() {
       this.isInitialized = true;
+    }, // Add this to your actions
+    async verifyUserData() {
+      // Check store state
+      console.log("Store userInfo:", this.userInfo);
+      console.log("Store accessToken:", this.accessToken);
+
+      // Check localStorage
+      console.log("LocalStorage userInfo:", localStorage.getItem("github_user_info"));
+      console.log("LocalStorage token:", localStorage.getItem("github_token"));
+
+      // If store data is missing but localStorage has it, recover it
+      if (!this.userInfo && localStorage.getItem("github_user_info")) {
+        try {
+          this.userInfo = JSON.parse(localStorage.getItem("github_user_info"));
+        } catch (e) {
+          console.error("Error parsing stored user info:", e);
+        }
+      }
+
+      if (!this.accessToken && localStorage.getItem("github_token")) {
+        this.accessToken = localStorage.getItem("github_token");
+      }
+
+      return {
+        hasStoreData: !!this.userInfo && !!this.accessToken,
+        hasLocalStorage: !!localStorage.getItem("github_user_info") && !!localStorage.getItem("github_token"),
+      };
     },
   },
 });

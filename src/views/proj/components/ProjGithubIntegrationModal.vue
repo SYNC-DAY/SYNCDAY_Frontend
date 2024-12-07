@@ -15,25 +15,35 @@
 			<div class="account-section">
 				<div class="section-content">
 					<div class="account-info">
-						<h4>Personal account connected</h4>
-						<p class="text-secondary">You have connected your GitHub account to SyncDay</p>
-					</div>
-					<div class="account-status">
 						<h4>Personal account {{ githubAuthStore.isAuthenticated ? 'connected' : 'not connected' }}</h4>
 						<p class="text-secondary">
 							{{ githubAuthStore.isAuthenticated
 								? `Connected as ${githubAuthStore.username}`
 								: 'Connect your GitHub account to SyncDay'
-							}}</p>
+							}}
+						</p>
 					</div>
-					<div v-if="!githubAuthStore.isAuthenticated">
-						<Button label="Connect GitHub" icon="pi pi-github" @click="openGithubLoginWindow" />
-					</div>
-					<div v-else class="account-status">
-						<span class="status-dot"></span>
-						{{ githubAuthStore.username }}
+
+					<!-- Add user profile info when authenticated -->
+					<div v-if="githubAuthStore.isAuthenticated" class="user-profile">
+						<div class="profile-details">
+							<Avatar :image="githubAuthStore.avatarUrl" :label="getInitials(githubAuthStore.username)"
+								shape="circle" class="mr-2" />
+							<div class="user-info">
+								<span class="username">{{ githubAuthStore.username }}</span>
+								<div class="connection-status">
+									<span class="status-dot"></span>
+									<span>Connected</span>
+								</div>
+							</div>
+						</div>
 						<Menu ref="accountMenu" :model="accountMenuItems" :popup="true" />
 						<Button icon="pi pi-chevron-down" @click="(event) => accountMenu.toggle(event)" text />
+					</div>
+
+					<!-- Keep existing connect button for non-authenticated state -->
+					<div v-else>
+						<Button label="Connect GitHub" icon="pi pi-github" @click="openGithubLoginWindow" />
 					</div>
 				</div>
 			</div>
@@ -47,21 +57,28 @@
 			</div>
 
 			<div class="organizations-list">
-				<div v-for="installation in githubAppStore.installations" :key="installation.installationId"
-					class="organization-item">
-					<div class="org-info">
-						<Avatar :image="installation.avatarUrl" :label="getInitials(installation.accountName)"
-							shape="circle" />
-						<div class="org-details">
-							<span class="org-name">{{ installation.accountName }}</span>
-							<span class="org-date">Enabled by {{ installation.accountName }} on {{
-								formatDate(installation.createdAt) }}</span>
+				<div v-if="!githubAuthStore.isAuthenticated">
+					Authenticate with Github First
+				</div>
+				<div v-else>
+
+
+					<div v-for="installation in githubAppStore.installations" :key="installation.installationId"
+						class="organization-item">
+						<div class="org-info">
+							<Avatar :image="installation.avatarUrl" :label="getInitials(installation.accountName)"
+								shape="circle" />
+							<div class="org-details">
+								<span class="org-name">{{ installation.accountName }}</span>
+								<span class="org-date">Enabled by {{ installation.accountName }} on {{
+									formatDate(installation.createdAt) }}</span>
+							</div>
 						</div>
-					</div>
-					<div class="org-status">
-						<span class="status-dot"></span>
-						Connected
-						<i class="pi pi-chevron-down"></i>
+						<div class="org-status">
+							<span class="status-dot"></span>
+							Connected
+							<i class="pi pi-chevron-down"></i>
+						</div>
 					</div>
 				</div>
 			</div>
