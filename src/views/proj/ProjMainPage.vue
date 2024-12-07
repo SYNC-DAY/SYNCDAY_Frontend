@@ -131,7 +131,7 @@
     try {
       activeProject.value = projId;
       activeWorkspace.value = null;
-
+      console.log(projId)
       await router.push({
         name: 'Project',
         params: { projectId: projId }
