@@ -163,8 +163,8 @@ export const useGithubAuthStore = defineStore("githubAuth", {
         const userData = await response.json();
         console.log(userData);
         this.userInfo = userData;
-        localStorage.setItem("github_user_info", JSON.stringify(response.data));
-        return response.data;
+        localStorage.setItem("github_user_info", JSON.stringify(userData));
+        return userData;
       } catch (error) {
         console.error("Error fetching user info:", error);
         this.error = error.response?.data?.message || error.message;
