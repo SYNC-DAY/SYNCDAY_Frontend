@@ -1,7 +1,7 @@
 <template>
   <SideBar>
     <!-- Project List -->
-    <template v-for="proj in projects" :key="proj.proj_id">
+    <template v-for="proj in projStore.projects" :key="proj.proj_id">
       <ProjItem :title="proj.proj_name" :isActive="activeProject === proj.proj_id"
         :initialBookmarked="proj.bookmark_status === 'BOOKMARKED'" :progress="proj.progress_status"
         :isExpanded="expandedProjects.includes(proj.proj_id)" @toggle-expansion="toggleProjectExpansion(proj.proj_id)"
@@ -47,13 +47,14 @@ import SideBar from '@/components/SideBar.vue';
 import ProjItem from './sidebar/ProjItem.vue';
 import WorkspaceItem from './sidebar/WorkspaceItem.vue';
 import NewProjModal from './components/NewProjModal.vue';
-
+import { useProjectStore } from '@/stores/proj/useProjectStore';
 
 // Initialize services
 const toast = useToast();
 const router = useRouter();
 const authStore = useAuthStore();
 const githubAppStore = useGithubAppStore();
+const projStore = useProjectStore();
 const { user } = storeToRefs(authStore);
 
 // State management
@@ -210,72 +211,10 @@ const handleBookmarkChange = async (projId, isBookmarked) => {
 };
 
 // Initial data fetch
-const fetchProjs = async () => {
-  try {
-    const response = await axios.get(`/proj-members/users/${user.value.userId}`);
-    if (!response.data.success) {
-      throw new Error(response.data.error || '프로젝트 목록을 불러오는데 실패했습니다');
-    }
 
-    const userProjMembers = response.data.data[0]?.proj_member_infos || [];
-    projects.value = userProjMembers.map(proj => ({
-      proj_id: proj.proj_id,
-      proj_name: proj.proj_name,
-      bookmark_status: proj.bookmark_status,
-      participation_status: proj.participation_status,
-      progress_status: proj.progress_status,
-      start_time: proj.start_time,
-      end_time: proj.end_time,
-      created_at: proj.created_at,
-      // Add VCS installation information
-      vcs_installation_id: proj.vcs_installation_id,
-      vcs_installation: proj.vcs_installation_id ? githubAppStore.getInstallationById(proj.vcs_installation_id) : null,
-      vcs_type: proj.vcs_type,
-      vcs_proj_url: proj.vcs_proj_url,
-      workspaces: proj.workspaces.map(ws => ({
-        workspace_id: ws.workspace_id,
-        workspace_name: ws.workspace_name,
-        created_at: ws.created_at,
-        progress_status: ws.progress_status,
-        vcs_type: ws.vcs_type,
-        vcs_repo_url: ws.vcs_repo_url,
-        proj_id: ws.proj_id
-      }))
-    }));
-
-    // Keep workspace mapping
-    workspaces.value = userProjMembers.flatMap(proj =>
-      proj.workspaces.map(ws => ({
-        ...ws,
-        project_id: proj.proj_id
-      }))
-    );
-
-    // If needed, you can also fetch GitHub installation details for projects with vcs_installation_id
-    for (const project of projects.value) {
-      if (project.vcs_installation_id) {
-        try {
-          await githubAppStore.fetchProjectInstallation(project.vcs_installation_id);
-
-        } catch (error) {
-          console.error(`Failed to fetch GitHub installation for project ${project.proj_id}:`, error);
-        }
-      }
-    }
-
-  } catch (err) {
-    console.error('Projects fetch failed:', err);
-    toast.add({
-      severity: 'error',
-      summary: '로딩 실패',
-      detail: '프로젝트 목록을 불러오는데 실패했습니다.',
-      life: 3000
-    });
-  }
-};
 
 onMounted(() => {
-  fetchProjs();
+  projStore.fetchProjects(user.value.userId);
 });
 
 

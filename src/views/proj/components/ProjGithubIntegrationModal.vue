@@ -64,7 +64,6 @@ import { useAuthStore } from '@/stores/auth';
 import { useGithubAppStore } from '@/stores/github/useGithubAppStore';
 import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 import { useGithubRepoStore } from '@/stores/github/useGithubRepoStore';
-import { projAPI } from "@/api/proj";
 
 import { useConfirm } from 'primevue';
 
