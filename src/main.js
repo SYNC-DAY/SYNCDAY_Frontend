@@ -35,6 +35,7 @@ import Card from "primevue/card";
 import ProgressBar from "primevue/progressbar";
 import Avatar from "primevue/avatar";
 import InputText from "primevue/inputtext";
+import Menu from "primevue/menu";
 /* css */
 import "@/assets/styles/syncday/main.css";
 
@@ -103,5 +104,6 @@ app.component("Card", Card);
 app.component("ProgressBar", ProgressBar);
 app.component("Avatar", Avatar);
 app.component("InputText", InputText);
+app.component("Menu", Menu);
 /* mount */
 app.mount("#app");

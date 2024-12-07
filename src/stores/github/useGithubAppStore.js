@@ -7,6 +7,8 @@ export const useGithubAppStore = defineStore("githubApp", {
     installations: [],
     isLoading: false,
     error: null,
+    installationWindow: null,
+    checkWindowInterval: null,
   }),
 
   getters: {
@@ -102,6 +104,46 @@ export const useGithubAppStore = defineStore("githubApp", {
     clearInstallations() {
       this.installations = [];
       this.error = null;
+    },
+    openInstallationWindow() {
+      // Save project ID for installation callback
+
+      const installUrl = `https://github.com/apps/${import.meta.env.VITE_GITHUB_APP_NAME}/installations/new`;
+      const callbackUrl = `${window.location.origin}/github/callback`;
+
+      // Add target_type=user parameter to the URL
+      const params = new URLSearchParams({
+        callback_url: callbackUrl,
+        target_type: "user",
+      });
+
+      const fullUrl = `${installUrl}?${params.toString()}`;
+
+      const width = 1020;
+      const height = 618;
+      const left = (window.innerWidth - width) / 2;
+      const top = (window.innerHeight - height) / 2;
+
+      const popupWindow = window.open(fullUrl, "Install GitHub App", `width=${width},height=${height},top=${top},left=${left}`);
+
+      if (this.checkWindowInterval) {
+        clearInterval(this.checkWindowInterval);
+      }
+      this.checkWindowInterval = setInterval(() => {
+        try {
+          if (!popupWindow || popupWindow.closed) {
+            this.cleanup();
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }, 500);
+    },
+    cleanup() {
+      if (this.checkWindowInterval) {
+        clearInterval(this.checkWindowInterval);
+        this.checkWindowInterval = null;
+      }
     },
   },
 });

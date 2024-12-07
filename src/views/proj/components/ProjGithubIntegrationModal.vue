@@ -43,7 +43,7 @@
 		<div class="section-container">
 			<div class="organizations-header">
 				<h4>Connected organizations</h4>
-				<Button icon="pi pi-plus" class="p-button-text" @click="githubAuthStore.openGithubLoginWindow" />
+				<Button icon="pi pi-plus" class="p-button-text" @click="githubAppStore.openInstallationWindow" />
 			</div>
 
 			<div class="organizations-list">
@@ -209,8 +209,7 @@ const toast = useToast();
 const confirm = useConfirm();
 
 // Refs
-const installationWindow = ref(null);
-const checkWindowInterval = ref(null);
+
 const accountMenu = ref();
 const searchQuery = ref('');
 
@@ -283,45 +282,7 @@ const openGithubLoginWindow = () => {
 	githubAuthStore.loginWithGithub();
 };
 
-const openInstallationWindow = () => {
-	// Save project ID for installation callback
-	localStorage.setItem('github_installation_project_id', props.projectId);
 
-	const installUrl = `https://github.com/apps/${import.meta.env.VITE_GITHUB_APP_NAME}/installations/new`;
-	const callbackUrl = `${window.location.origin}/github/callback`;
-
-	// Add target_type=user parameter to the URL
-	const params = new URLSearchParams({
-		callback_url: callbackUrl,
-		target_type: 'user'
-	});
-
-	const fullUrl = `${installUrl}?${params.toString()}`;
-
-	const width = 1020;
-	const height = 618;
-	const left = (window.innerWidth - width) / 2;
-	const top = (window.innerHeight - height) / 2;
-
-	installationWindow.value = window.open(
-		fullUrl,
-		'Install GitHub App',
-		`width=${width},height=${height},top=${top},left=${left}`
-	);
-
-	if (checkWindowInterval.value) {
-		clearInterval(checkWindowInterval.value);
-	}
-
-	checkWindowInterval.value = setInterval(() => {
-		if (installationWindow.value?.closed) {
-			clearInterval(checkWindowInterval.value);
-			checkWindowInterval.value = null;
-			installationWindow.value = null;
-			localStorage.removeItem('github_installation_project_id');
-		}
-	}, 500);
-};
 
 const handleAuthMessage = async (event) => {
 	if (event.origin !== window.location.origin) return;
@@ -367,9 +328,7 @@ onMounted(() => {
 
 onUnmounted(() => {
 	window.removeEventListener('message', handleAuthMessage);
-	if (checkWindowInterval.value) {
-		clearInterval(checkWindowInterval.value);
-	}
+	githubAppStore.cleanup();
 });
 
 

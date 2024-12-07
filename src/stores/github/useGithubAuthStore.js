@@ -5,8 +5,8 @@ import axios from "axios";
 export const useGithubAuthStore = defineStore("githubAuth", {
   state: () => ({
     // 인증 관련 상태
-    accessToken: localStorage.getItem("github_token"),
-    userInfo: JSON.parse(localStorage.getItem("github_user_info")),
+    accessToken: localStorage.getItem("github_token") || null,
+    userInfo: localStorage.getItem("github_user_info") || null,
     isLoading: false,
     error: null,
 
