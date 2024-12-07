@@ -1,47 +1,33 @@
 <template>
 	<Dialog :visible="visible" @update:visible="handleVisibilityChange" :modal="true" class="github-integration-dialog"
 		:style="{ width: '600px' }">
-		<template #header>
-			<div class="dialog-header">
-				<h3>GitHub Integration</h3>
-
-			</div>
-		</template>
-
-		<!-- Organizations Section -->
-		<section class="organizations-section">
-			<div class="organizations-header">
-				<h4>Connected organizations</h4>
-				<Button icon="pi pi-plus" class="p-button-text" @click="githubAppStore.openInstallationWindow" />
-			</div>
-
-			<!-- Organizations List -->
-			<div class="organizations-list">
-				<div v-for="installation in githubAppStore.installations" :key="installation.installationId"
-					class="organization-item">
-					<div class="org-info">
-						<Avatar :image="installation.avatarUrl" :label="getInitials(installation.accountName)"
-							shape="circle" />
-						<div class="org-details">
-							<span class="org-name">{{ installation.accountName }}</span>
-							<span class="org-date">
-								Enabled by {{ installation.accountName }} on {{ formatDate(installation.createdAt) }}
-							</span>
-						</div>
-					</div>
-					<div class="org-status" @click="toggleOrgMenu(installation.installationId)">
-						<span class="status-indicator"></span>
-						Connected
-						<i class="pi pi-chevron-down" :class="{ 'rotate-180': installation.menuOpen }"></i>
-						<Menu ref="orgMenu" />
+		<!-- Previous code remains the same -->
+		<div class="organizations-list">
+			<div v-for="installation in githubAppStore.installations" :key="installation.installationId"
+				class="organization-item">
+				<div class="org-info">
+					<Avatar :image="installation.avatarUrl" :label="getInitials(installation.accountName)"
+						shape="circle" />
+					<div class="org-details">
+						<span class="org-name">{{ installation.accountName }}</span>
+						<span class="org-date">
+							Enabled by {{ installation.accountName }} on {{ formatDate(installation.createdAt) }}
+						</span>
 					</div>
 				</div>
+				<div class="org-status">
+					<span class="status-indicator"></span>
+					Connected
+					<Button icon="pi pi-chevron-down" class="p-button-text"
+						@click="(event) => toggleOrgMenu(event, installation.installationId)" aria-haspopup="true"
+						aria-controls="org_menu" />
+				</div>
 			</div>
-
-
-		</section>
+		</div>
+		<Menu ref="orgMenu" id="org_menu" :model="orgMenuItems" :popup="true" />
 	</Dialog>
 </template>
+
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
@@ -73,20 +59,57 @@ const githubAuthStore = useGithubAuthStore()
 const githubAppStore = useGithubAppStore()
 const toast = useToast()
 const confirm = useConfirm()
-const toggleOrgMenu = (installationId) => {
-	console.log(`toggle menu for installation:${installationId}`);
-}
-const orgMenu = ref()
-const orgMenuItems = ref[(
-	{
-		label: "Disable",
-		icon: 'pi pi-disable',
-		command: () => {
-			githubAppStore.handleDisableAccess()
-		}
-	}
-)]
 
+
+const orgMenu = ref()
+const orgMenuItems = ref([
+	{
+		label: 'Options',
+		items: [
+			{
+				label: 'Disable',
+				icon: 'pi pi-cog'
+			},
+
+		]
+	}
+])
+
+// Add the toggle menu function
+const toggleOrgMenu = (event) => {
+	// Prevent event bubbling
+	// event.stopPropagation()
+	// Store the current installation ID
+	// githubAppStore.setCurrentInstallation(installationId)
+	// Show menu at click position
+	orgMenu.value?.toggle(event)
+}
+// Add confirmation dialog for uninstall
+const confirmUninstall = () => {
+	confirm.require({
+		message: 'Are you sure you want to uninstall this GitHub integration?',
+		header: 'Uninstall Integration',
+		icon: 'pi pi-exclamation-triangle',
+		accept: async () => {
+			try {
+				await githubAppStore.handleUninstallation()
+				toast.add({
+					severity: 'success',
+					summary: 'Success',
+					detail: 'GitHub integration uninstalled successfully',
+					life: 3000
+				})
+			} catch (error) {
+				toast.add({
+					severity: 'error',
+					summary: 'Error',
+					detail: 'Failed to uninstall integration',
+					life: 3000
+				})
+			}
+		}
+	})
+}
 
 // Refs
 const accountMenu = ref()
