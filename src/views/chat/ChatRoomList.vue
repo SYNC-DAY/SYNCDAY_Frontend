@@ -40,16 +40,13 @@
   import NewChatRoom from '@/views/chat/chat_components/NewChatRoom.vue';
   import ChatRoom from './ChatRoom.vue';
 
-  const { isVisible, roomId } = defineProps({
+  const { isVisible } = defineProps({
     isVisible: {
       type: Boolean,
       required: true
     }, 
-    roomId: {
-      type: String,
-      required: false,
-    },
   })
+  const roomId = ref('');
 
   const emit = defineEmits(['closePopup'])
 
@@ -75,6 +72,7 @@ const openChatRoom = (chat) => {
   if (chat && chat.roomId) { // 방어적 코드를 추가
     console.log(`${chat.roomId}번 채팅방 열기`);
     selectedRoom.value = chat;
+    roomId.value = chat.roomId;
   } else {
     console.error("유효하지 않은 채팅 데이터:", chat);
   }
@@ -132,21 +130,13 @@ const searchChat = (event) => {
 // 컴포넌트가 로드될 때 데이터 가져오기
 onMounted(() => {
   console.log("sfs", authStore.user.userId)
+  console.log('마운트: ', roomId)
   fetchChatRooms();
 });
 
 onUnmounted(() => {
   console.log(`채팅방 ${roomId}의 모든 데이터 초기화`);
-  if (roomId) { // roomId가 유효한 경우만 실행
-    console.log(`채팅방 ${roomId}의 모든 데이터 초기화`);
-    delete messagesInRoom.value[roomId];
-    if (subscriptions.value[roomId]) {
-      subscriptions.value[roomId].unsubscribe();
-      delete subscriptions.value[roomId];
-    }
-  } else {
-    console.error("onUnmounted: 유효하지 않은 roomId");
-  }
+
 });
   </script>
   

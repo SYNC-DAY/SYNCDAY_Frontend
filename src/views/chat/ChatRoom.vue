@@ -164,29 +164,27 @@ const reconnectWebSocket = () => {
 };
 
 const fetchMessages = async (roomId) => {
+
   try {
     const response = await axios.get(`/chat/room/${roomId}/message`);
-    messagesInRoom.value[roomId] = response.data.map(message => ({
-      ...message,
-      sentTime: formatDate(message.sentTime),
-      sentTime: formatTime(message.sentTime),
-    }));
+      messagesInRoom.value[roomId] = response.data.map(message => ({
+        ...message,
+        sentTime: formatDate(message.sentTime),
+        sentTime: formatTime(message.sentTime),
+      }
+      ));
   } catch (error) {
     console.error('채팅 메시지 불러오기 실패:', error);
+    messagesInRoom.value[roomId] = [];
   }
 };
 
-// 컴포넌트가 마운트될 때 메시지 로드
-onMounted(() => {
-  fetchMessages(props.roomId);
-  connectWebSocket(); // WebSocket 연결
-});
 
 const sendMessage = () => {
   console.log('전송 시도~!')
   console.log('현재 메시지 값:', newMessage.value);
   if (!newMessage.value || !newMessage.value.trim()) {
-  console.warn('빈 메시지는 전송할 수 없습니다.');
+    console.warn('빈 메시지는 전송할 수 없습니다.');
   return;
 }
 
@@ -228,7 +226,7 @@ const leaveChat = async () => {
     console.log('채팅방을 나가기: ', response.data )
     console.log('API 요청 URL: ', axios.defaults.baseURL + `/chat/room/${props.roomId}/leave`);
     console.log('응답 데이터: ', response.data);
-
+    
     isVisible.value = false;
     delete messagesInRoom.value[props.roomId];
     if(subscriptions.value[props.roomId]) {
@@ -242,25 +240,32 @@ const leaveChat = async () => {
 };
 
 
+// 컴포넌트가 마운트될 때 메시지 로드
 onMounted(() => {
-console.log('onMounted 실행')
-fetchMessages(props.roomId)
-connectWebSocket()
-})
+  console.log('마운트: ', props.roomId)
+  fetchMessages(props.roomId);
+  connectWebSocket(); // WebSocket 연결
+});
 
 onUnmounted(() => {
-if (stompClient.value) {
-  console.log('STOMP 클라이언트 비활성화 중...')
-  // Object.values(subscriptions.value).forEach(subscription => subscription.unsubscribe())
-  stompClient.value.deactivate()
-}
+  if (props.roomId && messagesInRoom.value[props.roomId]) {
+    console.log(`채팅방 ${props.roomId}의 모든 데이터 초기화`);
+    delete messagesInRoom.value[props.roomId];
+    if (subscriptions.value[props.roomId]) {
+      subscriptions.value[props.roomId].unsubscribe();
+      delete subscriptions.value[props.roomId];
+    }
+  } else {
+    console.warn('언: 유효하지 않은 roomId');
+  }
 });
+
 </script>
 
 <style scoped>
 .popup {
   position: absolute;
-  top: 50px; /* 아이콘 아래로 50px */
+  top: 50px;
   right: 0%;
   transform: translateX(-50%);
   width: 30%;
