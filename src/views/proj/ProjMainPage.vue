@@ -146,7 +146,28 @@
       });
     }
   };
+  const selectWorkspace = async (workspaceId, projId) => {
+    try {
+      activeWorkspace.value = workspaceId;
+      activeProject.value = projId;
 
+      await router.push({
+        name: 'Workspace',
+        params: {
+          projectId: projId,
+          workspaceId: workspaceId
+        }
+      });
+    } catch (err) {
+      console.error('Workspace navigation failed:', err);
+      toast.add({
+        severity: 'error',
+        summary: '이동 실패',
+        detail: '워크스페이스로 이동하는 중 오류가 발생했습니다.',
+        life: 3000
+      });
+    }
+  };
   const toggleProjectExpansion = (projId) => {
     const index = expandedProjects.value.indexOf(projId);
     if (index === -1) {

@@ -27,7 +27,8 @@
             <!-- 태그 선택 -->
             <div class="field mb-4">
               <label for="tags">태그 선택:</label>
-              <MultiSelect id="tags" v-model="selectedTags" :options="tags" optionLabel="name" placeholder="태그를 선택하세요" class="w-full"/>
+              <MultiSelect id="tags" v-model="selectedTags" :options="tags" optionLabel="name" placeholder="태그를 선택하세요"
+                class="w-full" />
             </div>
           </Dialog>
         </div>
@@ -44,7 +45,8 @@
 
           <TabPanels>
             <TabPanel value="0">
-              <CardBoard :cardboards="workspaceDetails.cardboards || [] " :workspaceId="workspaceDetails.workspace_id"></CardBoard>
+              <CardBoard :cardboards="workspaceDetails.cardboards || []" :workspaceId="workspaceDetails.workspace_id">
+              </CardBoard>
             </TabPanel>
             <TabPanel value="1">
               <KanbanBoard :cardboards="workspaceDetails.cardboards || []" />
@@ -69,194 +71,171 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import axios from 'axios';
+  import { ref, onMounted, watch } from 'vue';
+  import { useRoute, useRouter } from 'vue-router';
+  import axios from 'axios';
 
-import Tabs from 'primevue/tabs';
-import TabList from 'primevue/tablist';
-import Tab from 'primevue/tab';
-import { useToast } from "primevue/usetoast";
-import TabPanels from 'primevue/tabpanels';
-import TabPanel from 'primevue/tabpanel';
+  import Tabs from 'primevue/tabs';
+  import TabList from 'primevue/tablist';
+  import Tab from 'primevue/tab';
+  import { useToast } from "primevue/usetoast";
+  import TabPanels from 'primevue/tabpanels';
+  import TabPanel from 'primevue/tabpanel';
 
-/* views */
-import CardBoard from './views/CardBoardView.vue';
-import KanbanBoard from './views/KanbanBoardView.vue';
-import CalendarView from './views/CalendarView.vue';
-import CardModal from './components/layout/CardModal.vue';
+  /* views */
+  import CardBoard from './views/CardBoardView.vue';
+  import KanbanBoard from './views/KanbanBoardView.vue';
+  import CalendarView from './views/CalendarView.vue';
+  import CardModal from './components/layout/CardModal.vue';
 
 
-const route = useRoute();
-const router = useRouter();
-const toast = useToast();
-const showCardModal = ref(false);
-const selectedCard = ref(null);
-const showTagDialog = ref(false); // 태그 관리 다이얼로그 표시 여부
-const selectedTags = ref([]); // 선택된 태그
-const newTagName = ref(""); // 새 태그 이름 입력
+  const route = useRoute();
+  const router = useRouter();
+  const toast = useToast();
+  const showCardModal = ref(false);
+  const selectedCard = ref(null);
+  const showTagDialog = ref(false); // 태그 관리 다이얼로그 표시 여부
+  const selectedTags = ref([]); // 선택된 태그
+  const newTagName = ref(""); // 새 태그 이름 입력
 
-const props = defineProps({
-  projectId: {
-    type: [String, Number],
-    required: true
-  },
-  workspaceId: {
-    type: [String, Number],
-    required: true
-  },
-  projects: {
-    type: Array,
-    required: true
-  }
-});
+  const props = defineProps({
+    projectId: {
+      type: [String, Number],
+      required: true
+    },
+    workspaceId: {
+      type: [String, Number],
+      required: true
+    },
 
-const emit = defineEmits(['update:projects']);
-const isLoading = ref(false);
-const error = ref(null);
-const workspaceDetails = ref(null);
-
-const fetchWorkspace = async () => {
-  if (!props.workspaceId) {
-    error.value = 'No workspace ID provided';
-    return;
-  }
-
-  isLoading.value = true;
-  error.value = null;
-
-  try {
-    const response = await axios.get(`/workspaces/${props.workspaceId}`);
-
-    if (response.data.success) {
-      workspaceDetails.value = response.data.data;
-      const updatedProjects = JSON.parse(JSON.stringify(props.projects));
-      const project = updatedProjects.find(p => p.proj_id === parseInt(props.projectId));
-
-      if (project) {
-        const workspace = project.workspaces.find(
-          w => w.workspace_id === parseInt(props.workspaceId)
-        );
-        if (workspace) {
-          Object.assign(workspace, {
-            workspace_name: workspaceDetails.value.workspace_name,
-            progress_status: workspaceDetails.value.progress_status,
-            bookmark_status: workspaceDetails.value.bookmark_status,
-          });
-
-          emit('update:projects', updatedProjects);
-        }
-      }
-    } else {
-      throw new Error(response.data.error || 'Failed to fetch workspace data');
-    }
-  } catch (err) {
-    error.value = err.message || 'Failed to load workspace';
-    console.error('Failed to fetch workspace:', err);
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-onMounted(() => {
-  fetchWorkspace();
-});
-
-const handleCloseModal = () => {
-  router.replace({ 
-    query: { 
-      ...route.query,
-      cardId: undefined 
-    }
   });
-};
 
-watch(
-  [
-    () => props.workspaceId, 
-    () => props.projectId,
-    () => route.query.cardId
-  ],
-  async ([newWorkspaceId, newProjectId, newCardId], [oldWorkspaceId, oldProjectId, oldCardId]) => {
-    // 워크스페이스나 프로젝트가 변경되었을 때
-    if ((newWorkspaceId && newWorkspaceId !== oldWorkspaceId) ||
-        (newProjectId && newProjectId !== oldProjectId)) {
-      await fetchWorkspace();
+  const emit = defineEmits(['update:projects']);
+  const isLoading = ref(false);
+  const error = ref(null);
+  const workspaceDetails = ref(null);
+
+  const fetchWorkspace = async () => {
+    if (!props.workspaceId) {
+      error.value = 'No workspace ID provided';
+      return;
     }
 
-    // cardId가 변경되었을 때
-    if (newCardId !== oldCardId) {
-      if (newCardId) {
-        // 워크스페이스 데이터가 없다면 먼저 로드
-        if (!workspaceDetails.value) {
-          await fetchWorkspace();
+    isLoading.value = true;
+    error.value = null;
+
+    try {
+      const response = await axios.get(`/workspaces/${props.workspaceId}`);
+
+      if (response.data.success) {
+        workspaceDetails.value = response.data.data;
+        isLoading.value = false;
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+
+  onMounted(() => {
+    fetchWorkspace();
+  });
+
+  const handleCloseModal = () => {
+    router.replace({
+      query: {
+        ...route.query,
+        cardId: undefined
+      }
+    });
+  };
+
+  watch(
+    [
+      () => props.workspaceId,
+      () => props.projectId,
+      () => route.query.cardId
+    ],
+    async ([newWorkspaceId, newProjectId, newCardId], [oldWorkspaceId, oldProjectId, oldCardId]) => {
+      // 워크스페이스나 프로젝트가 변경되었을 때
+      if ((newWorkspaceId && newWorkspaceId !== oldWorkspaceId) ||
+        (newProjectId && newProjectId !== oldProjectId)) {
+        await fetchWorkspace();
+      }
+
+      // cardId가 변경되었을 때
+      if (newCardId !== oldCardId) {
+        if (newCardId) {
+          // 워크스페이스 데이터가 없다면 먼저 로드
+          if (!workspaceDetails.value) {
+            await fetchWorkspace();
+          }
+
+          // 카드 데이터 찾기
+          const card = findCardInWorkspace(newCardId);
+          if (card) {
+            selectedCard.value = card;
+            showCardModal.value = true;
+          }
+        } else {
+          // cardId가 없어졌을 때 (모달 닫기)
+          showCardModal.value = false;
+          selectedCard.value = null;
         }
-        
-        // 카드 데이터 찾기
-        const card = findCardInWorkspace(newCardId);
-        if (card) {
-          selectedCard.value = card;
-          showCardModal.value = true;
-        }
-      } else {
-        // cardId가 없어졌을 때 (모달 닫기)
-        showCardModal.value = false;
-        selectedCard.value = null;
       }
     }
-  }
-);
+  );
 
-// 워크스페이스 내에서 카드 찾기 헬퍼 함수
-const findCardInWorkspace = (cardId) => {
-  if (!workspaceDetails.value?.cardboards) return null;
-  
-  for (const cardboard of workspaceDetails.value.cardboards) {
-    const card = cardboard.cards?.find(c => c.card_id === Number(cardId));
-    if (card) return card;
-  }
-  return null;
-};
+  // 워크스페이스 내에서 카드 찾기 헬퍼 함수
+  const findCardInWorkspace = (cardId) => {
+    if (!workspaceDetails.value?.cardboards) return null;
+
+    for (const cardboard of workspaceDetails.value.cardboards) {
+      const card = cardboard.cards?.find(c => c.card_id === Number(cardId));
+      if (card) return card;
+    }
+    return null;
+  };
 </script>
 <style scoped>
-.workspace-header {
-  padding: 0 2rem;
-}
+  .workspace-header {
+    padding: 0 2rem;
+  }
 
-.workspace-header h4 {
-  font-size: 1.4rem;
-}
+  .workspace-header h4 {
+    font-size: 1.4rem;
+  }
 
-.workspace-header>h3 {
-  font-size: 2rem;
-}
+  .workspace-header>h3 {
+    font-size: 2rem;
+  }
 
-.workspace-content {}
+  .workspace-content {}
 
-.boards-container {
-  height: 100%;
-  padding: 1rem;
-  overflow-x: auto;
-  display: flex;
-  gap: 1rem;
-}
+  .boards-container {
+    height: 100%;
+    padding: 1rem;
+    overflow-x: auto;
+    display: flex;
+    gap: 1rem;
+  }
 
-/* Add custom scrollbar styling */
-.boards-container::-webkit-scrollbar {
-  height: 6px;
-}
+  /* Add custom scrollbar styling */
+  .boards-container::-webkit-scrollbar {
+    height: 6px;
+  }
 
-.boards-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
+  .boards-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
 
-.boards-container::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 3px;
-}
+  .boards-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+  }
 
-.boards-container::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
+  .boards-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
 </style>
