@@ -169,6 +169,14 @@ const handleInstallationSelect = async (installation) => {
 	);
 	if (success) {
 		console.log("vcs info updated")
+		emit('update:projectInfo', {
+			...props.projectData,
+			vcs: {
+				type: 'GITHUB',
+				URL: installation.htmlUrl
+			}
+		})
+
 	}
 
 }

@@ -92,7 +92,7 @@
 			@project-deleted="handleProjectDelete" />
 
 		<ProjVcsSettingsModal v-model:visible="showProjVcsSettings" :projectId="props.projectId"
-			:projectData="currentProject" @project-vcs-updated="handleProjVcsUpdated" />
+			:projectData="currentProject" @update:projectInfo="(newValue) => projData = newValue" />
 
 
 		<template>
