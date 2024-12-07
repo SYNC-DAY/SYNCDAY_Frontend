@@ -13,7 +13,8 @@
 				</div>
 
 				<div class="organizations-list">
-					<div v-for="installation in githubAppStore.installations" :key="installation.id" class="org-item">
+					<div v-for="installation in githubAppStore.installations" :key="installation.id" class="org-item"
+						@click="handleInstallationSelect(installation.installationId)">
 						<div class="org-info">
 							<Avatar :image="installation.avatarUrl" :label="getInitials(installation.accountName)"
 								shape="square" size="large" class="org-avatar" />
@@ -58,6 +59,9 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { useAuthStore } from '@/stores/auth';
+
+import { useGithubProjectStore } from '@/stores/github/useGithubProjStore';
 import { useGithubAppStore } from '@/stores/github/useGithubAppStore';
 import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 import { useConfirm } from 'primevue';
@@ -82,8 +86,10 @@ const emit = defineEmits(['update:visible'])
 
 
 /* stores */
+const authStore = useAuthStore();
 const githubAuthStore = useGithubAuthStore()
 const githubAppStore = useGithubAppStore()
+const githubProjStore = useGithubProjectStore()
 const toast = useToast()
 const confirm = useConfirm()
 
@@ -152,7 +158,11 @@ const addOrganization = () => {
 	// Implement organization addition logic
 }
 
-
+const handleInstallationSelect = (installationId) => {
+	// const userId = authStore.user.userId;
+	// const githubProjs = githubProjStore.fetchProjects(installationId);
+	// console.log(githubProjs)
+}
 
 
 
