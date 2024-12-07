@@ -14,7 +14,7 @@
 
 				<div class="organizations-list">
 					<div v-for="installation in githubAppStore.installations" :key="installation.id" class="org-item"
-						@click="handleInstallationSelect(installation.installationId)">
+						@click="handleInstallationSelect(installation)">
 						<div class="org-info">
 							<Avatar :image="installation.avatarUrl" :label="getInitials(installation.accountName)"
 								shape="square" size="large" class="org-avatar" />
@@ -61,9 +61,9 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useAuthStore } from '@/stores/auth';
 
-import { useGithubProjectStore } from '@/stores/github/useGithubProjStore';
 import { useGithubAppStore } from '@/stores/github/useGithubAppStore';
 import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
+import { useGithubRepoStore } from '@/stores/github/useGithubRepoStore';
 import { useConfirm } from 'primevue';
 
 // Props
@@ -89,7 +89,7 @@ const emit = defineEmits(['update:visible'])
 const authStore = useAuthStore();
 const githubAuthStore = useGithubAuthStore()
 const githubAppStore = useGithubAppStore()
-const githubProjStore = useGithubProjectStore()
+const githubRepoStore = useGithubRepoStore();
 const toast = useToast()
 const confirm = useConfirm()
 
@@ -116,12 +116,12 @@ const openMenu = (event, installationId) => {
 				{
 					label: 'Disable',
 					icon: 'pi pi-trash',
-					// command: () => handleDisableOrg(installationId)
+					command: () => githubAppStore.handleDisableOrg(installationId)
 				},
 				{
 					label: 'Modify',
 					icon: 'pi pi-pencil',
-					// command: () => handleModifyOrg(installationId)
+					command: () => githubAppStore.handleModifyOrg(installationId)
 				}
 			]
 		}
@@ -158,10 +158,8 @@ const addOrganization = () => {
 	// Implement organization addition logic
 }
 
-const handleInstallationSelect = (installationId) => {
-	// const userId = authStore.user.userId;
-	// const githubProjs = githubProjStore.fetchProjects(installationId);
-	// console.log(githubProjs)
+const handleInstallationSelect = (installation) => {
+
 }
 
 
