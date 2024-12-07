@@ -2,7 +2,7 @@
   <SideBar>
     <template v-if="!projStore.isLoading">
       <template v-for="(proj, id) in projStore.projects" :key="id">
-        <ProjItem :project="proj" :isActive="activeProject === id" :isExpanded="expandedProjects.includes(id)"
+        <ProjItem :proj="proj" :isActive="activeProject === id" :isExpanded="expandedProjects.includes(id)"
           @toggle-expansion="toggleProjectExpansion(id)">
           <template v-for="workspace in proj.workspaces" :key="workspace.workspace_id">
             <WorkspaceItem :workspaceId="workspace.workspace_id" :projectId="id" :title="workspace.workspace_name"
