@@ -75,7 +75,7 @@
 			@project-deleted="handleProjectDelete" />
 
 		<ProjVcsSettingsModal v-model:visible="showProjVcsSettings" :project-id="projectId"
-			:project-data="projects[props.projectId]" @update:project-info="updateProjectInfo" />
+			:project-data="projects[props.projectId]" @update:project="updateProjectInfo" />
 	</div>
 </template>
 

@@ -102,7 +102,16 @@ export const useProjectStore = defineStore("projectStore", {
         throw error;
       }
     },
-    async modifyProject(projData) {},
+    async updateProject(projData) {
+      try {
+        const response = await axios.put("/proj-members/", projData);
+
+        if (response.data.success) {
+          const resultData = response.data.data;
+          console.log(resultData);
+        }
+      } catch (error) {}
+    },
   },
 
   getters: {
