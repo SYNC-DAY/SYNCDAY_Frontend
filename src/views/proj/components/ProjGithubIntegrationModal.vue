@@ -64,6 +64,8 @@ import { useAuthStore } from '@/stores/auth';
 import { useGithubAppStore } from '@/stores/github/useGithubAppStore';
 import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 import { useGithubRepoStore } from '@/stores/github/useGithubRepoStore';
+import { projAPI } from "@/api/proj";
+
 import { useConfirm } from 'primevue';
 
 // Props
@@ -158,7 +160,16 @@ const addOrganization = () => {
 	// Implement organization addition logic
 }
 
-const handleInstallationSelect = (installation) => {
+const handleInstallationSelect = async (installation) => {
+	const success = await projAPI.updateProjVCS(
+		authStore.user.userId,
+		props.projectId,
+		'GITHUB',
+		installation.htmlUrl
+	);
+	if (success) {
+		console.log("vcs info updated")
+	}
 
 }
 
