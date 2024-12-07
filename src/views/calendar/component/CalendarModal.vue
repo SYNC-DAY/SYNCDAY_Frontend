@@ -133,7 +133,7 @@
                             :key="participant.userId"
                             class="participant-chip"
                         >
-                            {{ participant.name }}
+                            {{ props.isEditMode? participant.username : participant.name }}
                             <span class="remove-participant" @click="removeParticipant(participant)">x</span>
                         </div>
 
@@ -271,7 +271,7 @@ const searchKeyword = ref('');
 const searchResults = ref([]);
 
 // 선택된 참석자 목록
-const selectedParticipants = ref([]);
+const selectedParticipants = ref(props.isEditMode? props.schedule.userInfo.filter(user => user.userId !== authStore.user.userId) : []);
 
 const showAllParticipants = ref(false);
 
@@ -279,14 +279,6 @@ const showAllParticipants = ref(false);
 const displayedParticipants = computed(() => {
     return showAllParticipants.value ? selectedParticipants.value : selectedParticipants.value.slice(0, 5);
 });
-
-// DB에 넣을 목록
-// const registParticipants = ref();
-
-// userId만 추출해 registParticipants에 업데이트
-// watch(selectedParticipants, (newParticipants) => {
-//     registParticipants.value = newParticipants.map((p) => p.userId);
-// });
 
 // 사용자 검색 함수
 const searchUsers = async () => {

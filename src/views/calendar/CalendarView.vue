@@ -59,7 +59,7 @@ const calendarOptions = ref({
     height: '100%', // 캘린더 높이를 부모 컨테이너에 맞춤
     headerToolbar: {
         left: 'today prev next title',
-        right: 'dayGridMonth,timeGridWeek addEventButton',
+        right: 'dayGridMonth timeGridWeek addEventButton',
     },
     buttonText: {
         today: '오늘',
@@ -385,7 +385,7 @@ body,
 }
 
 ::v-deep(.fc-button-primary) {
-    border: 1px solid #FF9D85 !important;
+    /* border: 1px solid #FF9D85 !important; */
     background-color: white;
     color: black;
     border: none;
@@ -393,7 +393,7 @@ body,
 }
 
 ::v-deep(.fc-dayGridMonth-button.fc-button.fc-button-primary) {
-    border: 1px solid #FF9D85 !important;
+    /* border: 1px solid #FF9D85 !important; */
     background-color: white;
     color: black;
     border: none;
@@ -401,7 +401,7 @@ body,
 }
 
 ::v-deep(.fc-timeGridWeek-button.fc-button.fc-button-primary) {
-    border: 1px solid #FF9D85 !important;
+    /* border: 1px solid #FF9D85 !important; */
     background-color: white;
     color: black;
     border: none;
@@ -409,7 +409,7 @@ body,
 }
 
 ::v-deep(.fc-today-button.fc-button) {
-    border: 1px solid #FF9D85 !important;
+    /* border: 1px solid #FF9D85 !important; */
     color: #000000;
     background-color: white;
     padding: 0.2rem 0.6rem !important;

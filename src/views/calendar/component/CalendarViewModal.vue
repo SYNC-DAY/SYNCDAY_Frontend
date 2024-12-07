@@ -115,6 +115,44 @@
                 </div>
 
                 <!-- 참석과 불참 명단 -->
+                <div class="text" v-if="userInfoLength > 1">
+                    <span class="pi pi-users"></span>
+                    <span class="detail-content">
+                        <div>참석자 {{ userInfoLength }}명</div>
+                        <div style="font-size: 1rem">
+                            <div class="hover-item" @mouseover="showTooltip('attend')" @mouseleave="hideTooltip">
+                                초대 수락 {{ userInfoAttend }}명,
+                                <div v-if="tooltipType === 'attend' && userInfoAttend > 0" class="tooltip">
+                                    <ul>
+                                        <li v-for="(user, index) in attendList" :key="index">
+                                            {{ user }}
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="hover-item" @mouseover="showTooltip('pending')" @mouseleave="hideTooltip">
+                                회신 대기 {{ userInfoPending }}명,
+                                <div v-if="tooltipType === 'pending' && userInfoPending > 0" class="tooltip">
+                                    <ul>
+                                        <li v-for="(user, index) in pendingList" :key="index">
+                                            {{ user }}
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="hover-item" @mouseover="showTooltip('absent')" @mouseleave="hideTooltip">
+                                불참 {{ userInfoAbsend }}명
+                                <div v-if="tooltipType === 'absent' && userInfoAbsend > 0" class="tooltip">
+                                    <ul>
+                                        <li v-for="(user, index) in absentList" :key="index">
+                                            {{ user }}
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </span>
+                </div>
             </div>
         </div>
     </div>
@@ -165,6 +203,33 @@ const userInfo = props.schedule.userInfo; // 이걸로 참석자 확인!!
 const myNotificationTime = ref(props.schedule.myNotificationTime);
 // const myNotificationTime = props.schedule.myNotificationTime;
 console.log('userInfo', userInfo);
+
+const userInfoLength = props.schedule.userInfo.length;
+const userInfoAttend = props.schedule.userInfo.filter((user) => ['ATTEND'].includes(user.participationStatus)).length;
+const userInfoPending = props.schedule.userInfo.filter((user) => ['PENDING'].includes(user.participationStatus)).length;
+const userInfoAbsend = props.schedule.userInfo.filter((user) => ['ABSENT'].includes(user.participationStatus)).length;
+
+// Lists for tooltips
+const attendList = computed(() =>
+    userInfo.filter((user) => user.participationStatus === 'ATTEND').map((user) => user.username)
+);
+const pendingList = computed(() =>
+    userInfo.filter((user) => user.participationStatus === 'PENDING').map((user) => user.username)
+);
+const absentList = computed(() =>
+    userInfo.filter((user) => user.participationStatus === 'ABSENT').map((user) => user.username)
+);
+
+// Tooltip visibility
+const tooltipType = ref(null);
+
+function showTooltip(type) {
+    tooltipType.value = type;
+}
+
+function hideTooltip() {
+    tooltipType.value = null;
+}
 
 const emit = defineEmits(['close', 'submit']);
 
@@ -308,14 +373,12 @@ const alarmOptions = [
 ];
 
 const notificationTime = ref(
-    myNotificationTime.value ? 
-        String(
-              ((dayjs(startTime).diff(dayjs(myNotificationTime.value)) % 60000) / 1000 / 60) * 60
-            ).padStart(2, '0') +
-                ':' +
-                String(
-                    Math.floor(dayjs(startTime).diff(dayjs(myNotificationTime.value)) / 1000 / 60)
-                ).padStart(2, '0') : '00:10');
+    myNotificationTime.value
+        ? String(((dayjs(startTime).diff(dayjs(myNotificationTime.value)) % 60000) / 1000 / 60) * 60).padStart(2, '0') +
+              ':' +
+              String(Math.floor(dayjs(startTime).diff(dayjs(myNotificationTime.value)) / 1000 / 60)).padStart(2, '0')
+        : '00:10'
+);
 
 const notificationTimeRegist = ref();
 
@@ -339,7 +402,7 @@ watch(
         } else {
             notificationTimeRegist.value = null;
         }
-    },
+    }
     // { immediate: true }
 );
 
@@ -535,5 +598,35 @@ onBeforeUnmount(() => {
 .pi-spin:hover {
     opacity: 1;
     color: #333;
+}
+
+.hover-item {
+    position: relative;
+    display: inline-block;
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+.tooltip {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 5px 10px;
+    font-size: 1rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+    z-index: 100;
+}
+
+.tooltip ul {
+    padding: 0;
+    margin: 0;
+    list-style-type: none;
+}
+
+.tooltip li {
+    margin: 5px 0;
 }
 </style>
