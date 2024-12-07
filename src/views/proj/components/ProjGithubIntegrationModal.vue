@@ -9,31 +9,33 @@
 			<div class="organizations-section">
 				<div class="section-header">
 					<strong>Connected organizations</strong>
-					<Button icon="pi pi-plus" class="p-button-text" @click="" />
+					<Button icon="pi pi-plus" class="p-button-text" @click="addOrganization" />
 				</div>
 
 				<div class="organizations-list">
-					<div v-for="org in organizations" :key="org.id" class="org-item">
+					<div v-for="installation in githubAppStore.installations" :key="installation.id" class="org-item">
 						<div class="org-info">
-							<Avatar :image="org.avatarUrl" :label="getInitials(org.name)" shape="square" size="large"
-								class="org-avatar" />
+							<Avatar :image="installation.avatarUrl" :label="getInitials(installation.accountName)"
+								shape="square" size="large" class="org-avatar" />
 							<div class="org-details">
-								<span class="org-name">{{ org.name }}</span>
-								<span class="org-date">Enabled by {{ org.enabledBy }} on {{ formatDate(org.enabledDate)
+								<span class="org-name">{{ installation.accountName }}</span>
+								<span class="org-date">Enabled on {{ formatDate(installation.createdAt)
 									}}</span>
 							</div>
 						</div>
 						<div class="org-status">
 							<span class="status-dot"></span>
 							<span>Connected</span>
-							<Button icon="pi pi-chevron-down" class="p-button-text p-button-sm" @click="showOrgMenu" />
+							<Button icon="pi pi-chevron-down" @click="(event) => openMenu(event, installation.id)"
+								aria-haspopup="true" aria-controls="overlay_menu" class="p-button-text" />
 						</div>
 					</div>
 				</div>
 			</div>
+			<Menu ref="menu" :model="currentMenuItems" :popup="true" />
 
 			<!-- Repository Selection -->
-			<div class="gap-1rem">
+			<!-- <div class="gap-1rem">
 				<div class="container-col gap-1rem">
 					<strong>Select repositories to import</strong>
 					<InputText v-model="searchQuery" placeholder="Filter repositories" class="w-full mb-4" />
@@ -44,7 +46,7 @@
 						<label :for="repo.id" class="repo-name">{{ repo.name }}</label>
 					</div>
 				</div>
-			</div>
+			</div> -->
 
 			<!-- Import Options -->
 
@@ -54,12 +56,24 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useToast } from 'primevue/usetoast'
 import { useGithubAppStore } from '@/stores/github/useGithubAppStore';
+import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
+import { useConfirm } from 'primevue';
+
 // Props
 const props = defineProps({
 	visible: {
 		type: Boolean,
+		required: true
+	},
+	projectId: {
+		type: Number,
+		required: true
+	},
+	projectData: {
+		type: Object,
 		required: true
 	}
 })
@@ -68,36 +82,48 @@ const emit = defineEmits(['update:visible'])
 
 
 /* stores */
-// const githubAppstores =
+const githubAuthStore = useGithubAuthStore()
+const githubAppStore = useGithubAppStore()
+const toast = useToast()
+const confirm = useConfirm()
+
 
 // State
 const searchQuery = ref('')
-const importClosedIssues = ref(false)
+const menu = ref(null)
+const currentMenuItems = ref([])
+const currentInstallationId = ref(null)
 
-const organizations = ref([
-	{
-		id: 1,
-		name: 'three-ping',
-		enabledBy: 'letterh.dev',
-		enabledDate: '2024-12-07',
-		avatarUrl: ''
-	}
-])
+// Open menu with correct items
+const openMenu = (event, installationId) => {
+	// Prevent any parent handlers from being called
+	event.stopPropagation()
 
-const repositories = ref([
-	{
-		id: 'repo1',
-		name: 'three-ping/MUDIUM',
-		selected: false
-	}
-])
+	// Set current installation ID
+	currentInstallationId.value = installationId
 
-// Computed
-const filteredRepos = computed(() => {
-	return repositories.value.filter(repo =>
-		repo.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-	)
-})
+	// Update menu items for this installation
+	currentMenuItems.value = [
+		{
+			label: 'Options',
+			items: [
+				{
+					label: 'Disable',
+					icon: 'pi pi-power-off',
+					// command: () => handleDisableOrg(installationId)
+				},
+				{
+					label: 'Modify',
+					icon: 'pi pi-cog',
+					// command: () => handleModifyOrg(installationId)
+				}
+			]
+		}
+	]
+
+	// Show the menu at the click position
+	menu.value.show(event)
+}
 
 // Methods
 const handleVisibilityChange = (newValue) => {
@@ -106,7 +132,7 @@ const handleVisibilityChange = (newValue) => {
 
 const getInitials = (name) => {
 	return name
-		.split(/[\s-]/g)
+		.split(' ')
 		.map(word => word[0])
 		.join('')
 		.toUpperCase()
@@ -122,12 +148,86 @@ const formatDate = (date) => {
 }
 
 const addOrganization = () => {
+	githubAppStore.openInstallationWindow();
 	// Implement organization addition logic
 }
 
-const showOrgMenu = () => {
-	// Implement menu display logic
+
+
+
+
+
+const confirmRevokeAccess = () => {
+	confirm.require({
+		message: 'Are you sure you want to revoke GitHub access?',
+		header: 'Revoke Access',
+		icon: 'pi pi-exclamation-triangle',
+		accept: async () => {
+			try {
+				await githubAuthStore.revokeAccess()
+				toast.add({
+					severity: 'success',
+					summary: 'Success',
+					detail: 'GitHub access has been revoked',
+					life: 3000
+				})
+			} catch (error) {
+				toast.add({
+					severity: 'error',
+					summary: 'Error',
+					detail: 'Failed to revoke access',
+					life: 3000
+				})
+			}
+		}
+	})
 }
+
+const handleAuthMessage = async (event) => {
+	if (event.origin !== window.location.origin) return
+
+	const { type, data } = event.data
+
+	const toastMessages = {
+		'github-auth-success': {
+			severity: 'success',
+			summary: 'Success',
+			detail: 'GitHub account connected successfully'
+		},
+		'github-installation-success': {
+			severity: 'success',
+			summary: 'Success',
+			detail: 'GitHub app installed successfully'
+		},
+		'github-error': {
+			severity: 'error',
+			summary: 'Error',
+			detail: data || 'GitHub operation failed'
+		}
+	}
+
+	if (type in toastMessages) {
+		if (['github-auth-success', 'github-installation-success'].includes(type)) {
+			await githubAppStore.fetchInstallations()
+		}
+
+		toast.add({
+			...toastMessages[type],
+			life: 3000
+		})
+	}
+}
+
+// Lifecycle hooks
+onMounted(() => {
+	githubAppStore.fetchInstallations();
+	window.addEventListener('message', handleAuthMessage)
+})
+
+onUnmounted(() => {
+	window.removeEventListener('message', handleAuthMessage)
+	githubAppStore.cleanup()
+})
 </script>
 
 <style scoped>
