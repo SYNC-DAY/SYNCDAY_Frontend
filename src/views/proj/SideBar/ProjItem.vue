@@ -1,15 +1,14 @@
-<!-- ProjItem.vue -->
 <template>
 	<div class="proj-item">
 		<div class="proj-section container-row" @click="handleSelect">
 			<div class="proj-left" :class="{ 'gradient-vertical': isActive }"></div>
 			<div class="proj-title container-row">
-				<span>{{ title }}</span>
+				<span>{{ project?.proj_name }}</span>
 			</div>
 			<div class="proj-right container-col">
-				<div class="bookmark-section" @click.stop="toggleBookmark">
+				<div class="bookmark-section" @click.stop="handleBookmark">
 					<i class="pi gradient-vertical"
-						:class="{ 'pi-bookmark': !isBookmarked, 'pi-bookmark-fill': isBookmarked }"></i>
+						:class="{ 'pi-bookmark': !isProjectBookmarked, 'pi-bookmark-fill': isProjectBookmarked }"></i>
 				</div>
 				<div class="chevron-section">
 					<i class="pi" :class="{ 'pi-chevron-down': !isExpanded, 'pi-chevron-up': isExpanded }"
@@ -26,12 +25,20 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed } from 'vue';
+import { useAuthStore } from '@/stores/auth';
+import { useProjectStore } from '@/stores/proj/useProjectStore';
+import { storeToRefs } from 'pinia';
+
+const authStore = useAuthStore();
+const projectStore = useProjectStore();
+const { projects } = storeToRefs(projectStore);
 
 const props = defineProps({
-	title: {
-		type: String,
-		required: true
+	projectIndex: {
+		type: Number,
+		required: true,
+		validator: value => value >= 0 && Number.isInteger(value)
 	},
 	isActive: {
 		type: Boolean,
@@ -41,32 +48,44 @@ const props = defineProps({
 		type: Boolean,
 		default: false
 	},
-	initialBookmarked: {
-		type: Boolean,
-		default: false
-	},
 	progress: {
 		type: Number,
-		default: 0
+		default: 0,
+		validator: value => value >= 0 && value <= 100
 	}
-})
+});
 
-const emit = defineEmits(['toggle-expansion', 'select', 'bookmark-changed'])
+const emit = defineEmits(['toggle-expansion', 'select', 'bookmark-changed']);
 
-const isBookmarked = ref(props.initialBookmarked)
+// Computed properties
+const project = computed(() => projects.value[props.projectIndex]);
+const isProjectBookmarked = computed(() => project.value?.bookmark_status === 'BOOKMARKED');
+
+// Event handlers
+const handleBookmark = async () => {
+	if (!project.value) return;
+
+	const newBookmarkState = !isProjectBookmarked.value;
+	try {
+		await projectStore.handleBookmarkChange(
+			authStore.user.userId,
+			project.value.proj_id,
+			newBookmarkState
+		);
+		emit('bookmark-changed', newBookmarkState);
+	} catch (error) {
+		console.error('Failed to toggle bookmark:', error);
+		// You might want to show a toast message here
+	}
+};
 
 const handleExpand = () => {
-	emit('toggle-expansion')
-}
+	emit('toggle-expansion');
+};
 
 const handleSelect = () => {
-	emit('select')
-}
-
-const toggleBookmark = () => {
-	isBookmarked.value = !isBookmarked.value
-	emit('bookmark-changed', isBookmarked.value)
-}
+	emit('select');
+};
 </script>
 
 <style scoped>
