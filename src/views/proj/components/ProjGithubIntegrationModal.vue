@@ -29,10 +29,11 @@
 							</span>
 						</div>
 					</div>
-					<div class="org-status">
+					<div class="org-status" @click="toggleOrgMenu(installation.installationId)">
 						<span class="status-indicator"></span>
 						Connected
-						<i class="pi pi-chevron-down"></i>
+						<i class="pi pi-chevron-down" :class="{ 'rotate-180': installation.menuOpen }"></i>
+						<Menu ref="orgMenu" />
 					</div>
 				</div>
 			</div>
@@ -72,6 +73,20 @@ const githubAuthStore = useGithubAuthStore()
 const githubAppStore = useGithubAppStore()
 const toast = useToast()
 const confirm = useConfirm()
+const toggleOrgMenu = (installationId) => {
+	console.log(`toggle menu for installation:${installationId}`);
+}
+const orgMenu = ref()
+const orgMenuItems = ref[(
+	{
+		label: "Disable",
+		icon: 'pi pi-disable',
+		command: () => {
+			githubAppStore.handleDisableAccess()
+		}
+	}
+)]
+
 
 // Refs
 const accountMenu = ref()
@@ -80,6 +95,8 @@ const accountMenuItems = ref([{
 	icon: 'pi pi-trash',
 	command: () => confirmRevokeAccess()
 }])
+
+
 
 // Methods
 const handleVisibilityChange = (newValue) => {
@@ -271,6 +288,14 @@ onUnmounted(() => {
 	padding: 0.75rem;
 	border-radius: 0.375rem;
 	border: 1px solid var(--border-color);
+}
+
+.pi-chevron-down {
+	transition: transform 0.2s;
+}
+
+.pi-chevron-down.rotate-180 {
+	transform: rotate(180deg);
 }
 
 .org-info {
