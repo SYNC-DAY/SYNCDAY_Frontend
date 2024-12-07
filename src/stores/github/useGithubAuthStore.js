@@ -97,7 +97,10 @@ export const useGithubAuthStore = defineStore("githubAuth", {
         }
 
         // 백엔드에 코드 전송하여 액세스 토큰 얻기
-        const response = await axios.get(`user/oauth2/github/access_token?code=${code}&state=${returnedState}`);
+        const response = await axios.post("user/oauth2/github/access_token", {
+          code: code,
+          state: returnedState,
+        });
 
         if (response.data.success) {
           const accessToken = response.data.data;

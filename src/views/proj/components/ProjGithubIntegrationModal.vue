@@ -19,9 +19,21 @@
 						<p class="text-secondary">You have connected your GitHub account to SyncDay</p>
 					</div>
 					<div class="account-status">
+						<h4>Personal account {{ githubAuthStore.isAuthenticated ? 'connected' : 'not connected' }}</h4>
+						<p class="text-secondary">
+							{{ githubAuthStore.isAuthenticated
+								? `Connected as ${githubAuthStore.username}`
+								: 'Connect your GitHub account to SyncDay'
+							}}</p>
+					</div>
+					<div v-if="!githubAuthStore.isAuthenticated">
+						<Button label="Connect GitHub" icon="pi pi-github" @click="openGithubLoginWindow" />
+					</div>
+					<div v-else class="account-status">
 						<span class="status-dot"></span>
 						{{ githubAuthStore.username }}
-						<i class="pi pi-chevron-down"></i>
+						<Menu ref="accountMenu" :model="accountMenuItems" :popup="true" />
+						<Button icon="pi pi-chevron-down" @click="(event) => accountMenu.toggle(event)" text />
 					</div>
 				</div>
 			</div>
@@ -31,7 +43,7 @@
 		<div class="section-container">
 			<div class="organizations-header">
 				<h4>Connected organizations</h4>
-				<Button icon="pi pi-plus" class="p-button-text" @click="openInstallationWindow" />
+				<Button icon="pi pi-plus" class="p-button-text" @click="githubAuthStore.openGithubLoginWindow" />
 			</div>
 
 			<div class="organizations-list">
@@ -168,6 +180,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 import { useGithubAppStore } from '@/stores/github/useGithubAppStore';
 import { useToast } from 'primevue/usetoast';
+import { useConfirm } from 'primevue';
 
 
 // Props
@@ -193,11 +206,21 @@ const emit = defineEmits(['update:visible']);
 const githubAuthStore = useGithubAuthStore();
 const githubAppStore = useGithubAppStore();
 const toast = useToast();
-const searchQuery = ref('');
+const confirm = useConfirm();
+
 // Refs
 const installationWindow = ref(null);
 const checkWindowInterval = ref(null);
+const accountMenu = ref();
+const searchQuery = ref('');
 
+const accountMenuItems = ref([
+	{
+		label: 'Revoke Access',
+		icon: 'pi pi-trash',
+		command: () => confirmRevokeAccess()
+	}
+]);
 
 // Methods
 const handleVisibilityChange = (newValue) => {
@@ -227,6 +250,39 @@ const formatDate = (date) => {
 		year: 'numeric'
 	});
 };
+
+// 로그인 창 열기
+
+const confirmRevokeAccess = () => {
+	confirm.require({
+		message: 'Are you sure you want to revoke GitHub access?',
+		header: 'Revoke Access',
+		icon: 'pi pi-exclamation-triangle',
+		accept: async () => {
+			try {
+				await githubAuthStore.revokeAccess();
+				toast.add({
+					severity: 'success',
+					summary: 'Success',
+					detail: 'GitHub access has been revoked',
+					life: 3000
+				});
+			} catch (error) {
+				toast.add({
+					severity: 'error',
+					summary: 'Error',
+					detail: 'Failed to revoke access',
+					life: 3000
+				});
+			}
+		}
+	});
+};
+const openGithubLoginWindow = () => {
+	// store의 loginWithGithub 메서드 직접 사용
+	githubAuthStore.loginWithGithub();
+};
+
 const openInstallationWindow = () => {
 	// Save project ID for installation callback
 	localStorage.setItem('github_installation_project_id', props.projectId);
@@ -267,46 +323,56 @@ const openInstallationWindow = () => {
 	}, 500);
 };
 
-const handleInstallationMessage = (event) => {
+const handleAuthMessage = async (event) => {
 	if (event.origin !== window.location.origin) return;
 
-	if (event.data.type === 'github-auth-success') {
-		toast.add({
-			severity: 'success',
-			summary: '성공',
-			detail: 'GitHub 연동이 완료되었습니다',
-			life: 3000
-		});
+	const { type, data } = event.data;
+
+	switch (type) {
+		case 'github-auth-success':
+			await githubAppStore.fetchInstallations();
+			toast.add({
+				severity: 'success',
+				summary: 'Success',
+				detail: 'GitHub account connected successfully',
+				life: 3000
+			});
+			break;
+
+		case 'github-installation-success':
+			await githubAppStore.fetchInstallations();
+			toast.add({
+				severity: 'success',
+				summary: 'Success',
+				detail: 'GitHub app installed successfully',
+				life: 3000
+			});
+			break;
+
+		case 'github-error':
+			toast.add({
+				severity: 'error',
+				summary: 'Error',
+				detail: data || 'GitHub operation failed',
+				life: 3000
+			});
+			break;
 	}
 };
-const handleAuthMessage = (event) => {
-	if (event.origin !== window.location.origin) return;
 
-	if (event.data.type === 'github-auth-success') {
-		// 인증 성공 처리
-		toast.add({
-			severity: 'success',
-			summary: '성공',
-			detail: 'GitHub 연동이 완료되었습니다.',
-			life: 3000
-		});
-	}
-};
-
-// Lifecycle hooks
+// 하나의 메시지 핸들러만 사용
 onMounted(() => {
-	githubAppStore.fetchInstallations();
 	window.addEventListener('message', handleAuthMessage);
-	window.addEventListener('message', handleInstallationMessage);
 });
 
 onUnmounted(() => {
-	window.removeEventListener('message', handleInstallationMessage);
 	window.removeEventListener('message', handleAuthMessage);
 	if (checkWindowInterval.value) {
 		clearInterval(checkWindowInterval.value);
 	}
 });
+
+
 </script>
 
 <style scoped>
