@@ -88,6 +88,7 @@
   import CalendarView from './views/CalendarView.vue';
   import CardModal from './components/layout/CardModal.vue';
 
+  import WorkspaceAPI from '@/api/proj/workspace';
 
   const route = useRoute();
   const router = useRouter();
@@ -125,14 +126,11 @@
     error.value = null;
 
     try {
-      const response = await axios.get(`/workspaces/${props.workspaceId}`);
-
-      if (response.data.success) {
-        workspaceDetails.value = response.data.data;
-        isLoading.value = false;
-      }
+      workspaceDetails.value = await WorkspaceAPI.getWorkspaceById(props.workspaceId)
     } catch (err) {
       console.error(err)
+    } finally {
+      isLoading.value = false
     }
   }
 
