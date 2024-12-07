@@ -109,12 +109,12 @@ const openMenu = (event, installationId) => {
 			items: [
 				{
 					label: 'Disable',
-					icon: 'pi pi-power-off',
+					icon: 'pi pi-trash',
 					// command: () => handleDisableOrg(installationId)
 				},
 				{
 					label: 'Modify',
-					icon: 'pi pi-cog',
+					icon: 'pi pi-pencil',
 					// command: () => handleModifyOrg(installationId)
 				}
 			]
