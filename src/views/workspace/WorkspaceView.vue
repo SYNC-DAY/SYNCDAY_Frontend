@@ -15,7 +15,7 @@
       <div class="workspace-header container-row underline-gray">
         <div class="container-row header-left">
           <h4>{{ workspaceDetails.workspace_name }}</h4>
-          <i class="pi pi-github"></i>
+          <Button icon="pi pi-code" text></Button>
         </div>
 
         <div class="container-row header-right">

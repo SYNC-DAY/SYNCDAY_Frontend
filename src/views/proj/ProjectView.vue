@@ -45,7 +45,7 @@
 						<Card>
 							<template #title>
 								{{ workspace.workspace_name }}
-								<Button icon="pi pi-github" variant="text" />
+								<Button icon="pi pi-code" variant="text" />
 							</template>
 							<template #content>
 								<ProgressBar :value="workspace.progress_status" severity="secondary" />
