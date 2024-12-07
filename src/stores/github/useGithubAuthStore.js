@@ -103,8 +103,9 @@ export const useGithubAuthStore = defineStore("githubAuth", {
         });
 
         if (response.data.success) {
-          const accessToken = response.data.data;
-          this.setAccessToken(accessToken);
+          const tokenData = response.data.data;
+          console.log(tokenData);
+          this.setAccessToken(tokenData.access_token);
           await this.fetchUserInfo();
 
           // state 초기화
@@ -132,6 +133,7 @@ export const useGithubAuthStore = defineStore("githubAuth", {
 
     // 액세스 토큰 설정
     setAccessToken(token) {
+      console.log(token);
       this.accessToken = token;
       if (token) {
         localStorage.setItem("github_token", token);
@@ -154,7 +156,13 @@ export const useGithubAuthStore = defineStore("githubAuth", {
           },
         });
 
-        this.userInfo = response.data;
+        if (!response.ok) {
+          throw new Error(`HttpError! status: ${response.status}`);
+        }
+
+        const userData = await response.json();
+        console.log(userData);
+        this.userInfo = userData;
         localStorage.setItem("github_user_info", JSON.stringify(response.data));
         return response.data;
       } catch (error) {
