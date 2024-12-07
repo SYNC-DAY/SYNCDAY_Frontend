@@ -68,20 +68,19 @@ const orgMenuItems = ref([
 		items: [
 			{
 				label: 'Disable',
-				icon: 'pi pi-cog'
-			},
-
+				icon: 'pi pi-power-off',
+				command: () => {
+					// const currentInstallation = githubAppStore.currentInstallation
+					confirmUninstall()
+				}
+			}
 		]
 	}
 ])
 
-// Add the toggle menu function
-const toggleOrgMenu = (event) => {
-	// Prevent event bubbling
-	// event.stopPropagation()
-	// Store the current installation ID
+const toggleOrgMenu = (event, installationId) => {
+	event.stopPropagation()
 	// githubAppStore.setCurrentInstallation(installationId)
-	// Show menu at click position
 	orgMenu.value?.toggle(event)
 }
 // Add confirmation dialog for uninstall
