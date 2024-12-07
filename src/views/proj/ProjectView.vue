@@ -102,247 +102,243 @@
 </template>
 
 <script setup>
-import axios from 'axios';
-import { storeToRefs } from 'pinia';
-import { ref, computed } from 'vue';
-import { useAuthStore } from '@/stores/auth';
-import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
-import { useRouter } from 'vue-router';
-import { useToast } from 'primevue/usetoast';
-import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
-import ProjectSettingsModal from './components/ProjectSettingsModal.vue';
-import ProjVcsSettingsModal from './components/ProjGithubIntegrationModal.vue';
-import VcsTypeMenu from '../vcs/components/VcsTypeMenu.vue';
+	import axios from 'axios';
+	import { storeToRefs } from 'pinia';
+	import { ref, computed } from 'vue';
+	import { useAuthStore } from '@/stores/auth';
+	import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
+	import { useRouter } from 'vue-router';
+	import { useToast } from 'primevue/usetoast';
+	import Button from 'primevue/button';
+	import InputText from 'primevue/inputtext';
+	import ProjectSettingsModal from './components/ProjectSettingsModal.vue';
+	import ProjVcsSettingsModal from './components/ProjGithubIntegrationModal.vue';
+	import VcsTypeMenu from '../vcs/components/VcsTypeMenu.vue';
 
-// props
-const props = defineProps({
-	projectId: {
-		type: [String, Number],
-		required: true
-	},
-	projects: {
-		type: Array,
-		required: true
-	}
-});
-
-// Router and Stores
-const router = useRouter();
-const toast = useToast();
-const githubAuthStore = useGithubAuthStore();
-const authStore = useAuthStore();
-const { user } = storeToRefs(authStore);
-
-// Refs
-const projects = ref([]);
-const vcsMenu = ref(null);
-const showProjectSettings = ref(false);
-const showProjVcsSettings = ref(false);
-const openNewWorkspaceDialog = ref(false);
-const newWorkspaceName = ref('');
-
-// Computed
-const currentProject = computed(() =>
-	props.projects.find(p => p.proj_id === parseInt(props.projectId))
-);
-
-// Navigation Methods
-const navigateToWorkspace = (workspaceId) => {
-	router.push({
-		name: 'Workspace',
-		params: { projectId: props.projectId, workspaceId }
+	// props
+	const props = defineProps({
+		projectId: {
+			type: [String, Number],
+			required: true
+		},
+		proj: {
+			type: Object,
+			required: true
+		}
 	});
-};
 
-// VCS Integration Methods
-const toggleVcsMenu = (event) => {
-	vcsMenu.value.toggle(event);
-};
+	// Router and Stores
+	const router = useRouter();
+	const toast = useToast();
+	const githubAuthStore = useGithubAuthStore();
+	const authStore = useAuthStore();
+	const { user } = storeToRefs(authStore);
 
-const openProjectSettings = (project) => {
-	showProjectSettings.value = true;
-}
+	// Refs
+	const projects = ref([]);
+	const vcsMenu = ref(null);
+	const showProjectSettings = ref(false);
+	const showProjVcsSettings = ref(false);
+	const openNewWorkspaceDialog = ref(false);
+	const newWorkspaceName = ref('');
 
-const handleVcsSelection = async (vcsType) => {
-	try {
-		if (vcsType === 'GITHUB') {
-			showProjVcsSettings.value = true;
-		}
-	} catch (error) {
-		toast.add({
-			severity: 'error',
-			summary: 'VCS Connection Failed',
-			detail: error.message,
-			life: 3000
+	// Computed
+	// Navigation Methods
+	const navigateToWorkspace = (workspaceId) => {
+		router.push({
+			name: 'Workspace',
+			params: { projectId: props.projectId, workspaceId }
 		});
-	}
-};
+	};
 
+	// VCS Integration Methods
+	const toggleVcsMenu = (event) => {
+		vcsMenu.value.toggle(event);
+	};
 
-
-const handleProjectUpdate = (updatedProject) => {
-	const index = props.projects.findIndex((p) => p.proj_id === updatedProject.proj_id);
-	if (index !== -1) {
-		props.projects[index] = { ...props.projects[index], ...updatedProject }; // 데이터 업데이트
-	} else {
-		console.error(`Project with ID ${updatedProject.proj_id} not found.`);
-	}
-};
-
-
-const handleProjectDelete = (projectId) => {
-	projects.value = projects.value.filter(p => p.proj_id !== projectId);
-	router.push('/');
-};
-
-
-
-
-
-
-const handleProjectSelect = async ({ organization }) => {
-	try {
-		// First, construct the organization URL
-		const orgUrl = `https://github.com/${organization.login}`;
-
-		// Make the axios request to update the project's VCS information
-		const response = await axios.put("/projs/vcs", {
-			user_id: user.value.userId,
-			proj_id: props.projectId,
-			vcs_type: 'GITHUB',
-			vcs_proj_url: orgUrl
-		});
-
-		if (!response.data.success) {
-			throw new Error(response.data.error || 'Failed to update VCS information');
-		}
-
-		// Update the local project state
-		const updatedProject = {
-			...currentProject.value,
-			vcs_type: 'GITHUB',
-			vcs_proj_url: orgUrl
-		};
-
-		// Emit the update event to refresh the parent component
-		emit('update:project', updatedProject);
-
-		// Show success toast
-		toast.add({
-			severity: 'success',
-			summary: 'VCS Updated',
-			detail: `Successfully connected to GitHub organization: ${organization.login}`,
-			life: 3000
-		});
-
-		// Close the organization selection modal
-		showOrgProjSelectionModal.value = false;
-
-	} catch (error) {
-		console.error('Failed to update VCS information:', error);
-
-		// Show error toast
-		toast.add({
-			severity: 'error',
-			summary: 'Update Failed',
-			detail: error.message || 'Failed to update VCS information',
-			life: 3000
-		});
-	}
-};
-
-const createWorkspace = async () => {
-	console.log("확인 버튼 클릭됨");
-	if (!newWorkspaceName.value.trim()) {
-		toast.add({
-			severity: "warn",
-			summary: "이름 입력 필요",
-			detail: "워크스페이스 이름을 입력해주세요.",
-			life: 3000,
-		});
-		return;
+	const openProjectSettings = (project) => {
+		showProjectSettings.value = true;
 	}
 
-	try {
-		const response = await axios.post("/workspaces", {
-			workspace_name: newWorkspaceName.value.trim(),
-			proj_id: currentProject.value.proj_id,
-		});
-		console.log("현재 프로젝트id: ", currentProject.value);
-		console.log("새로운 워크스페이스 이름: ", newWorkspaceName.value);
-		if (response.data.success) {
-
-			const newWorkspace = response.data.data; // API 응답에서 새 워크스페이스 정보 가져오기
-			currentProject.value.workspaces.push(newWorkspace);
+	const handleVcsSelection = async (vcsType) => {
+		try {
+			if (vcsType === 'GITHUB') {
+				showProjVcsSettings.value = true;
+			}
+		} catch (error) {
 			toast.add({
-				severity: "success",
-				summary: "워크스페이스 생성",
-				detail: `워크스페이스 '${newWorkspaceName.value}'가 생성되었습니다.`,
-				life: 3000,
+				severity: 'error',
+				summary: 'VCS Connection Failed',
+				detail: error.message,
+				life: 3000
+			});
+		}
+	};
+
+
+
+	const handleProjectUpdate = (updatedProject) => {
+		const index = props.projects.findIndex((p) => p.proj_id === updatedProject.proj_id);
+		if (index !== -1) {
+			props.projects[index] = { ...props.projects[index], ...updatedProject }; // 데이터 업데이트
+		} else {
+			console.error(`Project with ID ${updatedProject.proj_id} not found.`);
+		}
+	};
+
+
+	const handleProjectDelete = (projectId) => {
+		projects.value = projects.value.filter(p => p.proj_id !== projectId);
+		router.push('/');
+	};
+
+
+
+
+
+
+	const handleProjectSelect = async ({ organization }) => {
+		try {
+			// First, construct the organization URL
+			const orgUrl = `https://github.com/${organization.login}`;
+
+			// Make the axios request to update the project's VCS information
+			const response = await axios.put("/projs/vcs", {
+				user_id: user.value.userId,
+				proj_id: props.projectId,
+				vcs_type: 'GITHUB',
+				vcs_proj_url: orgUrl
 			});
 
-			alert(`워크스페이스 '${newWorkspaceName.value}'가 성공적으로 생성되었습니다!`);
-			openNewWorkspaceDialog.value = false; // 모달 닫기
-			newWorkspaceName.value = ""; // 입력 필드 초기화
+			if (!response.data.success) {
+				throw new Error(response.data.error || 'Failed to update VCS information');
+			}
+
+			// Update the local project state
+			const updatedProject = {
+				...currentProject.value,
+				vcs_type: 'GITHUB',
+				vcs_proj_url: orgUrl
+			};
+
+			// Emit the update event to refresh the parent component
+			emit('update:project', updatedProject);
+
+			// Show success toast
+			toast.add({
+				severity: 'success',
+				summary: 'VCS Updated',
+				detail: `Successfully connected to GitHub organization: ${organization.login}`,
+				life: 3000
+			});
+
+			// Close the organization selection modal
+			showOrgProjSelectionModal.value = false;
+
+		} catch (error) {
+			console.error('Failed to update VCS information:', error);
+
+			// Show error toast
+			toast.add({
+				severity: 'error',
+				summary: 'Update Failed',
+				detail: error.message || 'Failed to update VCS information',
+				life: 3000
+			});
 		}
-	} catch (error) {
-		console.error("워크스페이스 생성 실패:", error);
-		toast.add({
-			severity: "error",
-			summary: "워크스페이스 생성 실패",
-			detail: "워크스페이스 생성 중 오류가 발생했습니다.",
-			life: 3000,
-		});
-	}
-};
-// Event emits
-const emit = defineEmits(['update:project']);
+	};
+
+	const createWorkspace = async () => {
+		console.log("확인 버튼 클릭됨");
+		if (!newWorkspaceName.value.trim()) {
+			toast.add({
+				severity: "warn",
+				summary: "이름 입력 필요",
+				detail: "워크스페이스 이름을 입력해주세요.",
+				life: 3000,
+			});
+			return;
+		}
+
+		try {
+			const response = await axios.post("/workspaces", {
+				workspace_name: newWorkspaceName.value.trim(),
+				proj_id: currentProject.value.proj_id,
+			});
+			console.log("현재 프로젝트id: ", currentProject.value);
+			console.log("새로운 워크스페이스 이름: ", newWorkspaceName.value);
+			if (response.data.success) {
+
+				const newWorkspace = response.data.data; // API 응답에서 새 워크스페이스 정보 가져오기
+				currentProject.value.workspaces.push(newWorkspace);
+				toast.add({
+					severity: "success",
+					summary: "워크스페이스 생성",
+					detail: `워크스페이스 '${newWorkspaceName.value}'가 생성되었습니다.`,
+					life: 3000,
+				});
+
+				alert(`워크스페이스 '${newWorkspaceName.value}'가 성공적으로 생성되었습니다!`);
+				openNewWorkspaceDialog.value = false; // 모달 닫기
+				newWorkspaceName.value = ""; // 입력 필드 초기화
+			}
+		} catch (error) {
+			console.error("워크스페이스 생성 실패:", error);
+			toast.add({
+				severity: "error",
+				summary: "워크스페이스 생성 실패",
+				detail: "워크스페이스 생성 중 오류가 발생했습니다.",
+				life: 3000,
+			});
+		}
+	};
+	// Event emits
+	const emit = defineEmits(['update:project']);
 </script>
 
 <style scoped>
-.role {}
+	.role {}
 
-.role img {
-	width: 1.5rem;
-	height: 1.5rem;
-}
+	.role img {
+		width: 1.5rem;
+		height: 1.5rem;
+	}
 
-.role span {
-	color: var(--muted-text-color);
+	.role span {
+		color: var(--muted-text-color);
 
-}
-
-
-
-
-/* Workspace Styles */
+	}
 
 
 
-.workspaces-grid {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	grid-gap: 1rem;
-}
+
+	/* Workspace Styles */
 
 
-.workspace-card {
-	border-radius: 1.2rem;
-	/* border: 0 solid #e5e7; */
-	gap: 2rem;
 
-}
+	.workspaces-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		grid-gap: 1rem;
+	}
 
-.workspace-card:hover {
-	transform: translateY(-2px);
-}
 
-.empty-state {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	min-height: 200px;
-}
+	.workspace-card {
+		border-radius: 1.2rem;
+		/* border: 0 solid #e5e7; */
+		gap: 2rem;
+
+	}
+
+	.workspace-card:hover {
+		transform: translateY(-2px);
+	}
+
+	.empty-state {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		min-height: 200px;
+	}
 </style>

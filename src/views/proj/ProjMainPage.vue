@@ -127,6 +127,34 @@
   };
 
   // Other methods remain the same...
+  const selectProject = async (projId) => {
+    try {
+      activeProject.value = projId;
+      activeWorkspace.value = null;
+
+      await router.push({
+        name: 'Project',
+        params: { projectId: projId }
+      });
+    } catch (err) {
+      console.error('Project navigation failed:', err);
+      toast.add({
+        severity: 'error',
+        summary: '이동 실패',
+        detail: '프로젝트로 이동하는 중 오류가 발생했습니다.',
+        life: 3000
+      });
+    }
+  };
+
+  const toggleProjectExpansion = (projId) => {
+    const index = expandedProjects.value.indexOf(projId);
+    if (index === -1) {
+      expandedProjects.value.push(projId);
+    } else {
+      expandedProjects.value.splice(index, 1);
+    }
+  };
 
   onMounted(async () => {
     try {
