@@ -1,124 +1,103 @@
 <template>
-	<Dialog :visible="visible" @update:visible="handleVisibilityChange" :modal="true" class="github-integration-dialog"
-		:style="{ width: '600px' }">
-		<!-- Previous code remains the same -->
-		<div class="organizations-list">
-			<div v-for="installation in githubAppStore.installations" :key="installation.installationId"
-				class="organization-item">
-				<div class="org-info">
-					<Avatar :image="installation.avatarUrl" :label="getInitials(installation.accountName)"
-						shape="circle" />
-					<div class="org-details">
-						<span class="org-name">{{ installation.accountName }}</span>
-						<span class="org-date">
-							Enabled by {{ installation.accountName }} on {{ formatDate(installation.createdAt) }}
-						</span>
+	<Dialog :visible="visible" @update:visible="handleVisibilityChange" :modal="true" class=""
+		:style="{ width: '70vw' }" header="Github Integration">
+		<!-- Progress Steps -->
+		<!-- Main Content -->
+		<div class="container-col gap-1rem">
+
+			<!-- Connected Organizations -->
+			<div class="organizations-section">
+				<div class="section-header">
+					<strong>Connected organizations</strong>
+					<Button icon="pi pi-plus" class="p-button-text" @click="" />
+				</div>
+
+				<div class="organizations-list">
+					<div v-for="org in organizations" :key="org.id" class="org-item">
+						<div class="org-info">
+							<Avatar :image="org.avatarUrl" :label="getInitials(org.name)" shape="square" size="large"
+								class="org-avatar" />
+							<div class="org-details">
+								<span class="org-name">{{ org.name }}</span>
+								<span class="org-date">Enabled by {{ org.enabledBy }} on {{ formatDate(org.enabledDate)
+									}}</span>
+							</div>
+						</div>
+						<div class="org-status">
+							<span class="status-dot"></span>
+							<span>Connected</span>
+							<Button icon="pi pi-chevron-down" class="p-button-text p-button-sm" @click="showOrgMenu" />
+						</div>
 					</div>
 				</div>
-				<div class="org-status">
-					<span class="status-indicator"></span>
-					Connected
-					<Button icon="pi pi-chevron-down" class="p-button-text"
-						@click="(event) => toggleOrgMenu(event, installation.installationId)" aria-haspopup="true"
-						aria-controls="org_menu" />
+			</div>
+
+			<!-- Repository Selection -->
+			<div class="gap-1rem">
+				<div class="container-col gap-1rem">
+					<strong>Select repositories to import</strong>
+					<InputText v-model="searchQuery" placeholder="Filter repositories" class="w-full mb-4" />
+				</div>
+				<div class="repository-list">
+					<div v-for="repo in filteredRepos" :key="repo.id" class="repo-item">
+						<Checkbox v-model="repo.selected" :binary="true" :inputId="repo.id" />
+						<label :for="repo.id" class="repo-name">{{ repo.name }}</label>
+					</div>
 				</div>
 			</div>
+
+			<!-- Import Options -->
+
+
 		</div>
-		<Menu ref="orgMenu" id="org_menu" :model="orgMenuItems" :popup="true" />
 	</Dialog>
 </template>
 
-
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore'
-import { useGithubAppStore } from '@/stores/github/useGithubAppStore'
-import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue'
-
+import { ref, computed } from 'vue'
+import { useGithubAppStore } from '@/stores/github/useGithubAppStore';
 // Props
 const props = defineProps({
 	visible: {
 		type: Boolean,
-		required: true
-	},
-	projectId: {
-		type: Number,
-		required: true
-	},
-	projectData: {
-		type: Object,
 		required: true
 	}
 })
 
 const emit = defineEmits(['update:visible'])
 
-// Store and service initialization
-const githubAuthStore = useGithubAuthStore()
-const githubAppStore = useGithubAppStore()
-const toast = useToast()
-const confirm = useConfirm()
 
+/* stores */
+// const githubAppstores =
 
-const orgMenu = ref()
-const orgMenuItems = ref([
+// State
+const searchQuery = ref('')
+const importClosedIssues = ref(false)
+
+const organizations = ref([
 	{
-		label: 'Options',
-		items: [
-			{
-				label: 'Disable',
-				icon: 'pi pi-power-off',
-				command: () => {
-					// const currentInstallation = githubAppStore.currentInstallation
-					confirmUninstall()
-				}
-			}
-		]
+		id: 1,
+		name: 'three-ping',
+		enabledBy: 'letterh.dev',
+		enabledDate: '2024-12-07',
+		avatarUrl: ''
 	}
 ])
 
-const toggleOrgMenu = (event, installationId) => {
-	event.stopPropagation()
-	// githubAppStore.setCurrentInstallation(installationId)
-	orgMenu.value?.toggle(event)
-}
-// Add confirmation dialog for uninstall
-const confirmUninstall = () => {
-	confirm.require({
-		message: 'Are you sure you want to uninstall this GitHub integration?',
-		header: 'Uninstall Integration',
-		icon: 'pi pi-exclamation-triangle',
-		accept: async () => {
-			try {
-				await githubAppStore.handleUninstallation()
-				toast.add({
-					severity: 'success',
-					summary: 'Success',
-					detail: 'GitHub integration uninstalled successfully',
-					life: 3000
-				})
-			} catch (error) {
-				toast.add({
-					severity: 'error',
-					summary: 'Error',
-					detail: 'Failed to uninstall integration',
-					life: 3000
-				})
-			}
-		}
-	})
-}
+const repositories = ref([
+	{
+		id: 'repo1',
+		name: 'three-ping/MUDIUM',
+		selected: false
+	}
+])
 
-// Refs
-const accountMenu = ref()
-const accountMenuItems = ref([{
-	label: 'Revoke Access',
-	icon: 'pi pi-trash',
-	command: () => confirmRevokeAccess()
-}])
-
-
+// Computed
+const filteredRepos = computed(() => {
+	return repositories.value.filter(repo =>
+		repo.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+	)
+})
 
 // Methods
 const handleVisibilityChange = (newValue) => {
@@ -127,7 +106,7 @@ const handleVisibilityChange = (newValue) => {
 
 const getInitials = (name) => {
 	return name
-		.split(' ')
+		.split(/[\s-]/g)
 		.map(word => word[0])
 		.join('')
 		.toUpperCase()
@@ -136,161 +115,96 @@ const getInitials = (name) => {
 
 const formatDate = (date) => {
 	return new Date(date).toLocaleDateString('en-US', {
+		year: 'numeric',
 		month: 'short',
-		day: 'numeric',
-		year: 'numeric'
+		day: 'numeric'
 	})
 }
 
-const openGithubLoginWindow = () => {
-	githubAuthStore.loginWithGithub()
+const addOrganization = () => {
+	// Implement organization addition logic
 }
 
-const confirmRevokeAccess = () => {
-	confirm.require({
-		message: 'Are you sure you want to revoke GitHub access?',
-		header: 'Revoke Access',
-		icon: 'pi pi-exclamation-triangle',
-		accept: async () => {
-			try {
-				await githubAuthStore.revokeAccess()
-				toast.add({
-					severity: 'success',
-					summary: 'Success',
-					detail: 'GitHub access has been revoked',
-					life: 3000
-				})
-			} catch (error) {
-				toast.add({
-					severity: 'error',
-					summary: 'Error',
-					detail: 'Failed to revoke access',
-					life: 3000
-				})
-			}
-		}
-	})
+const showOrgMenu = () => {
+	// Implement menu display logic
 }
-
-const handleAuthMessage = async (event) => {
-	if (event.origin !== window.location.origin) return
-
-	const { type, data } = event.data
-
-	const toastMessages = {
-		'github-auth-success': {
-			severity: 'success',
-			summary: 'Success',
-			detail: 'GitHub account connected successfully'
-		},
-		'github-installation-success': {
-			severity: 'success',
-			summary: 'Success',
-			detail: 'GitHub app installed successfully'
-		},
-		'github-error': {
-			severity: 'error',
-			summary: 'Error',
-			detail: data || 'GitHub operation failed'
-		}
-	}
-
-	if (type in toastMessages) {
-		if (['github-auth-success', 'github-installation-success'].includes(type)) {
-			await githubAppStore.fetchInstallations()
-		}
-
-		toast.add({
-			...toastMessages[type],
-			life: 3000
-		})
-	}
-}
-
-// Lifecycle hooks
-onMounted(() => {
-	githubAppStore.fetchInstallations();
-	window.addEventListener('message', handleAuthMessage)
-})
-
-onUnmounted(() => {
-	window.removeEventListener('message', handleAuthMessage)
-	githubAppStore.cleanup()
-})
 </script>
 
 <style scoped>
-.github-integration-dialog {
-	color: var(--text-color);
+.linear-style-dialog {
+	--linear-accent: #5E6AD2;
+	--linear-border: #2E2E36;
+	--linear-text-secondary: #8A8F98;
+	color: #fff;
+	background: #1C1C1F;
 }
 
-.dialog-header {
+.steps-container {
+	padding: 1rem 0;
+}
+
+.steps-wrapper {
 	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
-
-.dialog-header h3 {
-	font-size: 1.5rem;
-	margin: 0;
-}
-
-.text-secondary {
-	font-size: 0.9rem;
-	color: var(--text-secondary);
-}
-
-.account-section,
-.organizations-section {
-	margin: 1.5rem 0;
-	padding: 1rem;
-	border-radius: 0.5rem;
-	border: 1px solid var(--border-color);
-}
-
-.section-content {
-	display: flex;
+	align-items: center;
 	justify-content: space-between;
-	align-items: center;
+	padding: 0 2rem;
 }
 
-.account-info h4 {
-	margin: 0 0 0.25rem;
-	font-size: 1rem;
-}
-
-.user-profile {
-	display: flex;
-	align-items: center;
-	gap: 1rem;
-}
-
-.profile-details {
-	display: flex;
-	align-items: center;
-}
-
-.user-info {
+.step {
 	display: flex;
 	flex-direction: column;
-	gap: 0.25rem;
-}
-
-.connection-status,
-.org-status {
-	display: flex;
 	align-items: center;
 	gap: 0.5rem;
 }
 
-.status-indicator {
-	width: 8px;
-	height: 8px;
-	background: var(--success-color);
+.step-circle {
+	width: 24px;
+	height: 24px;
 	border-radius: 50%;
+	background: var(--linear-border);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 12px;
+	color: var(--linear-text-secondary);
 }
 
-.organizations-header {
+.step.active .step-circle {
+	background: var(--linear-accent);
+	color: white;
+}
+
+.step-label {
+	font-size: 12px;
+	color: var(--linear-text-secondary);
+}
+
+.step.active .step-label {
+	color: white;
+}
+
+.step-line {
+	flex: 1;
+	height: 2px;
+	background: var(--linear-border);
+	margin: 0 0.5rem;
+}
+
+.step-line.active {
+	background: var(--linear-accent);
+}
+
+.content-section {
+	padding: 1rem 2rem;
+}
+
+.section-title {
+	font-size: 1.5rem;
+	font-weight: 600;
+	margin-bottom: 2rem;
+}
+
+.section-header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -303,27 +217,23 @@ onUnmounted(() => {
 	gap: 0.75rem;
 }
 
-.organization-item {
+.org-item {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	padding: 0.75rem;
-	border-radius: 0.375rem;
-	border: 1px solid var(--border-color);
-}
-
-.pi-chevron-down {
-	transition: transform 0.2s;
-}
-
-.pi-chevron-down.rotate-180 {
-	transform: rotate(180deg);
+	border-radius: 6px;
+	border: 1px solid var(--linear-border);
 }
 
 .org-info {
 	display: flex;
 	align-items: center;
 	gap: 1rem;
+}
+
+.org-avatar {
+	background: var(--linear-border);
 }
 
 .org-details {
@@ -337,7 +247,77 @@ onUnmounted(() => {
 }
 
 .org-date {
-	font-size: 0.8rem;
-	color: var(--text-secondary);
+	font-size: 0.875rem;
+	color: var(--linear-text-secondary);
+}
+
+.org-status {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.status-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: #3FB950;
+}
+
+.repository-section {
+	margin-top: 2rem;
+}
+
+.repository-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.repo-item {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.5rem;
+	border-radius: 4px;
+}
+
+.repo-name {
+	font-size: 0.875rem;
+}
+
+.import-options {
+	margin-top: 2rem;
+}
+
+.option-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1rem 0;
+}
+
+:deep(.p-dialog-content) {
+	padding: 0;
+	background: #1C1C1F;
+}
+
+:deep(.p-dialog-header) {
+	display: none;
+}
+
+
+
+:deep(.p-checkbox) {
+	width: 1.25rem;
+	height: 1.25rem;
+}
+
+:deep(.p-button.p-button-text) {
+	color: var(--linear-text-secondary);
+}
+
+:deep(.p-button.p-button-text:hover) {
+	background: rgba(255, 255, 255, 0.1);
 }
 </style>
