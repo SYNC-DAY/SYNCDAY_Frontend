@@ -155,6 +155,7 @@
 				...props.projectData,
 				vcs_type: 'GITHUB',
 				vcs_proj_url: installation.htmlUrl || '', // GitHub repository URL
+				github_installation_id: installation.installationId
 			})
 
 			// Emit update event to parent component
@@ -162,7 +163,9 @@
 				...props.projectData,
 				vcs_type: 'GITHUB',
 				vcs_proj_url: installation.htmlUrl || '',
+				github_installation_id: installation.installationId
 			})
+			emit("update:visible", false)
 
 		} catch (err) {
 			error.value = err instanceof Error ? err.message : 'Failed to update GitHub integration'

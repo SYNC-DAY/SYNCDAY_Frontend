@@ -108,7 +108,7 @@ export const useProjectStore = defineStore("projectStore", {
 
         if (response.data.success) {
           const resultData = response.data.data;
-          console.log(resultData);
+          return true;
         }
       } catch (error) {}
     },
