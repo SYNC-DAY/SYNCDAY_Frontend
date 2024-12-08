@@ -102,7 +102,12 @@ export const useGithubAppStore = defineStore("githubApp", {
 
       try {
         const authStore = useAuthStore();
-        const response = await axios.delete(`/github/install/users/${authStore.user.userId}/installs/${installationId}`);
+        const response = await axios.delete("/github/install", {
+          params: {
+            userId: authStore.user.userId,
+            installationId: installationId,
+          },
+        });
 
         if (response.data.success) {
           // Remove the installation from the local state
