@@ -21,7 +21,10 @@
 	import { ref, watch, onMounted } from 'vue';
 	import { useToast } from 'primevue/usetoast';
 	import { useProjectStore } from '@/stores/proj/useProjectStore';
+	import { useGithubAppStore } from '@/stores/github/useGithubAppStore';
+	import { useGithubRepoStore } from '@/stores/github/useGithubRepoStore';
 	import { useRoute } from 'vue-router';
+
 	import axios from 'axios';
 	const props = defineProps({
 		projectId: {
@@ -49,8 +52,8 @@
 	const isVisible = ref(props.modelValue);
 	const selectedRepo = ref();
 	const githubInstallationId = ref(null);
-
-
+	const githubAppStore = useGithubAppStore();
+	const githubRepoStore = useGithubRepoStore();
 	const fetchRepositories = async (installationId) => {
 		if (!installationId) {
 			return;
@@ -58,7 +61,7 @@
 		try {
 			console.log('Starting request for installationId:', installationId);
 			// Replace with your actual API call
-			const response = await axios.get(`/github/repositories/installations/${installationId}`);
+			const response = githubRepoStore.fetchRepositories(installationId);
 
 			if (response.data.success) {
 				const resultData = response.data.data;
