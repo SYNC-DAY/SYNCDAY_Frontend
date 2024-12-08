@@ -87,7 +87,6 @@
 	import { useGithubAppStore } from '@/stores/github/useGithubAppStore';
 	import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 	import { useGithubProjectsStore } from '@/stores/github/useGithubProjectsStore';
-	import ConfirmDialog from 'primevue/confirmdialog'
 
 	import { useConfirm } from "primevue/useconfirm";
 

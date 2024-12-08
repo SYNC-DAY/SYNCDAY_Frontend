@@ -40,6 +40,8 @@ import Checkbox from "primevue/checkbox";
 import RadioButton from "primevue/radiobutton";
 import Menu from "primevue/menu";
 import MultiSelect from "primevue/multiselect";
+import ConfirmDialog from "primevue/confirmdialog";
+
 /* css */
 import "@/assets/styles/syncday/main.css";
 
@@ -113,5 +115,6 @@ app.component("Listbox", Listbox);
 app.component("Checkbox", Checkbox);
 app.component("MultiSelect", MultiSelect);
 app.component("RadioButton", RadioButton);
+app.component("ConfirmDialog", ConfirmDialog);
 /* mount */
 app.mount("#app");
