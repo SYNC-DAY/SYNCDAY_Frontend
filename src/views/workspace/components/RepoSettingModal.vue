@@ -8,7 +8,7 @@
 				<span>Are you sure you want to remove {{ selectedRepo?.name }}?</span>
 			</div>
 			<InputText />
-			<div v-for="repo in repositories" key="repo.id">
+			<div v-for="(id, repo) in repositories" key="id">
 				<input type="checkbox" v-model="importClosedIssues" class="sr-only peer" />
 				<span>{{ repo }}</span>
 			</div>
@@ -23,7 +23,8 @@
 <script setup>
 	import { ref, onMounted, watch } from 'vue';
 	import { useToast } from 'primevue/usetoast';
-
+	import { useProjectStore } from '@/stores/proj/useProjectStore';
+	import axios from 'axios';
 	const props = defineProps({
 		projectId: {
 			type: [String, Number],
@@ -37,23 +38,21 @@
 			type: Boolean,
 			default: false
 		},
-		githubInstallationId: {
-			type: Number,
-			required: false
-		}
+
 	});
 
 	const emit = defineEmits(['update:modelValue']);
 
+	const projectStore = useProjectStore();
 	const toast = useToast();
-	const repositories = ref([]);
+	let repositories = ref({});
 	const isVisible = ref(props.modelValue);
 	const newRepoUrl = ref('');
 	const isAddingRepo = ref(false);
 	const syncingRepos = ref([]);
 	const showDeleteConfirm = ref(false);
 	const selectedRepo = ref(null);
-
+	const githubInstallationId = ref(null)
 	// Watch for modal visibility changes
 	watch(() => props.modelValue, (newValue) => {
 		isVisible.value = newValue;
@@ -65,17 +64,35 @@
 
 	// Load repositories on mount
 	onMounted(async () => {
-		await fetchRepositories();
+		githubInstallationId.value = await projectStore.getInstallationId(props.projectId);
+		console.log(githubInstallationId.value)
+		await fetchRepositories(githubInstallationId.value);
 	});
 
-	const fetchRepositories = async () => {
+	const fetchRepositories = async (installationId) => {
 		try {
-			console.log(props.githubInstallationId)
+			console.log(installationId)
 			// Replace with your actual API call
-			const response = await fetch(`/api/github/repositories/installations/${props.githubInstallationId}`);
-			const data = await response.json();
-			console.log(data);
-			repositories.value = data;
+			const response = await axios.get(`/github/repositories/installations/${installationId}`);
+
+			if (response.data.success) {
+				const resultData = response.data.data;
+				console.log(resultData);
+
+				// Create a new object to hold all repositories
+				const repoObject = {};
+				resultData.forEach(repo => {
+					const repoId = repo.repoId;
+					console.log(repoId);
+					repoObject[repoId] = { ...repo };
+				});
+
+				// Assign the entire object at once to maintain reactivity
+				repositories.value = repoObject;
+			}
+			else {
+				console.log("response data fail")
+			}
 		} catch (error) {
 			toast.add({
 				severity: 'error',
@@ -189,6 +206,8 @@
 	const formatDate = (date) => {
 		return new Date(date).toLocaleString();
 	};
+
+
 </script>
 
 <style lang="scss" scoped>

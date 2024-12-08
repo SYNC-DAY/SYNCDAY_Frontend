@@ -68,8 +68,7 @@
       No workspace data available
     </div>
   </div>
-  <RepoSettingModal v-model="showModal" :project-id="projectId" :workspace-id="workspaceId"
-    :githubInstallationId="githubInstallationId" />
+  <RepoSettingModal v-model="showModal" :project-id="projectId" :workspace-id="workspaceId" />
 </template>
 
 <script setup>
@@ -104,7 +103,6 @@
   const selectedTags = ref([]); // 선택된 태그
   const newTagName = ref(""); // 새 태그 이름 입력
   const projectStore = useProjectStore();
-  const githubInstallationId = ref(null);
   const showModal = ref(false)
   const props = defineProps({
     projectId: {
@@ -144,8 +142,8 @@
     try {
       const id = await projectStore.getInstallationId(props.projectId);
       console.log(props.projectId)
-      console.log(id)
       githubInstallationId.value = id;
+      console.log(githubInstallationId.value)
       return id;
     } catch (err) {
       throw new Error(err)
@@ -155,7 +153,6 @@
 
   onMounted(() => {
     fetchWorkspace();
-    fetchInstallationId(props.projectId)
   });
 
   const handleCloseModal = () => {
