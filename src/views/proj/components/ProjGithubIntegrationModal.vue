@@ -1,10 +1,7 @@
 <template>
 	<Dialog :visible="visible" @update:visible="handleVisibilityChange" :modal="true" class=""
 		:style="{ width: '70vw' }" header="Github Integration">
-		<!-- Progress Steps -->
-		<!-- Main Content -->
 		<div class="container-col gap-1rem">
-
 			<!-- Connected Organizations -->
 			<div class="organizations-section">
 				<div class="section-header">
@@ -15,7 +12,8 @@
 				<div class="organizations-list">
 					<div v-for="(installation, id) in githubAppStore.installations" :key="id" class="org-item">
 						<div class="org-select">
-							<RadioButton :value="id" v-model="selectedInstallationId" :inputId="'org_' + id" />
+							<RadioButton :value="installation.id" v-model="selectedInstallationId"
+								:inputId="'installation_' + installation.id" />
 						</div>
 						<div class="org-info">
 							<Avatar :image="installation.avatarUrl" :label="getInitials(installation.accountName)"
@@ -28,7 +26,7 @@
 						<div class="org-status">
 							<span class="status-dot"></span>
 							<span>Connected</span>
-							<Button icon="pi pi-chevron-down" @click="(event) => openMenu(event, id)"
+							<Button icon="pi pi-chevron-down" @click="(event) => openMenu(event, installation.id)"
 								aria-haspopup="true" aria-controls="overlay_menu" class="p-button-text" />
 						</div>
 					</div>
@@ -41,7 +39,7 @@
 					</div>
 
 					<div class="projects-list">
-						<div v-for="project in activeProjects" :key="project.id" class="project-item"
+						<div v-for="project in githubProjects" :key="project.id" class="project-item"
 							:class="{ 'selected': selectedProjectId === project.id }">
 							<div class="project-select">
 								<RadioButton :value="project.id" v-model="selectedProjectId"
@@ -72,13 +70,10 @@
 					class="p-button-primary" />
 			</div>
 			<Menu ref="menu" :model="currentMenuItems" :popup="true" />
-
 		</div>
 		<ConfirmDialog></ConfirmDialog>
-
 	</Dialog>
 </template>
-
 <script setup>
 	import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 	import { useToast } from 'primevue/usetoast'
@@ -172,14 +167,7 @@
 							});
 						}
 					},
-					{
-						label: 'Modify',
-						icon: 'pi pi-pencil',
-						command: () => {
-							const installationUrl = "https://github.com/settings/installations/";
-							window.open(installationUrl, '_blank');
-						}
-					}
+
 				]
 			}
 		];
@@ -214,52 +202,20 @@
 		githubAppStore.openInstallationWindow();
 		// Implement organization addition logic
 	}
-
-	const handleInstallationSelect = async (installation) => {
-		selectedInstallationId.value = installation.id
-		loading.value = true
-		error.value = null
-
-		try {
-			await projectStore.updateProject({
-				...props.projectData,
-				vcs_type: 'GITHUB',
-				vcs_proj_url: installation.htmlUrl || '',
-				github_installation_id: installation.id
-			})
-
-			emit('update:project', {
-				...props.projectData,
-				vcs_type: 'GITHUB',
-				vcs_proj_url: installation.htmlUrl || '',
-				github_installation_id: installation.installationId
-			})
-			emit("update:visible", false)
-
-		} catch (err) {
-			error.value = err instanceof Error ? err.message : 'Failed to update GitHub integration'
-			console.error('GitHub integration error:', err)
-		} finally {
-			loading.value = false
-		}
+	const handleInstallationSelect = (id) => {
+		selectedInstallationId.value = id;
 	}
-
-
 
 	watch(selectedInstallationId, async (newVal) => {
 		if (newVal) {
 			try {
 				loading.value = true;
-				const githubAppStore = useGithubAppStore();
-
-				// Get the organization name from the selected installation
 				const installation = githubAppStore.installations[newVal];
-				const orgName = installation.accountName;
 
-				// Fetch projects
-				const data = githubProjectStore.fetchOrgProjects(selectedInstallationId.value, orgName)
-
-				githubProjects.value = data;
+				if (installation) {
+					const projects = await githubProjectStore.fetchOrgProjects(newVal, installation.accountName);
+					githubProjects.value = projects;
+				}
 			} catch (error) {
 				toast.add({
 					severity: 'error',
@@ -270,11 +226,9 @@
 			} finally {
 				loading.value = false;
 			}
-		} else {
-			projects.value = [];
-			selectedProjectId.value = null;
 		}
 	});
+
 	const confirmRevokeAccess = () => {
 		confirm.require({
 			message: 'Are you sure you want to revoke GitHub access?',
@@ -335,14 +289,32 @@
 			})
 		}
 	}
-
 	const handleSave = async () => {
 		if (!selectedInstallationId.value) return;
 
-		const selectedInstallation = githubAppStore.installations[selectedInstallationId.value]
+		const selectedInstallation = githubAppStore.installations[selectedInstallationId.value];
 
 		if (selectedInstallation) {
-			await handleInstallationSelect(selectedInstallation);
+			loading.value = true;
+			error.value = null;
+
+			try {
+				const updatedProject = {
+					...props.projectData,
+					vcs_type: 'GITHUB',
+					vcs_proj_url: selectedInstallation.htmlUrl || '',
+					github_installation_id: selectedInstallation.id
+				};
+
+				await projectStore.updateProject(updatedProject);
+				emit('update:project', updatedProject);
+				emit('update:visible', false);
+			} catch (err) {
+				error.value = err instanceof Error ? err.message : 'Failed to update GitHub integration';
+				console.error('GitHub integration error:', err);
+			} finally {
+				loading.value = false;
+			}
 		}
 	}
 

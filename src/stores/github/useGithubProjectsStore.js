@@ -142,7 +142,7 @@ export const useGithubProjectsStore = defineStore("githubProjects", {
           return this.orgProjects[installationId];
         }
 
-        this.orgProjects[orgName] = [];
+        this.orgProjects[installationId] = [];
         return [];
       } catch (error) {
         console.error(`Error fetching projects for org ${orgName}:`, error);
@@ -225,7 +225,7 @@ export const useGithubProjectsStore = defineStore("githubProjects", {
     },
 
     clearState() {
-      this.userProjects = [];
+      this.orgProjects = [];
       this.orgProjects = {};
       this.selectedProject = null;
       this.error = null;
