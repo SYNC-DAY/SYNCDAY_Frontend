@@ -295,16 +295,24 @@ export default {
 
   console.log("예약 정보:", this.reservationDetails);
 
-  // 모달 열기 및 데이터 전달
+// 버튼을 숨김
+this.showReservationButton = false;
+
+// 모달 열기 상태를 false로 했다가 다시 true로 변경
+this.isReservationDialogVisible = false;
+this.$nextTick(() => {
   this.isReservationDialogVisible = true;
+});
+
   console.log("isReservationDialogVisible 상태:", this.isReservationDialogVisible);
 
-  this.showReservationButton = false;
 
 },
 async closeReservationDialog() {
       this.isReservationDialogVisible = false; // 모달 닫기
       console.log("모달이 닫혔습니다.");
+      this.reservationDetails = {}; // 예약 세부 정보 초기화
+      this.showReservationButton = false; // 버튼 초기화
       await this.fetchReservations(this.selectedRoomName);
     },
 
