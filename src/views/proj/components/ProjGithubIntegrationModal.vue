@@ -13,15 +13,17 @@
 				</div>
 
 				<div class="organizations-list">
-					<div v-for="installation in githubAppStore.installations" :key="installation.id" class="org-item"
-						@click="handleInstallationSelect(installation)">
+					<div v-for="installation in githubAppStore.installations" :key="installation.id" class="org-item">
+						<div class="org-select">
+							<RadioButton :value="installation.id" v-model="selectedInstallationId"
+								:inputId="'org_' + installation.id" />
+						</div>
 						<div class="org-info">
 							<Avatar :image="installation.avatarUrl" :label="getInitials(installation.accountName)"
 								shape="square" size="large" class="org-avatar" />
 							<div class="org-details">
 								<span class="org-name">{{ installation.accountName }}</span>
-								<span class="org-date">Enabled on {{ formatDate(installation.createdAt)
-									}}</span>
+								<span class="org-date">Enabled on {{ formatDate(installation.createdAt) }}</span>
 							</div>
 						</div>
 						<div class="org-status">
@@ -32,6 +34,10 @@
 						</div>
 					</div>
 				</div>
+			</div>
+			<div class="container-row justify-right">
+				<Button label="Save" :loading="loading" :disabled="!selectedInstallationId" @click="handleSave"
+					class="p-button-primary" />
 			</div>
 			<Menu ref="menu" :model="currentMenuItems" :popup="true" />
 
@@ -85,7 +91,8 @@
 	const currentInstallationId = ref(null)
 	const loading = ref(false)
 	const error = ref(null)
-
+	// Add this with other refs
+	const selectedInstallationId = ref(null)
 	// Open menu with correct items
 	const openMenu = (event, installationId) => {
 		// Prevent any parent handlers from being called
@@ -146,19 +153,18 @@
 	}
 
 	const handleInstallationSelect = async (installation) => {
+		selectedInstallationId.value = installation.id
 		loading.value = true
 		error.value = null
 
 		try {
-			// Update project with selected GitHub installation
 			await projectStore.updateProject({
 				...props.projectData,
 				vcs_type: 'GITHUB',
-				vcs_proj_url: installation.htmlUrl || '', // GitHub repository URL
+				vcs_proj_url: installation.htmlUrl || '',
 				github_installation_id: installation.installationId
 			})
 
-			// Emit update event to parent component
 			emit('update:project', {
 				...props.projectData,
 				vcs_type: 'GITHUB',
@@ -236,6 +242,18 @@
 				...toastMessages[type],
 				life: 3000
 			})
+		}
+	}
+
+	const handleSave = async () => {
+		if (!selectedInstallationId.value) return;
+
+		const selectedInstallation = githubAppStore.installations.find(
+			install => install.id === selectedInstallationId.value
+		);
+
+		if (selectedInstallation) {
+			await handleInstallationSelect(selectedInstallation);
 		}
 	}
 
@@ -377,5 +395,18 @@
 
 	:deep(.p-button.p-button-text:hover) {
 		background: rgba(255, 255, 255, 0.1);
+	}
+
+	.org-select {
+		margin-right: 1rem;
+	}
+
+	.org-item {
+		display: flex;
+		align-items: center;
+		padding: 0.75rem;
+		border-radius: 6px;
+		border: 1px solid var(--linear-border);
+		cursor: pointer;
 	}
 </style>

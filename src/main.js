@@ -35,11 +35,9 @@ import Card from "primevue/card";
 import ProgressBar from "primevue/progressbar";
 import Avatar from "primevue/avatar";
 import InputText from "primevue/inputtext";
-
 import Listbox from "primevue/listbox";
-
 import Checkbox from "primevue/checkbox";
-
+import RadioButton from "primevue/radiobutton";
 import Menu from "primevue/menu";
 import MultiSelect from "primevue/multiselect";
 /* css */
@@ -70,17 +68,17 @@ app.use(router);
 const SyncDayPreset = definePreset(Aura, {
   semantic: {
     primary: {
-      50: "{pink.50}",
-      100: "{pink.100}",
-      200: "{pink.200}",
-      300: "{pink.300}",
-      400: "{pink.400}",
-      500: "{pink.500}",
-      600: "{pink.600}",
-      700: "{pink.700}",
-      800: "{pink.800}",
-      900: "{pink.900}",
-      950: "{pink.950}",
+      50: "{orange.50}",
+      100: "{orange.100}",
+      200: "{orange.200}",
+      300: "{orange.300}",
+      400: "{orange.400}",
+      500: "{orange.500}",
+      600: "{orange.600}",
+      700: "{orange.700}",
+      800: "{orange.800}",
+      900: "{orange.900}",
+      950: "{orange.950}",
     },
   },
 });
@@ -114,5 +112,6 @@ app.component("Menu", Menu);
 app.component("Listbox", Listbox);
 app.component("Checkbox", Checkbox);
 app.component("MultiSelect", MultiSelect);
+app.component("RadioButton", RadioButton);
 /* mount */
 app.mount("#app");

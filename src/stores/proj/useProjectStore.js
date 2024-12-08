@@ -132,7 +132,7 @@ export const useProjectStore = defineStore("projectStore", {
 
     async updateProject(projData) {
       try {
-        const response = await axios.put("/proj-members/", projData);
+        const response = await axios.put("/proj-members/projs", projData);
 
         if (response.data.success) {
           const resultData = response.data.data;

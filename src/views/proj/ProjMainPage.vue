@@ -83,7 +83,7 @@
 
   const handleProjectSubmit = async (projectData) => {
     try {
-      const response = await axios.post("/projs/", {
+      const response = await axios.post("/proj-members/projs", {
         user_id: authStore.user.userId,
         proj_name: projectData.name,
         start_time: projectData.startDate ? new Date(projectData.startDate).toISOString() : null,
