@@ -39,8 +39,8 @@ const getTeamPost = async () => {
     try {
         const loadingStartTime = Date.now(); // 로딩 시작 시간 기록
         const response = await axios.get(`/teampost/myteam/${userId}`);
-        teamPostList.value = response.data.data;
-        console.log(teamPostList)
+        teamPostList.value = response.data.data.slice(0,8);
+    
 
         // 최소 로딩 시간을 0.5초로 설정
         const elapsedTime = Date.now() - loadingStartTime;
@@ -58,13 +58,15 @@ const getTeamPost = async () => {
 const goToPost = (teamPost) => {
     teamStore.updatePostId(teamPost.teamPostId);
     teamStore.updateBoardId(teamPost.teamBoardId);
+    teamStore.updateBoardTitle(teamPost.boardTitle);
+    teamStore.getTeamName(userId);
     router.push('/team/post/detail/view');
 };
 
 
 
-onMounted(() => {
-    getTeamPost();
+onMounted(async () => {
+    await getTeamPost();
 });
 </script>
 
@@ -97,7 +99,7 @@ onMounted(() => {
 }
 
 .team-post-container:hover {
-    border-color: #007bff;
+    border-color: #FE5D86;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 

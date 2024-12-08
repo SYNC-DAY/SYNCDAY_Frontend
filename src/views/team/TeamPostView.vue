@@ -1,6 +1,11 @@
 <template>
     <div class="board-container">
         <div class="team-container">
+            <Button icon="pi pi-angle-double-left" 
+            label="게시판 목록" 
+            outlined
+            style="margin-right:1rem"
+            @click="goToBoardView"/>
             <Button 
                 :label="teamStore.teamName"  
                 icon="pi pi-user" 
@@ -15,11 +20,9 @@
                 rounded 
                 class="board-name-container"
             />
-            <Button @click="goToBoardView">게시판 목록으로 돌아가기</Button>
+
         </div>
         <div class="board-actions">
-            <Button @click="toCreateBoard" class="create-Button">글 쓰기</Button>
-
             <div class="search-bar">
                 <Select v-model="searchType" 
                 :options="searchTypes" 
@@ -31,12 +34,13 @@
                     <InputText v-model="searchQuery" placeholder="검색어를 입력하세요"
                     @keyup.enter="search" />
                 </IconField>
-                <Button @click="search" class="search-Button" :disabled="!searchQuery.trim()">검색</Button>
+                <Button @click="search" outlined class="search-Button" :disabled="!searchQuery.trim()">검색</Button>
             </div>
             <div v-if="isSearchResult">
-                <Button @click="getPostList" class="back-Button">전체글목록</Button>
-                <h1>검색결과</h1>
+                <Button outlined="" @click="getPostList(); resetSearch();" class="back-Button">전체글목록</Button>
             </div>
+            <Button v-if="!isSearchResult" @click="toCreateBoard" outlined class="create-Button">글 쓰기</Button>
+
         </div>
         <div class="board">
             <DataTable
@@ -54,20 +58,21 @@
 
         <!-- Pagination -->
         <div class="pagination">
-            <Button @click="changePage(1)" :disabled="postList.isFirstPage">처음</Button>
-            <Button @click="changePage(postList.prePage)" :disabled="!postList.hasPreviousPage">이전</Button>
+            <Button @click="changePage(1)" outlined :disabled="postList.isFirstPage">처음</Button>
+            <Button @click="changePage(postList.prePage)" outlined :disabled="!postList.hasPreviousPage">이전</Button>
 
             <Button
                 v-for="page in postList.navigatepageNums"
                 :key="page"
                 :class="{ active: page === postList.pageNum }"
                 @click="changePage(page)"
+                outlined
             >
                 {{ page }}
             </Button>
 
-            <Button @click="changePage(postList.nextPage)" :disabled="!postList.hasNextPage">다음</Button>
-            <Button @click="changePage(postList.pages)" :disabled="postList.isLastPage">마지막</Button>
+            <Button @click="changePage(postList.nextPage)" outlined :disabled="!postList.hasNextPage">다음</Button>
+            <Button @click="changePage(postList.pages)" outlined    :disabled="postList.isLastPage">마지막</Button>
         </div>
     </div>
 </template>
@@ -81,7 +86,7 @@ import { useTeamStore } from '@/stores/team';
 import { IconField,InputIcon, InputText, Select } from 'primevue';
 
 const route = useRoute();
-const searchType = ref('TITLE');
+const searchType = ref( {option:"TITLE",name:"제목"});
 const searchQuery = ref('');
 const teamStore = useTeamStore();
 const postList = ref({});
@@ -109,6 +114,10 @@ const getPostList = async (page = 1) => {
     try {
         const response = await axios.get(`/teampost/${teamStore.boardId}?page=${page}`);
         postList.value = response.data.data;
+        postList.value.list = postList.value.list.map(post => ({
+            ...post,
+            createdAt: formatDate(post.createdAt), 
+        }));
     } catch (error) {
         console.error('Failed to fetch post list:', error);
     }
@@ -128,11 +137,15 @@ const search = async () => {
     try {
         const response = await axios.get(`/teampost/${teamStore.boardId}`, {
             params: {
-                searchType: searchType.value,
+                searchType: searchType.value.option,
                 searchQuery: searchQuery.value,
             },
         });
         postList.value = response.data.data;
+        postList.value.list = postList.value.list.map(post => ({
+            ...post,
+            createdAt: formatDate(post.createdAt), 
+        }));
     } catch (error) {
         console.error('Failed to fetch post list:', error);
     }
@@ -156,6 +169,11 @@ const formatDate = (date) => {
 const toCreateBoard = ()=>{
     router.push("/team/post/create");
 };
+
+const resetSearch = () => {
+    searchQuery.value = "";
+    searchType.value = {option:"TITLE",name:"제목"};
+}
 
 const toPostDetail = (teamPostId, searchType, searchQuery) =>{
     if (searchQuery && searchQuery.trim() !== "") {
@@ -212,7 +230,12 @@ onMounted(async () => {
     opacity:1;
 }
 .board-container {
-    margin: 20px;
+    margin: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    
+    width: 100%;
 }
 
 .board-actions {
@@ -222,9 +245,7 @@ onMounted(async () => {
 }
 
 .create-Button {
-    background-color: #007bff;
-    color: white;
-    border: none;
+
     padding: 10px 20px;
     cursor: pointer;
 }
@@ -241,11 +262,12 @@ onMounted(async () => {
 }
 
 .search-Button {
-    background-color: #28a745;
-    color: white;
-    border: none;
     padding: 8px 16px;
     cursor: pointer;
+}
+
+.back-Button {
+    padding: 10px 20px;
 }
 
 .board-table {
@@ -270,20 +292,32 @@ onMounted(async () => {
     margin: 0 5px;
     padding: 5px 10px;
     cursor: pointer;
-    border: 1px solid #ccc;
-    background-color: white;
     transition: background-color 0.3s, color 0.3s;
     color:black;
 }
 
 .pagination Button.active {
-    background-color: #007bff;
+    background-color:#FE5D86;
     color: white;
     font-weight: bold;
 }
 
 .pagination Button:disabled {
     cursor: not-allowed;
-    opacity: 0.6;
 }
+
+.board{
+    width: 70vw;
+    border: 1px solid #FF9D85;
+    border-radius: 2.5rem;
+    box-shadow: 0 4px 8px rgba(255, 157, 133, 0.5);
+    padding: 2rem;
+}
+
+.team-container {
+    margin-bottom: 2rem;
+    align-self: center; /* 중앙 정렬로 통일 */
+    margin-left: 0; /* 추가 여백 제거 */
+}
+
 </style>

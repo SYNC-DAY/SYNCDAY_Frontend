@@ -40,7 +40,6 @@ const getTodayCardList = async () => {
     try {
         const response = await axios.get(`/cards/today/${authStore.user.userId}`);
         todayCardList.value = response.data.data;
-        console.log(todayCardList);
     } catch (error) {
         console.error("Failed to fetch cards:", error);
     }

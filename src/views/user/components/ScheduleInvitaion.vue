@@ -2,7 +2,7 @@
     <div>
         <!-- 초대된 일정이 없을 경우 -->
         <div v-if="!invitationList.length" class="logo-container">
-            <h2 class="logo-text">초대된 일정이 없습니다.</h2>
+            <h2 class="logo-text">모든 일정 초대를 <br> 확인했습니다.</h2>
         </div>
 
         <!-- 초대된 일정이 있을 경우 -->
@@ -154,6 +154,10 @@ border-bottom: none; /* 마지막 행 테두리 제거 */
 
 .icon {
 margin-right: 0.5rem;
+}
+
+.logo-text{
+    text-align: center;
 }
 
 .status-button {

@@ -5,14 +5,14 @@
         <thead>
           <tr>
             <th>일정명</th>
-            <th>시작</th>
+            <th>일시</th>
             <th>초대자</th>
             <th>참석 여부</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="invite in invitations" :key="invite.schedule_id">
-            <td class="title-cell">{{ invite.title }}</td>
+            <td class="title-cell">{{ invite.title ? invite.title : '제목없음' }}</td>
             <td class="time-cell">
               {{ formatDateTime(invite.start_time) }} ~ {{ formatDateTime(invite.end_time) }}
             </td>
@@ -23,20 +23,21 @@
               </span>
             </td>
             <td class="action-cell">
-              <button
+              <Button
+              outlined
                 class="reject-button"
                 :class="{ selected: invite.participation_status === 'ABSENT' }"
                 @click="updateStatus(invite.schedule_id, 'ABSENT')"
-              >
-                불참
-              </button>
-              <button
+                label="불참"
+              />
+              <Button
+              outlined
                 class="accept-button"
                 :class="{ selected: invite.participation_status === 'ATTEND' }"
                 @click="updateStatus(invite.schedule_id, 'ATTEND')"
-              >
-                참석
-              </button>
+                label="참석"
+              />
+  
             </td>
           </tr>
         </tbody>
@@ -64,8 +65,9 @@ const invitations = ref([]);
 const fetchInvitations = async () => {
   try {
     const response = await axios.get(`/userschedule/my?userId=${userId}`);
-    invitations.value = response.data.data;
-    console.log(invitations.value);
+    const nowList = response.data.data.filter(invitation => new Date(invitation.start_time) >= new Date());
+    invitations.value = nowList;
+
   } catch (error) {
     console.error("Error fetching invitations:", error);
   }
@@ -101,16 +103,20 @@ const formatDateTime = (dateTime) => {
   return new Date(dateTime).toLocaleString("ko-KR", options);
 };
 
-onMounted(() => {
-  fetchInvitations();
+onMounted(async() => {
+  await fetchInvitations();
 });
 </script>
 
 <style scoped>
 .invitation-list {
+  margin: 3rem;
   display: flex;
   flex-direction: column;
   align-items: center;
+  border: 1px solid #FF9D85;
+  border-radius: 2.5rem;
+  box-shadow: 0 4px 8px rgba(255, 157, 133, 0.5);
   width: 100%;
   height: auto;
 }
@@ -119,6 +125,11 @@ onMounted(() => {
   font-size: 1.8rem;
   font-weight: bold;
   margin-bottom: 2rem;
+}
+
+.selected{
+  background-color: #FE5D86;
+  color: white;
 }
 
 .invitation-table {
@@ -156,38 +167,16 @@ onMounted(() => {
   gap: 0.5rem;
 }
 
-.reject-button,
-.accept-button {
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: all 0.3s ease;
-  background-color: #fff;
-  border-color: black;
-}
 
-
-.reject-button.selected {
-    background-color: #ffc0c2;
-}
-
-.reject-button:hover {
-  background-color: #ffc0c2;
-}
-
-
-.accept-button.selected {
-    background-color: #aef0d1;
-}
-
-.accept-button:hover {
-  background-color: #aef0d1;
-}
 
 .no-invitation {
   font-size: 1.2rem;
   color: #888;
-}
+
+  width:100%;
+  height: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+} 
 </style>
