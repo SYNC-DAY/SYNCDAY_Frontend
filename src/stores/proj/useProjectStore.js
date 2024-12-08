@@ -131,5 +131,8 @@ export const useProjectStore = defineStore("projectStore", {
     isProjectBookmarked: state => projId => {
       return state.projects[projId]?.bookmark_status === "BOOKMARKED";
     },
+    getInstallationId: projId => {
+      return state.proejcts[projId]?.installationId;
+    },
   },
 });

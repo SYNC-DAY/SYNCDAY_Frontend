@@ -15,7 +15,7 @@
       <div class="workspace-header container-row underline-gray">
         <div class="container-row header-left">
           <h4>{{ workspaceDetails.workspace_name }}</h4>
-          <Button icon="pi pi-code" text></Button>
+          <Button icon="pi pi-code" text @click.stop="showModal = true" v-tooltip="'Repository Settings'"></Button>
         </div>
 
         <div class="container-row header-right">
@@ -68,10 +68,11 @@
       No workspace data available
     </div>
   </div>
+  <RepoSettingModal v-model="showModal" :project-id="projectId" :workspace-id="workspaceId" />
 </template>
 
 <script setup>
-  import { ref, onMounted, watch } from 'vue';
+  import { ref, onMounted, watch, computed } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import axios from 'axios';
 
@@ -89,6 +90,8 @@
   import CardModal from './components/layout/CardModal.vue';
 
   import WorkspaceAPI from '@/api/proj/workspace';
+  import RepoSettingModal from './components/RepoSettingModal.vue';
+  import { useProjectStore } from '@/stores/proj/useProjectStore';
 
   const route = useRoute();
   const router = useRouter();
@@ -98,7 +101,9 @@
   const showTagDialog = ref(false); // 태그 관리 다이얼로그 표시 여부
   const selectedTags = ref([]); // 선택된 태그
   const newTagName = ref(""); // 새 태그 이름 입력
-
+  const projectStore = useProjectStore();
+  const installationId = ref(null);
+  const showModal = ref(false)
   const props = defineProps({
     projectId: {
       type: [String, Number],
@@ -133,10 +138,20 @@
       isLoading.value = false
     }
   }
+  const fetchInstallationId = async () => {
+    try {
+      const id = await useProjectStore.getGithubInstallationid(props.projectId);
+      console.log(id)
+      return id;
+    } catch (err) {
+      throw new Error(err)
+    }
+  }
 
 
   onMounted(() => {
     fetchWorkspace();
+    fetchInstallationId(props.projectId)
   });
 
   const handleCloseModal = () => {
