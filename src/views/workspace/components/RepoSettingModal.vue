@@ -1,7 +1,6 @@
 <template>
-	<Dialog :visible="isVisible" modal header="Set  GitHub Repository" :style="{ width: '50vw' }" :closable="true"
-		@update:visible="updateVisibility">
-
+	<Dialog v-model:visible="isVisible" modal header="Set GitHub Repository" :style="{ width: '50vw' }"
+		:closable="true">
 		<!-- Repository Selection Section -->
 		<div class="container-col gap-1rem">
 			<strong class="text-lg font-medium mb-4">Select repositories to import</strong>
@@ -34,10 +33,9 @@
 </template>
 
 <script setup>
-	import { ref, onMounted, watch } from 'vue';
+	import { ref, watch } from 'vue';
 	import { useToast } from 'primevue/usetoast';
 	import { useProjectStore } from '@/stores/proj/useProjectStore';
-	import axios from 'axios';
 
 	const props = defineProps({
 		projectId: {
@@ -67,11 +65,15 @@
 	const enabledBy = ref('letterh.dev');
 	const enabledDate = ref('Dec 7, 2024');
 
-	// Your existing watch and methods here...
-	const updateVisibility = (newValue) => {
+	// Watch for changes in props.modelValue
+	watch(() => props.modelValue, (newValue) => {
 		isVisible.value = newValue;
+	});
+
+	// Watch for changes in isVisible
+	watch(() => isVisible.value, (newValue) => {
 		emit('update:modelValue', newValue);
-	};
+	});
 </script>
 
 <style lang="scss" scoped>
