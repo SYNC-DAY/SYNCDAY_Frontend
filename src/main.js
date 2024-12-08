@@ -41,6 +41,7 @@ import Listbox from "primevue/listbox";
 import Checkbox from "primevue/checkbox";
 
 import Menu from "primevue/menu";
+import MultiSelect from "primevue/multiselect";
 /* css */
 import "@/assets/styles/syncday/main.css";
 
@@ -112,5 +113,6 @@ app.component("InputText", InputText);
 app.component("Menu", Menu);
 app.component("Listbox", Listbox);
 app.component("Checkbox", Checkbox);
+app.component("MultiSelect", MultiSelect);
 /* mount */
 app.mount("#app");

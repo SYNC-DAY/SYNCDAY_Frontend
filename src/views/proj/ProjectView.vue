@@ -75,7 +75,7 @@
 				<Button label="확인" icon="pi pi-check" @click="createWorkspace" class="p-button-primary" />
 			</div>
 		</Dialog>
-
+		<Toast />
 		<ProjectSettingsModal v-model:visible="showProjectSettings" :project-id="projectId"
 			:project-data="projects[props.projectId]" @project-updated="handleProjectUpdate"
 			@project-deleted="handleProjectDelete" />
