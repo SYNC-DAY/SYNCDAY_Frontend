@@ -158,18 +158,64 @@ export const useGithubProjectsStore = defineStore("githubProjects", {
         throw new Error("Installation ID and organization names array are required");
       }
 
-      try {
-        this.isLoading = true;
-        const promises = orgNames.map(orgName =>
-          this.fetchOrgProjects(installationId, orgName).catch(error => {
-            console.error(`Failed to fetch projects for ${orgName}:`, error);
-            return [];
-          })
-        );
+      const githubAppStore = useGithubAppStore();
 
-        await Promise.all(promises);
+      try {
+        if (!githubAppStore.installations[installationId]) {
+          await githubAppStore.requestInstallationToken(installationId);
+        }
+
+        const targetType = githubAppStore.getTargetType(installationId);
+        if (!targetType) {
+          throw new Error(`Could not determine target type for installation ${installationId}`);
+        }
+
+        let query;
+        if (targetType.toUpperCase() === "ORGANIZATION") {
+          query = `
+      query($orgName: String!) {
+        organization(login: $orgName) {
+          projectsV2(first: 100) {
+            nodes {
+              id
+              title
+              url
+            }
+          }
+        }
+      }
+    `;
+        } else if (targetType.toUpperCase() === "USER") {
+          query = `
+      query($orgName: String!) {
+        user(login: $orgName) {
+          projectsV2(first: 100) {
+            nodes {
+              id
+              title
+              url
+            }
+          }
+        }
+      }
+    `;
+        }
+
+        const response = await this.executeGraphQLQuery(installationId, query, { orgName });
+
+        // Extract projects from either organization or user response
+        const projects = response?.organization?.projectsV2?.nodes || response?.user?.projectsV2?.nodes || [];
+
+        // Store projects under the installation ID
+        this.orgProjects[installationId] = projects.map(project => ({
+          id: project.id,
+          title: project.title,
+          url: project.url,
+        }));
+
+        return this.orgProjects[installationId];
       } catch (error) {
-        console.error("Error fetching all org projects:", error);
+        console.error("Error fetching projects:", error);
         this.error = error.message;
         throw error;
       } finally {
@@ -196,5 +242,8 @@ export const useGithubProjectsStore = defineStore("githubProjects", {
     removeOctokitInstance(installationId) {
       delete this.octokitInstances[installationId];
     },
+  },
+  getters: {
+    getProjects: state => installationId => state.orgProjects[installationId] || [],
   },
 });
