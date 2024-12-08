@@ -145,6 +145,8 @@
   const showColorPicker = ref(false);
   const projectStore = useProjectStore();
   const githubInstallationId = ref(null);
+  const showModal = ref(false)
+
   const props = defineProps({
     projectId: {
       type: [String, Number],
