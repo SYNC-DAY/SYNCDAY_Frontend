@@ -5,7 +5,7 @@
             <Button :class="{ active: tab === 'today' }" @click="selectTab('today')" outlined>
                 오늘의 일정
             </Button>
-            <Button :class="{ active: tab === 'notified' }" @click="selectTab('notice') " outlined>
+            <Button :class="{ active: tab === 'notice' }" @click="selectTab('notice') " outlined>
                 일정 알림
             </Button>
         </div>
@@ -88,7 +88,8 @@
     </div>
     </div>
     <div v-else class="assistant-Button-container" @click="show">
-    <img  alt="누르면 비서가 나오는 이미지" />
+    <i class="pi pi-briefcase" ></i>
+
     </div>
 </template>
 
@@ -303,7 +304,11 @@ onUnmounted(()=>{
 </script>
 
 <style scoped>
-
+.active {
+    background-color:#FE5D86;
+    color: white;
+    font-weight: bold;
+}
 .assistant-container {
     position: fixed;
     bottom: 1rem;
