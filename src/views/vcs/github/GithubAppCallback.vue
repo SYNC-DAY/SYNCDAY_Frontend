@@ -16,36 +16,6 @@ const githubAuthStore = useGithubAuthStore();
 const githubAppStore = useGithubAppStore();
 
 
-const handleOAuthCallback = async (code, state) => {
-	// Validate state exists
-	if (!state) {
-		throw new Error('State parameter is missing');
-	}
-
-	// Get stored state
-
-
-	try {
-		// Decode and parse state data
-
-		// Handle OAuth
-		await githubAuthStore.handleAuthCallback(code);
-
-		// Clear stored state
-		sessionStorage.removeItem('github_auth_state');
-
-		// Notify opener with original context
-		notifyOpener('auth-success', {
-			redirect: stateData.redirect,
-			projectId: stateData.projectId
-		});
-
-	} catch (error) {
-		console.error('OAuth callback error:', error);
-		throw new Error('Failed to process OAuth callback');
-	}
-};
-
 onMounted(async () => {
 	try {
 		const urlParams = new URLSearchParams(window.location.search);
@@ -53,11 +23,12 @@ onMounted(async () => {
 		const state = urlParams.get('state');
 		const installationId = urlParams.get('installation_id')
 		const setupAction = urlParams.get('setup_action')
-		console.log(code)
-		console.log(state)
+
+		console.log((`urlParamsd:${urlParams}`))
 		if (code && state) {
 			await handleOAuthCallback(code, state);
-		} else if (installationId && setupAction) {
+		}
+		else if (installationId && setupAction) {
 			await handleInstallationCallback(installationId, setupAction);
 		} else {
 			throw new Error('Invalid callback parameters');
@@ -67,17 +38,39 @@ onMounted(async () => {
 		notifyOpener('error', err.message);
 	} finally {
 		loading.value = false;
-		// Close window after short delay
 		setTimeout(() => window.close(), 1000);
 	}
 });
+const handleOAuthCallback = async (code, state) => {
+	try {
+		// state 유효성 검증에 store의 getter 사용
+		if (!githubAuthStore.isStateValid) {
+			throw new Error('State validation failed');
+		}
+		if (state !== githubAuthStore.state) {
+			throw new Error('State mismatch');
+		}
+
+		// 리다이렉트 URL 가져오기
+		const redirectUrl = localStorage.getItem('github_auth_redirect');
+
+		// OAuth 처리
+		await githubAuthStore.handleAuthCallback(code, state);
+
+		// 성공 알림
+		notifyOpener('auth-success', {
+			redirect: redirectUrl
+		});
+
+	} catch (error) {
+		console.error('OAuth callback error:', error);
+		throw new Error('Failed to process OAuth callback');
+	}
+};
 
 const handleInstallationCallback = async (installationId, setupAction) => {
-
-
 	await githubAppStore.handleInstallationCallback(installationId, setupAction);
 	localStorage.removeItem('github_installation_project_id');
-
 	notifyOpener('installation-success', { installationId });
 };
 

@@ -1,22 +1,19 @@
-// stores/github/useGithubAppStore.js
+// stores/githubAppStore.js
 import { defineStore } from "pinia";
 import axios from "axios";
 import { useAuthStore } from "../auth";
 export const useGithubAppStore = defineStore("githubApp", {
   state: () => ({
-    installations: new Map(), // Map to store installations by installationId
+    installations: [],
     isLoading: false,
     error: null,
+    installationWindow: null,
+    checkWindowInterval: null,
   }),
 
   getters: {
-    hasInstallation: state => installationId => {
-      return state.installations.has(installationId);
-    },
-
-    getAllInstallations: state => {
-      return Array.from(state.installations);
-    },
+    getInstallations: state => state.installations,
+    isInstallationsLoading: state => state.isLoading,
   },
 
   actions: {
@@ -58,17 +55,95 @@ export const useGithubAppStore = defineStore("githubApp", {
         this.isLoading = false;
       }
     },
-
     async fetchInstallations() {
+      this.isLoading = true;
+      this.error = null;
+
       try {
         const authStore = useAuthStore();
         const response = await axios.get(`/github/install/${authStore.user.userId}`);
 
         if (response.data.success) {
-          const data = response.data.data;
-          console.log(data);
+          // Process installations to remove duplicates
+          const installations = response.data.data;
+
+          // Create a map to track latest installation for each account_id
+          const latestInstallations = new Map();
+
+          installations.forEach(installation => {
+            const existingInstallation = latestInstallations.get(installation.account_id);
+
+            if (!existingInstallation || new Date(installation.createdAt) > new Date(existingInstallation.createdAt)) {
+              latestInstallations.set(installation.account_id, installation);
+            }
+          });
+
+          // Convert map values back to array and store
+          this.installations = Array.from(latestInstallations.values()).map(installation => ({
+            id: installation.id,
+            installationId: installation.installation_id,
+            accountId: installation.account_id,
+            accountName: installation.account_name,
+            accountType: installation.account_type,
+            avatarUrl: installation.avatar_url,
+            htmlUrl: installation.html_url,
+            status: installation.status,
+            createdAt: installation.createdAt,
+            updatedAt: installation.updatedAt,
+            userId: installation.user_id,
+          }));
         }
-      } catch (error) {}
+      } catch (error) {
+        console.error("Error fetching GitHub installations:", error);
+        this.error = error.response?.data?.error || "Failed to fetch installations";
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    clearInstallations() {
+      this.installations = [];
+      this.error = null;
+    },
+    openInstallationWindow() {
+      // Save project ID for installation callback
+
+      const installUrl = `https://github.com/apps/${import.meta.env.VITE_GITHUB_APP_NAME}/installations/new`;
+      const callbackUrl = `${window.location.origin}/github/callback`;
+
+      // Add target_type=user parameter to the URL
+      const params = new URLSearchParams({
+        callback_url: callbackUrl,
+        target_type: "user",
+      });
+
+      const fullUrl = `${installUrl}?${params.toString()}`;
+
+      const width = 1020;
+      const height = 618;
+      const left = (window.innerWidth - width) / 2;
+      const top = (window.innerHeight - height) / 2;
+
+      const popupWindow = window.open(fullUrl, "Install GitHub App", `width=${width},height=${height},top=${top},left=${left}`);
+
+      if (this.checkWindowInterval) {
+        clearInterval(this.checkWindowInterval);
+      }
+      this.checkWindowInterval = setInterval(() => {
+        try {
+          if (!popupWindow || popupWindow.closed) {
+            this.cleanup();
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }, 500);
+    },
+    cleanup() {
+      if (this.checkWindowInterval) {
+        clearInterval(this.checkWindowInterval);
+        this.checkWindowInterval = null;
+      }
     },
   },
 });
