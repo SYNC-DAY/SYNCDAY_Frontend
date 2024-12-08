@@ -14,6 +14,12 @@
 				<div class="header-left container-row">
 					<div class="project-title">
 						<h3>{{ projects[props.projectId].proj_name }}</h3>
+						<div v-if="projects[props.projectId].vcs_proj_url">
+							<a :href="projects[props.projectId].vcs_proj_url" target="_blank" rel="noopener noreferrer"
+								@click.prevent="openInPopup">
+								Open Project
+							</a>
+						</div>
 					</div>
 					<div class="container-row role">
 						<img v-if="projects[props.projectId].participation_status === 'OWNER'"
@@ -202,7 +208,19 @@
 		}
 	};
 
+	const openInPopup = async () => {
+		const url = projects.value[props.projectId].vcs_proj_url;
+		const width = 800;
+		const height = 600;
+		const left = (window.screen.width / 2) - (width / 2);
+		const top = (window.screen.height / 2) - (height / 2);
 
+		window.open(
+			url,
+			'ProjectWindow',
+			`width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes`
+		);
+	}
 
 </script>
 
