@@ -52,6 +52,9 @@
 
 
 	const fetchRepositories = async (installationId) => {
+		if (!installationId) {
+			return;
+		}
 		try {
 			console.log('Starting request for installationId:', installationId);
 			// Replace with your actual API call

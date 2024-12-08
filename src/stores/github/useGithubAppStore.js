@@ -79,6 +79,16 @@ export const useGithubAppStore = defineStore("githubApp", {
         this.isLoading = false;
       }
     },
+    async requestInstallationToken(installationId) {
+      const authStore = useAuthStore();
+      const userId = authStore.user.userId;
+      const response = await axios.get(`/github/install/users/${userId}/installs/${installationId}/access_token`);
+      if (response.data.success) {
+        const resData = response.data.data;
+        this.installations[installationId] = { ...this.installations[installationId], access_token: resData };
+        return resData;
+      }
+    },
 
     clearInstallations() {
       this.installations = [];
@@ -123,6 +133,14 @@ export const useGithubAppStore = defineStore("githubApp", {
         clearInterval(this.checkWindowInterval);
         this.checkWindowInterval = null;
       }
+    },
+  },
+  getters: {
+    getInstallationToken: state => async installationId => {
+      if (state.installations[installationId]?.access_token) {
+        return state.installations[installationId].access_token;
+      }
+      return await state.requestInstallationToken(installationId);
     },
   },
 });

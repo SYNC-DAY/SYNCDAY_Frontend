@@ -34,6 +34,39 @@
 						</div>
 					</div>
 				</div>
+
+				<div v-if="selectedInstallationId && githubProjects.length > 0" class="projects-section">
+					<div class="section-header">
+						<strong>Projects</strong>
+						<span class="text-sm text-gray-500">Select a project to connect</span>
+					</div>
+
+					<div class="projects-list">
+						<div v-for="project in activeProjects" :key="project.id" class="project-item"
+							:class="{ 'selected': selectedProjectId === project.id }">
+							<div class="project-select">
+								<RadioButton :value="project.id" v-model="selectedProjectId"
+									:inputId="'project_' + project.id" />
+							</div>
+							<div class="project-info">
+								<div class="project-details">
+									<span class="project-name">{{ project.name }}</span>
+									<span class="project-meta">Created {{ formatDate(project.created_at) }}</span>
+								</div>
+								<div class="project-stats">
+									<span class="stat-item">
+										<i class="pi pi-file mr-1"></i>
+										{{ project.open_issues_count }} open issues
+									</span>
+									<span class="stat-item">
+										<i class="pi pi-users mr-1"></i>
+										{{ project.watchers_count }} watchers
+									</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
 			</div>
 			<div class="container-row justify-right">
 				<Button label="Save" :loading="loading" :disabled="!selectedInstallationId" @click="handleSave"
@@ -46,13 +79,13 @@
 </template>
 
 <script setup>
-	import { ref, computed, onMounted, onUnmounted } from 'vue'
+	import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 	import { useToast } from 'primevue/usetoast'
 	import { useAuthStore } from '@/stores/auth';
 
 	import { useGithubAppStore } from '@/stores/github/useGithubAppStore';
 	import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
-
+	import { useGithubProjectsStore } from '@/stores/github/useGithubProjectsStore';
 	import { useConfirm } from 'primevue';
 	import { useProjectStore } from '@/stores/proj/useProjectStore';
 
@@ -80,6 +113,7 @@
 	const projectStore = useProjectStore();
 	const githubAuthStore = useGithubAuthStore()
 	const githubAppStore = useGithubAppStore()
+	const githubProjectStore = useGithubProjectsStore();
 	const toast = useToast()
 	const confirm = useConfirm()
 
@@ -92,6 +126,7 @@
 	const error = ref(null)
 	// Add this with other refs
 	const selectedInstallationId = ref(null)
+	const githubProjects = ref(null)
 	// Open menu with correct items
 	const openMenu = (event, installationId) => {
 		// Prevent any parent handlers from being called
@@ -182,7 +217,35 @@
 
 
 
+	watch(selectedInstallationId, async (newVal) => {
+		if (newVal) {
+			try {
+				loading.value = true;
+				const githubAppStore = useGithubAppStore();
 
+				// Get the organization name from the selected installation
+				const installation = githubAppStore.installations[newVal];
+				const orgName = installation.accountName;
+
+				// Fetch projects
+				const data = githubProjectStore.fetchOrgProjects(selectedInstallationId.value, orgName)
+
+				githubProjects.value = data;
+			} catch (error) {
+				toast.add({
+					severity: 'error',
+					summary: 'Error',
+					detail: 'Failed to fetch projects: ' + error.message,
+					life: 3000
+				});
+			} finally {
+				loading.value = false;
+			}
+		} else {
+			projects.value = [];
+			selectedProjectId.value = null;
+		}
+	});
 	const confirmRevokeAccess = () => {
 		confirm.require({
 			message: 'Are you sure you want to revoke GitHub access?',
@@ -257,6 +320,7 @@
 	// Lifecycle hooks
 	onMounted(() => {
 		githubAppStore.fetchInstallations();
+
 		window.addEventListener('message', handleAuthMessage)
 	})
 
@@ -405,5 +469,72 @@
 		border-radius: 6px;
 		border: 1px solid var(--linear-border);
 		cursor: pointer;
+	}
+
+
+	.projects-list {
+		margin-top: 1rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.project-item {
+		display: flex;
+		align-items: center;
+		padding: 1rem;
+		border-radius: 6px;
+		border: 1px solid var(--surface-border);
+		background: var(--surface-card);
+		transition: all 0.2s;
+	}
+
+	.project-item:hover {
+		background: var(--surface-hover);
+	}
+
+	.project-item.selected {
+		border-color: var(--primary-color);
+		background: var(--primary-50);
+	}
+
+	.project-select {
+		margin-right: 1rem;
+	}
+
+	.project-info {
+		flex: 1;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.project-details {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	.project-name {
+		font-weight: 600;
+		color: var(--text-color);
+	}
+
+	.project-meta {
+		font-size: 0.875rem;
+		color: var(--text-color-secondary);
+	}
+
+	.project-stats {
+		display: flex;
+		gap: 1rem;
+		align-items: center;
+	}
+
+	.stat-item {
+		display: flex;
+		align-items: center;
+		font-size: 0.875rem;
+		color: var(--text-color-secondary);
 	}
 </style>
