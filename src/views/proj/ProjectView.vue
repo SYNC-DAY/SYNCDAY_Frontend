@@ -131,7 +131,10 @@
 	const showProjVcsSettings = ref(false);
 	const openNewWorkspaceDialog = ref(false);
 	const newWorkspaceName = ref('');
-
+	const workspaceDetails = ref(null);
+	const fetchWorkspace = async () => {
+		workspaceDetails.value = projectStore.getWorkspace(props.projectId, props.workspaceId);
+	}
 
 	// Methods
 	const navigateToWorkspace = (workspaceId) => {

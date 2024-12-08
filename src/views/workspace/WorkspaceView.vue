@@ -143,7 +143,8 @@
   const newTagName = ref(""); // 새 태그 이름 입력
   const newTagColor = ref("#FFFFFF"); // 새 태그 색상
   const showColorPicker = ref(false);
-
+  const projectStore = useProjectStore();
+  const githubInstallationId = ref(null);
   const props = defineProps({
     projectId: {
       type: [String, Number],
@@ -153,10 +154,7 @@
       type: [String, Number],
       required: true
     },
-    projects: {
-      type: Array,
-      required: true
-    }
+
   });
 
   const emit = defineEmits(['update:projects']);
@@ -165,49 +163,20 @@
   const workspaceDetails = ref(null);
   const showCardTag = ref(null);
 
-
   const fetchWorkspace = async () => {
-    if (!props.workspaceId) {
-      error.value = 'No workspace ID provided';
-      return;
-    }
-
-    isLoading.value = true;
-    error.value = null;
-
+    workspaceDetails.value = await await WorkspaceAPI.getWorkspaceById(props.workspaceId)
+  }
+  const fetchInstallationId = async () => {
     try {
-      const response = await axios.get(`/workspaces/${props.workspaceId}`);
-
-      if (response.data.success) {
-        workspaceDetails.value = response.data.data;
-        const updatedProjects = JSON.parse(JSON.stringify(props.projects));
-        const project = updatedProjects.find(p => p.proj_id === parseInt(props.projectId));
-
-        if (project) {
-          const workspace = project.workspaces.find(
-            w => w.workspace_id === parseInt(props.workspaceId)
-          );
-          if (workspace) {
-            Object.assign(workspace, {
-              workspace_name: workspaceDetails.value.workspace_name,
-              progress_status: workspaceDetails.value.progress_status,
-              bookmark_status: workspaceDetails.value.bookmark_status,
-            });
-
-            emit('update:projects', updatedProjects);
-          }
-        }
-      } else {
-        throw new Error(response.data.error || 'Failed to fetch workspace data');
-      }
+      const id = await projectStore.getInstallationId(props.projectId);
+      console.log(props.projectId)
+      githubInstallationId.value = id;
+      console.log(githubInstallationId.value)
+      return id;
     } catch (err) {
-      error.value = err.message || 'Failed to load workspace';
-      console.error('Failed to fetch workspace:', err);
-    } finally {
-      isLoading.value = false;
+      throw new Error(err)
     }
-  };
-
+  }
   const fetchCardTag = async () => {
     if (!props.workspaceId) {
       throw new Error('WorkspaceID is Missing');
