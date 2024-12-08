@@ -1,17 +1,17 @@
 <template>
 	<Dialog v-model:visible="isVisible" modal header="Repository Settings" :style="{ width: '50vw' }" :closable="true">
-
+		<InputText />
+		<div v-for="(repo, id) in repositories" :key="id">
+			<input type="checkbox" v-model="importClosedIssues" class="sr-only peer" />
+			<span>{{ repo.repoName }}</span>
+		</div>
 		<!-- Confirmation Dialog -->
 		<Dialog v-model:visible="showDeleteConfirm" modal header="Confirm Deletion" :style="{ width: '350px' }">
 			<div class="confirmation-content">
 				<i class="pi pi-exclamation-triangle mr-3" style="font-size: 2rem" />
 				<span>Are you sure you want to remove {{ selectedRepo?.name }}?</span>
 			</div>
-			<InputText />
-			<div v-for="(id, repo) in repositories" key="id">
-				<input type="checkbox" v-model="importClosedIssues" class="sr-only peer" />
-				<span>{{ repo }}</span>
-			</div>
+
 			<template #footer>
 				<Button label="No" icon="pi pi-times" @click="showDeleteConfirm = false" class="p-button-text" />
 				<Button label="Yes" icon="pi pi-check" @click="deleteRepository" class="p-button-danger" />
