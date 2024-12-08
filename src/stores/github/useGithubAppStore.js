@@ -39,9 +39,11 @@ export const useGithubAppStore = defineStore("githubApp", {
 
         if (response.data.success) {
           const resData = response.data.data;
-
-          this.installation[resData.id] = resData;
+          console.log(resData);
+          this.installations[resData.id] = { ...resData };
           return true;
+        } else {
+          console.log("response failed");
         }
         throw new Error("Installation failed");
       } catch (error) {
