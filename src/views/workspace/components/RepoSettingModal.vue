@@ -7,6 +7,11 @@
 				<i class="pi pi-exclamation-triangle mr-3" style="font-size: 2rem" />
 				<span>Are you sure you want to remove {{ selectedRepo?.name }}?</span>
 			</div>
+			<InputText />
+			<div v-for="repo in repositories" key="repo.id">
+				<input type="checkbox" v-model="importClosedIssues" class="sr-only peer" />
+				<span>{{ repo }}</span>
+			</div>
 			<template #footer>
 				<Button label="No" icon="pi pi-times" @click="showDeleteConfirm = false" class="p-button-text" />
 				<Button label="Yes" icon="pi pi-check" @click="deleteRepository" class="p-button-danger" />
@@ -31,6 +36,10 @@
 		modelValue: {
 			type: Boolean,
 			default: false
+		},
+		githubInstallationId: {
+			type: Number,
+			required: false
 		}
 	});
 
@@ -61,8 +70,9 @@
 
 	const fetchRepositories = async () => {
 		try {
+			console.log(props.githubInstallationId)
 			// Replace with your actual API call
-			const response = await fetch(`/api/github/repositories/installations/58113211`);
+			const response = await fetch(`/api/github/repositories/installations/${props.githubInstallationId}`);
 			const data = await response.json();
 			console.log(data);
 			repositories.value = data;

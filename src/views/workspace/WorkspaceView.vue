@@ -68,7 +68,8 @@
       No workspace data available
     </div>
   </div>
-  <RepoSettingModal v-model="showModal" :project-id="projectId" :workspace-id="workspaceId" />
+  <RepoSettingModal v-model="showModal" :project-id="projectId" :workspace-id="workspaceId"
+    :githubInstallationId="githubInstallationId" />
 </template>
 
 <script setup>
@@ -92,6 +93,7 @@
   import WorkspaceAPI from '@/api/proj/workspace';
   import RepoSettingModal from './components/RepoSettingModal.vue';
   import { useProjectStore } from '@/stores/proj/useProjectStore';
+  import GithubAppInstallationModal from '../vcs/github/GithubAppInstallationModal.vue';
 
   const route = useRoute();
   const router = useRouter();
@@ -102,7 +104,7 @@
   const selectedTags = ref([]); // 선택된 태그
   const newTagName = ref(""); // 새 태그 이름 입력
   const projectStore = useProjectStore();
-  const installationId = ref(null);
+  const githubInstallationId = ref(null);
   const showModal = ref(false)
   const props = defineProps({
     projectId: {
@@ -141,7 +143,9 @@
   const fetchInstallationId = async () => {
     try {
       const id = await projectStore.getInstallationId(props.projectId);
+      console.log(props.projectId)
       console.log(id)
+      githubInstallationId.value = id;
       return id;
     } catch (err) {
       throw new Error(err)
