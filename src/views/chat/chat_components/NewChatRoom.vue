@@ -105,6 +105,7 @@ async function createNewChat() {
     const newRoom = {
       roomId: response.data?.data?.roomId || response.data?.roomId,
       chatRoomName: chatRoomName.value,
+      lastMessage: "",
     };
 
     console.log("새 채팅방 생성: ", newRoom)

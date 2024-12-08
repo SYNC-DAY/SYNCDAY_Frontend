@@ -64,6 +64,7 @@ const createNewChatRoom = () => {
 }
 
 const addNewChat = (newRoom) => {
+  newRoom.lastMessage = newRoom.lastMessage;
   chatList.value.unshift(newRoom)
   isPopupVisible.value = false
   openChatRoom(newRoom)
@@ -117,7 +118,7 @@ const filterChatList = computed(() => {
   
   return chatList.value.map((chat) => {
     const userName = authStore.user.userName; // 로그인한 유저 이름
-    const filteredName = chat.chatRoomName.replace(userName, '').trim(); // 유저 이름을 제거
+    const filteredName = chat.chatRoomName.replace(userName, '').trim(); // 유저 이름을 제거(,(쉼표)도 제거 필요(수정 예정) )
     return {
       ...chat,
       chatRoomName: filteredName
@@ -137,7 +138,7 @@ const searchChat = (event) => {
 
   // 채팅방 삭제
   const removeChatFromList = (roomId) => {
-    chatList.value = chatList.value.filter(chat => chat.roomId !== roomId);
+    chatList.value = chatList.value.filter((chat) => chat.roomId !== roomId);
     console.log(`채팅 목록에서 ${roomId} 삭제`);
   };
 
@@ -258,6 +259,7 @@ onUnmounted(() => {
   
   .chat-search {
     border-radius: 7px;
+    border-style: solid;
     background-color: #f5f5f5 ;
     border-color: #d1d1d1;
     font-size: 0.9rem;
