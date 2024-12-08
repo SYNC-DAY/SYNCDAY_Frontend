@@ -140,7 +140,7 @@
   }
   const fetchInstallationId = async () => {
     try {
-      const id = await useProjectStore.getGithubInstallationid(props.projectId);
+      const id = await projectStore.getInstallationId(props.projectId);
       console.log(id)
       return id;
     } catch (err) {
