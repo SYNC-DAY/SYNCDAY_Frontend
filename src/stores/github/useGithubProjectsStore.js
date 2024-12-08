@@ -77,29 +77,63 @@ export const useGithubProjectsStore = defineStore("githubProjects", {
 
       try {
         this.isLoading = true;
+        const githubAppStore = useGithubAppStore();
+        const targetType = githubAppStore.getTargetType(installationId);
+        if (!targetType) {
+          throw new Error(`Could not determine target type for installation ${installationId}`);
+        }
+        this.isLoading = true;
 
-        const query = `
-          query($orgName: String!) {
-            organization(login: $orgName) {
-              projectsV2(first: 100) {
-                nodes {
-                  id
-                  title
-                  shortDescription
-                  url
-                  closed
-                  updatedAt
-                  number
-                  items {
-                    nodes {
-                      id
-                    }
-                  }
-                }
+        let query;
+        if (targetType === "Organization") {
+          query = `
+    query($orgName: String!) {
+      organization(login: $orgName) {
+        projectsV2(first: 100) {
+          nodes {
+            id
+            title
+            shortDescription
+            url
+            closed
+            updatedAt
+            number
+            items {
+              nodes {
+                id
               }
             }
           }
-        `;
+        }
+      }
+    }
+  `;
+        } else if (targetType === "User") {
+          query = `
+    query($orgName: String!) {
+      user(login: $orgName) {
+        projectsV2(first: 100) {
+          nodes {
+            id
+            title
+            shortDescription
+            url
+            closed
+            updatedAt
+            number
+            items {
+              nodes {
+                id
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+        } else {
+          throw new Error(`Invalid target type: ${targetType}`);
+        }
 
         const response = await this.executeGraphQLQuery(installationId, query, { orgName });
 

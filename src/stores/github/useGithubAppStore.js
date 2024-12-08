@@ -195,4 +195,9 @@ export const useGithubAppStore = defineStore("githubApp", {
       }
     },
   },
+  getters: {
+    getTargetType: state => installationId => {
+      return state.installations[installationId]?.accountType;
+    },
+  },
 });
