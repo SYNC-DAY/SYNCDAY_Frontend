@@ -10,8 +10,8 @@
 		<!-- Footer Actions -->
 		<template #footer>
 			<div class="flex justify-between">
-				<Button label="Back" icon="pi pi-arrow-left" class="p-button-text" />
-				<Button label="Next" icon="pi pi-arrow-right" />
+				<!-- <Button label="Back" icon="pi pi-arrow-left" class="p-button-text" /> -->
+				<Button label="Save" icon="pi pi-check" @click="handleSaveRepositoryInfo" />
 			</div>
 		</template>
 	</Dialog>
@@ -43,7 +43,7 @@
 	const toast = useToast();
 	const repositories = ref([]);
 	const isVisible = ref(props.modelValue);
-	const selectedRepo = ref(null);
+	const selectedRepo = ref();
 	const githubInstallationId = ref(null);
 
 
@@ -86,7 +86,24 @@
 	watch(() => isVisible.value, (newValue) => {
 		emit('update:modelValue', newValue);
 	});
+	const handleSaveRepositoryInfo = (repository) => {
+		try {
+			const response = axios.put("/proj-members/workspaces/", {
+				proj_id: props.projectId,
+				workspaceId: props.workspaceId,
+				vcs_repo_url: repository.htmlUrl,
+				vcs_type: "GITHUB"
+			})
 
+			if (response.data.success) {
+				console.log(response.data.data);
+			}
+
+		}
+		catch (err) {
+			console.error(err)
+		}
+	}
 
 </script>
 
