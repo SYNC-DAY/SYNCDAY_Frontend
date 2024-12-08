@@ -1,13 +1,13 @@
 <template>
     <div v-if="isAssistantVisible" class="assistant-container">
     <div class="assistant-balloon">
-        <div class="tab-button-container">
-            <button :class="{ active: tab === 'today' }" @click="selectTab('today')">
+        <div class="tab-Button-container">
+            <Button :class="{ active: tab === 'today' }" @click="selectTab('today')" outlined>
                 오늘의 일정
-            </button>
-            <button :class="{ active: tab === 'notified' }" @click="selectTab('notice')">
+            </Button>
+            <Button :class="{ active: tab === 'notified' }" @click="selectTab('notice') " outlined>
                 일정 알림
-            </button>
+            </Button>
         </div>
         <div v-if="tab == 'today'" class="today-schedule">
             <p>반갑습니다! Syncday 비서 문어입니다.</p>
@@ -27,7 +27,7 @@
                             <td>{{ schedule.title }}</td>
                             <td>{{ formatStart(schedule.start_time) }}</td>
                             <template v-if="isPastSchedule(schedule.start_time)">
-                                <td>이미 시작된 일정입니다.</td>
+                                <td> 이미 시작한 일정</td>
                             </template>
                             <template v-else>
                                 <td class="edit-td" v-if="editingSchedule === schedule.schedule_id">
@@ -41,15 +41,15 @@
                                         </select>
                                     </div>
                                     <div v-if="editingSchedule === schedule.schedule_id">
-                                        <button @click="saveNotificationTime(schedule)">확인</button>
-                                        <button @click="cancelEditing()">취소</button>
+                                        <Button @click="saveNotificationTime(schedule)" outlined>확인</Button>
+                                        <Button @click="cancelEditing()" outlined>취소</Button>
                                     </div>
                                 </td>
 
                                 <template v-else>
                                     <td>
                                         {{ schedule.notification_time ? formatStart(schedule.notification_time) : '알림 없음' }}
-                                        <button @click="editNotification(schedule.schedule_id)">수정</button>
+                                        <Button outlined @click="editNotification(schedule.schedule_id)">수정</Button>
                                     </td>
                                 </template>
                             </template>
@@ -81,13 +81,13 @@
                 <p>아직 알림드릴 일정이 없습니다.</p>
             </div>
         </div>
-        <button @click="hide">닫기</button>
+        <Button outlined @click="hide">닫기</Button>
     </div>
     <div class="assistant-avatar">
         <img src="@/assets/images/assistant.png" alt="Assistant" />
     </div>
     </div>
-    <div v-else class="assistant-button-container" @click="show">
+    <div v-else class="assistant-Button-container" @click="show">
     <img  alt="누르면 비서가 나오는 이미지" />
     </div>
 </template>
@@ -115,9 +115,10 @@ const tab = ref("today");
 
 const isPastSchedule = (start_time) => {
     const startTime = new Date(start_time);
+    startTime.setMinutes(startTime.getMinutes() - 5); // 5분 추가
     const now = new Date();
     return startTime < now;
-};
+};  
 
 const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -149,7 +150,7 @@ const formatStart = (dateString) => {
     hours = hours ? hours : 12; 
 
     if (hours == 12 && ampm == '오전' ) {
-        return "자정";
+        return "종일";
     }
 
     return `${ampm} ${String(hours).padStart(2, '0')}:${minutes}`;
@@ -228,8 +229,7 @@ if (eventSource.value) {
 }
 
 eventSource.value = new EventSourcePolyfill(
-    // `http://localhost:8080/sse/notification/subscribe/${authStore.user.userId}`,
-    `http://localhost:5000/sse/notification/subscribe/1`,
+    `http://localhost:5000/sse/notification/subscribe/${authStore.user.userId}`,
     {
     headers: {
         Authorization: `Bearer ${token}`,
@@ -349,23 +349,9 @@ onUnmounted(()=>{
 
 
 /* 닫기 버튼 */
-.assistant-balloon button {
-    margin-top: 8px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-}
-
-.assistant-balloon button:hover {
-    background-color: #0056b3;
-}
 
 /* 비서 버튼 컨테이너 */
-.assistant-button-container {
+.assistant-Button-container {
     position: fixed;
     bottom: 1rem;
     right: 1rem;
@@ -381,7 +367,7 @@ onUnmounted(()=>{
     z-index: 1;
 }
 
-.assistant-button-container img {
+.assistant-Button-container img {
     width: 40px;
     height: 40px;
     object-fit: contain;

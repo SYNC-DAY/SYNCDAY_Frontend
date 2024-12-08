@@ -2,20 +2,45 @@
     <div class="post-detail-container">
         <!-- Header -->
         <div class="detail-header">
-            <div class="team-name-container">
-                {{ teamStore.teamName }} - {{ teamStore.boardTitle }}
-            </div>
-            <div class="button-container">
-                <Button @click="submitPost">작성 완료</Button>
-                <Button @click="goToList">목록</Button>
+            <div class="team-container">
+                <Button icon="pi pi-angle-double-left" 
+                label="게시글 목록" 
+                outlined
+                style="margin-right:1rem"
+                @click="goToList"/>
+                <Button 
+                    :label="teamStore.teamName"  
+                    icon="pi pi-user" 
+                    disabled 
+                    rounded 
+                    class="team-name-container"
+                />- 
+                <Button 
+                    :label="teamStore.boardTitle"  
+                    icon="pi pi-user" 
+                    disabled 
+                    rounded 
+                    class="board-name-container"
+                />
             </div>
         </div>
-
         <!-- Body -->
         <div class="detail-body">
-            <input v-model="newPost.title" class="edit-title" placeholder="제목을 입력하세요" />
-            <textarea v-model="newPost.content" class="edit-content" placeholder="내용을 입력하세요"></textarea>
+            <div class="detail-up">
+                <InputText class="title-input" v-model="newPost.title"/>
+                <div class="button-container">
+                    <Button outlined @click="goToList">취소</Button>
+                    <Button outlined @click="submitPost">작성</Button>
+                </div>
+            </div>
+            <Editor v-model="newPost.content" editorStyle="height: 30rem">
+                    <template v-slot:toolbar>
+                        <span class="ql-formats">
+                        </span>
+                    </template>
+                </Editor>
         </div>
+
     </div>
 </template>
 
@@ -25,6 +50,8 @@ import { useTeamStore } from '@/stores/team';
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
+import { InputText } from 'primevue';
+import Editor from 'primevue/editor';
 
 const teamStore = useTeamStore();
 const authStore = useAuthStore();
@@ -35,6 +62,12 @@ const newPost = ref({
     content: '',
 });
 
+const removeHtmlTags = (html) => {
+    const tempElement = document.createElement('div');
+    tempElement.innerHTML = html;
+    return tempElement.innerText || tempElement.textContent; // HTML 태그 제거 후 텍스트 반환
+};
+
 // 게시글 작성 완료
 const submitPost = async () => {
     if (!newPost.value.title.trim() || !newPost.value.content.trim()) {
@@ -43,6 +76,7 @@ const submitPost = async () => {
     }
 
     try {
+        newPost.value.content = removeHtmlTags(newPost.value.content);
         const response = await axios.post('/teampost', {
             title: newPost.value.title,
             content: newPost.value.content,
@@ -67,41 +101,32 @@ const goToList = () => {
 </script>
 
 <style scoped>
-/* Container 스타일 */
-.post-detail-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    background-color: #f9f9f9;
+/* 기존 스타일 유지 */
+
+/* 수정 모드 스타일 */
+
+.title-input{
+    width: 50vw;
 }
 
-/* Header 스타일 */
-.detail-header {
-    margin-bottom: 20px;
-}
-
-.team-name-container {
-    font-size: 18px;
-    font-weight: bold;
-    margin-bottom: 10px;
-}
-
-.button-container {
+.detail-up{
     display: flex;
-    gap: 10px;
+    justify-content: space-between;
 }
-
-/* Body 스타일 */
-.detail-body {
-    margin-bottom: 20px;
-    line-height: 1.6;
-    font-size: 16px;
-    color: #333;
+.detail-header{
+    margin-bottom: 0.5rem;
 }
-
-/* Input 스타일 */
+.post-detail-container{
+    display:flex;
+    flex-direction: column;
+    align-items: center;
+    width:100%;
+    height:100%;
+    margin-top: 2rem;
+}
+.post-title{
+    text-align: center;
+}
 .edit-title {
     width: 100%;
     padding: 10px;
@@ -119,5 +144,53 @@ const goToList = () => {
     border: 1px solid #ccc;
     border-radius: 5px;
     resize: none;
+}
+
+.edit-buttons {
+    text-align: right;
+}
+
+.detail-body{
+    border: 1px solid #FF9D85;
+    border-radius: 2.5rem;
+    box-shadow: 0 4px 8px rgba(255, 157, 133, 0.5);
+    padding: 2rem;
+    width: 70vw;
+}
+
+
+
+.team-name-container {
+    margin-top: 1rem;
+    margin-right: 1rem;
+    background-color: #FDC387;
+    border-color: #FDC387;
+    cursor: default;
+    color: black;
+    opacity:1;
+}
+.board-name-container {
+    margin-top: 1rem;
+    margin-right: 1rem;
+    background-color: #FDC387;
+    border-color: #FDC387;
+    cursor: default;
+    color: black;
+    opacity:1;
+}
+
+.post-meta{
+    text-align: right;
+}
+.my-post-button{
+    text-align: right;
+}
+
+.content{
+    border-top: #FDC387 solid 1px;
+    margin-top: 2rem;
+    padding: 2rem;
+    font-size: 1.2rem;
+    line-height: 2; /* 줄 간격을 1.5배로 설정 */
 }
 </style>

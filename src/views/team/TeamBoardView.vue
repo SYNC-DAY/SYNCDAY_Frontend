@@ -4,16 +4,16 @@
             <Button 
                 :label="teamStore.teamName"  
                 icon="pi pi-user" 
-                disabled 
                 rounded 
+                disabled
                 class="team-name-container"
             />
             <Button 
                 class="team-board-edit" 
                 @click="showEditModal = true"
-            >
-                게시판 수정
-            </Button>
+                outlined
+                label="게시판 수정"
+            />
         </div>
         <div class="board-view-body">
             <div class="board-container">
@@ -30,7 +30,7 @@
                             더보기
                         </Button>
                     </div>
-                    <BoardPost :teamBoardId="board.teamBoardId"></BoardPost>
+                    <BoardPost @changeBoardName="changeBoardName" :teamBoardId="board.teamBoardId"></BoardPost>
                 </div>
             </div>
         </div>
@@ -79,6 +79,20 @@ const goToThatPostView = (boardId, boardTitle) => {
     });
 };
 
+const changeBoardName = (boardId) => {
+    // boardList에서 boardId가 일치하는 항목 찾기
+    const board = boardList.value.find(item => item.teamBoardId === boardId);
+
+    if (board) {
+        // boardTitle 가져오기
+        const boardTitle = board.boardTitle;
+        teamStore.updateBoardTitle(boardTitle); // teamStore에 업데이트
+    } else {
+        console.error(`Board with ID ${boardId} not found.`);
+    }
+};
+
+
 onMounted(async () => {
     await getBoardList();
     await teamStore.getTeamName(1); // userId
@@ -107,23 +121,20 @@ onMounted(async () => {
     border-color: #FDC387;
     cursor: default;
     color: black;
+    opacity: 1;
+    
 }
 
 .team-board-edit {
     margin-top: 1rem;
-    background-color: #FF9D85;
-    border: none;
-    color: white;
+
     padding: 0.8rem 1.5rem;
     border-radius: 0.5rem;
-    cursor: pointer;
     height: 2.5rem;
     opacity: 1;
 }
 
-.team-board-edit:hover {
-    background-color: #FF7F50;
-}
+
 
 .board {
     border: 1px solid #FF9D85;
