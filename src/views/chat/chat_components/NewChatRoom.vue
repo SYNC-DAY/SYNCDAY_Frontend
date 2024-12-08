@@ -148,6 +148,7 @@ loadUsers();
 .modal-content p {
   font-size: 20px;
   font-weight: 400;
+  color: #383838;
   margin-bottom: 15px;
   margin-left: 20px;
 }

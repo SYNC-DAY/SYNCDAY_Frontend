@@ -114,8 +114,15 @@ const filterChatList = computed(() => {
   if (!Array.isArray(chatList.value) || chatList.value.length === 0) {
     return []; 
   }
-
-  return chatList.value.filter((chat) =>
+  
+  return chatList.value.map((chat) => {
+    const userName = authStore.user.userName; // 로그인한 유저 이름
+    const filteredName = chat.chatRoomName.replace(userName, '').trim(); // 유저 이름을 제거
+    return {
+      ...chat,
+      chatRoomName: filteredName
+    };
+  }).filter((chat) =>
     chat.chatRoomName?.toLowerCase().includes(searchQuery.value.toLowerCase())
   );
 });
@@ -165,7 +172,8 @@ onUnmounted(() => {
   /* 팝업 콘텐츠 */
   .popup-content {
     padding: 10px;
-    overflow-y: auto; /* 내용이 길어지면 스크롤 */
+    overflow-y: auto;
+    height: calc(100% - 20px);
   }
   
   .popup-content p {
@@ -193,6 +201,24 @@ onUnmounted(() => {
     color: #686666;
   }
   
+  .chatlist {
+  flex-direction: column;
+  flex-grow: 1;
+  gap: 7px;
+  padding: 7px;
+  border-radius: 5px;
+  }
+
+  .popup ::-webkit-scrollbar {
+  width: 8px; /* 세로 스크롤바 크기 */
+  height: 8px; /* 가로 스크롤바 크기 */
+}
+
+/* 스크롤바의 막대 */
+.popup ::-webkit-scrollbar-thumb {
+  background-color: #fdebf1; /* 색상 */
+  border-radius: 4px; /* 둥근 모서리 */
+}
   .new-chat {
   background-color: #fd8eaa;
   border-radius: 13px;

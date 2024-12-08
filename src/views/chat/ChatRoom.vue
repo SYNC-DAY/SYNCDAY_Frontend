@@ -316,11 +316,21 @@ h2 {
   gap: 15px;
   overflow-y: auto;
   padding: 10px;
-  background-color: #fdf7f9;
+  background-color: #fdf6f9;
   border-radius: 5px;
   margin-bottom: 20px;
 }
 
+.chat-messages::-webkit-scrollbar {
+  width: 8px; /* 세로 스크롤바 크기 */
+  height: 8px; /* 가로 스크롤바 크기 */
+}
+
+/* 스크롤바의 막대 */
+.chat-messages::-webkit-scrollbar-thumb {
+  background-color: #ffe0ea; /* 색상 */
+  border-radius: 4px; /* 둥근 모서리 */
+}
 
 .date-divider {
   text-align: center;
