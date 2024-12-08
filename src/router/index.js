@@ -21,12 +21,18 @@ export async function setupRouter() {
         component: () => import("@/views/user/Main.vue"),
         meta: { requiresAuth: true },
       },
-      // {
-      //   path: "/:roomId",
-      //   name: "ChatRoom",
-      //   component: () => import("@/views/chat/ChatRoom.vue"),
-      //   props: true,
-      // },
+      {
+        path: "/chat",
+        name: "ChatRoomList",
+        component: () => import("@/views/chat/ChatRoomList.vue"), // 채팅방 목록
+        children: [
+          {
+            path: ":roomId", // 특정 채팅방
+            name: "ChatRoom",
+            component: () => import("@/views/chat/ChatRoom.vue"),
+          },
+        ],
+      },
       ...userRoutes,
       ...projectRoutes,
       ...calendarRoutes,

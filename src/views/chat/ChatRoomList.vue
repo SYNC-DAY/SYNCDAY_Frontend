@@ -5,20 +5,20 @@
         <div class="popup-content">
           <p>채팅</p>
           <div class="newchat">
-            <button class="new-chat" @click="createNewChatRoom">새 채팅</button>
+            <button class="new-chat" @click="createNewChatRoom"> 새 채팅  </button>
             </div>
-            <div >
-              <input class="chat-search" type="text" placeholder="이름, 채팅방 명 검색 " @input="searchChat($event)"/>
+            <div class="search">
+              <input class="chat-search" type="text" placeholder=" 채팅방 명 검색 " @input="searchChat($event)"/>
             </div>
             <div class= "chatlist">
-               <div v-for="chat in filteredChatList" :key="chat.roomId" @click="openChatRoom(chat)" class="chat-room">
+               <div v-for="chat in filterChatList" :key="chat.roomId" @click="openChatRoom(chat)" class="chat-room">
                 <div class="profile-line">
                   <img :src="userProfileImg" alt="프로필 이미지" class="profile-img"/>
                   <div class="profile-content">
-                  <span class="roomName">{{ chat.chatRoomName }}</span>
-                  <div class="content-time">
-                  <span class="lastMessage">{{ chat.lastMessage || '메시지가 없습니다' }}</span>
+                  <span class="roomName-time">{{ chat.chatRoomName }}</span>
                   <span class="time">{{ chat.sentTime }}</span>
+                  <div class="content">
+                  <span class="lastMessage">{{ chat.lastMessage }}</span>
                   </div>
                 </div>
               </div>
@@ -26,7 +26,7 @@
             </div>
           </div>
         </div>
-        <NewChatRoom v-if="isPopupVisible" @close="closeNewChatRoom"/>
+        <NewChatRoom v-if="isPopupVisible" @close="closeNewChatRoom" @chatCreated="addNewChat"/>
         <ChatRoom  v-if="selectedRoom" :roomId="selectedRoom.roomId"
         :chatRoomName="selectedRoom.chatRoomName"  
         @close="closeChatRoom" :removeChatFromList="removeChatFromList"/>
@@ -39,6 +39,9 @@
   import axios from 'axios';
   import NewChatRoom from '@/views/chat/chat_components/NewChatRoom.vue';
   import ChatRoom from './ChatRoom.vue';
+  import { useRouter } from 'vue-router';
+
+  const router = useRouter();
 
   const { isVisible } = defineProps({
     isVisible: {
@@ -50,7 +53,6 @@
 
   const emit = defineEmits(['closePopup'])
 
-// const isVisible = ref(true); 
 const chatList = ref([]);   
 const searchQuery = ref(''); 
 const isPopupVisible = ref(false);
@@ -62,9 +64,16 @@ const createNewChatRoom = () => {
   console.log('새 채팅방 생성 모달!');
   isPopupVisible.value = true
 }
+
+const addNewChat = (newRoom) => {
+  chatList.value.unshift(newRoom)
+  isPopupVisible.value = false
+  openChatRoom(newRoom)
+}
 const closeNewChatRoom = () => {
   console.log('새채팅 모달 종료')
   isPopupVisible.value = false;
+  // router.push({name: 'ChatRoom'})
 }
 // 채팅방 열기
 const openChatRoom = (chat) => {
@@ -82,16 +91,17 @@ const openChatRoom = (chat) => {
 const closeChatRoom = () => {
   selectedRoom.value = null;
 };
-// 채팅방 데이터 가져오기
+
+// 채팅방 목록 데이터 가져오기
 const fetchChatRooms = async () => {
   
   try {
     console.log('authStore.user.userId:', authStore.user.userId); 
-    const response = await axios.get('/chat/room',{params: { userId: authStore.user.userId }});
+    const response = await axios.get('/chat/room',{params: { userId: authStore.user.userId}});
     console.log('API 요청 URL: ', axios.defaults.baseURL + '/chat/room');
     console.log('응답데이터: ', response.data)
     if (Array.isArray(response.data)) {
-      chatList.value = response.data;
+      chatList.value = response.data || [];
     } else {
       console.error('예상치 못한 응답 데이터 형식:', response.data);
       chatList.value = [];
@@ -102,8 +112,9 @@ const fetchChatRooms = async () => {
   }
 };
 
+
 // 채팅방 필터링
-const filteredChatList = computed(() => {
+const filterChatList = computed(() => {
   if (!Array.isArray(chatList.value) || chatList.value.length === 0) {
     return []; 
   }
@@ -128,11 +139,12 @@ const searchChat = (event) => {
   };
 
 // 컴포넌트가 로드될 때 데이터 가져오기
-onMounted(() => {
-  console.log("sfs", authStore.user.userId)
-  console.log('마운트: ', roomId)
-  fetchChatRooms();
-});
+// onMounted(() => {
+//   console.log("sfs", authStore.user.userId)
+//   console.log('마운트: ', roomId)
+//   fetchChatRooms();
+// });
+  onMounted(fetchChatRooms);
 
 onUnmounted(() => {
   console.log(`채팅방 ${roomId}의 모든 데이터 초기화`);
@@ -177,7 +189,7 @@ onUnmounted(() => {
     right: 10px;
     background: none;
     border: none;
-    font-size: 1rem;
+    font-size: 0.8rem;
     cursor: pointer;
     color: #c7c5c5;
   }
@@ -187,10 +199,10 @@ onUnmounted(() => {
   }
   
   .new-chat {
-  background-color: #ff9d85;
-  border-radius: 3px;
+  background-color: #fd8eaa;
+  border-radius: 13px;
   font-size: 1rem;
-  color: rgb(43, 43, 43);
+  color: #fff2f2;
   border: none;
   cursor: pointer;
   margin-bottom: 0.5rem;
@@ -198,7 +210,7 @@ onUnmounted(() => {
 }
 
 .new-chat:hover {
-  background-color: #fc8d71;
+  background-color: #fc7294;
 }
 
   .chat-room {
@@ -225,7 +237,7 @@ onUnmounted(() => {
   
   .chat-search {
     border-radius: 7px;
-    background-color: #e9e9e9 ;
+    background-color: #f5f5f5 ;
     border-color: #d1d1d1;
     font-size: 0.9rem;
     width: 90%;
@@ -235,7 +247,7 @@ onUnmounted(() => {
   margin-top: 1rem;
 }
 .roomName {
-  font-size: 14px;
+  font-size: 15px;
 }
 .lastMessage {
   font-size: 11px;
@@ -250,7 +262,7 @@ onUnmounted(() => {
   width: 40px;
   height: 40px;
 }
-.content-time {
+.content {
   display: flex;
   justify-content: space-between;
   align-items: center;
