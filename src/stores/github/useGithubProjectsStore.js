@@ -85,7 +85,7 @@ export const useGithubProjectsStore = defineStore("githubProjects", {
         this.isLoading = true;
 
         let query;
-        if (targetType === "Organization") {
+        if (targetType === "ORGANIZATION") {
           query = `
     query($orgName: String!) {
       organization(login: $orgName) {
@@ -108,7 +108,7 @@ export const useGithubProjectsStore = defineStore("githubProjects", {
       }
     }
   `;
-        } else if (targetType === "User") {
+        } else if (targetType === "USER") {
           query = `
     query($orgName: String!) {
       user(login: $orgName) {
