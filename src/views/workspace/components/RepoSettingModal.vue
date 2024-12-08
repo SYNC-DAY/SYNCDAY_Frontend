@@ -95,7 +95,7 @@
 		console.log(selectedRepo.value)
 		console.log({ workspace_id: props.workspaceId, proj_id: props.workspaceId, workspace_name: props.workspaceData.workspace_name, vcs_repo_name: selectedRepo.value.repoName, vcs_repo_url: selectedRepo.value.htmlUrl, proj_member_id: projMemberId })
 		await projectStore.updateWorkspace({ workspace_id: props.workspaceId, proj_id: props.workspaceId, workspace_name: props.workspaceData.workspace_name, vcs_repo_name: selectedRepo.value.repoName, vcs_repo_url: selectedRepo.value.htmlUrl, proj_member_id: projMemberId })
-
+		emit('update:modelValue', false)
 	}
 
 </script>
