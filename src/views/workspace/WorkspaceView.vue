@@ -134,7 +134,6 @@
 
   import WorkspaceAPI from '@/api/proj/workspace';
   import RepoSettingModal from './components/RepoSettingModal.vue';
-  import MilestoneSelector from '../vcs/github/MilestoneSelector.vue';
   import { useProjectStore } from '@/stores/proj/useProjectStore';
 
   const route = useRoute();
