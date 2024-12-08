@@ -78,7 +78,7 @@
 							<!-- 사용자 추가 버튼 -->
 							<Button 
 								icon="pi pi-user-plus" 
-								@click="addUserToProject(user)" 
+								@click="addMember(user)" 
 								class="p-button-text p-button-success"
 							/>
 							</li>
@@ -330,32 +330,41 @@ const handleInput = debounce(() => {
 	searchUsers(searchQuery.value);
 }, 300);
 
-const addMember = async () => {
-	try {
-		const response = await axios.post(`/proj-members/${props.projectId}/members`, {
-			userId: selectedUser.value.user_id
-		});
+const addMember = async (selectedUser) => {
+  try {
+    if (!selectedUser || !selectedUser.userId) {
+      throw new Error("선택된 사용자가 유효하지 않습니다.");
+    }
 
-		if (response.data.success) {
-			await loadProjectMembers();
-			selectedUser.value = null;
-			toast.add({
-				severity: 'success',
-				summary: '멤버 추가',
-				detail: '멤버가 추가되었습니다.',
-				life: 3000
-			});
-		}
-	} catch (error) {
-		console.error('Failed to add member:', error);
-		toast.add({
-			severity: 'error',
-			summary: '멤버 추가 실패',
-			detail: '멤버 추가 중 오류가 발생했습니다.',
-			life: 3000
-		});
-	}
+    const requestData = {
+      userId: selectedUser.userId,
+      participation_status: "MEMBER", // 본문에 데이터 포함
+    };
+
+    const response = await axios.post(`/proj-members/${props.projectId}/members`, requestData);
+
+    console.log("추가된 유저 ID: ", selectedUser.userId);
+
+    if (response.data.success) {
+      toast.add({
+        severity: "success",
+        summary: "멤버 추가",
+        detail: "멤버가 성공적으로 추가되었습니다.",
+        life: 3000,
+      });
+    }
+  } catch (error) {
+    console.error("Failed to add member:", error);
+    toast.add({
+      severity: "error",
+      summary: "멤버 추가 실패",
+      detail: "멤버 추가 중 오류가 발생했습니다.",
+      life: 3000,
+    });
+  }
 };
+
+
 
 const updateMemberStatus = async (member) => {
 	try {
