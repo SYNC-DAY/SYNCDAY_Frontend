@@ -1,3 +1,4 @@
+<!-- ChatRoom.vue -->
 <template>
   <div v-if="isVisible" class="popup">
     <button class="close-button" @click="$emit('close')">X</button>
@@ -150,6 +151,7 @@ const subscribeToRoom = (roomId) => {
     if (!messagesInRoom.value[roomId]) {
       messagesInRoom.value[roomId] = []
     }
+    console.log("메세지:", receivedMessage)
     // messagesInRoom.value[roomId].push(receivedMessage)
     messagesInRoom.value[roomId] = [...messagesInRoom.value[roomId], receivedMessage]
   })

@@ -1,8 +1,9 @@
+<!-- NewChatRoom.vue -->
 <template>
   <div class="modal" draggable="true">
     <div class="modal-content">
       <button class="close-button" @click="$emit('close')">X</button>
-      <h3>새 채팅방 만들기</h3>
+      <p>새 채팅방 만들기</p>
 
       <div v-if="isLoading">로딩 중...</div>
       <div v-else>
@@ -49,7 +50,6 @@
 import { ref, computed, watch } from "vue";
 import axios from "axios";
 import { useAuthStore } from '@/stores/auth';
-import { useRouter } from "vue-router";
 
 // 상태 관리
 const users = ref([]); // 사용자 목록
@@ -59,7 +59,6 @@ const authStore = useAuthStore();
 const currentUserId = ref(authStore.user?.userId);
 const chatRoomName = ref(""); // 채팅방 이름
 const isLoading = ref(true);
-const router = useRouter()
 const emit = defineEmits(["chatCreated","close"]);
 
 // 사용자 목록 로드
@@ -111,7 +110,6 @@ async function createNewChat() {
     console.log("새 채팅방 생성: ", newRoom)
     emit("chatCreated", newRoom)
     emit("close");
-    router.push({name: "ChatRoom", params: {roomId: newRoom.roomId, chatRoomName: newRoom.chatRoomName}});
   } catch (error) {
     console.error("채팅방 생성 실패:", error);
     alert("채팅방 생성에 실패하였습니다. 다시 시도해주세요.");
@@ -147,6 +145,12 @@ loadUsers();
   overflow: hidden;
 }
 
+.modal-content p {
+  font-size: 20px;
+  font-weight: 400;
+  margin-bottom: 15px;
+  margin-left: 20px;
+}
 /* 닫기 버튼 */
 .close-button {
   position: absolute;

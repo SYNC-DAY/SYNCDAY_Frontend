@@ -1,3 +1,4 @@
+<!-- ChatRoomList.vue --> 
 <template>
     <div>
       <div v-if="isVisible" class="popup">
@@ -39,9 +40,6 @@
   import axios from 'axios';
   import NewChatRoom from '@/views/chat/chat_components/NewChatRoom.vue';
   import ChatRoom from './ChatRoom.vue';
-  import { useRouter } from 'vue-router';
-
-  const router = useRouter();
 
   const { isVisible } = defineProps({
     isVisible: {
@@ -73,11 +71,10 @@ const addNewChat = (newRoom) => {
 const closeNewChatRoom = () => {
   console.log('새채팅 모달 종료')
   isPopupVisible.value = false;
-  // router.push({name: 'ChatRoom'})
 }
 // 채팅방 열기
 const openChatRoom = (chat) => {
-  console.log('chat', chat);
+  console.log('chat오픈: ', chat);
   if (chat && chat.roomId) { // 방어적 코드를 추가
     console.log(`${chat.roomId}번 채팅방 열기`);
     selectedRoom.value = chat;
@@ -94,7 +91,6 @@ const closeChatRoom = () => {
 
 // 채팅방 목록 데이터 가져오기
 const fetchChatRooms = async () => {
-  
   try {
     console.log('authStore.user.userId:', authStore.user.userId); 
     const response = await axios.get('/chat/room',{params: { userId: authStore.user.userId}});
@@ -139,12 +135,11 @@ const searchChat = (event) => {
   };
 
 // 컴포넌트가 로드될 때 데이터 가져오기
-// onMounted(() => {
-//   console.log("sfs", authStore.user.userId)
-//   console.log('마운트: ', roomId)
-//   fetchChatRooms();
-// });
-  onMounted(fetchChatRooms);
+onMounted(() => {
+  console.log("해당 유저 정보", authStore.user.userId)
+  console.log('마운트: ', roomId)
+  fetchChatRooms();
+});
 
 onUnmounted(() => {
   console.log(`채팅방 ${roomId}의 모든 데이터 초기화`);
