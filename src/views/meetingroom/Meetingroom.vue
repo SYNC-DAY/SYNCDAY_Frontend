@@ -1,5 +1,6 @@
 <template>
   <div class="calendar-setting">
+    <span>회의실 예약</span>
     <div class="calender-1">
       <FullCalendar :options="calendarOptions" ref="calendar1" />
     </div>
@@ -356,6 +357,14 @@ async closeReservationDialog() {
   width: 100%;
 }
 
+.calendar-setting span {
+  font-size: 1.5rem;
+  margin-top: 1%;
+  margin-left: 1%;
+  font-weight: bold;  
+
+}
+
 .calender-1 {
   display: flex;
   justify-content: center; 
@@ -382,7 +391,14 @@ async closeReservationDialog() {
   width: 100%;
   height: auto;
   max-height: 400px; 
-  overflow-y: hidden; 
+  overflow-y: hidden;
+  margin-left: 1%; 
+}
+
+.filter-area select {
+  margin-top: 1%;
+  margin-left: 1%;
+  margin-bottom: -5%;
 }
 
 .selected-date {
