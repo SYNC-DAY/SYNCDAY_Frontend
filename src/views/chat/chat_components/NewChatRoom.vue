@@ -30,7 +30,9 @@
                 type="checkbox"
                 :value="user.userId"
                 v-model="selectedMembers"
+                class="user-check"
               />
+              <span class="user-check-circle"></span>
               {{ user.name }}
             </label>
           </div>
@@ -48,8 +50,6 @@
 import { ref, computed, watch } from "vue";
 import axios from "axios";
 import { useAuthStore } from '@/stores/auth';
-import { Subscript } from "lucide-vue-next";
-import { allowContextMenu } from "@fullcalendar/core/internal";
 
 // 상태 관리
 const users = ref([]); // 사용자 목록
@@ -91,17 +91,21 @@ const emit = defineEmits(["close"]);
 async function createNewChat() {
   try {
     if (selectedMembers.value.length === 0) {
-      alert("채팅방에 추가할 멤버를 선택해주세요!");
+      alert("채팅할 멤버를 선택해주세요");
       return;
     }
+
     const response = await axios.post("http://localhost:5000/api/chat/room/create", {
       chatRoomName: chatRoomName.value,
       memberIds: selectedMembers.value,
     });
-    const newRoomId = response.data.data.id;
+    console.log("응답 데이터 확인: ",response)
+
+    const newRoomId = response.data.data ? response.data.data.roomId : response.data.roomId;
+    const newRoomName = chatRoomName.value;
     console.log("새 채팅방 생성 성공:", newRoomId);
     emit("close");
-    routerKey.push({name: "ChatRoom", params: {roomId: newRoomId}});
+    router.push({name: "ChatRoom", params: {roomId: newRoomId, chatRoomName: newRoomName}});
   } catch (error) {
     console.error("채팅방 생성 실패:", error);
     alert("채팅방 생성에 실패하였습니다. 다시 시도해주세요.");
@@ -165,7 +169,44 @@ loadUsers();
   padding: 8px;
   font-size: 1rem;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 10px;
+}
+/* 체크박스 숨기기 */
+.user-check {
+  display: none;
+}
+
+/* 동그라미 체크박스 스타일 */
+.user-check-circle {
+  width: 10px;
+  height: 10px;
+  border: 2px solid #ddd;
+  border-radius: 50%;
+  display: inline-block;
+  position: relative;
+  margin-right: 10px;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+}
+
+/* 체크박스 선택 시 스타일 */
+.user-check:checked + .user-check-circle {
+  background-color: #ff9d85;
+  border-color: #fc8d71;
+  position: relative;
+}
+
+/* 동그라미 안 체크 표시 */
+.user-check:checked + .user-check-circle::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  /* background-color: #fff4f1; */
+  border-radius: 50%;
 }
 
 /* 멤버 리스트 스크롤 */
@@ -176,6 +217,16 @@ loadUsers();
   padding: 10px;
   border-radius: 4px;
 }
+.scrollable-list::-webkit-scrollbar{
+  width: 10px;
+}
+.scrollable-list::-webkit-scrollbar-thumb {
+    background: #fccfc4; /* 스크롤바 색상 */
+    border-radius: 10px; /* 스크롤바 둥근 테두리 */
+}
+.scrollable-list::-webkit-scrollbar-track {
+    background: #fff4f1;
+}
 .user-item {
   display: flex;
   align-items: center;
@@ -185,27 +236,17 @@ loadUsers();
   margin-right: 10px;
 }
 
-/* 채팅방 이름 */
-.chat-room-name {
-  margin-bottom: 20px;
-}
-.chat-room-name input {
-  width: 100%;
-  padding: 8px;
-  font-size: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
 /* 생성 버튼 */
 .create-new {
   background-color: #ff9d85;
-  color: white;
+  color: rgb(34, 34, 34);
   padding: 8px 10px;
   font-size: 1rem;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  display: block;
+  margin: 0 auto;
 }
 .create-new:hover {
   background-color: #fc8d71;

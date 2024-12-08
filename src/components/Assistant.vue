@@ -235,8 +235,8 @@ eventSource.value = new EventSourcePolyfill(
         Authorization: `Bearer ${token}`,
         
     },
-    connectionTimeout: 24*60*1000, 
-    heartbeatTimeout: 24*60*1000, 
+    connectionTimeout: 24*60*60*1000, 
+    heartbeatTimeout: 24*60*60*1000, 
     }
 );
 

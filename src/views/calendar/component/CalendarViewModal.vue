@@ -2,8 +2,12 @@
     <div class="modal-container" @click="handleOutsideClick">
         <div class="modal-content">
             <div class="modal-header">
-                <span class="pi pi-pencil" @click="openEditModal"></span>
-                <span class="pi pi-trash" @click="deleteSchedule(scheduleId)"></span>
+                <span class="pi pi-pencil" @click="openEditModal" v-if="ownerUserId === authStore.user.userId"></span>
+                <span
+                    class="pi pi-trash"
+                    @click="deleteSchedule(scheduleId)"
+                    v-if="ownerUserId === authStore.user.userId"
+                ></span>
                 <span class="pi pi-times" @click="$emit('close')"></span>
             </div>
             <CalendarModal
@@ -53,7 +57,7 @@
 
                 <!-- 회의 여부 -->
                 <div class="text" v-if="meetingStatus === 'ACTIVE'">
-                    <span class="pi pi-users"></span>
+                    <span class="pi pi-book"></span>
                     <span class="detail-content">
                         {{ meetingStatus == 'ACTIVE' ? '회의' : null }}
                     </span>
@@ -72,24 +76,30 @@
                 <!-- 알람 (없으면 여기서 추가할 수 있게) -->
                 <!-- isAllDay가 true면 알람추가 안되게 해야한다!!!!!!!!! -->
                 <div class="text" v-if="!isAllDay">
-                    <span class="pi pi-bell"></span>
-                    <span v-if="notificationMessage && showSelectAlarm == false" class="detail-content">
-                        {{ notificationMessage }}
-                    </span>
-                    <span
-                        v-if="showSelectAlarm == false"
-                        class="pi pi-spin pi-refresh"
-                        style="margin-left: 1rem"
-                        @click="showSelectAlarm = !showSelectAlarm"
-                    ></span>
-                    <span
-                        v-if="!notificationMessage && showSelectAlarm == false"
-                        class="detail-content"
-                        style="cursor: pointer"
-                        @click="showSelectAlarm = !showSelectAlarm"
-                    >
-                        알람 추가
-                    </span>
+                    <div class="hover-area">
+                        <span class="pi pi-bell"></span>
+                        <span
+                            v-if="notificationMessage && showSelectAlarm === false"
+                            @click="showSelectAlarm = !showSelectAlarm"
+                            class="detail-content"
+                        >
+                            {{ notificationMessage }}
+                        </span>
+                        <span
+                            v-if="!notificationMessage && showSelectAlarm === false && !myNotificationTime"
+                            class="detail-content"
+                            style="cursor: pointer"
+                            @click="showSelectAlarm = !showSelectAlarm"
+                        >
+                            알람 추가
+                        </span>
+                        <span
+                            v-if="notificationMessage && showSelectAlarm === false"
+                            class="pi pi-spin pi-refresh"
+                            style="margin-left: 1rem"
+                            @click="showSelectAlarm = !showSelectAlarm"
+                        ></span>
+                    </div>
                     <div v-if="showSelectAlarm" class="dropdown-container">
                         <Select
                             v-model="notificationTime"
@@ -97,6 +107,7 @@
                             option-label="label"
                             option-value="value"
                             size="large"
+                            placeholder="알람 선택"
                         ></Select>
                         <span class="pi pi-check" @click="updateSelectAlarm"></span>
                         <span class="pi pi-times" @click="showSelectAlarm = false"></span>
@@ -104,13 +115,51 @@
                 </div>
 
                 <!-- 참석과 불참 명단 -->
+                <div class="text" v-if="userInfoLength > 1">
+                    <span class="pi pi-users"></span>
+                    <span class="detail-content">
+                        <div>참석자 {{ userInfoLength }}명</div>
+                        <div style="font-size: 1rem">
+                            <div class="hover-item" @mouseover="showTooltip('attend')" @mouseleave="hideTooltip">
+                                초대 수락 {{ userInfoAttend }}명,
+                                <div v-if="tooltipType === 'attend' && userInfoAttend > 0" class="tooltip">
+                                    <ul>
+                                        <li v-for="(user, index) in attendList" :key="index">
+                                            {{ user }}
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="hover-item" @mouseover="showTooltip('pending')" @mouseleave="hideTooltip">
+                                회신 대기 {{ userInfoPending }}명,
+                                <div v-if="tooltipType === 'pending' && userInfoPending > 0" class="tooltip">
+                                    <ul>
+                                        <li v-for="(user, index) in pendingList" :key="index">
+                                            {{ user }}
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="hover-item" @mouseover="showTooltip('absent')" @mouseleave="hideTooltip">
+                                불참 {{ userInfoAbsend }}명
+                                <div v-if="tooltipType === 'absent' && userInfoAbsend > 0" class="tooltip">
+                                    <ul>
+                                        <li v-for="(user, index) in absentList" :key="index">
+                                            {{ user }}
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </span>
+                </div>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, defineProps, watch } from 'vue';
+import { ref, computed, defineProps, watch, onMounted, onBeforeUnmount } from 'vue';
 import CalendarModal from './CalendarModal.vue';
 import Select from 'primevue/select';
 import dayjs from 'dayjs';
@@ -140,7 +189,7 @@ const schedule = props.schedule;
 console.log('schedule!!!', schedule);
 
 const scheduleId = props.schedule.scheduleId;
-const title = props.schedule.title;
+const title = props.schedule.title ? props.schedule.title : '(제목 없음)';
 const content = props.schedule.content;
 const startTime = props.schedule.startTime;
 const endTime = props.schedule.endTime;
@@ -148,11 +197,39 @@ const endTime = props.schedule.endTime;
 const publicStatus = props.schedule.publicStatus;
 const meetingStatus = props.schedule.meetingStatus;
 // const meetingroomId = props.schedule.meetingroomId;
-// const ownerUserId = props.schedule.ownerUserId;
+const ownerUserId = props.schedule.ownerUserId;
 const ownerUsername = props.schedule.ownerUsername;
 const userInfo = props.schedule.userInfo; // 이걸로 참석자 확인!!
-// const myNotificationTime = ref(props.schedule.myNotificationTime);
-const myNotificationTime = props.schedule.myNotificationTime;
+const myNotificationTime = ref(props.schedule.myNotificationTime);
+// const myNotificationTime = props.schedule.myNotificationTime;
+console.log('userInfo', userInfo);
+
+const userInfoLength = props.schedule.userInfo.length;
+const userInfoAttend = props.schedule.userInfo.filter((user) => ['ATTEND'].includes(user.participationStatus)).length;
+const userInfoPending = props.schedule.userInfo.filter((user) => ['PENDING'].includes(user.participationStatus)).length;
+const userInfoAbsend = props.schedule.userInfo.filter((user) => ['ABSENT'].includes(user.participationStatus)).length;
+
+// Lists for tooltips
+const attendList = computed(() =>
+    userInfo.filter((user) => user.participationStatus === 'ATTEND').map((user) => user.username)
+);
+const pendingList = computed(() =>
+    userInfo.filter((user) => user.participationStatus === 'PENDING').map((user) => user.username)
+);
+const absentList = computed(() =>
+    userInfo.filter((user) => user.participationStatus === 'ABSENT').map((user) => user.username)
+);
+
+// Tooltip visibility
+const tooltipType = ref(null);
+
+function showTooltip(type) {
+    tooltipType.value = type;
+}
+
+function hideTooltip() {
+    tooltipType.value = null;
+}
 
 const emit = defineEmits(['close', 'submit']);
 
@@ -171,6 +248,7 @@ const openEditModal = () => {
 
 // 종일 체크 여부
 const isAllDay = ref(dayjs(startTime).format('HH:mm') === '00:00' && dayjs(endTime).format('HH:mm') === '00:00');
+console.log('isAllDay', isAllDay.value);
 
 // 현재 연도
 const currentYear = dayjs().year();
@@ -270,20 +348,22 @@ if (currentUser) {
 
 const startTimeAdj = dayjs(startTime);
 
-// notificationTime이 null이 아닌 경우, startTime과 계산하여 몇 분 전을 표시
-const notificationMessage = ref('');
-
-if (myNotificationTime) {
-    const notificationTimeDiff = startTimeAdj.diff(dayjs(myNotificationTime), 'minute');
-    notificationMessage.value = `${Math.abs(notificationTimeDiff)}분 전`; // 분 차이를 계산
-} else {
-    notificationMessage.value = ''; // null일 경우 비워두기
-}
+// myNotificationTime이 null이 아닌 경우, startTime과 계산하여 몇 분 전을 표시
+const notificationMessage = computed(() => {
+    if (myNotificationTime.value) {
+        const notificationTimeDiff = startTimeAdj.diff(dayjs(myNotificationTime.value), 'minute');
+        return `${Math.abs(notificationTimeDiff)}분 전`; // 분 차이를 계산
+    } else {
+        return ''; // null일 경우 비워두기
+    }
+});
+console.log('notificationMessage', notificationMessage.value);
 
 const showSelectAlarm = ref(false);
 
 // 알람 시간 옵션 배열
 const alarmOptions = [
+    { label: '알람 없음', value: null },
     { label: '10분 전', value: '00:10' },
     { label: '20분 전', value: '00:20' },
     { label: '30분 전', value: '00:30' },
@@ -293,17 +373,19 @@ const alarmOptions = [
 ];
 
 const notificationTime = ref(
-    myNotificationTime
-        ? String(((dayjs(startTime).diff(dayjs(myNotificationTime)) % 60000) / 1000 / 60) * 60).padStart(2, '0') +
+    myNotificationTime.value
+        ? String(((dayjs(startTime).diff(dayjs(myNotificationTime.value)) % 60000) / 1000 / 60) * 60).padStart(2, '0') +
               ':' +
-              String(Math.floor(dayjs(startTime).diff(dayjs(myNotificationTime)) / 1000 / 60)).padStart(2, '0')
+              String(Math.floor(dayjs(startTime).diff(dayjs(myNotificationTime.value)) / 1000 / 60)).padStart(2, '0')
         : '00:10'
 );
 
+const notificationTimeRegist = ref();
+
 watch(
-    notificationTime,
+    [notificationTime, showSelectAlarm],
     () => {
-        if (showSelectAlarm.value) {
+        if (notificationTime.value) {
             // "HH:mm" 형식의 시간을 duration으로 변환
             const [hours, minutes] = notificationTime.value.split(':').map(Number);
             const notificationDuration = dayjs.duration({ hours, minutes }); // duration 객체 생성
@@ -314,11 +396,14 @@ watch(
             );
             const adjustedTime = originalStartTime.subtract(notificationDuration); // 알람 시간만큼 빼기
 
-            myNotificationTime.value = adjustedTime.format('YYYY-MM-DDTHH:mm:ss+09:00'); // ISO 형식으로 설정
-            console.log(`알람 시간 설정!!: ${myNotificationTime.value}`);
+            // 이거 이상할수도?? 타입 안맞을수도??
+            notificationTimeRegist.value = adjustedTime.format('YYYY-MM-DDTHH:mm:ss+09:00'); // ISO 형식으로 설정
+            console.log(`알람 시간 설정!!: ${notificationTimeRegist.value}`);
+        } else {
+            notificationTimeRegist.value = null;
         }
-    },
-    { immediate: true }
+    }
+    // { immediate: true }
 );
 
 // 알람 수정
@@ -329,7 +414,7 @@ const updateSelectAlarm = async () => {
             {
                 schedule_id: scheduleId,
                 user_id: authStore.user.userId,
-                notification_time: myNotificationTime.value,
+                notification_time: notificationTimeRegist.value,
             },
             {
                 headers: {
@@ -346,7 +431,7 @@ const updateSelectAlarm = async () => {
         }
 
         emit('submit');
-        emit('close');
+        // emit('close');
     } catch (error) {
         console.error(
             props.isEditMode ? '스케줄 수정 실패' : '스케줄 등록 실패',
@@ -363,11 +448,11 @@ const deleteSchedule = async (scheduleId) => {
         const response = await axios.delete(`/schedule/${scheduleId}`);
         console.log('삭제 성공:', response.data);
 
-        emit('close');
         emit('submit');
+        emit('close');
 
         // 성공 알림 (선택 사항)
-        alert('스케줄이 삭제되었습니다.');
+        // alert('스케줄이 삭제되었습니다.');
     } catch (error) {
         console.error('삭제 실패:', error.response?.data || error.message);
 
@@ -375,6 +460,21 @@ const deleteSchedule = async (scheduleId) => {
         alert('스케줄 삭제에 실패했습니다. 다시 시도해주세요.');
     }
 };
+
+// 'Esc' 키를 눌렀을 때 모달을 닫는 함수
+const handleEscKey = (event) => {
+    if (event.key === 'Escape') {
+        emit('close');
+    }
+};
+
+onMounted(() => {
+    window.addEventListener('keydown', handleEscKey);
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('keydown', handleEscKey);
+});
 </script>
 
 <style scoped>
@@ -396,7 +496,7 @@ const deleteSchedule = async (scheduleId) => {
     padding: 2rem;
     border-radius: 8px;
     width: 80%;
-    max-width: 450px;
+    max-width: 500px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     position: relative;
 }
@@ -416,7 +516,7 @@ const deleteSchedule = async (scheduleId) => {
     display: flex;
     flex-direction: column;
     gap: 2.5rem;
-    margin-top: 3rem;
+    margin-top: 2rem;
     margin-left: 1rem;
 }
 
@@ -462,7 +562,7 @@ const deleteSchedule = async (scheduleId) => {
     color: #999;
     cursor: pointer;
     opacity: 0; /* 기본적으로 숨김 */
-    transition: opacity 0.3s;
+    transition: opacity 0.2s;
 }
 
 .dropdown-container:hover .pi {
@@ -474,16 +574,59 @@ const deleteSchedule = async (scheduleId) => {
     margin-left: 1rem;
 }
 
+/* hover-area에 마우스를 올리면 pi-spin이 보이도록 */
+.hover-area {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer; /* 전체 영역에 커서 변경 */
+}
+
+/* pi-spin 기본 상태 */
 .pi-spin {
     font-size: 1rem;
     color: #999;
-    cursor: pointer;
     opacity: 0; /* 기본적으로 숨김 */
     transition: opacity 0.3s;
 }
 
+/* hover 시 pi-spin이 보이도록 */
+.hover-area:hover .pi-spin {
+    opacity: 1; /* 호버 시 보이도록 */
+}
+
+/* pi-spin에만 직접적으로 호버 효과 */
 .pi-spin:hover {
-    opacity: 1; /* 마우스가 드롭다운 위에 있을 때 표시 */
+    opacity: 1;
     color: #333;
+}
+
+.hover-item {
+    position: relative;
+    display: inline-block;
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+.tooltip {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 5px 10px;
+    font-size: 1rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+    z-index: 100;
+}
+
+.tooltip ul {
+    padding: 0;
+    margin: 0;
+    list-style-type: none;
+}
+
+.tooltip li {
+    margin: 5px 0;
 }
 </style>

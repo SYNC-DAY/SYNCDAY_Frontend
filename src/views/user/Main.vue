@@ -11,13 +11,6 @@
     <div class="widget-container">
       <div class="content-container">
         <div class="title-container">
-          <p class="widget-title">북마크한 카드</p>
-        </div>
-      </div>
-    </div>
-    <div class="widget-container">
-      <div class="content-container">
-        <div class="title-container">
           <p class="widget-title">일정 초대</p>
         </div>
         <div class="invitaion-container">
@@ -28,7 +21,15 @@
     <div class="widget-container">
       <div class="content-container">
         <div class="title-container">
-          <p class="widget-title">팀 게시판</p>
+          <p class="widget-title">진행중인 카드</p>
+        </div>
+        <DoingCard></DoingCard>
+      </div>
+    </div>
+    <div class="widget-container">
+      <div class="content-container">
+        <div class="title-container">
+          <p class="widget-title">팀 최신</p>
         </div>
         <TeamBoardList/>
       </div>
@@ -47,6 +48,7 @@
     import timeGridPlugin from '@fullcalendar/timegrid';
     import ScheduleInvitaion from './components/ScheduleInvitaion.vue';
     import TeamBoardList from './components/TeamBoardList.vue';
+    import DoingCard from './components/DoingCard.vue';
     
     const authStore = useAuthStore();
     const router = useRouter();

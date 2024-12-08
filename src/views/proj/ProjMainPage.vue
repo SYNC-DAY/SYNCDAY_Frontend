@@ -35,14 +35,17 @@
 <script setup>
 import { ref, onMounted, provide, nextTick } from 'vue';
 import { useAuthStore } from "@/stores/auth.js";
+
+import { useGithubAppStore } from '@/stores/github/useGithubAppStore';
+
 import { storeToRefs } from "pinia";
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
 
 import SideBar from '@/components/SideBar.vue';
-import ProjItem from './SideBar/ProjItem.vue';
-import WorkspaceItem from './SideBar/WorkspaceItem.vue';
+import ProjItem from './sidebar/ProjItem.vue';
+import WorkspaceItem from './sidebar/WorkspaceItem.vue';
 import NewProjModal from './components/NewProjModal.vue';
 
 
@@ -50,6 +53,7 @@ import NewProjModal from './components/NewProjModal.vue';
 const toast = useToast();
 const router = useRouter();
 const authStore = useAuthStore();
+const githubAppStore = useGithubAppStore();
 const { user } = storeToRefs(authStore);
 
 // State management
@@ -223,6 +227,9 @@ const fetchProjs = async () => {
       start_time: proj.start_time,
       end_time: proj.end_time,
       created_at: proj.created_at,
+      // Add VCS installation information
+      vcs_installation_id: proj.vcs_installation_id,
+      vcs_installation: proj.vcs_installation_id ? githubAppStore.getInstallationById(proj.vcs_installation_id) : null,
       vcs_type: proj.vcs_type,
       vcs_proj_url: proj.vcs_proj_url,
       workspaces: proj.workspaces.map(ws => ({
@@ -236,13 +243,26 @@ const fetchProjs = async () => {
       }))
     }));
 
-    // Update workspaces ref
+    // Keep workspace mapping
     workspaces.value = userProjMembers.flatMap(proj =>
       proj.workspaces.map(ws => ({
         ...ws,
         project_id: proj.proj_id
       }))
     );
+
+    // If needed, you can also fetch GitHub installation details for projects with vcs_installation_id
+    for (const project of projects.value) {
+      if (project.vcs_installation_id) {
+        try {
+          await githubAppStore.fetchProjectInstallation(project.vcs_installation_id);
+
+        } catch (error) {
+          console.error(`Failed to fetch GitHub installation for project ${project.proj_id}:`, error);
+        }
+      }
+    }
+
   } catch (err) {
     console.error('Projects fetch failed:', err);
     toast.add({

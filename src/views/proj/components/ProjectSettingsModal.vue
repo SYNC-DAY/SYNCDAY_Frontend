@@ -6,16 +6,15 @@
 			<TabList>
 				<Tab value="0">프로젝트</Tab>
 				<Tab value="1">멤버</Tab>
-				<Tab value="2">VCS</Tab>
 			</TabList>
 
 			<TabPanels>
 				<TabPanel value="0">
 					<!-- Project -->
 					<div class="modify-proj">
-						<span>프로젝트 명 :</span> 
+						<span>프로젝트 명 :</span>
 						<InputText id="projName" v-model="formData.projName" class="w-full"
-						:class="{ 'p-invalid': errors.projName }" />
+							:class="{ 'p-invalid': errors.projName }" />
 
 						<div class="mb-4">
 							<label for="startDate" class="block mb-2">시작일 : </label>
@@ -24,7 +23,7 @@
 						</div>
 						<div class="mb-4">
 							<label for="endDate" class="block mb-2">종료일 : </label>
-							<Calendar id="endDate" v-model="formData.endDate" class="w-full" :showIcon="true"/>
+							<Calendar id="endDate" v-model="formData.endDate" class="w-full" :showIcon="true" />
 						</div>
 						<div class="modify-button">
 							<Button label="수정" @click="handleSave"></Button>
@@ -38,26 +37,23 @@
 							<Column field="email" header="Email"></Column>
 							<!-- <Column field="participant_status" header="Status"></Column> -->
 							<Column field="participant_status" header="Status">
-        						<template #body="slotProps">
+								<template #body="slotProps">
 									<!-- 데이터가 변경될 가능성이 있는 로직 -->
 									<div v-if="slotProps.data.participation_status === 'OWNER'" class="status-item">
-										<img src="@/assets/icons/crown.svg" alt="Owner Icon" class="status-icon" style="width:1.3rem; "/>
+										<img src="@/assets/icons/crown.svg" alt="Owner Icon" class="status-icon"
+											style="width:1.3rem; " />
 										<span>OWNER</span>
 									</div>
 									<div v-if="slotProps.data.participation_status === 'MEMBER'" class="status-item">
 										<i class="pi pi-user" style="font-size: 0.9rem"></i>
 										<span>MEMBER</span>
-										<Button 
-                    						v-if="isOwner"
-                    						icon="pi pi-trash"
-                    						class="p-button-text p-button-danger ml-2"
-                    						@click="confirmRemoveMember(slotProps.data)"
-                    						tooltip="Remove Member"
-											style="width:1.2rem; height:1.2rem"
-                						/>
+										<Button v-if="isOwner" icon="pi pi-trash"
+											class="p-button-text p-button-danger ml-2"
+											@click="confirmRemoveMember(slotProps.data)" tooltip="Remove Member"
+											style="width:1.2rem; height:1.2rem" />
 									</div>
 								</template>
-    						</Column>
+							</Column>
 						</DataTable>
 					</div>
 					<div class="plus-member">
@@ -87,31 +83,6 @@
     					</Dialog>
 					</div>
 				</TabPanel>
-				<TabPanel value="2">
-					<div class="container-row justify-right">
-						<Button label="VCS" severity="secondary" @click="toggleVcsMenu"></Button>
-						<VcsTypeMenu ref="vcsMenu" @vcs-selected="handleVcsSelection" />
-					</div>
-
-					<div v-if="selectedVcs === 'GITHUB'" class="mt-4">
-						<h3 class="text-lg font-medium mb-4">GitHub Integration</h3>
-
-						<!-- Installation Status -->
-						<div v-if="!githubAppAuth.isInstalled" class="installation-required">
-							<div class="text-center py-6">
-								<i class="pi pi-github text-4xl mb-3"></i>
-								<h4 class="text-xl font-medium mb-2">GitHub App Installation Required</h4>
-								<p class="text-gray-600 mb-4">
-									To connect your GitHub organizations, you need to install our GitHub App first.
-								</p>
-								<Button label="Install GitHub App" severity="primary"
-									:loading="githubAppAuth.isInstalling" @click="handleInstallApp" />
-							</div>
-						</div>
-					</div>
-				</TabPanel>
-
-
 			</TabPanels>
 		</Tabs>
 
@@ -127,9 +98,7 @@ import { ref, onMounted, watch, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 import { useAuthStore } from "@/stores/auth";
-import { useGithubAppAuthStore } from '@/stores/github/useGithubAppAuthstore';
-import { useGithubOrgStore } from '@/stores/github/useGithubOrgStore';
-import { useGithubRepoStore } from '@/stores/github/useGithubRepoStore';
+
 
 import { debounce } from 'lodash';
 import Tabs from 'primevue/tabs';
@@ -143,12 +112,9 @@ import InputText from 'primevue/inputtext';
 import Calendar from 'primevue/calendar';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
 
 /* store */
-const githubAppAuth = useGithubAppAuthStore();
-const githubOrgStore = useGithubOrgStore();
-const githubRepoStore = useGithubRepoStore();
+
 const authStore = useAuthStore(); // 로그인된 사용자 정보
 const visible1 = ref(false);
 const value1 = ref('');
@@ -158,10 +124,10 @@ const searchQuery = ref('');
 const route = useRoute();
 
 const isOwner = computed(() => {
-    return projectMembers.value.some(member => 
-        member.participation_status === 'OWNER' && 
-        member.user_id === authStore.user.userId
-    );
+	return projectMembers.value.some(member =>
+		member.participation_status === 'OWNER' &&
+		member.user_id === authStore.user.userId
+	);
 });
 
 
@@ -179,70 +145,14 @@ const props = defineProps({
 const emit = defineEmits(['update:visible', 'project-updated', 'project-deleted']);
 
 /* refs */
-const vcsMenu = ref(null);
-const selectedVcs = ref(null);
-const selectedOrg = ref(null);
+
 const isLoading = ref(false);
 const error = ref(null);
 
 const organizations = ref([]);
 const repositories = ref([]);
 
-const toggleVcsMenu = (event) => {
-	vcsMenu.value.toggle(event);
-}
 
-const handleVcsSelection = async (vcsType) => {
-	selectedVcs.value = vcsType;
-	if (vcsType === 'GITHUB' && githubAppAuth.isInstalled) {
-		await fetchOrganizations();
-	}
-};
-
-const handleInstallApp = async () => {
-	try {
-		await githubAppAuth.initiateInstallation();
-	} catch (err) {
-		error.value = 'Failed to initiate GitHub App installation';
-	}
-};
-const handleConfigureApp = () => {
-	// Redirect to GitHub App configuration page
-	const appName = import.meta.env.VITE_GITHUB_APP_NAME;
-	window.location.href = `https://github.com/apps/${appName}/installations/new`;
-};
-const fetchOrganizations = async () => {
-	if (!githubAppAuth.isInstalled) return;
-
-	isLoading.value = true;
-	error.value = null;
-	try {
-		const orgs = await githubOrgStore.fetchOrganizations(true);
-		organizations.value = orgs;
-	} catch (err) {
-		console.error('Error fetching organizations:', err);
-		error.value = 'Failed to fetch organizations. Please try again.';
-	} finally {
-		isLoading.value = false;
-	}
-};
-
-const selectOrganization = async (org) => {
-	selectedOrg.value = org;
-	await fetchRepositories(org.login);
-};
-const fetchRepositories = async (orgName) => {
-	isLoading.value = true;
-	try {
-		const repos = await githubOrgStore.fetchOrgRepositories(orgName);
-		repositories.value = repos;
-	} catch (err) {
-		console.error('Error fetching repositories:', err);
-		error.value = 'Failed to fetch repositories. Please try again.';
-	} finally {
-		isLoading.value = false;
-	}
-};
 // Services
 const confirm = useConfirm();
 const toast = useToast();
@@ -298,31 +208,31 @@ const loadProjectMembers = async () => {
 };
 
 const searchUsers = async (keyword) => {
-  try {
-    const sanitizedKeyword = keyword.trim();
-    if (!sanitizedKeyword) {
-      searchResults.value = [];
-      return;
-    }
-    
-    const response = await axios.get(`/user/search`, {
-      params: {
-        keyword: sanitizedKeyword
-      }
-    });
+	try {
+		const sanitizedKeyword = keyword.trim();
+		if (!sanitizedKeyword) {
+			searchResults.value = [];
+			return;
+		}
 
-	console.log("조회된 유저들: ", response)
+		const response = await axios.get(`/user/search`, {
+			params: {
+				keyword: sanitizedKeyword
+			}
+		});
 
-    if (response.data.data) {
-		searchResults.value = response.data.data.filter(user => user.name.includes(sanitizedKeyword));
-    //   searchResults.value = response.data.data;
-    } else {
-      searchResults.value = [];
-    }
-  } catch (error) {
-    console.error('Error fetching search results:', error);
-    searchResults.value = [];
-  }
+		console.log("조회된 유저들: ", response)
+
+		if (response.data.data) {
+			searchResults.value = response.data.data.filter(user => user.name.includes(sanitizedKeyword));
+			//   searchResults.value = response.data.data;
+		} else {
+			searchResults.value = [];
+		}
+	} catch (error) {
+		console.error('Error fetching search results:', error);
+		searchResults.value = [];
+	}
 };
 
 // debounce를 사용하여 입력이 끝난 후 300ms 후에 검색 실행
@@ -413,7 +323,7 @@ const removeMember = async (member) => {
 const handleSave = async () => {
 	try {
 		alert("프로젝트를 수정합니다!");
-		
+
 		isSaving.value = true;
 		console.log("projectId: ", props.projectId);
 		const response = await axios.put(`/projs/${props.projectId}`, {
@@ -475,7 +385,7 @@ onMounted(() => {
 	if (props.visible) {
 		resetForm();
 	}
-	
+
 	loadProjectMembers();
 
 });
@@ -489,17 +399,17 @@ watch(() => props.visible, (newValue) => {
 
 <style scoped>
 .status-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
 }
 
 .status-icon {
-    width: 1.5rem;
-    height: 1.5rem; 
-    object-fit: contain;
-    display: inline-block; 
-    vertical-align: middle; 
+	width: 1.5rem;
+	height: 1.5rem;
+	object-fit: contain;
+	display: inline-block;
+	vertical-align: middle;
 }
 
 .plus-member {
@@ -507,5 +417,4 @@ watch(() => props.visible, (newValue) => {
 	text-align: center;
 	margin-top: 5%;
 }
-
 </style>
