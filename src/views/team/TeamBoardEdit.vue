@@ -12,16 +12,16 @@
                     class="edit-input" 
                     placeholder="새 제목을 입력하세요" 
                 />
-                <Button @click="updateBoardTitle(board.teamBoardId)">완료</Button>
-                <Button @click="cancelEdit">취소</Button>
+                <Button outlined @click="updateBoardTitle(board.teamBoardId)">완료</Button>
+                <Button outlined @click="cancelEdit">취소</Button>
             </template>
             <template v-else>
                 <!-- 일반 모드 -->
                 <div>
                     {{ board.boardTitle }}
                 </div>
-                <Button @click="enterEditMode(board.teamBoardId, board.boardTitle)">수정</Button>
-                <Button @click="deleteBoard(board.teamBoardId)">삭제</Button>
+                <Button outlined @click="enterEditMode(board.teamBoardId, board.boardTitle)">수정</Button>
+                <Button outlined @click="deleteBoard(board.teamBoardId)">삭제</Button>
             </template>
         </div>
 
@@ -33,11 +33,11 @@
                     class="edit-input" 
                     placeholder="새 게시판 이름을 입력하세요" 
                 />
-                <Button @click="addBoard">추가</Button>
-                <Button @click="cancelAdd">취소</Button>
+                <Button outlined @click="addBoard">추가</Button>
+                <Button outlined @click="cancelAdd">취소</Button>
             </template>
             <template v-else>
-                <Button icon="pi pi-plus" label="추가" @click="startAdding" />
+                <Button outlined icon="pi pi-plus" label="추가" @click="startAdding" />
             </template>
         </div>
     </div>

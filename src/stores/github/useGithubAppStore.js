@@ -1,43 +1,38 @@
-// stores/github/useGithubAppStore.js
+// stores/githubAppStore.js
 import { defineStore } from "pinia";
 import axios from "axios";
 import { useAuthStore } from "../auth";
 export const useGithubAppStore = defineStore("githubApp", {
   state: () => ({
-    installations: new Map(), // Map to store installations by installationId
+    installations: [],
     isLoading: false,
     error: null,
+    installationWindow: null,
+    checkWindowInterval: null,
   }),
 
   getters: {
-    hasInstallation: state => installationId => {
-      return state.installations.has(installationId);
-    },
-
-    getAllInstallations: state => {
-      return Array.from(state.installations);
-    },
+    getInstallations: state => state.installations,
+    isInstallationsLoading: state => state.isLoading,
   },
 
   actions: {
-    async handleInstallationCallback(projectId, installationId) {
+    async handleInstallationCallback(installationId, setupAction) {
       this.isLoading = true;
       this.error = null;
       const authStore = useAuthStore();
 
       try {
         console.log("Installation callback payload:", {
-          vcs_type: "GITHUB",
           user_id: authStore.user.userId,
           installation_id: installationId,
-          proj_id: projectId,
+          setup_action: setupAction,
         });
 
-        const response = await axios.post("/vcs/install", {
-          vcs_type: "GITHUB",
+        const response = await axios.post("/github/install/", {
           user_id: authStore.user.userId,
           installation_id: installationId,
-          proj_id: projectId,
+          setup_action: setupAction,
         });
 
         console.log("Installation response:", response.data);
@@ -60,151 +55,94 @@ export const useGithubAppStore = defineStore("githubApp", {
         this.isLoading = false;
       }
     },
-
-    async fetchProjectInstallation(installationId) {
-      if (!installationId) return;
-
-      // If we already have this installation cached, return early
-      if (this.installations.has(installationId)) {
-        return this.installations.get(installationId);
-      }
-
+    async fetchInstallations() {
       this.isLoading = true;
       this.error = null;
 
       try {
-        console.log(installationId);
-        const response = await axios.get(`/vcs/installations/${installationId}`);
+        const authStore = useAuthStore();
+        const response = await axios.get(`/github/install/${authStore.user.userId}`);
 
         if (response.data.success) {
-          const installation = response.data.data;
-          this.installations.set(installationId, installation);
-          return installation;
-        } else {
-          throw new Error(response.data.error || "Failed to fetch installation");
+          // Process installations to remove duplicates
+          const installations = response.data.data;
+
+          // Create a map to track latest installation for each account_id
+          const latestInstallations = new Map();
+
+          installations.forEach(installation => {
+            const existingInstallation = latestInstallations.get(installation.account_id);
+
+            if (!existingInstallation || new Date(installation.createdAt) > new Date(existingInstallation.createdAt)) {
+              latestInstallations.set(installation.account_id, installation);
+            }
+          });
+
+          // Convert map values back to array and store
+          this.installations = Array.from(latestInstallations.values()).map(installation => ({
+            id: installation.id,
+            installationId: installation.installation_id,
+            accountId: installation.account_id,
+            accountName: installation.account_name,
+            accountType: installation.account_type,
+            avatarUrl: installation.avatar_url,
+            htmlUrl: installation.html_url,
+            status: installation.status,
+            createdAt: installation.createdAt,
+            updatedAt: installation.updatedAt,
+            userId: installation.user_id,
+          }));
         }
       } catch (error) {
-        console.error("Error fetching GitHub installation:", error);
-        this.error = error.message || "An error occurred while fetching installation";
-        throw error;
-      } finally {
-        this.isLoading = false;
-      }
-    },
-
-    async fetchMultipleInstallations(installationIds) {
-      const uniqueIds = [...new Set(installationIds)].filter(id => id && !this.installations.has(id));
-
-      if (uniqueIds.length === 0) return;
-
-      this.isLoading = true;
-
-      try {
-        await Promise.all(uniqueIds.map(id => this.fetchProjectInstallation(id)));
+        console.error("Error fetching GitHub installations:", error);
+        this.error = error.response?.data?.error || "Failed to fetch installations";
       } finally {
         this.isLoading = false;
       }
     },
 
     clearInstallations() {
-      this.installations.clear();
+      this.installations = [];
       this.error = null;
     },
+    openInstallationWindow() {
+      // Save project ID for installation callback
 
-    async fetchOrganizationProjects(installationId) {
-      this.isLoading = true;
-      try {
-        const installation = this.getInstallationById(installationId);
-        if (!installation) {
-          throw new Error("no installation found");
-        }
-        const response = await axios.get(`vcs/installations/${installationId}/projects`);
-        const responseData = response.data.data;
-        console.log(responseData);
-      } catch (error) {
-        console.log(error);
+      const installUrl = `https://github.com/apps/${import.meta.env.VITE_GITHUB_APP_NAME}/installations/new`;
+      const callbackUrl = `${window.location.origin}/github/callback`;
+
+      // Add target_type=user parameter to the URL
+      const params = new URLSearchParams({
+        callback_url: callbackUrl,
+        target_type: "user",
+      });
+
+      const fullUrl = `${installUrl}?${params.toString()}`;
+
+      const width = 1020;
+      const height = 618;
+      const left = (window.innerWidth - width) / 2;
+      const top = (window.innerHeight - height) / 2;
+
+      const popupWindow = window.open(fullUrl, "Install GitHub App", `width=${width},height=${height},top=${top},left=${left}`);
+
+      if (this.checkWindowInterval) {
+        clearInterval(this.checkWindowInterval);
       }
+      this.checkWindowInterval = setInterval(() => {
+        try {
+          if (!popupWindow || popupWindow.closed) {
+            this.cleanup();
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }, 500);
     },
-    async fetchGithubInstallationToken(vcs_installation_id) {
-      this.isLoading = true;
-      try {
-        let installation = this.getInstallationById(vcs_installation_id);
-        if (!installation) {
-          throw new Error("No installation found");
-        }
-
-        const response = await axios.get(`vcs/installations/${vcs_installation_id}/installation-token`);
-        const { data: responseData } = response; // Fix: Correct destructuring of response
-
-        if (responseData.success) {
-          // Fix: Use the correct data structure from the response
-          const token = responseData.data; // The token is in response.data
-          console.log(token);
-          // Update the installation with the new token
-
-          installation = {
-            ...installation,
-            installation_token: token,
-          };
-
-          const updatedInstallation = { ...installation, installation_token: token };
-          this.installations = {
-            ...this.installations,
-            [vcs_installation_id]: updatedInstallation,
-          };
-          // Fix: Use the correct vcs_installation_id variable
-
-          return token;
-        }
-        return null;
-      } catch (error) {
-        console.error("Failed to fetch installation token:", error);
-        this.error = error.message;
-        throw error;
-      } finally {
-        this.isLoading = false;
-      }
-    },
-    getInstallationById(installationId) {
-      return this.installations.get(installationId);
-    },
-    async fetchProjects(installationId) {
-      this.isLoading = true;
-      this.error = null;
-
-      try {
-        let installation = this.getInstallationById(installationId);
-
-        if (!installation?.installation_token) {
-          installation = await this.fetchGithubInstallationToken(installationId);
-        }
-
-        const response = await fetch(`https://api.github.com/installation/repositories`, {
-          headers: {
-            Authorization: `Bearer ${installation}`,
-            Accept: "application/vnd.github.v3+json",
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        data.repositories.forEach(project => {
-          this.projects.set(project.full_name, {
-            ...project,
-            installationId,
-          });
-        });
-
-        return Array.from(this.projects.values());
-      } catch (error) {
-        this.error = `Failed to fetch projects: ${error.message}`;
-        throw error;
-      } finally {
-        this.isLoading = false;
+    cleanup() {
+      if (this.checkWindowInterval) {
+        clearInterval(this.checkWindowInterval);
+        this.checkWindowInterval = null;
       }
     },
   },

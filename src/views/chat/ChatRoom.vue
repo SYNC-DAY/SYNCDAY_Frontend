@@ -11,59 +11,58 @@
             {{ formatDate(messages[index].sentTime) }}
           </div>
           <div class="message-line">
-        <img :src="message.userProfileImg" alt="프로필 이미지" class="profile-img" />
-        <div class="message-content">
-          <span class="sender">{{ message.senderName }}</span>
-          <div class="content-and-time">
-            <span class="content">{{ message.content }}</span>
-            <span class="time-right">{{ message.sentTime }}</span>
+            <img :src="message.userProfileImg" alt="프로필 이미지" class="profile-img" />
+            <div class="message-content">
+              <span class="sender">{{ message.senderName }}</span>
+              <div class="content-and-time">
+                <span class="content">{{ message.content }}</span>
+                <span class="time-right">{{ message.sentTime }}</span>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
         </template>
       </div>
       <div class="chat-input">
-        <input 
-          v-model="newMessage"   type="text"   placeholder=" 메시지를 입력하세요"  @keyup.enter="sendMessage" />
-      <button @click="sendMessage">전송</button>
-    </div>
+        <input v-model="newMessage" type="text" placeholder=" 메시지를 입력하세요" @keyup.enter="sendMessage" />
+        <button @click="sendMessage">전송</button>
       </div>
     </div>
-  
+  </div>
+
 
 </template>
 
 <script setup>
-import { onUnmounted, onMounted, ref, defineProps, computed } from 'vue';
-import SockJS from 'sockjs-client';
-import { Client } from '@stomp/stompjs';
-import { useAuthStore } from '@/stores/auth';
-import axios from 'axios';
+  import { onUnmounted, onMounted, ref, defineProps, computed } from 'vue';
+  import SockJS from 'sockjs-client';
+  import { Client } from '@stomp/stompjs';
+  import { useAuthStore } from '@/stores/auth';
+  import axios from 'axios';
 
-const props = defineProps({
-  roomId: {
-    type: String,
-    required: true
-  },
-  chatRoomName: {
-    type: String,
-    required: true
-  }, 
-  removeChatFromList: {
-    type: Function,
-    required: true
-  }
-});
+  const props = defineProps({
+    roomId: {
+      type: String,
+      required: true
+    },
+    chatRoomName: {
+      type: String,
+      required: true
+    },
+    removeChatFromList: {
+      type: Function,
+      required: true
+    }
+  });
 
-const authStore = useAuthStore()
-const connectionStatus = ref('웹 소켓 시작')
-const isConnected = ref(false)
-const stompClient = ref(null)
-const isVisible = ref(true);
-const messages = computed(() => messagesInRoom.value[props.roomId] || []);
-const newMessage = ref(''); // 새 입력 메세지
-const subscriptions = ref({}) // 토픽 구독 채팅방 연결
-const messagesInRoom = ref({})  // 각 채팅방 당 메세지
+  const authStore = useAuthStore()
+  const connectionStatus = ref('웹 소켓 시작')
+  const isConnected = ref(false)
+  const stompClient = ref(null)
+  const isVisible = ref(true);
+  const messages = computed(() => messagesInRoom.value[props.roomId] || []);
+  const newMessage = ref(''); // 새 입력 메세지
+  const subscriptions = ref({}) // 토픽 구독 채팅방 연결
+  const messagesInRoom = ref({})  // 각 채팅방 당 메세지
 
 
 // 날짜 설정
@@ -78,70 +77,71 @@ const formatTime = (timeString) => {
   const minutes = String(date.getMinutes()).padStart(2, '0');
   const ampm = date.getHours() < 12 ? '오전' : '오후';
 
-  return `${ampm} ${hours}:${minutes}`; 
-};
-const shouldShowDate = (index) => {
-  if(index === 0) return true;
-  const currentDate = formatDate(messages.value[index].sentTime);
-  const previousDate = formatDate(messages.value[index - 1].sentTime);
-  return currentDate !== previousDate;
-};
+    return `${ampm} ${hours}:${minutes}`;
+  };
+  const shouldShowDate = (index) => {
+    if (index === 0) return true;
+    const currentDate = formatDate(messages.value[index].sentTime);
+    const previousDate = formatDate(messages.value[index - 1].sentTime);
+    return currentDate !== previousDate;
+  };
 
-const connectWebSocket = () => {
-  console.log('웹소켓 연결 시도 중...')
-  if (stompClient.value?.connected) {
-    console.log('이미 웹소켓이 연결되어 있습니다.');
-    return;
-  }
+  const connectWebSocket = () => {
+    console.log('웹소켓 연결 시도 중...')
+    if (stompClient.value?.connected) {
+      console.log('이미 웹소켓이 연결되어 있습니다.');
+      return;
+    }
 
-  const socket = new SockJS(`http://localhost:5000/ws?token=${authStore.accessToken}`, null, {
-    transports: ['websocket', 'xhr-streaming', 'xhr-polling']
-  });
+    // 환경변수나 설정에서 URL을 가져오는 것이 좋습니다
+    const socket = new SockJS(`http://localhost:5000/ws?token=${authStore.accessToken}`, null, {
+      transports: ['websocket', 'xhr-streaming', 'xhr-polling']
+    });
 
-  stompClient.value = new Client({
-    webSocketFactory: () => socket,
-    reconnectDelay: 5000, // 재연결 시간 줄임
-    heartbeatIncoming: 4000,
-    heartbeatOutgoing: 4000,
-    debug: function (str) {
-      console.log('웹소켓 연결 상태: ',str)
-      isConnected.value = true;
-    },
-    onConnect: (frame) => {
-      console.log('STOMP 연결됨(success!!!): ' + frame)
-      isConnected.value = true
-      connectionStatus.value = '연결됨'
-      subscribeToRoom(props.roomId) // 연결 성공 시 구독 실행
-    },
-    onStompError: (frame) => {
-      console.error('STOMP 오류:', frame)
+    stompClient.value = new Client({
+      webSocketFactory: () => socket,
+      reconnectDelay: 5000, // 재연결 시간 줄임
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000,
+      debug: function (str) {
+        console.log('웹소켓 연결 상태: ', str)
+        isConnected.value = true;
+      },
+      onConnect: (frame) => {
+        console.log('STOMP 연결됨(success!!!): ' + frame)
+        isConnected.value = true
+        connectionStatus.value = '연결됨'
+        subscribeToRoom(props.roomId) // 연결 성공 시 구독 실행
+      },
+      onStompError: (frame) => {
+        console.error('STOMP 오류:', frame)
+        isConnected.value = false;
+        handleConnectionFailure('STOMP 오류: ' + frame.headers['messages'])
+      },
+      onDisconnect: () => {
+        console.log('STOMP 연결 끊김');
+        isConnected.value = false;
+        connectionStatus.value = '연결 끊김';
+        reconnectWebSocket();
+      },
+    });
+
+
+    try {
+      console.log('activate: ', stompClient.value)
+      stompClient.value.activate()
+      console.log('클라이언트 활성화 호출 성공!')
+    } catch (error) {
+      console.error('STOMP 클라이언트 활성화 실패:', error)
       isConnected.value = false;
-      handleConnectionFailure('STOMP 오류: ' + frame.headers['messages'])
-    },
-    onDisconnect: () => {
-      console.log('STOMP 연결 끊김');
-      isConnected.value = false;
-      connectionStatus.value = '연결 끊김';
-      reconnectWebSocket();
-    },
-  });
-
-
-  try {
-    console.log('activate: ',stompClient.value)
-    stompClient.value.activate()
-    console.log('클라이언트 활성화 호출 성공!')
-  } catch (error) {
-    console.error('STOMP 클라이언트 활성화 실패:', error)
-    isConnected.value = false;
+    }
   }
-}
 
-const subscribeToRoom = (roomId) => {
-  if (subscriptions.value[roomId]) {
-    console.warn(`이미 방 ${roomId}에 구독 중입니다.`);
-    return;
-  }
+  const subscribeToRoom = (roomId) => {
+    if (subscriptions.value[roomId]) {
+      console.warn(`이미 방 ${roomId}에 구독 중입니다.`);
+      return;
+    }
 
   subscriptions.value[roomId] = stompClient.value.subscribe(`/topic/room/${roomId}`, message => {
     console.log('메시지 수신:', message.body)
@@ -158,14 +158,14 @@ const subscribeToRoom = (roomId) => {
 };
 
 
-/** WebSocket 재연결 */
-const reconnectWebSocket = () => {
-  setTimeout(() => {
-    if (!isConnected.value) connectWebSocket();
-  }, 5000);
-};
+  /** WebSocket 재연결 */
+  const reconnectWebSocket = () => {
+    setTimeout(() => {
+      if (!isConnected.value) connectWebSocket();
+    }, 5000);
+  };
 
-const fetchMessages = async (roomId) => {
+  const fetchMessages = async (roomId) => {
 
   try {
     const response = await axios.get(`/chat/room/${roomId}/message`);
@@ -176,92 +176,92 @@ const fetchMessages = async (roomId) => {
         sentTime: formatTime(message.sentTime),
       }
       ));
-  } catch (error) {
-    console.error('채팅 메시지 불러오기 실패:', error);
-    messagesInRoom.value[roomId] = [];
-  }
-};
+    } catch (error) {
+      console.error('채팅 메시지 불러오기 실패:', error);
+      messagesInRoom.value[roomId] = [];
+    }
+  };
 
 
-const sendMessage = () => {
-  console.log('전송 시도~!')
-  console.log('현재 메시지 값:', newMessage.value);
-  if (!newMessage.value || !newMessage.value.trim()) {
-    console.warn('빈 메시지는 전송할 수 없습니다.');
-  return;
-}
+  const sendMessage = () => {
+    console.log('전송 시도~!')
+    console.log('현재 메시지 값:', newMessage.value);
+    if (!newMessage.value || !newMessage.value.trim()) {
+      console.warn('빈 메시지는 전송할 수 없습니다.');
+      return;
+    }
 
-if (!isConnected.value) {
-  console.error('웹소켓에 연결되지 않았습니다. 연결을 시도합니다...');
-  connectWebSocket(); // 연결 시도
-  return;
-}
+    if (!isConnected.value) {
+      console.error('웹소켓에 연결되지 않았습니다. 연결을 시도합니다...');
+      connectWebSocket(); // 연결 시도
+      return;
+    }
 
-const chatMessage = {
-  content: newMessage.value.trim(),
-  roomId: props.roomId,
-  senderId: authStore.user?.userId,
-  senderName: authStore.user?.name,
-  userProfileImg: authStore.user?.userProfileImg,
-  chatType: 'TALK',
-  sentTime: new Date().toISOString(),
-};
+    const chatMessage = {
+      content: newMessage.value.trim(),
+      roomId: props.roomId,
+      senderId: authStore.user?.userId,
+      senderName: authStore.user?.name,
+      userProfileImg: authStore.user?.userProfileImg,
+      chatType: 'TALK',
+      sentTime: new Date().toISOString(),
+    };
 
-try {
-  console.log("publish")
-  stompClient.value.publish({
-    destination: `/app/room/${props.roomId}`,
-    body: JSON.stringify(chatMessage),
+    try {
+      console.log("publish")
+      stompClient.value.publish({
+        destination: `/app/room/${props.roomId}`,
+        body: JSON.stringify(chatMessage),
+      });
+      newMessage.value = ''; // 메시지 초기화
+    } catch (error) {
+      console.error('메시지 전송 중 오류:', error);
+    }
+
+  };
+
+
+  const leaveChat = async () => {
+    try {
+      const response = await axios.post(`/chat/room/${props.roomId}/leave`, null, {
+        params: { userId: authStore.user?.userId },
+      });
+      console.log('채팅방을 나가기: ', response.data)
+      console.log('API 요청 URL: ', axios.defaults.baseURL + `/chat/room/${props.roomId}/leave`);
+      console.log('응답 데이터: ', response.data);
+
+      isVisible.value = false;
+      delete messagesInRoom.value[props.roomId];
+      if (subscriptions.value[props.roomId]) {
+        subscriptions.value[props.roomId].unsubscribe();
+        delete subscriptions.value[props.roomId];
+      }
+      removeChatFromList(props.roomId)
+    } catch (error) {
+      console.error('채팅방 나가는 중 오류 발생:', error);
+    }
+  };
+
+
+  // 컴포넌트가 마운트될 때 메시지 로드
+  onMounted(() => {
+    console.log('마운트: ', props.roomId)
+    fetchMessages(props.roomId);
+    connectWebSocket(); // WebSocket 연결
   });
-  newMessage.value = ''; // 메시지 초기화
-} catch (error) {
-  console.error('메시지 전송 중 오류:', error);
-}
 
-};
-
-
-const leaveChat = async () => {
-  try {
-    const response = await axios.post(`/chat/room/${props.roomId}/leave`, null, {
-      params: { userId: authStore.user?.userId },
-    });
-    console.log('채팅방을 나가기: ', response.data )
-    console.log('API 요청 URL: ', axios.defaults.baseURL + `/chat/room/${props.roomId}/leave`);
-    console.log('응답 데이터: ', response.data);
-    
-    isVisible.value = false;
-    delete messagesInRoom.value[props.roomId];
-    if(subscriptions.value[props.roomId]) {
-      subscriptions.value[props.roomId].unsubscribe();
-      delete subscriptions.value[props.roomId];
+  onUnmounted(() => {
+    if (props.roomId && messagesInRoom.value[props.roomId]) {
+      console.log(`채팅방 ${props.roomId}의 모든 데이터 초기화`);
+      delete messagesInRoom.value[props.roomId];
+      if (subscriptions.value[props.roomId]) {
+        subscriptions.value[props.roomId].unsubscribe();
+        delete subscriptions.value[props.roomId];
+      }
+    } else {
+      console.warn('언: 유효하지 않은 roomId');
     }
-    removeChatFromList(props.roomId)
-  } catch (error) {
-    console.error('채팅방 나가는 중 오류 발생:', error);
-  }
-};
-
-
-// 컴포넌트가 마운트될 때 메시지 로드
-onMounted(() => {
-  console.log('마운트: ', props.roomId)
-  fetchMessages(props.roomId);
-  connectWebSocket(); // WebSocket 연결
-});
-
-onUnmounted(() => {
-  if (props.roomId && messagesInRoom.value[props.roomId]) {
-    console.log(`채팅방 ${props.roomId}의 모든 데이터 초기화`);
-    delete messagesInRoom.value[props.roomId];
-    if (subscriptions.value[props.roomId]) {
-      subscriptions.value[props.roomId].unsubscribe();
-      delete subscriptions.value[props.roomId];
-    }
-  } else {
-    console.warn('언: 유효하지 않은 roomId');
-  }
-});
+  });
 
 </script>
 
@@ -280,10 +280,10 @@ onUnmounted(() => {
   z-index: 1000;
 } 
 
-.leave-chat {
-  position: absolute;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
+  .leave-chat {
+    position: absolute;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
     top: 15px;
     right: 10px;
     background: none;
@@ -293,15 +293,16 @@ onUnmounted(() => {
     font-size: 0.9rem;
     cursor: pointer;
     color: #c7c5c5;
-}
+  }
 
-.popup-content {
-  padding: 20px;
-  display: flex; 
-  overflow-y: auto; /* 내용이 길어지면 스크롤 */
-  flex-direction: column;
-  height: 100%;
-}
+  .popup-content {
+    padding: 20px;
+    display: flex;
+    overflow-y: auto;
+    /* 내용이 길어지면 스크롤 */
+    flex-direction: column;
+    height: 100%;
+  }
 
 h2 {
   margin: 0 0 20px 0;
@@ -328,35 +329,35 @@ h2 {
   margin: 10px 0;
 }
 
-.message-line {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-}
+  .message-line {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
 
-.profile-img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  margin-left: 0.5rem;
-}
+  .profile-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-left: 0.5rem;
+  }
 
-.message-content {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  margin-left: 0.5rem;
-}
+  .message-content {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-left: 0.5rem;
+  }
 
 .sender {
   font-size: 12px;
 }
 
-.content-and-time {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+  .content-and-time {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 
 .content {
   padding: 10px;
@@ -377,12 +378,12 @@ h2 {
 }
 
 
-.chat-input {
-  display: flex;
-  gap: 10px;
-  height: 2.5rem;
-  border: none;
-}
+  .chat-input {
+    display: flex;
+    gap: 10px;
+    height: 2.5rem;
+    border: none;
+  }
 
 .chat-input input {
   font-size: 0.9rem;
@@ -405,8 +406,8 @@ h2 {
   background-color: #fc7294;
 }
 
-.close-button {
-  position: absolute;
+  .close-button {
+    position: absolute;
     top: 10px;
     right: 10px;
     background: none;
@@ -414,9 +415,9 @@ h2 {
     font-size: 0.8rem;
     cursor: pointer;
     color: #c7c5c5;
-}
+  }
 
-.close-button:hover {
-  color: #333;
-}
+  .close-button:hover {
+    color: #333;
+  }
 </style>
