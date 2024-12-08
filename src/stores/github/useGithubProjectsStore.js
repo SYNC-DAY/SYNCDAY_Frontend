@@ -138,8 +138,8 @@ export const useGithubProjectsStore = defineStore("githubProjects", {
         const response = await this.executeGraphQLQuery(installationId, query, { orgName });
 
         if (response?.organization?.projectsV2?.nodes) {
-          this.orgProjects[orgName] = response.organization.projectsV2.nodes;
-          return this.orgProjects[orgName];
+          this.orgProjects[installationId] = response.organization.projectsV2.nodes;
+          return this.orgProjects[installationId];
         }
 
         this.orgProjects[orgName] = [];
@@ -207,6 +207,7 @@ export const useGithubProjectsStore = defineStore("githubProjects", {
         const projects = response?.organization?.projectsV2?.nodes || response?.user?.projectsV2?.nodes || [];
 
         // Store projects under the installation ID
+        console.log(installationId);
         this.orgProjects[installationId] = projects.map(project => ({
           id: project.id,
           title: project.title,
