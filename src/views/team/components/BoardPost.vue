@@ -36,6 +36,8 @@ const postList = ref({
     list: [] 
 });
 
+const emit = defineEmits(['changeBoardName']);
+
 const getPostList = async () => {
     try {
         const response = await axios.get(`/teampost/${teamBoardId.value}`);
@@ -58,7 +60,7 @@ const formatDate = (dateTime) => {
 
 const goToPost = (event) => {
     const post = event.data;
-    console.log(post)
+    emit('changeBoardName',post.teamBoardId);
     teamStore.updateBoardId(post.teamBoardId);
     teamStore.updatePostId(post.teamPostId);
     router.push("/team/post/detail/view");

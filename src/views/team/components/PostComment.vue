@@ -1,14 +1,10 @@
 <template> 
-    <div>
+    <div class="comment-container">
         <h4>댓글({{ commentNum }})</h4>
         <!-- 댓글 작성 -->
         <div class="comment-input-container">
-            <textarea 
-                v-model="newComment" 
-                placeholder="댓글을 입력하세요" 
-                class="comment-input"
-            ></textarea>
-            <button @click="submitComment" class="submit-button">댓글 작성</button>
+            <Textarea class="comment-input" v-model="newComment" rows="5" cols="80"/>
+            <Button outlined @click="submitComment" class="submit-button">댓글 작성</Button>
         </div>
 
         <!-- 댓글 목록 -->
@@ -18,12 +14,14 @@
                     <div class="comment">
                         <!-- 수정 모드 -->
                         <div v-if="editCommentId === comment.teamCommentId" class="edit-comment">
-                            <textarea 
-                                v-model="editedComment" 
-                                placeholder="댓글을 수정하세요"
-                            ></textarea>
-                            <button @click="updateComment">수정 완료</button>
-                            <button @click="cancelEdit">취소</button>
+                            <Textarea v-model="editedComment"
+                            rows="5" cols="80"
+                            placeholder="댓글을 수정하세요."
+                            />
+                            <div>
+                                <Button outlined="" @click="updateComment">수정 완료</Button>
+                                <Button outlined="" @click="cancelEdit">취소</Button>
+                            </div>
                         </div>
 
                         <!-- 일반 모드 -->
@@ -36,8 +34,8 @@
                             </div>
                             <!-- 수정/삭제 버튼 -->
                             <div v-if="authStore.user.userId === comment.userId" class="comment-buttons">
-                                <button @click="startEditComment(comment)">수정</button>
-                                <button @click="deleteComment(comment.teamCommentId)">삭제</button>
+                                <Button outlined="" @click="startEditComment(comment)">수정</Button>
+                                <Button outlined @click="deleteComment(comment.teamCommentId)">삭제</Button>
                             </div>
                         </div>
                     </div>
@@ -46,13 +44,12 @@
 
             <!-- 페이징 버튼 -->
             <div class="pagination">
-                <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1">이전</button>
+                <Button outlined="" @click="changePage(currentPage - 1)" :disabled="currentPage === 1">이전</button>
                 <span>페이지 {{ currentPage }} / {{ totalPages }}</span>
-                <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">다음</button>
+                <Button outlined="" @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">다음</button>
             </div>
         </div>
         <div v-else>
-            <p>댓글이 없습니다.</p>
         </div>
     </div>
 </template>
@@ -62,6 +59,7 @@ import { onMounted, ref } from 'vue';
 import axios from 'axios';
 import { useTeamStore } from '@/stores/team';
 import { useAuthStore } from '@/stores/auth';
+import { Textarea } from 'primevue';
 
 const teamStore = useTeamStore();
 const authStore = useAuthStore();
@@ -193,6 +191,10 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+
+.comment-container{
+    margin-bottom: 3rem;
+}
 .comment {
     border-bottom: 1px solid #ddd;
     padding: 10px 0;
@@ -215,12 +217,9 @@ onMounted(async () => {
 }
 
 .comment-input {
-    width: 100%;
-    height: 80px;
-    padding: 10px;
+    padding: 1rem;
     border: 1px solid #ccc;
     border-radius: 5px;
-    font-size: 14px;
     resize: none;
 }
 
@@ -249,9 +248,7 @@ onMounted(async () => {
     cursor: not-allowed;
 }
 
-.edit-comment textarea {
-    width: 100%;
-    height: 60px;
-    margin-bottom: 10px;
+.edit-comment{
+
 }
 </style>
