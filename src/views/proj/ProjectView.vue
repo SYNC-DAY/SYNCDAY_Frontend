@@ -51,7 +51,8 @@
 						<Card>
 							<template #title>
 								{{ workspace.workspace_name }}
-								<Button icon="pi pi-code" variant="text" />
+								<Button icon="pi pi-code" variant="text" @click.stop="openRepositoryPopup(workspace)"
+									v-tooltip.bottom="'go to repository'" />
 							</template>
 							<template #content>
 								<ProgressBar :value="workspace.progress_status" severity="secondary" />
@@ -68,7 +69,21 @@
 			</div>
 		</div>
 
-		<!-- Modals -->
+		<!-- Repository Dialog -->
+		<Dialog v-model:visible="showRepoDialog" modal header="Repository Link" :style="{ width: '50vw' }">
+			<template v-if="selectedWorkspace?.vcs_repo_url">
+				<p>Repository URL:</p>
+				<a :href="selectedWorkspace.vcs_repo_url" target="_blank" rel="noopener noreferrer"
+					@click.prevent="openInPopup" class="repo-link">
+					{{ selectedWorkspace.vcs_repo_url }}
+				</a>
+			</template>
+			<template v-else>
+				<p>No repository link available for this workspace.</p>
+			</template>
+		</Dialog>
+
+		<!-- Other Modals -->
 		<Dialog v-model:visible="openNewWorkspaceDialog" modal header="새 워크스페이스 생성" :style="{ width: '30rem' }">
 			<InputText v-model="newWorkspaceName" type="text" placeholder="워크스페이스 이름 입력" />
 			<div class="modal-footer mt-4">
@@ -98,6 +113,7 @@
 
 	import Button from 'primevue/button';
 	import InputText from 'primevue/inputtext';
+	import Dialog from 'primevue/dialog';
 	import ProjectSettingsModal from './components/ProjectSettingsModal.vue';
 	import ProjVcsSettingsModal from './components/ProjGithubIntegrationModal.vue';
 	import VcsTypeMenu from '../vcs/components/VcsTypeMenu.vue';
@@ -132,6 +148,9 @@
 	const openNewWorkspaceDialog = ref(false);
 	const newWorkspaceName = ref('');
 	const workspaceDetails = ref(null);
+	const showRepoDialog = ref(false);
+	const selectedWorkspace = ref(null);
+
 	const fetchWorkspace = async () => {
 		workspaceDetails.value = projectStore.getWorkspace(props.projectId, props.workspaceId);
 	}
@@ -145,6 +164,67 @@
 				workspaceId
 			}
 		});
+	};
+
+	const openRepositoryPopup = (workspace) => {
+		// Log workspace details for debugging
+		console.log('Opening repository for workspace:', workspace);
+
+		// Store the selected workspace
+		selectedWorkspace.value = workspace;
+
+		// Check if repository URL exists (fixed typo from vsc_repo_url to vcs_repo_url)
+		if (workspace.vcs_repo_url) {
+			// Show the repository dialog
+			showRepoDialog.value = true;
+		} else {
+			// Show a toast notification if no repository URL is available
+			toast.add({
+				severity: 'info',
+				summary: 'Repository Not Available',
+				detail: 'No repository link has been configured for this workspace.',
+				life: 3000
+			});
+		}
+	};
+
+	// Update the openInPopup method to handle both project and workspace URLs
+	const openInPopup = () => {
+		// Get the URL from either the selected workspace or project
+		const url = selectedWorkspace.value?.vcs_repo_url || projects.value[props.projectId]?.vcs_proj_url;
+
+		if (!url) {
+			toast.add({
+				severity: 'error',
+				summary: 'Error',
+				detail: 'Repository URL is not available.',
+				life: 3000
+			});
+			return;
+		}
+
+		// Calculate center position for the popup
+		const width = 800;
+		const height = 600;
+		const left = (window.screen.width / 2) - (width / 2);
+		const top = (window.screen.height / 2) - (height / 2);
+
+		// Open repository in a new popup window
+		const popup = window.open(
+			url,
+			'RepositoryWindow',
+			`width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes`
+		);
+
+		// Check if popup was blocked
+		if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+			toast.add({
+				severity: 'warn',
+				summary: 'Popup Blocked',
+				detail: 'Please allow popups for this site to open the repository.',
+				life: 5000
+			});
+		}
 	};
 
 	const toggleVcsMenu = (event) => {
@@ -211,19 +291,6 @@
 		}
 	};
 
-	const openInPopup = async () => {
-		const url = projects.value[props.projectId].vcs_proj_url;
-		const width = 800;
-		const height = 600;
-		const left = (window.screen.width / 2) - (width / 2);
-		const top = (window.screen.height / 2) - (height / 2);
-
-		window.open(
-			url,
-			'ProjectWindow',
-			`width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes`
-		);
-	}
 
 </script>
 
@@ -264,5 +331,15 @@
 		align-items: center;
 		justify-content: center;
 		min-height: 200px;
+	}
+
+	.repo-link {
+		color: var(--primary-color);
+		text-decoration: none;
+		word-break: break-all;
+	}
+
+	.repo-link:hover {
+		text-decoration: underline;
 	}
 </style>
