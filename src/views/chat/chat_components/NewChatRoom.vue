@@ -105,6 +105,7 @@ async function createNewChat() {
     const newRoom = {
       roomId: response.data?.data?.roomId || response.data?.roomId,
       chatRoomName: chatRoomName.value,
+      lastMessage: "",
     };
 
     console.log("새 채팅방 생성: ", newRoom)
@@ -148,6 +149,7 @@ loadUsers();
 .modal-content p {
   font-size: 20px;
   font-weight: 400;
+  color: #383838;
   margin-bottom: 15px;
   margin-left: 20px;
 }
