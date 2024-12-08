@@ -161,7 +161,7 @@
 				...props.projectData,
 				vcs_type: 'GITHUB',
 				vcs_proj_url: installation.htmlUrl || '',
-				github_installation_id: installation.installationId
+				github_installation_id: installation.id
 			})
 
 			emit('update:project', {
@@ -247,9 +247,7 @@
 	const handleSave = async () => {
 		if (!selectedInstallationId.value) return;
 
-		const selectedInstallation = githubAppStore.installations.find(
-			install => install.id === selectedInstallationId.value
-		);
+		const selectedInstallation = githubAppStore.installations[selectedInstallationId.value]
 
 		if (selectedInstallation) {
 			await handleInstallationSelect(selectedInstallation);
