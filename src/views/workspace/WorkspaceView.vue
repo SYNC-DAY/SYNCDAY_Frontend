@@ -16,6 +16,8 @@
         <div class="container-row header-left">
           <h4>{{ workspaceDetails.workspace_name }}</h4>
           <Button icon="pi pi-code" text @click.stop="showModal = true" v-tooltip="'Repository Settings'"></Button>
+          <Button icon="pi pi-sync" text @click.stop="showMilestoneSelection = true"
+            v-tooltip="'sync milestones'"></Button>
         </div>
 
         <div class="container-row header-right">
@@ -106,6 +108,8 @@
   </div>
   <RepoSettingModal v-model="showModal" :project-id="projectId" :workspace-id="workspaceId"
     :workspaceData="workspaceDetails" />
+
+  <MilestoneSelector v-model="showMilestoneSelection" />
 </template>
 
 <script setup>
@@ -130,6 +134,7 @@
 
   import WorkspaceAPI from '@/api/proj/workspace';
   import RepoSettingModal from './components/RepoSettingModal.vue';
+  import MilestoneSelector from '../vcs/github/MilestoneSelector.vue';
   import { useProjectStore } from '@/stores/proj/useProjectStore';
 
   const route = useRoute();
@@ -146,7 +151,7 @@
   const projectStore = useProjectStore();
   const githubInstallationId = ref(null);
   const showModal = ref(false)
-
+  const showMilestoneSelection = ref(false)
   const props = defineProps({
     projectId: {
       type: [String, Number],

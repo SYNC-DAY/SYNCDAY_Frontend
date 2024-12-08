@@ -30,12 +30,12 @@
 
 <script setup>
 	import { onMounted } from 'vue';
-	import { useMilestoneStore } from './stores/MilestoneStore';
+	import { useMilestoneStore } from '@/stores/github/useMilestoneStore';
 
 	const store = useMilestoneStore();
 
 	onMounted(() => {
-		store.fetchMilestones();
+		store.fetchMilestones(7);
 	});
 
 	const formatDate = (date) => {
