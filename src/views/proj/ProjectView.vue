@@ -96,7 +96,7 @@
 
 
 
-
+		<Toast/>
 		<ProjectSettingsModal v-model:visible="showProjectSettings" :projectId="props.projectId"
 			:projectData="currentProject" @project-updated="handleProjectUpdate"
 			@project-deleted="handleProjectDelete" />
@@ -146,7 +146,7 @@ const showOrgProjSelectionModal = ref(false);
 const showProjectSettings = ref(false);
 const openNewWorkspaceDialog = ref(false);
 const newWorkspaceName = ref('');
-const selectedProjectId = ref(null);
+// const selectedProjectId = ref(null);
 
 // Computed
 const currentProject = computed(() =>

@@ -58,7 +58,7 @@ const connectWebSocket = () => {
   }
 
   // 환경변수나 설정에서 URL을 가져오는 것이 좋습니다
-  const socket = new SockJS(`http://localhost:5000/ws?token=${authStore.accessToken}`, null, {
+  const socket = new SockJS(`http://localhost:8080/ws?token=${authStore.accessToken}`, null, {
     transports: ['websocket', 'xhr-streaming', 'xhr-polling']
   });
 

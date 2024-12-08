@@ -11,6 +11,12 @@
         <p><strong>장소:</strong> {{ details.meetingroom_place || "정보 없음" }}</p>
         <p><strong>시작 시간:</strong> {{ details.start_time || "정보 없음" }}</p>
         <p><strong>종료 시간:</strong> {{ details.end_time || "정보 없음" }}</p>
+        <p><strong>참석자:</strong></p>
+        <ul>
+  <li v-for="attendee in details.attendees" :key="attendee.userId">
+    {{ attendee.userName }} ({{ attendee.status }})
+  </li>
+</ul>
         <p><strong>예약자 이름:</strong> {{ user.userName || "정보 없음" }}</p>
         <p><strong>예약자 이메일:</strong> {{ user.email || "정보 없음" }}</p>
         <p><strong>예약자 전화번호:</strong> {{ user.phoneNumber || "정보 없음" }}</p>
@@ -53,6 +59,7 @@ const emit = defineEmits(["closeDialog", "reservationDeleted"])
     try {
         const response = await axios.get(`meetingroom_reservation/${scheduleId}`);
         const dataArray = response.data.data; // 응답 데이터가 배열로 반환
+        console.log("에약 정보: ", response);
         if (dataArray.length > 0) {
             const utcStartTime = dataArray[0].start_time; // UTC 시간
             const utcEndTime = dataArray[0].end_time; // UTC 시간
@@ -99,6 +106,16 @@ const emit = defineEmits(["closeDialog", "reservationDeleted"])
             }
         };
 
+const fetchAttendees = async () => {
+  try {
+    const response = await axios.get(`/meetingroom_reservation/${scheduleId}/attendees`);
+    details.value.attendees = response.data; // 참석자 정보 추가
+  } catch (error) {
+    console.error("참석자 정보를 가져오는 중 오류 발생:", error);
+  }
+};
+
+
   // 예약 삭제
   const deleteReservation = async () => {
     if (confirm("정말 삭제하시겠습니까?")) {
@@ -127,6 +144,7 @@ const emit = defineEmits(["closeDialog", "reservationDeleted"])
 //   });
   
 const isFutureReservation = computed(() => {
+    console.log("details확인: ", details);
     return details.value?.end_time > new Date();
 });
   // 예약 소유자인지 확인
@@ -145,6 +163,7 @@ const isFutureReservation = computed(() => {
   onMounted(() => {
     fetchReservationDetails();
     fetchUserInfo();
+    fetchAttendees(); 
   });
   </script>
   

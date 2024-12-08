@@ -34,6 +34,7 @@ import Dialog from "primevue/dialog";
 import Card from "primevue/card";
 import ProgressBar from "primevue/progressbar";
 import Avatar from "primevue/avatar";
+import MultiSelect from "primevue/multiselect";
 /* css */
 import "@/assets/styles/syncday/main.css";
 
@@ -101,5 +102,6 @@ app.component("Dialog", Dialog);
 app.component("Card", Card);
 app.component("ProgressBar", ProgressBar);
 app.component("Avatar", Avatar);
+app.component("MultiSelect", MultiSelect);
 /* mount */
 app.mount("#app");
