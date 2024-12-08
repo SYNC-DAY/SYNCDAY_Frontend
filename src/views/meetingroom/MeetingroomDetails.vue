@@ -11,12 +11,12 @@
         <p><strong>장소:</strong> {{ details.meetingroom_place || "정보 없음" }}</p>
         <p><strong>시작 시간:</strong> {{ details.start_time || "정보 없음" }}</p>
         <p><strong>종료 시간:</strong> {{ details.end_time || "정보 없음" }}</p>
-        <p><strong>참석자:</strong></p>
-        <ul>
-  <li v-for="attendee in details.attendees" :key="attendee.userId">
-    {{ attendee.userName }} ({{ attendee.status }})
-  </li>
-</ul>
+        <p><strong>참석자:</strong> {{ userNames }} </p>
+        <!-- <ul>
+          <li v-for="user in details.userInfo" :key="user.userId">
+            {{ user.username }} 
+          </li>
+        </ul> -->
         <p><strong>예약자 이름:</strong> {{ user.userName || "정보 없음" }}</p>
         <p><strong>예약자 이메일:</strong> {{ user.email || "정보 없음" }}</p>
         <p><strong>예약자 전화번호:</strong> {{ user.phoneNumber || "정보 없음" }}</p>
@@ -77,6 +77,7 @@ const emit = defineEmits(["closeDialog", "reservationDeleted"])
                 ...dataArray[0],
                 start_time: startTimeKST, // Date 객체
                 end_time: endTimeKST,    // Date 객체
+
             };
 
             console.log("KST Start Time (Date): ", startTimeKST);
@@ -106,14 +107,14 @@ const emit = defineEmits(["closeDialog", "reservationDeleted"])
             }
         };
 
-const fetchAttendees = async () => {
-  try {
-    const response = await axios.get(`/meetingroom_reservation/${scheduleId}/attendees`);
-    details.value.attendees = response.data; // 참석자 정보 추가
-  } catch (error) {
-    console.error("참석자 정보를 가져오는 중 오류 발생:", error);
-  }
-};
+// const fetchAttendees = async () => {
+//   try {
+//     const response = await axios.get(`/meetingroom_reservation/${scheduleId}/attendees`);
+//     details.value.attendees = response.data; // 참석자 정보 추가
+//   } catch (error) {
+//     console.error("참석자 정보를 가져오는 중 오류 발생:", error);
+//   }
+// };
 
 
   // 예약 삭제
@@ -158,12 +159,16 @@ const isFutureReservation = computed(() => {
 
     
 };
+
+const userNames = computed(() => {
+  return details.value.userInfo.map(user => user.username).join(", ");
+});
   
   // 컴포넌트 로드 시 데이터 가져오기
   onMounted(() => {
     fetchReservationDetails();
     fetchUserInfo();
-    fetchAttendees(); 
+    // fetchAttendees(); 
   });
   </script>
   

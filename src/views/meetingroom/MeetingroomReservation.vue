@@ -139,14 +139,20 @@ const searchUsers = async (keyword) => {
 };
 
 const addMember = (user) => {
-  if (selectedAttendees.value.some((attendee) => attendee.user_id === user.userId)) {
-    alert("이미 추가된 사용자입니다.");
-
+  // 주관자인 경우 추가 불가
+  if (user.userId === authStore.user.userId) {
+    alert("주관자는 참석자로 추가할 수 없습니다.");
     return;
   }
-  console.log("user: ", user);
-  console.log("selectedAttendes: ", selectedAttendees.value);
-  selectedAttendees.value.push(user.userId);
+
+  // 이미 참석자로 추가된 경우 추가 불가
+  if (selectedAttendees.value.some((attendee) => attendee.userId === user.userId)) {
+    alert("이미 추가된 사용자입니다.");
+    return;
+  }
+
+  // 참석자 추가
+  selectedAttendees.value.push(user);
 };
 
 const removeMember = (user) => {
@@ -164,7 +170,7 @@ const handleReservation = async () => {
     meetingroomId: resourceId,
     userId: authStore.user.userId,
     // attendeeIds: selectedAttendees.value.map((user) => user.userId),
-    attendeeIds: selectedAttendees.value,
+    attendeeIds: selectedAttendees.value.map((user) => user.userId),
   };
   console.log("회의실 예약정보: ", reservationData);
 
