@@ -92,7 +92,6 @@
   import WorkspaceAPI from '@/api/proj/workspace';
   import RepoSettingModal from './components/RepoSettingModal.vue';
   import { useProjectStore } from '@/stores/proj/useProjectStore';
-  import GithubAppInstallationModal from '../vcs/github/GithubAppInstallationModal.vue';
 
   const route = useRoute();
   const router = useRouter();

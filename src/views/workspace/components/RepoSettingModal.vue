@@ -1,22 +1,35 @@
 <template>
-	<Dialog v-model:visible="isVisible" modal header="Repository Settings" :style="{ width: '50vw' }" :closable="true">
-		<InputText />
-		<div v-for="(repo, id) in repositories" :key="id">
-			<input type="checkbox" v-model="importClosedIssues" class="sr-only peer" />
-			<span>{{ repo.repoName }}</span>
-		</div>
-		<!-- Confirmation Dialog -->
-		<Dialog v-model:visible="showDeleteConfirm" modal header="Confirm Deletion" :style="{ width: '350px' }">
-			<div class="confirmation-content">
-				<i class="pi pi-exclamation-triangle mr-3" style="font-size: 2rem" />
-				<span>Are you sure you want to remove {{ selectedRepo?.name }}?</span>
-			</div>
+	<Dialog :visible="isVisible" modal header="Set  GitHub Repository" :style="{ width: '50vw' }" :closable="true"
+		@update:visible="updateVisibility">
 
-			<template #footer>
-				<Button label="No" icon="pi pi-times" @click="showDeleteConfirm = false" class="p-button-text" />
-				<Button label="Yes" icon="pi pi-check" @click="deleteRepository" class="p-button-danger" />
-			</template>
-		</Dialog>
+		<!-- Repository Selection Section -->
+		<div class="container-col gap-1rem">
+			<strong class="text-lg font-medium mb-4">Select repositories to import</strong>
+			<InputText v-model="searchQuery" placeholder="Filter repositories" class="w-full mb-4" />
+
+			<div class="repositories-list">
+				<div v-for="(repo, id) in repositories" :key="id" class="repo-item p-3 border-b">
+					<div class="flex items-center">
+						<Checkbox v-model="selectedRepos[id]" :binary="true" class="mr-3" />
+						<span>{{ repo.repoName }}</span>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Import Closed Issues Toggle -->
+		<div class="mt-6 flex items-center justify-between">
+			<span>Do you want to import data for closed issues?</span>
+			<ToggleButton v-model="importClosedIssues" />
+		</div>
+
+		<!-- Footer Actions -->
+		<template #footer>
+			<div class="flex justify-between">
+				<Button label="Back" icon="pi pi-arrow-left" class="p-button-text" />
+				<Button label="Next" icon="pi pi-arrow-right" />
+			</div>
+		</template>
 	</Dialog>
 </template>
 
@@ -25,6 +38,7 @@
 	import { useToast } from 'primevue/usetoast';
 	import { useProjectStore } from '@/stores/proj/useProjectStore';
 	import axios from 'axios';
+
 	const props = defineProps({
 		projectId: {
 			type: [String, Number],
@@ -38,189 +52,59 @@
 			type: Boolean,
 			default: false
 		},
-
 	});
 
 	const emit = defineEmits(['update:modelValue']);
 
 	const projectStore = useProjectStore();
 	const toast = useToast();
-	let repositories = ref({});
+	const repositories = ref({});
 	const isVisible = ref(props.modelValue);
-	const newRepoUrl = ref('');
-	const isAddingRepo = ref(false);
-	const syncingRepos = ref([]);
-	const showDeleteConfirm = ref(false);
-	const selectedRepo = ref(null);
-	const githubInstallationId = ref(null)
-	// Watch for modal visibility changes
-	watch(() => props.modelValue, (newValue) => {
+	const searchQuery = ref('');
+	const selectedRepos = ref({});
+	const importClosedIssues = ref(false);
+	const organizationName = ref('three-ping');
+	const enabledBy = ref('letterh.dev');
+	const enabledDate = ref('Dec 7, 2024');
+
+	// Your existing watch and methods here...
+	const updateVisibility = (newValue) => {
 		isVisible.value = newValue;
-	});
-
-	watch(() => isVisible.value, (newValue) => {
 		emit('update:modelValue', newValue);
-	});
-
-	// Load repositories on mount
-	onMounted(async () => {
-		githubInstallationId.value = await projectStore.getInstallationId(props.projectId);
-		console.log(githubInstallationId.value)
-		await fetchRepositories(githubInstallationId.value);
-	});
-
-	const fetchRepositories = async (installationId) => {
-		try {
-			console.log(installationId)
-			// Replace with your actual API call
-			const response = await axios.get(`/github/repositories/installations/${installationId}`);
-
-			if (response.data.success) {
-				const resultData = response.data.data;
-				console.log(resultData);
-
-				// Create a new object to hold all repositories
-				const repoObject = {};
-				resultData.forEach(repo => {
-					const repoId = repo.repoId;
-					console.log(repoId);
-					repoObject[repoId] = { ...repo };
-				});
-
-				// Assign the entire object at once to maintain reactivity
-				repositories.value = repoObject;
-			}
-			else {
-				console.log("response data fail")
-			}
-		} catch (error) {
-			toast.add({
-				severity: 'error',
-				summary: 'Error',
-				detail: 'Failed to load repositories',
-				life: 3000
-			});
-		}
 	};
-
-	const addRepository = async () => {
-		if (!newRepoUrl.value) {
-			toast.add({
-				severity: 'warn',
-				summary: 'Warning',
-				detail: 'Please enter a repository URL',
-				life: 3000
-			});
-			return;
-		}
-
-		isAddingRepo.value = true;
-		try {
-			// Replace with your actual API call
-			await fetch(`/api/workspaces/${props.workspaceId}/projects/${props.projectId}/repositories`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({ url: newRepoUrl.value })
-			});
-
-			await fetchRepositories();
-			newRepoUrl.value = '';
-
-			toast.add({
-				severity: 'success',
-				summary: 'Success',
-				detail: 'Repository added successfully',
-				life: 3000
-			});
-		} catch (error) {
-			toast.add({
-				severity: 'error',
-				summary: 'Error',
-				detail: 'Failed to add repository',
-				life: 3000
-			});
-		} finally {
-			isAddingRepo.value = false;
-		}
-	};
-
-	const syncRepository = async (repoId) => {
-		syncingRepos.value.push(repoId);
-		try {
-			// Replace with your actual API call
-			await fetch(`/api/repositories/${repoId}/sync`, { method: 'POST' });
-
-			toast.add({
-				severity: 'success',
-				summary: 'Success',
-				detail: 'Repository synced successfully',
-				life: 3000
-			});
-
-			await fetchRepositories();
-		} catch (error) {
-			toast.add({
-				severity: 'error',
-				summary: 'Error',
-				detail: 'Failed to sync repository',
-				life: 3000
-			});
-		} finally {
-			syncingRepos.value = syncingRepos.value.filter(id => id !== repoId);
-		}
-	};
-
-	const confirmDeleteRepo = (repo) => {
-		selectedRepo.value = repo;
-		showDeleteConfirm.value = true;
-	};
-
-	const deleteRepository = async () => {
-		try {
-			// Replace with your actual API call
-			await fetch(`/api/repositories/${selectedRepo.value.id}`, {
-				method: 'DELETE'
-			});
-
-			showDeleteConfirm.value = false;
-			await fetchRepositories();
-
-			toast.add({
-				severity: 'success',
-				summary: 'Success',
-				detail: 'Repository removed successfully',
-				life: 3000
-			});
-		} catch (error) {
-			toast.add({
-				severity: 'error',
-				summary: 'Error',
-				detail: 'Failed to remove repository',
-				life: 3000
-			});
-		}
-	};
-
-	const formatDate = (date) => {
-		return new Date(date).toLocaleString();
-	};
-
-
 </script>
 
 <style lang="scss" scoped>
-	.repo-settings {
-		.repo-list {
-			margin-bottom: 2rem;
-		}
+	.step-item {
+		@apply flex-1 text-center;
 
-		.confirmation-content {
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			padding: 1rem;
+		.step-circle {
+			@apply w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mx-auto mb-2 text-sm;
+
+			&.active {
+				@apply bg-blue-500 text-white;
+			}
+		}
+	}
+
+	.step-line {
+		@apply flex-1 h-px bg-gray-300 mx-2 my-4;
+	}
+
+	.org-item {
+		&:hover {
+			@apply bg-gray-50;
+		}
+	}
+
+	.repositories-list {
+		max-height: 300px;
+		overflow-y: auto;
+	}
+
+	.repo-item {
+		&:hover {
+			@apply bg-gray-50;
 		}
 	}
 </style>
