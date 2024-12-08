@@ -38,7 +38,7 @@
 			notifyOpener('error', err.message);
 		} finally {
 			loading.value = false;
-			// setTimeout(() => window.close(), 1000);
+			setTimeout(() => window.close(), 1000);
 		}
 	});
 	const handleOAuthCallback = async (code, state) => {
@@ -81,7 +81,7 @@
 				data: data
 			};
 			window.opener.postMessage(message, window.location.origin);
-			// window.close();
+			window.close();
 		}
 	};
 </script>
