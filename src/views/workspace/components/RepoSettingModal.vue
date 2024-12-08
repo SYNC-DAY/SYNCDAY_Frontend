@@ -33,10 +33,11 @@
 </template>
 
 <script setup>
-	import { ref, watch } from 'vue';
+	import { ref, watch, onMounted } from 'vue';
 	import { useToast } from 'primevue/usetoast';
 	import { useProjectStore } from '@/stores/proj/useProjectStore';
-
+	import { useRoute } from 'vue-router';
+	import axios from 'axios';
 	const props = defineProps({
 		projectId: {
 			type: [String, Number],
@@ -53,7 +54,6 @@
 	});
 
 	const emit = defineEmits(['update:modelValue']);
-
 	const projectStore = useProjectStore();
 	const toast = useToast();
 	const repositories = ref({});
@@ -64,6 +64,46 @@
 	const organizationName = ref('three-ping');
 	const enabledBy = ref('letterh.dev');
 	const enabledDate = ref('Dec 7, 2024');
+	const githubInstallationId = ref(null);
+
+
+	const fetchRepositories = async (installationId) => {
+		try {
+			console.log('Starting request for installationId:', installationId);
+			// Replace with your actual API call
+			const response = await axios.get(`/github/repositories/installations/${installationId}`);
+
+			if (response.data.success) {
+				const resultData = response.data.data;
+				console.log(resultData);
+
+				// Create a new object to hold all repositories
+				const repoObject = {};
+				resultData.forEach(repo => {
+					const repoId = repo.repoId;
+					console.log(repoId);
+					repoObject[repoId] = { ...repo };
+				});
+
+				// Assign the entire object at once to maintain reactivity
+				repositories.value = repoObject;
+			}
+			else {
+				console.log("response data fail")
+			}
+		} catch (error) {
+			toast.add({
+				severity: 'error',
+				summary: 'Error',
+				detail: 'Failed to load repositories',
+				life: 3000
+			});
+		}
+	};
+	onMounted(async () => {
+		githubInstallationId.value = await projectStore.getInstallationId(props.projectId);
+		await fetchRepositories(githubInstallationId.value);
+	});
 
 	// Watch for changes in props.modelValue
 	watch(() => props.modelValue, (newValue) => {
@@ -74,6 +114,8 @@
 	watch(() => isVisible.value, (newValue) => {
 		emit('update:modelValue', newValue);
 	});
+
+
 </script>
 
 <style lang="scss" scoped>
