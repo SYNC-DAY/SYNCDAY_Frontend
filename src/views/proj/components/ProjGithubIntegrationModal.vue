@@ -13,10 +13,9 @@
 				</div>
 
 				<div class="organizations-list">
-					<div v-for="installation in githubAppStore.installations" :key="installation.id" class="org-item">
+					<div v-for="(installation, id) in githubAppStore.installations" :key="id" class="org-item">
 						<div class="org-select">
-							<RadioButton :value="installation.id" v-model="selectedInstallationId"
-								:inputId="'org_' + installation.id" />
+							<RadioButton :value="id" v-model="selectedInstallationId" :inputId="'org_' + id" />
 						</div>
 						<div class="org-info">
 							<Avatar :image="installation.avatarUrl" :label="getInitials(installation.accountName)"
@@ -29,7 +28,7 @@
 						<div class="org-status">
 							<span class="status-dot"></span>
 							<span>Connected</span>
-							<Button icon="pi pi-chevron-down" @click="(event) => openMenu(event, installation.id)"
+							<Button icon="pi pi-chevron-down" @click="(event) => openMenu(event, id)"
 								aria-haspopup="true" aria-controls="overlay_menu" class="p-button-text" />
 						</div>
 					</div>
@@ -75,6 +74,8 @@
 			<Menu ref="menu" :model="currentMenuItems" :popup="true" />
 
 		</div>
+		<ConfirmDialog></ConfirmDialog>
+
 	</Dialog>
 </template>
 
@@ -86,7 +87,10 @@
 	import { useGithubAppStore } from '@/stores/github/useGithubAppStore';
 	import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
 	import { useGithubProjectsStore } from '@/stores/github/useGithubProjectsStore';
-	import { useConfirm } from 'primevue';
+	import ConfirmDialog from 'primevue/confirmdialog'
+
+	import { useConfirm } from "primevue/useconfirm";
+
 	import { useProjectStore } from '@/stores/proj/useProjectStore';
 
 	// Props
@@ -129,13 +133,9 @@
 	const githubProjects = ref(null)
 	// Open menu with correct items
 	const openMenu = (event, installationId) => {
-		// Prevent any parent handlers from being called
-		event.stopPropagation()
+		event.stopPropagation();
+		currentInstallationId.value = installationId;
 
-		// Set current installation ID
-		currentInstallationId.value = installationId
-
-		// Update menu items for this installation
 		currentMenuItems.value = [
 			{
 				label: 'Options',
@@ -143,20 +143,50 @@
 					{
 						label: 'Disable',
 						icon: 'pi pi-trash',
-						command: () => githubAppStore.handleDisableOrg(installationId)
+						command: () => {
+							confirm.require({
+								message: 'Are you sure you want to disable this GitHub installation?',
+								header: 'Confirm Disable',
+								icon: 'pi pi-exclamation-triangle',
+								accept: async () => {
+									try {
+										loading.value = true;
+										await githubAppStore.disableInstallation(installationId);
+										toast.add({
+											severity: 'success',
+											summary: 'Success',
+											detail: 'GitHub installation disabled successfully',
+											life: 3000
+										});
+										await githubAppStore.fetchInstallations();
+									} catch (error) {
+										toast.add({
+											severity: 'error',
+											summary: 'Error',
+											detail: error.message || 'Failed to disable installation',
+											life: 3000
+										});
+									} finally {
+										loading.value = false;
+									}
+								}
+							});
+						}
 					},
 					{
 						label: 'Modify',
 						icon: 'pi pi-pencil',
-						command: () => githubAppStore.handleModifyOrg(installationId)
+						command: () => {
+							const installationUrl = "https://github.com/settings/installations/";
+							window.open(installationUrl, '_blank');
+						}
 					}
 				]
 			}
-		]
+		];
 
-		// Show the menu at the click position
-		menu.value.show(event)
-	}
+		menu.value.show(event);
+	};
 
 	// Methods
 	const handleVisibilityChange = (newValue) => {

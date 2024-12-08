@@ -1,7 +1,7 @@
-// stores/githubAppStore.js
 import { defineStore } from "pinia";
 import axios from "axios";
 import { useAuthStore } from "../auth";
+
 export const useGithubAppStore = defineStore("githubApp", {
   state: () => ({
     installations: {},
@@ -14,6 +14,12 @@ export const useGithubAppStore = defineStore("githubApp", {
   getters: {
     getInstallations: state => state.installations,
     isInstallationsLoading: state => state.isLoading,
+    getInstallationToken: state => async installationId => {
+      if (state.installations[installationId]?.access_token) {
+        return state.installations[installationId].access_token;
+      }
+      return await state.requestInstallationToken(installationId);
+    },
   },
 
   actions: {
@@ -42,8 +48,6 @@ export const useGithubAppStore = defineStore("githubApp", {
           console.log(resData);
           this.installations[resData.id] = { ...resData };
           return true;
-        } else {
-          console.log("response failed");
         }
         throw new Error("Installation failed");
       } catch (error) {
@@ -58,6 +62,7 @@ export const useGithubAppStore = defineStore("githubApp", {
         this.isLoading = false;
       }
     },
+
     async fetchInstallations() {
       this.isLoading = true;
       this.error = null;
@@ -67,9 +72,7 @@ export const useGithubAppStore = defineStore("githubApp", {
         const response = await axios.get(`/github/install/users/${authStore.user.userId}`);
 
         if (response.data.success) {
-          // Process installations to remove duplicates
           const resData = response.data.data;
-
           resData.forEach(element => {
             this.installations[element.id] = { ...element };
           });
@@ -81,6 +84,7 @@ export const useGithubAppStore = defineStore("githubApp", {
         this.isLoading = false;
       }
     },
+
     async requestInstallationToken(installationId) {
       const authStore = useAuthStore();
       const userId = authStore.user.userId;
@@ -92,17 +96,65 @@ export const useGithubAppStore = defineStore("githubApp", {
       }
     },
 
+    async disableInstallation(installationId) {
+      this.isLoading = true;
+      this.error = null;
+
+      try {
+        const authStore = useAuthStore();
+        const response = await axios.delete(`/github/install/users/${authStore.user.userId}/installs/${installationId}`);
+
+        if (response.data.success) {
+          // Remove the installation from the local state
+          delete this.installations[installationId];
+          return true;
+        }
+        throw new Error("Failed to disable installation");
+      } catch (error) {
+        console.error("Error disabling installation:", error);
+        this.error = error.response?.data?.message || "Failed to disable installation";
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async updateInstallation(installationId, updateData) {
+      this.isLoading = true;
+      this.error = null;
+
+      try {
+        const authStore = useAuthStore();
+        const response = await axios.patch(`/github/install/users/${authStore.user.userId}/installs/${installationId}`, updateData);
+
+        if (response.data.success) {
+          const resData = response.data.data;
+          // Update the installation in local state
+          this.installations[installationId] = {
+            ...this.installations[installationId],
+            ...resData,
+          };
+          return true;
+        }
+        throw new Error("Failed to update installation");
+      } catch (error) {
+        console.error("Error updating installation:", error);
+        this.error = error.response?.data?.message || "Failed to update installation";
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
     clearInstallations() {
-      this.installations = [];
+      this.installations = {};
       this.error = null;
     },
-    openInstallationWindow() {
-      // Save project ID for installation callback
 
+    openInstallationWindow() {
       const installUrl = `https://github.com/apps/${import.meta.env.VITE_GITHUB_APP_NAME}/installations/new`;
       const callbackUrl = `${window.location.origin}/github/callback`;
 
-      // Add target_type=user parameter to the URL
       const params = new URLSearchParams({
         callback_url: callbackUrl,
         target_type: "user",
@@ -130,19 +182,12 @@ export const useGithubAppStore = defineStore("githubApp", {
         }
       }, 500);
     },
+
     cleanup() {
       if (this.checkWindowInterval) {
         clearInterval(this.checkWindowInterval);
         this.checkWindowInterval = null;
       }
-    },
-  },
-  getters: {
-    getInstallationToken: state => async installationId => {
-      if (state.installations[installationId]?.access_token) {
-        return state.installations[installationId].access_token;
-      }
-      return await state.requestInstallationToken(installationId);
     },
   },
 });
