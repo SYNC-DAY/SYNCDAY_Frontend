@@ -68,7 +68,8 @@
       No workspace data available
     </div>
   </div>
-  <RepoSettingModal v-model="showModal" :project-id="projectId" :workspace-id="workspaceId" />
+  <RepoSettingModal v-model="showModal" :project-id="projectId" :workspace-id="workspaceId"
+    :workspaceData="workspaceDetails" />
 </template>
 
 <script setup>

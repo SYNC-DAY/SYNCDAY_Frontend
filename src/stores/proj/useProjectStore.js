@@ -117,6 +117,15 @@ export const useProjectStore = defineStore("projectStore", {
         console.error(error);
       }
     },
+    async updateWorkspace(workspaceData) {
+      try {
+        const response = await axios.put("/proj-members/workspaces", workspaceData);
+        if (response.data.success) {
+          const resultData = response.data.data;
+          console.log(resultData);
+        }
+      } catch (error) {}
+    },
   },
 
   getters: {
@@ -133,6 +142,9 @@ export const useProjectStore = defineStore("projectStore", {
     },
     getInstallationId: state => projId => {
       return state.projects[projId]?.github_installation_id;
+    },
+    getProjMemberId: state => projId => {
+      return state.projects[projId]?.proj_member_id;
     },
   },
 });

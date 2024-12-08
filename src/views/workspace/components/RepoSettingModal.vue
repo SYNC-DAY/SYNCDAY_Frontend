@@ -11,7 +11,7 @@
 		<template #footer>
 			<div class="flex justify-between">
 				<!-- <Button label="Back" icon="pi pi-arrow-left" class="p-button-text" /> -->
-				<Button label="Save" icon="pi pi-check" @click="handleSaveRepositoryInfo" />
+				<Button label="Save" icon="pi pi-check" @click="onClickSave" />
 			</div>
 		</template>
 	</Dialog>
@@ -36,6 +36,10 @@
 			type: Boolean,
 			default: false
 		},
+		workspaceData: {
+			type: Object,
+			required: true
+		}
 	});
 
 	const emit = defineEmits(['update:modelValue']);
@@ -86,23 +90,11 @@
 	watch(() => isVisible.value, (newValue) => {
 		emit('update:modelValue', newValue);
 	});
-	const handleSaveRepositoryInfo = (repository) => {
-		try {
-			const response = axios.put("/proj-members/workspaces/", {
-				proj_id: props.projectId,
-				workspaceId: props.workspaceId,
-				vcs_repo_url: repository.htmlUrl,
-				vcs_type: "GITHUB"
-			})
-
-			if (response.data.success) {
-				console.log(response.data.data);
-			}
-
-		}
-		catch (err) {
-			console.error(err)
-		}
+	const onClickSave = async () => {
+		const projMemberId = await projectStore.getProjMemberId(props.projectId);
+		console.log(selectedRepo.value)
+		console.log({ workspace_id: props.workspaceId, proj_id: props.workspaceId, workspace_name: props.workspaceData.workspace_name, vcs_repo_name: selectedRepo.value.repoName, vcs_repo_url: selectedRepo.value.htmlUrl, proj_member_id: projMemberId })
+		await projectStore.updateWorkspace({ workspace_id: props.workspaceId, proj_id: props.workspaceId, workspace_name: props.workspaceData.workspace_name, vcs_repo_name: selectedRepo.value.repoName, vcs_repo_url: selectedRepo.value.htmlUrl, proj_member_id: projMemberId })
 	}
 
 </script>
