@@ -42,13 +42,14 @@
 						<div v-for="project in githubProjects" :key="project.id" class="project-item"
 							:class="{ 'selected': selectedProjectId === project.id }">
 							<div class="project-select">
-								<RadioButton :value="project.id" v-model="selectedProjectId"
-									:inputId="'project_' + project.id" />
+								<RadioButton :value="project.id" :inputId="'project_' + project.id"
+									v-model:model-value="selectedGithubProjectId"
+									@change="handleProjectSelect(project.id)" />
 							</div>
 							<div class="project-info">
 								<div class="project-details">
-									<span class="project-name">{{ project.name }}</span>
-									<span class="project-meta">Created {{ formatDate(project.created_at) }}</span>
+									<span class="project-name">{{ project.title }}</span>
+									<span class="project-meta">Updated {{ formatDate(project.updatedAt) }}</span>
 								</div>
 								<div class="project-stats">
 									<span class="stat-item">
@@ -124,6 +125,7 @@
 	const error = ref(null)
 	// Add this with other refs
 	const selectedInstallationId = ref(null)
+	const selectedGithubProjectId = ref(null)
 	const githubProjects = ref(null)
 	// Open menu with correct items
 	const openMenu = (event, installationId) => {
@@ -206,6 +208,9 @@
 		selectedInstallationId.value = id;
 	}
 
+	const handleProjectSelect = (id) => {
+		selectedGithubProjectId.value = id;
+	}
 	watch(selectedInstallationId, async (newVal) => {
 		if (newVal) {
 			try {
