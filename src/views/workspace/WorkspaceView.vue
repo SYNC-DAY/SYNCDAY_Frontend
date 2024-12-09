@@ -16,6 +16,8 @@
         <div class="container-row header-left">
           <h4>{{ workspaceDetails.workspace_name }}</h4>
           <Button icon="pi pi-code" text @click.stop="showModal = true" v-tooltip="'Repository Settings'"></Button>
+          <Button icon="pi pi-sync" text @click.stop="showMilestoneSelection = true"
+            v-tooltip="'sync milestones'"></Button>
         </div>
 
         <div class="container-row header-right">
@@ -105,11 +107,15 @@
     </div>
   </div>
   <RepoSettingModal v-model="showModal" :project-id="projectId" :workspace-id="workspaceId"
-    :workspaceData="workspaceDetails" />
+    :workspaceData="workspaceDetails" @update="updateRepositoryInfo" />
+
+  <MilestoneSelection :is-open="showMilestoneSelection" :installationId="githubInstallationId" :owner="owner"
+    :projectId="projectId" :workspaceId="workspaceId" @close="showModal = false"
+    :repoUrl="workspaceDetails?.vcs_repo_url || null" />
 </template>
 
 <script setup>
-  import { ref, onMounted, watch, computed } from 'vue';
+  import { ref, onMounted, watch, computed, provide } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import axios from 'axios';
 
@@ -130,6 +136,7 @@
 
   import WorkspaceAPI from '@/api/proj/workspace';
   import RepoSettingModal from './components/RepoSettingModal.vue';
+  import MilestoneSelection from './components/MilestoneSelection.vue';
   import { useProjectStore } from '@/stores/proj/useProjectStore';
 
   const route = useRoute();
@@ -145,8 +152,10 @@
   const showColorPicker = ref(false);
   const projectStore = useProjectStore();
   const githubInstallationId = ref(null);
+  const repositoryInfo = ref(null);
   const showModal = ref(false)
-
+  const showMilestoneSelection = ref(false)
+  const repoUrl = ref(null)
   const props = defineProps({
     projectId: {
       type: [String, Number],
@@ -170,7 +179,9 @@
   const showCardTag = ref(null);
 
   const fetchWorkspace = async () => {
-    workspaceDetails.value = await await WorkspaceAPI.getWorkspaceById(props.workspaceId)
+    console.log(props.projectId)
+    console.log(props.workspaceId)
+    workspaceDetails.value = await projectStore.fetchWorkspace(props.projectId, props.workspaceId)
   }
   const fetchInstallationId = async () => {
     try {
@@ -183,6 +194,7 @@
       throw new Error(err)
     }
   }
+  provide('proj-installatoin-id', props.installationId)
   const fetchCardTag = async () => {
     if (!props.workspaceId) {
       throw new Error('WorkspaceID is Missing');
@@ -261,6 +273,7 @@
   }
 
   onMounted(() => {
+    fetchInstallationId();
     fetchWorkspace();
     fetchCardTag();
     // addNewTag();
@@ -274,7 +287,15 @@
       }
     });
   };
+  const updateRepositoryInfo = (repoInfo) => {
+    // Update your local state with the new repository info
+    // For example:
+    console.log("repoInfo:")
+    console.log(repoInfo)
+    repoUrl.value = repoInfo?.vcs_repo_url;
+    projectStore.updateWorkspace({ ...workspaceDetails.value, ...repoInfo })
 
+  }
   watch(
     [
       () => props.workspaceId,

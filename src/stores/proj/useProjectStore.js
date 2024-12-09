@@ -1,210 +1,213 @@
 import { defineStore } from "pinia";
 import axios from "axios";
+import { projectApi } from "@/api/proj/project";
 
-export const useProjectStore = defineStore("projectStore", {
+export const useProjectStore = defineStore("project", {
   state: () => ({
-    projects: {}, // { [projectId]: projectData }
-    workspaces: {}, // { [projectId]: { [workspaceId]: workspaceData } }
-    isLoading: false,
-    isFetching: false,
+    projects: {},
+    isLoading: true,
     error: null,
-    isInitialized: false,
+    activeProjectId: null,
+    activeWorkspaceId: null,
   }),
+
+  getters: {
+    hasProjects: state => Object.keys(state.projects).length > 0,
+    hasProjects: state => Object.keys(state.projects).length > 0,
+
+    getProjectById: state => id => state.projects[id] || null,
+
+    activeProject: state => (state.activeProjectId ? state.projects[state.activeProjectId] : null),
+
+    activeWorkspace: state => {
+      if (!state.activeProjectId || !state.activeWorkspaceId) return null;
+
+      const project = state.projects[state.activeProjectId];
+      return project?.workspaces?.find(workspace => workspace.workspace_id === state.activeWorkspaceId);
+    },
+
+    // Get projects as an array for v-for iteration
+    projectsArray: state =>
+      Object.values(state.projects).sort((a, b) => {
+        // Sort by bookmark status (bookmarked first) then by created date
+        if (a.bookmark_status === b.bookmark_status) {
+          return new Date(b.created_at) - new Date(a.created_at);
+        }
+        return a.bookmark_status === "BOOKMARKED" ? -1 : 1;
+      }),
+
+    // Get bookmarked projects
+    bookmarkedProjects: state => Object.values(state.projects).filter(project => project.bookmark_status === "BOOKMARKED"),
+  },
 
   actions: {
     async initializeStore(userId) {
-      if (this.isInitialized) return;
-
       this.isLoading = true;
+      this.error = null;
+
       try {
-        await this.fetchProjects(userId);
-        this.isInitialized = true;
+        const data = await projectApi.getUserProjects(userId);
+        const userProjects = data[0]?.proj_member_infos || [];
+
+        this.projects = userProjects.reduce((acc, projectInfo) => {
+          const validWorkspaces = projectInfo.workspaces.filter(workspace => workspace.workspace_id !== null);
+
+          acc[projectInfo.proj_id] = {
+            proj_id: projectInfo.proj_id,
+            proj_name: projectInfo.proj_name,
+            start_time: projectInfo.start_time,
+            end_time: projectInfo.end_time,
+            created_at: projectInfo.created_at,
+            progress_status: projectInfo.progress_status,
+            bookmark_status: projectInfo.bookmark_status,
+            participation_status: projectInfo.participation_status,
+            vcs_type: projectInfo.vcs_type,
+            vcs_proj_url: projectInfo.vcs_proj_url,
+            vcs_installation_id: projectInfo.vcs_installation_id,
+            workspaces: validWorkspaces,
+          };
+          return acc;
+        }, {});
+      } catch (error) {
+        this.error = error.message;
+        throw error;
       } finally {
         this.isLoading = false;
       }
     },
 
-    async fetchProjects(userId) {
-      this.isFetching = true;
-      this.error = null;
-
+    async createProject(projectData) {
       try {
-        const response = await axios.get(`/proj-members/users/${userId}`);
+        const newProject = await projectApi.createProject(projectData);
+        this.projects[newProject.proj_id] = {
+          ...newProject,
+          workspaces: [],
+        };
+        return newProject;
+      } catch (error) {
+        throw error;
+      }
+    },
 
-        if (response.data.success && response.data.data.length > 0) {
-          const projMemberInfos = response.data.data[0].proj_member_infos;
+    async updateProject(projectId, updateData) {
+      try {
+        const updatedProject = await projectApi.updateProject(projectId, updateData);
+        this.projects[projectId] = {
+          ...this.projects[projectId],
+          ...updatedProject,
+        };
+        return updatedProject;
+      } catch (error) {
+        throw error;
+      }
+    },
 
-          // Create new projects and workspaces objects while maintaining reactivity
-          const newProjects = {};
-          const newWorkspaces = {};
+    async deleteProject(projectId) {
+      try {
+        await projectApi.deleteProject(projectId);
+        delete this.projects[projectId];
+        if (this.activeProjectId === projectId) {
+          this.clearActiveStates();
+        }
+      } catch (error) {
+        throw error;
+      }
+    },
 
-          projMemberInfos.forEach(proj => {
-            // Handle project data
-            newProjects[proj.proj_id] = {
-              ...proj,
-              startTime: proj.start_time ? new Date(proj.start_time) : null,
-              endTime: proj.end_time ? new Date(proj.end_time) : null,
-              createdAt: new Date(proj.created_at),
-              bookmark_status: proj.bookmark_status || "NONE",
-            };
+    async toggleBookmark(projectId) {
+      try {
+        const newStatus = this.projects[projectId].bookmark_status === "BOOKMARKED" ? "NONE" : "BOOKMARKED";
 
-            // Handle workspaces data
-            if (proj.workspaces && proj.workspaces.length > 0) {
-              newWorkspaces[proj.proj_id] = {};
-              proj.workspaces.forEach(workspace => {
-                newWorkspaces[proj.proj_id][workspace.workspace_id] = {
-                  ...workspace,
-                  createdAt: new Date(workspace.created_at),
-                };
-              });
-            }
-          });
+        await projectApi.updateBookmarkStatus(projectId, newStatus);
+        this.projects[projectId].bookmark_status = newStatus;
+        return newStatus;
+      } catch (error) {
+        throw error;
+      }
+    },
 
-          // Update the store
-          this.projects = newProjects;
-          this.workspaces = newWorkspaces;
+    async createWorkspace(projectId, workspaceData) {
+      try {
+        const newWorkspace = await projectApi.createWorkspace(projectId, workspaceData);
+        this.projects[projectId].workspaces.push(newWorkspace);
+        return newWorkspace;
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    async createProject({ userId, projectData }) {
+      try {
+        const response = await axios.post("/proj-members/projs", {
+          user_id: userId,
+          proj_name: projectData.name,
+          start_time: projectData.startDate ? new Date(projectData.startDate).toISOString() : null,
+          end_time: projectData.endDate ? new Date(projectData.endDate).toISOString() : null,
+        });
+
+        if (response.data.success) {
+          const newProject = {
+            proj_id: response.data.data.proj_id,
+            proj_name: projectData.name,
+            start_time: projectData.startDate,
+            end_time: projectData.endDate,
+            progress_status: 0,
+            bookmark_status: "NONE",
+            participation_status: "OWNER",
+            created_at: new Date().toISOString(),
+            workspaces: [],
+          };
+
+          // Add new project to state
+          this.projects[newProject.proj_id] = newProject;
+
+          // Set as active project
+          this.setActiveProject(newProject.proj_id);
+
+          return newProject;
         } else {
-          this.projects = {};
-          this.workspaces = {};
+          throw new Error(response.data.message || "Failed to create project");
         }
       } catch (error) {
-        this.error = error.message || "Failed to fetch projects";
-        console.error("Error fetching projects:", error);
-        throw error;
-      } finally {
-        this.isFetching = false;
-      }
-    },
-
-    addProject(project) {
-      this.projects[project.proj_id] = {
-        ...project,
-        startTime: project.start_time ? new Date(project.start_time) : null,
-        endTime: project.end_time ? new Date(project.end_time) : null,
-        createdAt: new Date(project.created_at),
-        bookmark_status: project.bookmark_status || "NONE",
-      };
-
-      // Initialize workspaces object for the new project
-      if (project.workspaces && project.workspaces.length > 0) {
-        this.workspaces[project.proj_id] = {};
-        project.workspaces.forEach(workspace => {
-          this.workspaces[project.proj_id][workspace.workspace_id] = {
-            ...workspace,
-            createdAt: new Date(workspace.created_at),
-          };
-        });
-      }
-    },
-
-    async handleBookmark(projMemberId, projId) {
-      if (!projId || !projMemberId) {
-        console.error("Missing projId or projMemberId");
-        return;
-      }
-
-      try {
-        const response = await axios({
-          method: "PUT",
-          url: "/proj-members/bookmark",
-          params: {
-            projMemberId: projMemberId,
-          },
-        });
-
-        if (response.data.success) {
-          const newStatus = response.data.data;
-
-          if (this.projects[projId]) {
-            this.projects[projId] = {
-              ...this.projects[projId],
-              bookmark_status: newStatus,
-            };
-          }
-
-          return newStatus;
-        }
-      } catch (error) {
-        console.error("Bookmark update failed:", error);
         throw error;
       }
     },
 
-    async updateProject(projData) {
+    async updateProject(projectId, updateData) {
       try {
-        const response = await axios.put("/proj-members/", projData);
+        const response = await axios.put(`/proj-members/projs/${projectId}`, updateData);
 
         if (response.data.success) {
-          const resultData = response.data.data;
-          const projId = projData.proj_id;
-          this.projects[projId] = { ...this.projects[projId], ...resultData };
-          return true;
-        }
-        return false;
-      } catch (error) {
-        console.error(error);
-        return false;
-      }
-    },
-
-    async updateWorkspace(workspaceData) {
-      try {
-        const response = await axios.put("/proj-members/workspaces", workspaceData);
-
-        if (response.data.success) {
-          const resultData = response.data.data;
-          const projId = workspaceData.proj_id;
-          const workspaceId = workspaceData.workspace_id;
-
-          // Ensure the project exists in workspaces
-          if (!this.workspaces[projId]) {
-            this.workspaces[projId] = {};
-          }
-
-          // Update the workspace
-          console.log(resultData);
-          this.workspaces[projId][workspaceId] = {
-            ...resultData,
+          // Update project in state
+          this.projects[projectId] = {
+            ...this.projects[projectId],
+            ...updateData,
           };
 
-          return true;
+          return this.projects[projectId];
+        } else {
+          throw new Error(response.data.message || "Failed to update project");
         }
-        return false;
       } catch (error) {
-        console.error("Error updating workspace:", error);
-        return false;
+        throw error;
       }
     },
-  },
 
-  getters: {
-    isLoadingAny: state => state.isLoading || state.isFetching,
-
-    hasProjects: state => Object.keys(state.projects).length > 0,
-
-    getBookmarkedProjects: state => {
-      return Object.values(state.projects).filter(proj => proj.bookmark_status === "BOOKMARKED");
+    setActiveProject(projectId) {
+      this.activeProjectId = projectId;
+      this.activeWorkspaceId = null; // Clear active workspace when changing projects
     },
 
-    isProjectBookmarked: state => projId => {
-      return state.projects[projId]?.bookmark_status === "BOOKMARKED";
+    setActiveWorkspace(projectId, workspaceId) {
+      this.activeProjectId = projectId;
+      this.activeWorkspaceId = workspaceId;
     },
 
-    getInstallationId: state => projId => {
-      return state.projects[projId]?.github_installation_id;
+    clearActiveStates() {
+      this.activeProjectId = null;
+      this.activeWorkspaceId = null;
     },
 
-    getProjMemberId: state => projId => {
-      return state.projects[projId]?.proj_member_id;
-    },
-
-    // New getters for workspaces
-    getProjectWorkspaces: state => projId => {
-      return state.workspaces[projId] || {};
-    },
-
-    getWorkspace: state => (projId, workspaceId) => {
-      return state.workspaces[projId]?.[workspaceId];
-    },
+    // Workspace related actions
   },
 });
