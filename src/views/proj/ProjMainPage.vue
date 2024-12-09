@@ -128,7 +128,7 @@
 
   const selectProject = async (projId) => {
     try {
-      await projectStore.setActiveProject(projId);
+      projectStore.setActiveProject(projId);
       await router.push({
         name: 'Project',
         params: { projectId: projId }

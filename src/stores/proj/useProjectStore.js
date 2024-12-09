@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import axios from "axios";
+import { projectApi } from "@/api/proj/project";
 
 export const useProjectStore = defineStore("project", {
   state: () => ({
@@ -45,40 +46,93 @@ export const useProjectStore = defineStore("project", {
       this.error = null;
 
       try {
-        const response = await axios.get(`/proj-members/users/${userId}`);
+        const data = await projectApi.getUserProjects(userId);
+        const userProjects = data[0]?.proj_member_infos || [];
 
-        if (response.data.success) {
-          const userProjects = response.data.data[0]?.proj_member_infos || [];
+        this.projects = userProjects.reduce((acc, projectInfo) => {
+          const validWorkspaces = projectInfo.workspaces.filter(workspace => workspace.workspace_id !== null);
 
-          // Transform array to object with proj_id as keys
-          this.projects = userProjects.reduce((acc, projectInfo) => {
-            // Filter out null workspaces
-            const validWorkspaces = projectInfo.workspaces.filter(workspace => workspace.workspace_id !== null);
-
-            acc[projectInfo.proj_id] = {
-              proj_id: projectInfo.proj_id,
-              proj_name: projectInfo.proj_name,
-              start_time: projectInfo.start_time,
-              end_time: projectInfo.end_time,
-              created_at: projectInfo.created_at,
-              progress_status: projectInfo.progress_status,
-              bookmark_status: projectInfo.bookmark_status,
-              participation_status: projectInfo.participation_status,
-              vcs_type: projectInfo.vcs_type,
-              vcs_proj_url: projectInfo.vcs_proj_url,
-              vcs_installation_id: projectInfo.vcs_installation_id,
-              workspaces: validWorkspaces,
-            };
-            return acc;
-          }, {});
-        } else {
-          throw new Error(response.data.error || "Failed to load projects");
-        }
+          acc[projectInfo.proj_id] = {
+            proj_id: projectInfo.proj_id,
+            proj_name: projectInfo.proj_name,
+            start_time: projectInfo.start_time,
+            end_time: projectInfo.end_time,
+            created_at: projectInfo.created_at,
+            progress_status: projectInfo.progress_status,
+            bookmark_status: projectInfo.bookmark_status,
+            participation_status: projectInfo.participation_status,
+            vcs_type: projectInfo.vcs_type,
+            vcs_proj_url: projectInfo.vcs_proj_url,
+            vcs_installation_id: projectInfo.vcs_installation_id,
+            workspaces: validWorkspaces,
+          };
+          return acc;
+        }, {});
       } catch (error) {
-        this.error = error.message || "Failed to initialize projects";
+        this.error = error.message;
         throw error;
       } finally {
         this.isLoading = false;
+      }
+    },
+
+    async createProject(projectData) {
+      try {
+        const newProject = await projectApi.createProject(projectData);
+        this.projects[newProject.proj_id] = {
+          ...newProject,
+          workspaces: [],
+        };
+        return newProject;
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    async updateProject(projectId, updateData) {
+      try {
+        const updatedProject = await projectApi.updateProject(projectId, updateData);
+        this.projects[projectId] = {
+          ...this.projects[projectId],
+          ...updatedProject,
+        };
+        return updatedProject;
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    async deleteProject(projectId) {
+      try {
+        await projectApi.deleteProject(projectId);
+        delete this.projects[projectId];
+        if (this.activeProjectId === projectId) {
+          this.clearActiveStates();
+        }
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    async toggleBookmark(projectId) {
+      try {
+        const newStatus = this.projects[projectId].bookmark_status === "BOOKMARKED" ? "NONE" : "BOOKMARKED";
+
+        await projectApi.updateBookmarkStatus(projectId, newStatus);
+        this.projects[projectId].bookmark_status = newStatus;
+        return newStatus;
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    async createWorkspace(projectId, workspaceData) {
+      try {
+        const newWorkspace = await projectApi.createWorkspace(projectId, workspaceData);
+        this.projects[projectId].workspaces.push(newWorkspace);
+        return newWorkspace;
+      } catch (error) {
+        throw error;
       }
     },
 
@@ -155,66 +209,5 @@ export const useProjectStore = defineStore("project", {
     },
 
     // Workspace related actions
-    async addWorkspace(projectId, workspaceData) {
-      try {
-        const response = await axios.post(`/proj-members/projs/${projectId}/workspaces`, workspaceData);
-
-        if (response.data.success) {
-          const newWorkspace = response.data.data;
-
-          // Add workspace to project
-          if (!this.projects[projectId].workspaces) {
-            this.projects[projectId].workspaces = [];
-          }
-
-          this.projects[projectId].workspaces.push(newWorkspace);
-          return newWorkspace;
-        } else {
-          throw new Error(response.data.message || "Failed to create workspace");
-        }
-      } catch (error) {
-        throw error;
-      }
-    },
-
-    async updateWorkspaceBookmark(projectId, workspaceId, bookmarkStatus) {
-      try {
-        const response = await axios.put(`/proj-members/projs/${projectId}/workspaces/${workspaceId}/bookmark`, { bookmark_status: bookmarkStatus });
-
-        if (response.data.success) {
-          // Update workspace bookmark status in state
-          const workspace = this.projects[projectId].workspaces.find(w => w.workspace_id === workspaceId);
-
-          if (workspace) {
-            workspace.bookmark_status = bookmarkStatus;
-          }
-
-          return workspace;
-        } else {
-          throw new Error(response.data.message || "Failed to update bookmark status");
-        }
-      } catch (error) {
-        throw error;
-      }
-    },
-
-    // Helper methods for state management
-    removeProject(projectId) {
-      delete this.projects[projectId];
-      if (this.activeProjectId === projectId) {
-        this.clearActiveStates();
-      }
-    },
-
-    removeWorkspace(projectId, workspaceId) {
-      const project = this.projects[projectId];
-      if (project && project.workspaces) {
-        project.workspaces = project.workspaces.filter(w => w.workspace_id !== workspaceId);
-
-        if (this.activeWorkspaceId === workspaceId) {
-          this.activeWorkspaceId = null;
-        }
-      }
-    },
   },
 });
