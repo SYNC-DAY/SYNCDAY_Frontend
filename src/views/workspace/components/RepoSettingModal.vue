@@ -83,15 +83,17 @@
 			});
 		}
 	};
-	onMounted(async () => {
-		githubInstallationId.value = await projectStore.getInstallationId(props.projectId);
-		console.log(githubInstallationId.value)
-		repositories.value = await githubRepoStore.fetchRepositories(githubInstallationId.value);
-	});
+
 
 	// Watch for changes in props.modelValue
 	watch(() => props.modelValue, (newValue) => {
 		isVisible.value = newValue;
+
+		if (newValue === true) {
+			githubInstallationId.value = projectStore.getInstallationId(props.projectId);
+			console.log(githubInstallationId.value)
+			repositories.value = githubRepoStore.fetchRepositories(githubInstallationId.value);
+		}
 	});
 
 	// Watch for changes in isVisible

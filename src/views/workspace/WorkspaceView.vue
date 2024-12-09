@@ -110,7 +110,7 @@
     :workspaceData="workspaceDetails" @update="updateRepositoryInfo" />
 
   <MilestoneSelection :is-open="showMilestoneSelection" :installation-id="installationId" :owner="owner" :repo="repo"
-    :project-id="projectId" @close="showModal = false" />
+    :project-id="projectId" @close="showModal = false" :repositoryInfo="repositoryInfo" />
 </template>
 
 <script setup>
@@ -280,7 +280,9 @@
   const updateRepositoryInfo = (repoInfo) => {
     // Update your local state with the new repository info
     // For example:
+    projectStore.updateWorkspace({ workspaceDetails, ...repoInfo })
     repositoryInfo.value = repoInfo
+
   }
   watch(
     [

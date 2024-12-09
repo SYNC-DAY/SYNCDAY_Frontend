@@ -86,6 +86,10 @@
 		projectId: {
 			type: String,
 			required: true
+		},
+		repositoryInfo: {
+			type: Object,
+			required: false
 		}
 	});
 
@@ -110,7 +114,7 @@
 	});
 
 	const milestones = computed(() =>
-		milestoneStore.getMilestones(props.installationId, owner.value, repo.value)
+		milestoneStore.getMilestones(props.installationId, props.repositoryInfo.owner, props.repositoryInfo.repoName)
 	);
 
 	// Watch for modal open state

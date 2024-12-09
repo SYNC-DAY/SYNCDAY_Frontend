@@ -146,10 +146,38 @@ export const useProjectStore = defineStore("projectStore", {
         return false;
       }
     },
+    removeCircularReferences(obj) {
+      const seen = new WeakSet();
 
+      return JSON.parse(
+        JSON.stringify(obj, (key, value) => {
+          if (typeof value === "object" && value !== null) {
+            if (seen.has(value)) {
+              return undefined; // Remove circular reference
+            }
+            seen.add(value);
+          }
+          return value;
+        })
+      );
+    },
+    async fetchWorkspace(projectId, workspaceId) {
+      try {
+        const response = await axios.get(`/workspaces/${workspaceId}`);
+        if (response.data.success) {
+          const workspaceData = this.workspaces[projectId][workspaceId];
+          this.workspaces[projectId][workspaceId] = { ...workspaceData, ...response.data.data };
+        }
+      } catch (error) {
+        return false;
+        console.error(error);
+      }
+    },
     async updateWorkspace(workspaceData) {
       try {
-        const response = await axios.put("/proj-members/workspaces", workspaceData);
+        const cleanData = this.removeCircularReferences(workspaceData);
+        console.log(cleanData);
+        const response = await axios.put("/proj-members/workspaces", cleanData);
 
         if (response.data.success) {
           const resultData = response.data.data;
