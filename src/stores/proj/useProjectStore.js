@@ -2,124 +2,140 @@
 import { defineStore } from "pinia";
 import { projectApi } from "@/api/proj/project";
 export const useProjectStore = defineStore("project", {
-  state: () => ({
-    projects: {},
-    isLoading: false,
-    error: null,
-    activeProjectId: null,
-    activeWorkspaceId: null,
-  }),
+	state: () => ({
+		projects: {},
+		isLoading: false,
+		error: null,
+		activeProjectId: null,
+		activeWorkspaceId: null,
+	}),
 
-  getters: {
-    hasProjects: state => Object.keys(state.projects).length > 0,
+	getters: {
+		hasProjects: state => Object.keys(state.projects).length > 0,
 
-    getProjectById: state => id => state.projects[id] || null,
+		getProjectById: state => id => state.projects[id] || null,
 
-    activeProject: state => (state.activeProjectId ? state.projects[state.activeProjectId] : null),
+		activeProject: state => (state.activeProjectId ? state.projects[state.activeProjectId] : null),
 
-    activeWorkspace: state => {
-      if (!state.activeProjectId || !state.activeWorkspaceId) return null;
+		activeWorkspace: state => {
+			if (!state.activeProjectId || !state.activeWorkspaceId) return null;
 
-      const project = state.projects[state.activeProjectId];
-      return project?.workspaces?.find(workspace => workspace.workspace_id === state.activeWorkspaceId);
-    },
+			const project = state.projects[state.activeProjectId];
+			return project?.workspaces?.find(workspace => workspace.workspace_id === state.activeWorkspaceId);
+		},
 
-    projectsArray: state =>
-      Object.values(state.projects).sort((a, b) => {
-        if (a.bookmark_status === b.bookmark_status) {
-          return new Date(b.created_at) - new Date(a.created_at);
-        }
-        return a.bookmark_status === "BOOKMARKED" ? -1 : 1;
-      }),
+		projectsArray: state =>
+			Object.values(state.projects).sort((a, b) => {
+				if (a.bookmark_status === b.bookmark_status) {
+					return new Date(b.created_at) - new Date(a.created_at);
+				}
+				return a.bookmark_status === "BOOKMARKED" ? -1 : 1;
+			}),
 
-    bookmarkedProjects: state => Object.values(state.projects).filter(project => project.bookmark_status === "BOOKMARKED"),
-  },
-  actions: {
-    async initializeStore(userId) {
-      this.isLoading = true;
-      this.error = null;
-      try {
-        const data = await projectApi.getUserProjects(userId);
-        this.setProjects(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        this.setLoading(false);
-      }
-    },
-    setProjects(projectsData) {
-      this.projects = projectsData;
-    },
+		bookmarkedProjects: state => Object.values(state.projects).filter(project => project.bookmark_status === "BOOKMARKED"),
+	},
+	actions: {
+		async initializeStore(userId) {
+			this.isLoading = true;
+			this.error = null;
+			try {
+				const data = await projectApi.getUserProjects(userId);
+				this.setProjects(data);
+			} catch (err) {
+				console.error(err);
+			} finally {
+				this.setLoading(false);
+			}
+		},
+		async handleBookmark(memberId) {
+			try {
+				console.log(memberId);
+				const data = await projectApi.updateBookmarkStatus(memberId);
+				this.setBookmarkStatus(data);
+			} catch (error) {
+				console.error("Failed to update bookmark status:", error);
+				throw error;
+			}
+		},
 
-    addProject(project) {
-      this.projects[project.proj_id] = {
-        ...project,
-        workspaces: project.workspaces || [],
-      };
-    },
+		setBookmarkStatus(projectId, bookmarkStatus) {
+			if (this.projects[projectId]) {
+				this.projects[projectId].bookmark_status = bookmarkStatus;
+			}
+		},
+		setProjects(projectsData) {
+			this.projects = projectsData;
+		},
 
-    updateProject(projectId, updates) {
-      this.projects[projectId] = {
-        ...this.projects[projectId],
-        ...updates,
-      };
-    },
+		addProject(project) {
+			this.projects[project.proj_id] = {
+				...project,
+				workspaces: project.workspaces || [],
+			};
+		},
 
-    removeProject(projectId) {
-      delete this.projects[projectId];
-      if (this.activeProjectId === projectId) {
-        this.clearActiveStates();
-      }
-    },
+		updateProject(projectId, updates) {
+			this.projects[projectId] = {
+				...this.projects[projectId],
+				...updates,
+			};
+		},
 
-    // Workspace state updates
-    addWorkspace(projectId, workspace) {
-      if (!this.projects[projectId].workspaces) {
-        this.projects[projectId].workspaces = [];
-      }
-      this.projects[projectId].workspaces.push(workspace);
-    },
+		removeProject(projectId) {
+			delete this.projects[projectId];
+			if (this.activeProjectId === projectId) {
+				this.clearActiveStates();
+			}
+		},
 
-    updateWorkspace(projectId, workspaceId, updates) {
-      const workspace = this.projects[projectId].workspaces.find(w => w.workspace_id === workspaceId);
-      if (workspace) {
-        Object.assign(workspace, updates);
-      }
-    },
+		// Workspace state updates
+		addWorkspace(projectId, workspace) {
+			if (!this.projects[projectId].workspaces) {
+				this.projects[projectId].workspaces = [];
+			}
+			this.projects[projectId].workspaces.push(workspace);
+		},
 
-    removeWorkspace(projectId, workspaceId) {
-      const project = this.projects[projectId];
-      if (project?.workspaces) {
-        project.workspaces = project.workspaces.filter(w => w.workspace_id !== workspaceId);
-      }
-      if (this.activeWorkspaceId === workspaceId) {
-        this.activeWorkspaceId = null;
-      }
-    },
+		updateWorkspace(projectId, workspaceId, updates) {
+			const workspace = this.projects[projectId].workspaces.find(w => w.workspace_id === workspaceId);
+			if (workspace) {
+				Object.assign(workspace, updates);
+			}
+		},
 
-    // Loading state
-    setLoading(status) {
-      this.isLoading = status;
-    },
+		removeWorkspace(projectId, workspaceId) {
+			const project = this.projects[projectId];
+			if (project?.workspaces) {
+				project.workspaces = project.workspaces.filter(w => w.workspace_id !== workspaceId);
+			}
+			if (this.activeWorkspaceId === workspaceId) {
+				this.activeWorkspaceId = null;
+			}
+		},
 
-    setError(error) {
-      this.error = error;
-    },
+		// Loading state
+		setLoading(status) {
+			this.isLoading = status;
+		},
 
-    // Active states
-    setActiveProject(projectId) {
-      this.activeProjectId = projectId;
-      this.activeWorkspaceId = null;
-    },
+		setError(error) {
+			this.error = error;
+		},
 
-    setActiveWorkspace(projectId, workspaceId) {
-      this.activeProjectId = projectId;
-      this.activeWorkspaceId = workspaceId;
-    },
+		// Active states
+		setActiveProject(projectId) {
+			this.activeProjectId = projectId;
+			this.activeWorkspaceId = null;
+		},
 
-    clearActiveStates() {
-      this.activeProjectId = null;
-      this.activeWorkspaceId = null;
-    },
-  },
+		setActiveWorkspace(projectId, workspaceId) {
+			this.activeProjectId = projectId;
+			this.activeWorkspaceId = workspaceId;
+		},
+
+		clearActiveStates() {
+			this.activeProjectId = null;
+			this.activeWorkspaceId = null;
+		},
+	},
 });

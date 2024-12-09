@@ -1,27 +1,39 @@
 <template>
 	<div class="proj-item">
-		<div class="proj-section container-row" @click="handleSelect">
-			<div class="proj-left" :class="{ 'gradient-vertical': isActive }"></div>
+		<div
+			class="proj-section container-row"
+			@click="handleSelect">
+			<div
+				class="proj-left"
+				:class="{ 'gradient-vertical': isActive }"></div>
 			<div class="proj-title container-row">
 				<span>{{ props.proj?.proj_name }}</span>
 			</div>
 			<div class="proj-right container-col">
-				<div class="bookmark-section" @click.stop="handleBookmark">
-					<i class="pi gradient-vertical" :class="{
-						'pi-bookmark': !isBookmarked,
-						'pi-bookmark-fill': isBookmarked
-					}">
+				<div
+					class="bookmark-section"
+					@click.stop="handleBookmark">
+					<i
+						class="pi gradient-vertical"
+						:class="{
+							'pi-bookmark': !isBookmarked,
+							'pi-bookmark-fill': isBookmarked,
+						}">
 					</i>
 				</div>
 				<div class="chevron-section">
-					<i class="pi" :class="{ 'pi-chevron-down': !isExpanded, 'pi-chevron-up': isExpanded }"
+					<i
+						class="pi"
+						:class="{ 'pi-chevron-down': !isExpanded, 'pi-chevron-up': isExpanded }"
 						@click.stop="handleExpand">
 					</i>
 				</div>
 			</div>
 		</div>
 		<transition name="expand">
-			<div v-show="isExpanded" class="proj-content">
+			<div
+				v-show="isExpanded"
+				class="proj-content">
 				<slot></slot>
 			</div>
 		</transition>
@@ -29,9 +41,9 @@
 </template>
 
 <script setup>
-	import { computed, ref } from 'vue';
-	import { useProjectStore } from '@/stores/proj/useProjectStore';
-	import { useToast } from 'primevue/usetoast';
+	import { computed, ref } from "vue";
+	import { useProjectStore } from "@/stores/proj/useProjectStore";
+	import { useToast } from "primevue/usetoast";
 
 	const projectStore = useProjectStore();
 	const toast = useToast();
@@ -39,81 +51,80 @@
 	const props = defineProps({
 		proj: {
 			type: Object,
-			required: true
+			required: true,
 		},
 		projId: {
 			type: Number,
-			required: true
+			required: true,
 		},
 		userId: {
 			type: Number,
-			required: true
+			required: true,
 		},
 		isActive: {
 			type: Boolean,
-			default: false
+			default: false,
 		},
 		isExpanded: {
 			type: Boolean,
-			default: false
+			default: false,
 		},
 		progress: {
 			type: Number,
 			default: 0,
-			validator: value => value >= 0 && value <= 100
-		}
+			validator: value => value >= 0 && value <= 100,
+		},
 	});
 
-	const emit = defineEmits(['toggle-expansion', 'select', 'bookmark-changed']);
+	const emit = defineEmits(["toggle-expansion", "select", "bookmark-changed"]);
 
 	// Local state for optimistic updates
-	const localBookmarkStatus = ref(props.proj?.bookmark_status || 'NONE');
+	const localBookmarkStatus = ref(props.proj?.bookmark_status || "NONE");
 
 	const isBookmarked = computed(() => {
-		return localBookmarkStatus.value === 'BOOKMARKED';
+		return localBookmarkStatus.value === "BOOKMARKED";
 	});
 
-	const handleBookmark = async (event) => {
+	const handleBookmark = async event => {
 		try {
 			event.stopPropagation();
 
 			if (!props.proj?.proj_member_id) {
-				console.error('Missing proj_member_id');
+				console.error("Missing proj_member_id");
 				return;
 			}
 
 			// Optimistic update
-			const newStatus = localBookmarkStatus.value === 'BOOKMARKED' ? 'NONE' : 'BOOKMARKED';
+			const newStatus = localBookmarkStatus.value === "BOOKMARKED" ? "NONE" : "BOOKMARKED";
 			localBookmarkStatus.value = newStatus;
 
 			// Actually update the bookmark
-			const result = await projectStore.handleBookmark(props.proj.proj_member_id, props.projId);
+			const result = await projectStore.handleBookmark(props.proj.proj_member_id);
 
 			// Update local state with the actual result
 			localBookmarkStatus.value = result;
 
-			emit('bookmark-changed', props.projId);
-
+			emit("bookmark-changed", props.projId);
 		} catch (error) {
 			// Revert optimistic update on error
-			localBookmarkStatus.value = props.proj?.bookmark_status || 'NONE';
+			localBookmarkStatus.value = props.proj?.bookmark_status || "NONE";
 
 			toast.add({
-				severity: 'error',
-				summary: '북마크 실패',
-				detail: '북마크 상태를 변경하는 중 오류가 발생했습니다.',
-				life: 3000
+				severity: "error",
+				summary: "북마크 실패",
+				detail: "북마크 상태를 변경하는 중 오류가 발생했습니다.",
+				life: 3000,
 			});
 		}
 	};
 
-	const handleExpand = (event) => {
+	const handleExpand = event => {
 		event.stopPropagation();
-		emit('toggle-expansion');
+		emit("toggle-expansion");
 	};
 
 	const handleSelect = () => {
-		emit('select');
+		emit("select");
 	};
 </script>
 <style scoped>
@@ -165,7 +176,7 @@
 		cursor: pointer;
 	}
 
-	.proj-right>.bookmark-section>i {
+	.proj-right > .bookmark-section > i {
 		position: absolute;
 		top: -3px;
 		font-size: 2rem;
@@ -174,7 +185,7 @@
 		transition: transform 0.3s ease, opacity 0.3s ease;
 	}
 
-	.proj-right>.bookmark-section>i:hover {
+	.proj-right > .bookmark-section > i:hover {
 		transform: scale(1.1);
 	}
 
@@ -182,7 +193,7 @@
 		cursor: pointer;
 	}
 
-	.proj-right>.chevron-section>i {
+	.proj-right > .chevron-section > i {
 		position: absolute;
 		bottom: 0.2rem;
 		vertical-align: bottom;
