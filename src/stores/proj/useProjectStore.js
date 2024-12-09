@@ -1,261 +1,211 @@
 import { defineStore } from "pinia";
 import axios from "axios";
 
-export const useProjectStore = defineStore("projectStore", {
+export const useProjectStore = defineStore("project", {
   state: () => ({
-    projects: {}, // { [projectId]: projectData }
-    workspaces: {}, // { [projectId]: { [workspaceId]: workspaceData } }
-    isLoading: false,
-    isFetching: false,
+    projects: {},
+    isLoading: true,
     error: null,
-    isInitialized: false,
+    activeProjectId: null,
+    activeWorkspaceId: null,
   }),
+
+  getters: {
+    hasProjects: state => Object.keys(state.projects).length > 0,
+
+    activeProject: state => (state.activeProjectId ? state.projects[state.activeProjectId] : null),
+
+    activeWorkspace: state => {
+      if (!state.activeProjectId || !state.activeWorkspaceId) return null;
+
+      const project = state.projects[state.activeProjectId];
+      return project?.workspaces?.find(workspace => workspace.workspace_id === state.activeWorkspaceId);
+    },
+
+    // Get projects as an array for v-for iteration
+    projectsArray: state =>
+      Object.entries(state.projects).map(([id, project]) => ({
+        ...project,
+        proj_id: parseInt(id),
+      })),
+  },
 
   actions: {
     async initializeStore(userId) {
-      if (this.isInitialized) return;
-
       this.isLoading = true;
-      try {
-        await this.fetchProjects(userId);
-        this.isInitialized = true;
-      } finally {
-        this.isLoading = false;
-      }
-    },
-
-    async fetchProjects(userId) {
-      this.isFetching = true;
       this.error = null;
 
       try {
         const response = await axios.get(`/proj-members/users/${userId}`);
 
-        if (response.data.success && response.data.data.length > 0) {
-          const projMemberInfos = response.data.data[0].proj_member_infos;
+        if (response.data.success) {
+          const userProjects = response.data.data[0]?.proj_member_infos || [];
 
-          // Create new projects and workspaces objects while maintaining reactivity
-          const newProjects = {};
-          const newWorkspaces = {};
+          // Transform array to object with proj_id as keys
+          this.projects = userProjects.reduce((acc, projectInfo) => {
+            // Filter out null workspaces
+            const validWorkspaces = projectInfo.workspaces.filter(workspace => workspace.workspace_id !== null);
 
-          projMemberInfos.forEach(proj => {
-            // Handle project data
-            newProjects[proj.proj_id] = {
-              ...proj,
-              startTime: proj.start_time ? new Date(proj.start_time) : null,
-              endTime: proj.end_time ? new Date(proj.end_time) : null,
-              createdAt: new Date(proj.created_at),
-              bookmark_status: proj.bookmark_status || "NONE",
+            acc[projectInfo.proj_id] = {
+              proj_id: projectInfo.proj_id,
+              proj_name: projectInfo.proj_name,
+              start_time: projectInfo.start_time,
+              end_time: projectInfo.end_time,
+              created_at: projectInfo.created_at,
+              progress_status: projectInfo.progress_status,
+              bookmark_status: projectInfo.bookmark_status,
+              participation_status: projectInfo.participation_status,
+              vcs_type: projectInfo.vcs_type,
+              vcs_proj_url: projectInfo.vcs_proj_url,
+              vcs_installation_id: projectInfo.vcs_installation_id,
+              workspaces: validWorkspaces,
             };
-
-            // Handle workspaces data
-            if (proj.workspaces && proj.workspaces.length > 0) {
-              newWorkspaces[proj.proj_id] = {};
-              proj.workspaces.forEach(workspace => {
-                newWorkspaces[proj.proj_id][workspace.workspace_id] = {
-                  ...workspace,
-                  createdAt: new Date(workspace.created_at),
-                };
-              });
-            }
-          });
-
-          // Update the store
-          this.projects = newProjects;
-          this.workspaces = newWorkspaces;
+            return acc;
+          }, {});
         } else {
-          this.projects = {};
-          this.workspaces = {};
+          throw new Error(response.data.error || "Failed to load projects");
         }
       } catch (error) {
-        this.error = error.message || "Failed to fetch projects";
-        console.error("Error fetching projects:", error);
+        this.error = error.message || "Failed to initialize projects";
         throw error;
       } finally {
-        this.isFetching = false;
+        this.isLoading = false;
       }
     },
 
-    addProject(project) {
-      this.projects[project.proj_id] = {
-        ...project,
-        startTime: project.start_time ? new Date(project.start_time) : null,
-        endTime: project.end_time ? new Date(project.end_time) : null,
-        createdAt: new Date(project.created_at),
-        bookmark_status: project.bookmark_status || "NONE",
-      };
+    async createProject({ userId, projectData }) {
+      try {
+        const response = await axios.post("/proj-members/projs", {
+          user_id: userId,
+          proj_name: projectData.name,
+          start_time: projectData.startDate ? new Date(projectData.startDate).toISOString() : null,
+          end_time: projectData.endDate ? new Date(projectData.endDate).toISOString() : null,
+        });
 
-      // Initialize workspaces object for the new project
-      if (project.workspaces && project.workspaces.length > 0) {
-        this.workspaces[project.proj_id] = {};
-        project.workspaces.forEach(workspace => {
-          this.workspaces[project.proj_id][workspace.workspace_id] = {
-            ...workspace,
-            createdAt: new Date(workspace.created_at),
+        if (response.data.success) {
+          const newProject = {
+            proj_id: response.data.data.proj_id,
+            proj_name: projectData.name,
+            start_time: projectData.startDate,
+            end_time: projectData.endDate,
+            progress_status: 0,
+            bookmark_status: "NONE",
+            participation_status: "OWNER",
+            created_at: new Date().toISOString(),
+            workspaces: [],
           };
-        });
-      }
-    },
 
-    async handleBookmark(projMemberId, projId) {
-      if (!projId || !projMemberId) {
-        console.error("Missing projId or projMemberId");
-        return;
-      }
+          // Add new project to state
+          this.projects[newProject.proj_id] = newProject;
 
-      try {
-        const response = await axios({
-          method: "PUT",
-          url: "/proj-members/bookmark",
-          params: {
-            projMemberId: projMemberId,
-          },
-        });
+          // Set as active project
+          this.setActiveProject(newProject.proj_id);
 
-        if (response.data.success) {
-          const newStatus = response.data.data;
-
-          if (this.projects[projId]) {
-            this.projects[projId] = {
-              ...this.projects[projId],
-              bookmark_status: newStatus,
-            };
-          }
-
-          return newStatus;
-        }
-      } catch (error) {
-        console.error("Bookmark update failed:", error);
-        throw error;
-      }
-    },
-
-    async updateProject(projData) {
-      try {
-        const response = await axios.put("/proj-members/projs", projData);
-
-        if (response.data.success) {
-          const resultData = response.data.data;
-          const projId = projData.proj_id;
-          this.projects[projId] = { ...this.projects[projId], ...resultData };
-          return true;
-        }
-        return false;
-      } catch (error) {
-        console.error(error);
-        return false;
-      }
-    },
-    removeCircularReferences(obj, seen = new WeakSet()) {
-      // Handle primitives and null
-      if (!obj || typeof obj !== "object") {
-        return obj;
-      }
-
-      // Detect circular references
-      if (seen.has(obj)) {
-        return null; // or {} or [] depending on your needs
-      }
-
-      // Add this object to our set of seen objects
-      seen.add(obj);
-
-      // Handle arrays
-      if (Array.isArray(obj)) {
-        return obj.map(item => this.removeCircularReferences(item, seen));
-      }
-
-      // Handle objects
-      const cleanObj = {};
-      for (const [key, value] of Object.entries(obj)) {
-        if (value && typeof value === "object") {
-          cleanObj[key] = this.removeCircularReferences(value, seen);
+          return newProject;
         } else {
-          cleanObj[key] = value;
-        }
-      }
-
-      return cleanObj;
-    },
-    async fetchWorkspace(projectId, workspaceId) {
-      try {
-        const response = await axios.get(`/workspaces/${workspaceId}`);
-        if (response.data.success) {
-          const workspaceData = this.workspaces[projectId][workspaceId];
-          this.workspaces[projectId][workspaceId] = { ...workspaceData, ...response.data.data };
-          return this.workspaces[projectId][workspaceId];
+          throw new Error(response.data.message || "Failed to create project");
         }
       } catch (error) {
-        console.error(error);
-        return false;
-      }
-    },
-    async updateWorkspace(workspaceData) {
-      try {
-        // Create a plain object with only the necessary fields
-        const requestData = {
-          ...workspaceData,
-          proj_member_id: this.getProjMemberId(workspaceData.proj_id),
-        };
-
-        console.log("Request data:", requestData);
-
-        const response = await axios.put("/proj-members/workspaces", requestData);
-
-        if (response.data.success) {
-          const resultData = response.data.data;
-          const projId = workspaceData.proj_id;
-          const workspaceId = workspaceData.workspace_id;
-
-          // Ensure the project exists in workspaces
-          if (!this.workspaces[projId]) {
-            this.workspaces[projId] = {};
-          }
-
-          // Update the workspace
-          this.workspaces[projId][workspaceId] = resultData;
-          return true;
-        }
-        return false;
-      } catch (error) {
-        console.error("Error updating workspace:", error);
         throw error;
       }
     },
-  },
 
-  getters: {
-    isLoadingAny: state => state.isLoading || state.isFetching,
+    async updateProject(projectId, updateData) {
+      try {
+        const response = await axios.put(`/proj-members/projs/${projectId}`, updateData);
 
-    hasProjects: state => Object.keys(state.projects).length > 0,
+        if (response.data.success) {
+          // Update project in state
+          this.projects[projectId] = {
+            ...this.projects[projectId],
+            ...updateData,
+          };
 
-    getBookmarkedProjects: state => {
-      return Object.values(state.projects).filter(proj => proj.bookmark_status === "BOOKMARKED");
-    },
-
-    isProjectBookmarked: state => projId => {
-      return state.projects[projId]?.bookmark_status === "BOOKMARKED";
-    },
-
-    getInstallationId: state => projId => {
-      if (!state.projects[projId]) {
-        console.warn(`Project ${projId} not found in store`);
-        return null;
+          return this.projects[projectId];
+        } else {
+          throw new Error(response.data.message || "Failed to update project");
+        }
+      } catch (error) {
+        throw error;
       }
-      return state.projects[projId].vcs_installation_id ?? null;
     },
 
-    getProjMemberId: state => projId => {
-      return state.projects[projId]?.proj_member_id;
+    setActiveProject(projectId) {
+      this.activeProjectId = projectId;
+      this.activeWorkspaceId = null; // Clear active workspace when changing projects
     },
 
-    // New getters for workspaces
-    getProjectWorkspaces: state => projId => {
-      return state.workspaces[projId] || {};
+    setActiveWorkspace(projectId, workspaceId) {
+      this.activeProjectId = projectId;
+      this.activeWorkspaceId = workspaceId;
     },
 
-    getWorkspace: state => (projId, workspaceId) => {
-      return state.workspaces[projId]?.[workspaceId];
+    clearActiveStates() {
+      this.activeProjectId = null;
+      this.activeWorkspaceId = null;
+    },
+
+    // Workspace related actions
+    async addWorkspace(projectId, workspaceData) {
+      try {
+        const response = await axios.post(`/proj-members/projs/${projectId}/workspaces`, workspaceData);
+
+        if (response.data.success) {
+          const newWorkspace = response.data.data;
+
+          // Add workspace to project
+          if (!this.projects[projectId].workspaces) {
+            this.projects[projectId].workspaces = [];
+          }
+
+          this.projects[projectId].workspaces.push(newWorkspace);
+          return newWorkspace;
+        } else {
+          throw new Error(response.data.message || "Failed to create workspace");
+        }
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    async updateWorkspaceBookmark(projectId, workspaceId, bookmarkStatus) {
+      try {
+        const response = await axios.put(`/proj-members/projs/${projectId}/workspaces/${workspaceId}/bookmark`, { bookmark_status: bookmarkStatus });
+
+        if (response.data.success) {
+          // Update workspace bookmark status in state
+          const workspace = this.projects[projectId].workspaces.find(w => w.workspace_id === workspaceId);
+
+          if (workspace) {
+            workspace.bookmark_status = bookmarkStatus;
+          }
+
+          return workspace;
+        } else {
+          throw new Error(response.data.message || "Failed to update bookmark status");
+        }
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    // Helper methods for state management
+    removeProject(projectId) {
+      delete this.projects[projectId];
+      if (this.activeProjectId === projectId) {
+        this.clearActiveStates();
+      }
+    },
+
+    removeWorkspace(projectId, workspaceId) {
+      const project = this.projects[projectId];
+      if (project && project.workspaces) {
+        project.workspaces = project.workspaces.filter(w => w.workspace_id !== workspaceId);
+
+        if (this.activeWorkspaceId === workspaceId) {
+          this.activeWorkspaceId = null;
+        }
+      }
     },
   },
 });

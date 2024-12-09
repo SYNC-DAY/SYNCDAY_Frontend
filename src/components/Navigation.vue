@@ -181,7 +181,7 @@
 
 <style scoped>
 	.nav-top {
-		padding: 1rem;
+		padding: 0.5rem;
 	}
 
 	.nav-top>div,
