@@ -40,7 +40,7 @@
 								<template #body="slotProps">
 									<!-- 데이터가 변경될 가능성이 있는 로직 -->
 									<div v-if="slotProps.data.participation_status === 'OWNER'" class="status-item">
-										<img src="@/assets/icons/crown.svg" alt="Owner Icon" class="status-icon"
+										<img  alt="Owner Icon" class="status-icon"
 											style="width:1.3rem; " />
 										<span>OWNER</span>
 									</div>
