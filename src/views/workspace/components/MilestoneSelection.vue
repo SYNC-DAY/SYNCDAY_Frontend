@@ -126,6 +126,9 @@
 	const fetchMilestones = async () => {
 		isLoading.value = true;
 		console.log(props.installationId)
+		if (!props.installationId) {
+			throw new Error("no installationId found")
+		}
 		// console.log(props.repoUrl)
 		if (props.repoUrl) {
 			owner.value = props.repoUrl.split('/')[3]

@@ -129,8 +129,8 @@
 
 			// Emit a simple object with only necessary data
 			emit('update', {
-				name: selectedRepo.value.name,
-				html_url: selectedRepo.value.html_url
+				vcs_repo_name: selectedRepo.value.name,
+				vcs_repo_url: selectedRepo.value.html_url
 			});
 
 			closeModal();

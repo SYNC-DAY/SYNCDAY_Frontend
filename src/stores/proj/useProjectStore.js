@@ -195,6 +195,7 @@ export const useProjectStore = defineStore("projectStore", {
         // Create a plain object with only the necessary fields
         const requestData = {
           ...workspaceData,
+          proj_member_id: this.getProjMemberId(workspaceData.proj_id),
         };
 
         console.log("Request data:", requestData);

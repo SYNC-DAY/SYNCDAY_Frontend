@@ -173,6 +173,8 @@
   const showCardTag = ref(null);
 
   const fetchWorkspace = async () => {
+    console.log(props.projectId)
+    console.log(props.workspaceId)
     workspaceDetails.value = await projectStore.fetchWorkspace(props.projectId, props.workspaceId)
   }
   const fetchInstallationId = async () => {
@@ -283,6 +285,7 @@
     // For example:
     console.log("repoInfo:")
     console.log(repoInfo)
+    this.repoUrl.value = repoInfo?.vcs_repo_url;
     projectStore.updateWorkspace({ ...workspaceDetails.value, ...repoInfo })
 
   }

@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { useGithubAppStore } from "./useGithubAppStore";
-import { Octokit } from "@octokit/rest";
+import { graphql } from "@octokit/graphql";
+import { unref } from "vue";
 
 export const useGithubMilestoneStore = defineStore("githubMilestoneStore", {
   state: () => ({
@@ -9,16 +10,17 @@ export const useGithubMilestoneStore = defineStore("githubMilestoneStore", {
     isFetching: false,
     error: null,
     isInitialized: false,
-    octokitInstances: {}, // { [installationId]: OctokitInstance }
+    graphqlClients: {}, // { [installationId]: GraphQLClient }
   }),
 
   actions: {
-    async getOctokitInstance(installationId) {
+    async getGraphQLClient(installationId) {
       try {
         const githubAppStore = useGithubAppStore();
         const installation = githubAppStore.installations[installationId];
 
         if (!installation?.access_token) {
+          console.log("No access token found, requesting new token...");
           await githubAppStore.requestInstallationToken(installationId);
         }
 
@@ -28,15 +30,16 @@ export const useGithubMilestoneStore = defineStore("githubMilestoneStore", {
           throw new Error("No access token available for this installation");
         }
 
-        if (!this.octokitInstances[installationId]) {
-          this.octokitInstances[installationId] = new Octokit({
-            auth: updatedInstallation.access_token,
-          });
-        }
+        // Always create a new instance to ensure fresh token
+        this.graphqlClients[installationId] = graphql.defaults({
+          headers: {
+            authorization: `token ${updatedInstallation.access_token}`,
+          },
+        });
 
-        return this.octokitInstances[installationId];
+        return this.graphqlClients[installationId];
       } catch (error) {
-        console.error("Failed to initialize Octokit:", error);
+        console.error("Failed to initialize GraphQL client:", error);
         throw new Error(`Failed to initialize GitHub client: ${error.message}`);
       }
     },
@@ -59,29 +62,73 @@ export const useGithubMilestoneStore = defineStore("githubMilestoneStore", {
       const key = `${installationId}:${owner}:${repo}`;
 
       try {
-        const octokit = await this.getOctokitInstance(installationId);
-        const response = await octokit.rest.issues.listMilestonesForRepo({
-          owner,
-          repo,
-          state: "open",
-          sort: "due_on",
-          direction: "asc",
-          per_page: 100,
+        // Unwrap any potential refs
+        const ownerValue = unref(owner);
+        const repoValue = unref(repo);
+
+        const graphqlWithAuth = await this.getGraphQLClient(installationId);
+
+        const query = `
+          query getMilestones($owner: String!, $repo: String!) {
+            repository(owner: $owner, name: $repo) {
+              milestones(first: 100, states: [OPEN], orderBy: {field: DUE_DATE, direction: ASC}) {
+                nodes {
+                  id
+                  number
+                  title
+                  description
+                  dueOn
+                  state
+                  createdAt
+                  updatedAt
+                  closed
+                  closedAt
+                  issues(states: [OPEN, CLOSED]) {
+                    totalCount
+                  }
+                  closedIssues: issues(states: [CLOSED]) {
+                    totalCount
+                  }
+                }
+              }
+            }
+          }
+        `;
+
+        const response = await graphqlWithAuth(query, {
+          owner: ownerValue,
+          repo: repoValue,
         });
 
-        // Process milestones to add computed properties
-        const processedMilestones = response.data.map(milestone => ({
+        console.log("Milestone response:", response);
+
+        // Process milestones to match the expected format
+        const processedMilestones = response.repository.milestones.nodes.map(milestone => ({
           ...milestone,
-          total_issues: milestone.open_issues + milestone.closed_issues,
-          progress_percentage: milestone.open_issues + milestone.closed_issues === 0 ? 0 : Math.round((milestone.closed_issues / (milestone.open_issues + milestone.closed_issues)) * 100),
+          open_issues: milestone.issues.totalCount - milestone.closedIssues.totalCount,
+          closed_issues: milestone.closedIssues.totalCount,
+          total_issues: milestone.issues.totalCount,
+          progress_percentage: milestone.issues.totalCount === 0 ? 0 : Math.round((milestone.closedIssues.totalCount / milestone.issues.totalCount) * 100),
         }));
 
         // Update store with new milestones
         this.milestones[key] = processedMilestones;
         return processedMilestones;
       } catch (error) {
-        this.error = error.message || "Failed to fetch milestones";
-        console.error("Error fetching milestones:", error);
+        console.error("GraphQL error:", {
+          errors: error.errors,
+          owner: unref(owner),
+          repo: unref(repo),
+        });
+
+        if (error.errors?.[0]?.type === "NOT_FOUND") {
+          this.error = `Repository ${unref(owner)}/${unref(repo)} not found or no access`;
+        } else if (error.errors?.[0]?.type === "FORBIDDEN") {
+          this.error = "Authentication failed - please check permissions";
+        } else {
+          this.error = error.message || "Failed to fetch milestones";
+        }
+
         throw error;
       } finally {
         this.isFetching = false;
@@ -93,26 +140,60 @@ export const useGithubMilestoneStore = defineStore("githubMilestoneStore", {
       this.error = null;
 
       try {
-        const octokit = await this.getOctokitInstance(installationId);
-        const response = await octokit.rest.issues.createMilestone({
-          owner,
-          repo,
-          ...milestoneData,
+        const graphqlWithAuth = await this.getGraphQLClient(installationId);
+
+        const mutation = `
+          mutation createMilestone($input: CreateMilestoneInput!) {
+            createMilestone(input: $input) {
+              milestone {
+                id
+                number
+                title
+                description
+                dueOn
+                state
+              }
+            }
+          }
+        `;
+
+        const response = await graphqlWithAuth(mutation, {
+          input: {
+            repositoryId: await this.getRepositoryId(installationId, unref(owner), unref(repo)),
+            title: unref(milestoneData.title),
+            description: unref(milestoneData.description),
+            dueOn: unref(milestoneData.due_on),
+          },
         });
 
-        if (response.status === 201) {
-          // Refresh milestones after creation
-          await this.fetchMilestones(installationId, owner, repo);
-          return response.data;
-        }
-        return null;
+        await this.fetchMilestones(installationId, owner, repo);
+        return response.createMilestone.milestone;
       } catch (error) {
+        console.error("Create milestone error:", error);
         this.error = error.message || "Failed to create milestone";
-        console.error("Error creating milestone:", error);
         throw error;
       } finally {
         this.isLoading = false;
       }
+    },
+
+    async getRepositoryId(installationId, owner, repo) {
+      const graphqlWithAuth = await this.getGraphQLClient(installationId);
+
+      const query = `
+        query getRepoId($owner: String!, $repo: String!) {
+          repository(owner: $owner, name: $repo) {
+            id
+          }
+        }
+      `;
+
+      const response = await graphqlWithAuth(query, {
+        owner: unref(owner),
+        repo: unref(repo),
+      });
+
+      return response.repository.id;
     },
 
     async updateMilestone(installationId, owner, repo, milestoneNumber, milestoneData) {
@@ -120,23 +201,45 @@ export const useGithubMilestoneStore = defineStore("githubMilestoneStore", {
       this.error = null;
 
       try {
-        const octokit = await this.getOctokitInstance(installationId);
-        const response = await octokit.rest.issues.updateMilestone({
-          owner,
-          repo,
-          milestone_number: milestoneNumber,
-          ...milestoneData,
+        const graphqlWithAuth = await this.getGraphQLClient(installationId);
+
+        const mutation = `
+          mutation updateMilestone($input: UpdateMilestoneInput!) {
+            updateMilestone(input: $input) {
+              milestone {
+                id
+                number
+                title
+                description
+                dueOn
+                state
+              }
+            }
+          }
+        `;
+
+        // First get the milestone ID
+        const milestone = await this.getMilestoneByNumber(installationId, unref(owner), unref(repo), unref(milestoneNumber));
+
+        if (!milestone) {
+          throw new Error("Milestone not found");
+        }
+
+        const response = await graphqlWithAuth(mutation, {
+          input: {
+            milestoneId: milestone.id,
+            title: unref(milestoneData.title),
+            description: unref(milestoneData.description),
+            dueOn: unref(milestoneData.due_on),
+            state: unref(milestoneData.state),
+          },
         });
 
-        if (response.status === 200) {
-          // Refresh milestones after update
-          await this.fetchMilestones(installationId, owner, repo);
-          return response.data;
-        }
-        return null;
+        await this.fetchMilestones(installationId, owner, repo);
+        return response.updateMilestone.milestone;
       } catch (error) {
+        console.error("Update milestone error:", error);
         this.error = error.message || "Failed to update milestone";
-        console.error("Error updating milestone:", error);
         throw error;
       } finally {
         this.isLoading = false;
@@ -148,25 +251,38 @@ export const useGithubMilestoneStore = defineStore("githubMilestoneStore", {
       this.error = null;
 
       try {
-        const octokit = await this.getOctokitInstance(installationId);
-        const response = await octokit.rest.issues.deleteMilestone({
-          owner,
-          repo,
-          milestone_number: milestoneNumber,
+        const graphqlWithAuth = await this.getGraphQLClient(installationId);
+
+        // First get the milestone ID
+        const milestone = await this.getMilestoneByNumber(installationId, unref(owner), unref(repo), unref(milestoneNumber));
+
+        if (!milestone) {
+          throw new Error("Milestone not found");
+        }
+
+        const mutation = `
+          mutation deleteMilestone($input: DeleteMilestoneInput!) {
+            deleteMilestone(input: $input) {
+              clientMutationId
+            }
+          }
+        `;
+
+        await graphqlWithAuth(mutation, {
+          input: {
+            milestoneId: milestone.id,
+          },
         });
 
-        if (response.status === 204) {
-          // Remove from local state
-          const key = `${installationId}:${owner}:${repo}`;
-          if (this.milestones[key]) {
-            this.milestones[key] = this.milestones[key].filter(m => m.number !== milestoneNumber);
-          }
-          return true;
+        // Remove from local state
+        const key = `${installationId}:${owner}:${repo}`;
+        if (this.milestones[key]) {
+          this.milestones[key] = this.milestones[key].filter(m => m.number !== milestoneNumber);
         }
-        return false;
+        return true;
       } catch (error) {
+        console.error("Delete milestone error:", error);
         this.error = error.message || "Failed to delete milestone";
-        console.error("Error deleting milestone:", error);
         throw error;
       } finally {
         this.isLoading = false;
