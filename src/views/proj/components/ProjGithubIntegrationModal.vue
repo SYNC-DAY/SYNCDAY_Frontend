@@ -298,7 +298,7 @@
 		if (!selectedInstallationId.value) return;
 
 		const selectedInstallation = githubAppStore.installations[selectedInstallationId.value];
-
+		const selectedProject = githubProjects.value?.find(p => p.id === selectedGithubProjectId.value);
 		if (selectedInstallation) {
 			loading.value = true;
 			error.value = null;
@@ -307,7 +307,7 @@
 				const updatedProject = {
 					...props.projectData,
 					vcs_type: 'GITHUB',
-					vcs_proj_url: selectedInstallation.htmlUrl || '',
+					vcs_proj_url: selectedProject?.url || selectedInstallation.htmlUrl || '',
 					github_installation_id: selectedInstallation.id
 				};
 
