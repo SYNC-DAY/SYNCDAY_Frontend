@@ -26,6 +26,7 @@
 	import { useRoute } from 'vue-router';
 
 	import axios from 'axios';
+	import { useGithubProjectsStore } from '@/stores/github/useGithubProjectsStore';
 	const props = defineProps({
 		projectId: {
 			type: [String, Number],
@@ -84,6 +85,7 @@
 	};
 	onMounted(async () => {
 		githubInstallationId.value = await projectStore.getInstallationId(props.projectId);
+		console.log(githubInstallationId.value)
 		await fetchRepositories(githubInstallationId.value);
 	});
 

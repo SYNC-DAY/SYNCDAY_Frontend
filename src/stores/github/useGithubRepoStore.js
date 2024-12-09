@@ -1,52 +1,132 @@
 import { defineStore } from "pinia";
+import { Octokit } from "@octokit/rest";
 import { useGithubAppStore } from "./useGithubAppStore";
 
 export const useGithubRepoStore = defineStore("githubRepo", {
   state: () => ({
     repositories: {}, // Keyed by installationId
+    octokitInstances: {},
+    isLoading: false,
+    error: null,
   }),
 
   actions: {
-    // Add more specific error handling
-    async fetchRepositories(installationId) {
-      const appStore = useGithubAppStore();
+    async initializeOctokit(installationId) {
+      if (!installationId) {
+        throw new Error("Installation ID is required");
+      }
+
       try {
-        if (!installationId) {
-          throw new Error("Installation ID is required");
+        const githubAppStore = useGithubAppStore();
+        const installation = githubAppStore.installations[installationId];
+
+        if (!installation?.access_token) {
+          await githubAppStore.requestInstallationToken(installationId);
         }
 
-        if (!appStore.installations[installationId]) {
-          throw new Error(`No installation found for ID: ${installationId}`);
+        const updatedInstallation = githubAppStore.installations[installationId];
+
+        if (!updatedInstallation?.access_token) {
+          throw new Error("No access token available for this installation");
         }
 
-        const response = await fetch(/*...*/);
-
-        // Add specific error handling for different status codes
-        if (response.status === 401) {
-          throw new Error("Authentication failed - token may be expired");
-        }
-        if (response.status === 404) {
-          throw new Error("Installation not found or no access to repositories");
-        }
-        if (!response.ok) {
-          throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+        if (!this.octokitInstances[installationId]) {
+          this.octokitInstances[installationId] = new Octokit({
+            auth: updatedInstallation.access_token,
+          });
         }
 
-        const data = await response.json();
-        // Validate the response data
-        if (!Array.isArray(data)) {
-          throw new Error("Invalid response format: expected array of repositories");
-        }
-
-        this.repositories[installationId] = data;
-        return data;
+        return this.octokitInstances[installationId];
       } catch (error) {
-        console.error(`Error fetching repositories for installation ${installationId}:`, error);
+        console.error("Failed to initialize Octokit:", error);
+        throw new Error(`Failed to initialize GitHub client: ${error.message}`);
+      }
+    },
+
+    async executeGraphQLQuery(installationId, query, variables) {
+      try {
+        const octokit = await this.initializeOctokit(installationId);
+        return await octokit.graphql(query, variables);
+      } catch (error) {
+        if (error.message.includes("Bad credentials")) {
+          const githubAppStore = useGithubAppStore();
+          await githubAppStore.requestInstallationToken(installationId);
+          const octokit = await this.initializeOctokit(installationId);
+          return await octokit.graphql(query, variables);
+        }
         throw error;
       }
     },
 
-    // Add type checking for repository data
+    async fetchRepositories(installationId) {
+      if (!installationId) {
+        throw new Error("Installation ID is required");
+      }
+
+      try {
+        this.isLoading = true;
+        const githubAppStore = useGithubAppStore();
+        const targetType = githubAppStore.getTargetType(installationId);
+        const accountName = githubAppStore.getLogin(installationId);
+        console.log("Account Name:", accountName); // Log the correct variable
+        if (!targetType) {
+          throw new Error(`Could not determine target type for installation ${installationId}`);
+        }
+
+        // GraphQL query to fetch repositories
+        const query = `
+          query($login: String!) {
+            ${targetType.toLowerCase()}(login: $login) {
+              repositories(first: 100, orderBy: {field: UPDATED_AT, direction: DESC}) {
+                nodes {
+                  id
+                  name
+                  fullName: nameWithOwner
+                  url
+                  description
+                  updatedAt
+                  primaryLanguage {
+                    name
+                  }
+                  defaultBranchRef {
+                    name
+                  }
+                }
+              }
+            }
+          }
+        `;
+
+        const response = await this.executeGraphQLQuery(installationId, query, {
+          login: accountName,
+        });
+
+        const repositories = response?.[targetType.toLowerCase()]?.repositories?.nodes || [];
+
+        // Transform the response to match the expected format
+        const transformedRepos = repositories.map(repo => ({
+          id: repo.id,
+          name: repo.name,
+          full_name: repo.fullName,
+          private: repo.private,
+          html_url: repo.url,
+          description: repo.description,
+          updated_at: repo.updatedAt,
+          language: repo.primaryLanguage?.name,
+          default_branch: repo.defaultBranchRef?.name,
+        }));
+
+        this.repositories[installationId] = transformedRepos;
+        return transformedRepos;
+      } catch (error) {
+        console.error(`Error fetching repositories for installation ${installationId}:`, error);
+        this.error = error.message;
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
     saveRepositories(installationId, repositories) {
       if (!Array.isArray(repositories)) {
         throw new Error("Repositories must be an array");
@@ -61,9 +141,15 @@ export const useGithubRepoStore = defineStore("githubRepo", {
     clearRepositories(installationId) {
       if (installationId) {
         delete this.repositories[installationId];
+        this.removeOctokitInstance(installationId);
       } else {
         this.repositories = {};
+        this.octokitInstances = {};
       }
+    },
+
+    removeOctokitInstance(installationId) {
+      delete this.octokitInstances[installationId];
     },
   },
 
@@ -78,5 +164,9 @@ export const useGithubRepoStore = defineStore("githubRepo", {
     hasRepositories: state => installationId => {
       return !!state.repositories[installationId]?.length;
     },
+
+    isLoadingRepositories: state => state.isLoading,
+
+    getError: state => state.error,
   },
 });

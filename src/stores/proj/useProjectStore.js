@@ -191,7 +191,11 @@ export const useProjectStore = defineStore("projectStore", {
     },
 
     getInstallationId: state => projId => {
-      return state.projects[projId]?.github_installation_id;
+      if (!state.projects[projId]) {
+        console.warn(`Project ${projId} not found in store`);
+        return null;
+      }
+      return state.projects[projId].vcs_installation_id ?? null;
     },
 
     getProjMemberId: state => projId => {
