@@ -47,11 +47,14 @@ export const useProjectStore = defineStore("project", {
 				this.setLoading(false);
 			}
 		},
-		async handleBookmark(memberId) {
+		async handleBookmark(projectId) {
 			try {
-				console.log(memberId);
+				console.log(projectId);
+				const memberId = this.projects[projectId].proj_member_id;
 				const data = await projectApi.updateBookmarkStatus(memberId);
-				this.setBookmarkStatus(data);
+				console.log(data);
+				this.setBookmarkStatus(projectId, data);
+				return data;
 			} catch (error) {
 				console.error("Failed to update bookmark status:", error);
 				throw error;

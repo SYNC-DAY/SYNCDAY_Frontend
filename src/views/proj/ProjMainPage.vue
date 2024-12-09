@@ -52,8 +52,7 @@
 							:isActive="workspace.workspace_id === activeWorkspaceId"
 							:progress="workspace.progress_status"
 							:initialBookmarked="workspace.bookmark_status === 'BOOKMARKED'"
-							@select="selectWorkspace(project.proj_id, workspace.workspace_id)"
-							@bookmark-changed="handleWorkspaceBookmark" />
+							@select="selectWorkspace(project.proj_id, workspace.workspace_id)" />
 					</template>
 				</ProjItem>
 			</template>
@@ -96,12 +95,13 @@
 	const authStore = useAuthStore();
 	const router = useRouter();
 	const toast = useToast();
+
 	// Destructure store properties with storeToRefs for reactivity
 	const { projects, isLoading, error, activeProjectId, activeWorkspaceId, hasProjects } = storeToRefs(projectStore);
 
 	const { user } = storeToRefs(authStore);
 	const userId = user.value.userId;
-	provide("userId", userId);
+
 	// Local state
 	const expandedProjects = ref([]);
 	const showNewProjModal = ref(false);
@@ -111,7 +111,9 @@
 	provide("activeProjectId", activeProjectId);
 	provide("activeWorkspaceId", activeWorkspaceId);
 
-	// Methods
+	// Bookmark handling methods
+
+	// Existing methods
 	const handleRetryLoad = async () => {
 		try {
 			await projectStore.initializeStore(userId);

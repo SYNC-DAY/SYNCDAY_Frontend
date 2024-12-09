@@ -76,38 +76,44 @@
 		},
 	});
 
-	const emit = defineEmits(["toggle-expansion", "select", "bookmark-changed"]);
+	const emit = defineEmits(["toggle-expansion", "select"]);
 
-	// Local state for optimistic updates
-	const localBookmarkStatus = ref(props.proj?.bookmark_status || "NONE");
-
+	// Add computed property for bookmark status
 	const isBookmarked = computed(() => {
-		return localBookmarkStatus.value === "BOOKMARKED";
+		return props.proj?.bookmark_status == "BOOKMARKED";
 	});
 
-	const handleBookmark = async event => {
+	const handleBookmark = async () => {
+		if (!props.proj?.proj_member_id) {
+			toast.add({
+				severity: "error",
+				summary: "북마크 실패",
+				detail: "프로젝트 정보를 찾을 수 없습니다.",
+				life: 3000,
+			});
+			return;
+		}
+
+		const newStatus = !isBookmarked.value;
+
 		try {
-			event.stopPropagation();
+			// Emit the event before the API call for optimistic update
+			console.log(props.projId);
+			// Make the API call through the store
+			await projectStore.handleBookmark(props.projId);
 
-			if (!props.proj?.proj_member_id) {
-				console.error("Missing proj_member_id");
-				return;
-			}
-
-			// Optimistic update
-			const newStatus = localBookmarkStatus.value === "BOOKMARKED" ? "NONE" : "BOOKMARKED";
-			localBookmarkStatus.value = newStatus;
-
-			// Actually update the bookmark
-			const result = await projectStore.handleBookmark(props.proj.proj_member_id);
-
-			// Update local state with the actual result
-			localBookmarkStatus.value = result;
-
-			emit("bookmark-changed", props.projId);
+			toast.add({
+				severity: "success",
+				summary: "북마크 성공",
+				detail: `프로젝트가 ${newStatus ? "북마크" : "북마크 해제"}되었습니다.`,
+				life: 3000,
+			});
 		} catch (error) {
 			// Revert optimistic update on error
-			localBookmarkStatus.value = props.proj?.bookmark_status || "NONE";
+			emit("bookmark-changed", {
+				projMemberId: props.proj.proj_member_id,
+				status: !newStatus, // Revert to original status
+			});
 
 			toast.add({
 				severity: "error",
@@ -127,6 +133,7 @@
 		emit("select");
 	};
 </script>
+
 <style scoped>
 	.proj-item {
 		border-bottom: 1px solid var(--outline-gray);
