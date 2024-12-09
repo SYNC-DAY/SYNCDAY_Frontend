@@ -107,7 +107,6 @@
 <script setup>
   import { ref, computed, onMounted } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
-  import { storeToRefs } from 'pinia';
   import { useProjectStore } from '@/stores/proj/useProjectStore';
   import { useToast } from 'primevue/usetoast';
 
