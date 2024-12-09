@@ -75,22 +75,15 @@
 			type: Number,
 			required: false
 		},
-		owner: {
+		repoUrl: {
 			type: String,
-			required: true
-		},
-		repo: {
-			type: String,
-			required: true
+			required: false
 		},
 		projectId: {
 			type: String,
 			required: true
 		},
-		repositoryInfo: {
-			type: Object,
-			required: false
-		}
+
 	});
 
 	const emit = defineEmits(['close']);
@@ -113,10 +106,11 @@
 		}
 	});
 
-	const milestones = computed(() =>
-		milestoneStore.getMilestones(props.installationId, props.repositoryInfo.owner, props.repositoryInfo.repoName)
-	);
-
+	// const milestones = computed(() =>
+	// 	// milestoneStore.getMilestones(props.installationId, repositoryInfo.owner, repositoryInfo.repoName)
+	// );
+	const owner = ref(null)
+	const repo = ref(null)
 	// Watch for modal open state
 	watch(() => props.isOpen, async (newValue) => {
 		if (newValue) {
@@ -132,11 +126,16 @@
 	const fetchMilestones = async () => {
 		isLoading.value = true;
 		console.log(props.installationId)
+		// console.log(props.repoUrl)
+		if (props.repoUrl) {
+			owner.value = props.repoUrl.split('/')[3]
+			repo.value = props.repoUrl.split('/')[4]
+		}
 		try {
 			await milestoneStore.fetchMilestones(
 				props.installationId,
-				props.owner,
-				props.repo
+				owner,
+				repo
 			);
 		} catch (error) {
 			console.error('Failed to fetch milestones:', error);
@@ -150,11 +149,11 @@
 		isLoading.value = true;
 
 		try {
-			await issueStore.fetchIssues(props.installationId, props.owner, props.repo);
+			await issueStore.fetchIssues(props.installationId, owner, repo);
 			milestoneIssues.value = issueStore.getIssuesByMilestone(
 				props.installationId,
-				props.owner,
-				props.repo,
+				owner,
+				repo,
 				milestone.number
 			);
 		} catch (error) {
