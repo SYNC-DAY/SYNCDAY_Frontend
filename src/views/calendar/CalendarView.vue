@@ -1,18 +1,20 @@
 <template>
-    <div style="height: 100%; width: 100%">
-        <FullCalendar :options="calendarOptions" />
-        <CalendarViewModal
-            v-if="showEventModal"
-            :schedule="selectedEvent"
-            @close="closeModal"
-            @submit="fetchSchedules"
-        />
-        <CalendarModal
-            v-if="isModalVisible"
-            :schedule="selectedInfo"
-            @close="closeModal"
-            @submit="fetchSchedules"
-        />
+    <div class="app-container">
+        <div class="calendar-container">
+            <FullCalendar :options="calendarOptions" />
+            <CalendarViewModal
+                v-if="showEventModal"
+                :schedule="selectedEvent"
+                @close="closeModal"
+                @submit="fetchSchedules"
+            />
+            <CalendarModal
+                v-if="isModalVisible"
+                :schedule="selectedInfo"
+                @close="closeModal"
+                @submit="fetchSchedules"
+            />
+        </div>
     </div>
 </template>
 
@@ -25,12 +27,14 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction'; // 클릭/드래그 기능
 import CalendarViewModal from './component/CalendarViewModal.vue';
 import CalendarModal from './component/CalendarModal.vue';
+import SideBar from '@/components/SideBar.vue';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc'; // UTC 플러그인
 import timezone from 'dayjs/plugin/timezone'; // 타임존 플러그인
 import 'dayjs/locale/ko';
 
 import { useAuthStore } from '@/stores/auth';
+import { shade } from '@primevue/themes';
 const authStore = useAuthStore();
 
 dayjs.extend(utc); // UTC 플러그인 사용
@@ -51,9 +55,14 @@ const events = ref([]);
 const calendarOptions = ref({
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
     initialView: 'dayGridMonth',
+    fixedWeekCount: false,
+    height: '100%', // 캘린더 높이를 부모 컨테이너에 맞춤
     headerToolbar: {
-        left: 'title prev next today',
-        right: 'dayGridMonth,timeGridWeek addEventButton',
+        left: 'today prev next title',
+        right: 'dayGridMonth timeGridWeek addEventButton',
+    },
+    buttonText: {
+        today: '오늘',
     },
     views: {
         dayGridMonth: {
@@ -170,23 +179,51 @@ const fetchSchedules = async () => {
                 }
             }
 
+            const backgroundColor = ref('#FF9D85');
+            const borderColor = ref('#FF9D85');
+            const textColor = ref('white');
+
+            if (schedule.status === 'ATTEND') {
+                if (schedule.meeting_status === 'ACTIVE') {
+                    backgroundColor.value = '#FE5D86';
+                    borderColor.value = '#FE5D86';
+                    textColor.value = 'white';
+                } else {
+                    backgroundColor.value = '#FF9D85';
+                    borderColor.value = '#FF9D85';
+                    textColor.value = 'white';
+                }
+            } else if (schedule.status === 'PENDING') {
+                if (schedule.meeting_status === 'ACTIVE') {
+                    backgroundColor.value = 'white';
+                    borderColor.value = '#FE5D86';
+                    textColor.value = 'black';
+                } else {
+                    backgroundColor.value = 'white';
+                    borderColor.value = '#FF9D85';
+                    textColor.value = 'black';
+                }
+            } else {
+                backgroundColor.value = 'white';
+                borderColor.value = '#646464';
+                textColor.value = 'black';
+            }
+
             return {
                 id: schedule.schedule_id,
                 title: schedule.title ? schedule.title : '(제목 없음)',
                 start: startDate,
                 end: endDate,
                 allDay: isAllDay,
-                backgroundColor: '#FF9D85',
-                borderColor: '#FF9D85',
+                backgroundColor: backgroundColor.value,
+                borderColor: borderColor.value,
+                textColor: textColor.value,
                 extendedProps: {
-                    content: schedule.content,
                     meetingStatus: schedule.meeting_status,
-                    meetingroomId: schedule.meetingroom_id,
-                    publicStatus: schedule.public_status,
-                    scheduleRepeatId: schedule.schedule_repeat_id,
-                    repeatOrder: schedule.repeat_order,
                     username: schedule.username,
+                    status: schedule.status,
                     attendeeIds: schedule.attendee_ids,
+                    publicStatus: schedule.public_status,
                     // 필요하면 더 추가
                 },
             };
@@ -203,7 +240,12 @@ const fetchDetailSchedules = async (scheduleId, userId) => {
         const response = await axios.get(`/schedule/my/${scheduleId}?userId=${userId}`);
         const data = response.data.data[0];
 
-        console.log('data!!', data)
+        if (!data) {
+            console.error('No data found in the response');
+            return;
+        }
+
+        console.log('data??', data);
 
         // selectedEvent를 가져온 데이터로 업데이트
         selectedEvent.value = {
@@ -214,25 +256,30 @@ const fetchDetailSchedules = async (scheduleId, userId) => {
             endTime: new Date(data.end_time),
             updateTime: new Date(data.update_time),
             publicStatus: data.public_status,
-            scheduleRepeatId: data.schedule_repeat_id,
-            repeatOrder: data.repeat_order,
             meetingStatus: data.meeting_status,
             meetingroomId: data.meetingroom_id,
-            userId: data.user_id,
-            username: data.username,
-            notificationTime: data.notification_time ? new Date(data.notification_time) : null,
-            userInfo: data.user_info.map((user) => ({
-                userId: user.user_id,
-                username: user.username,
-                participationStatus: user.participationStatus,
-            })),
+            ownerUserId: data.owner_user_id,
+            ownerUsername: data.owner_username,
+            myNotificationTime: data.my_notification_time ? new Date(data.my_notification_time) : null,
+            userInfo:
+                Array.isArray(data.user_info) && data.user_info.length > 0
+                    ? data.user_info.map((user) => ({
+                          userId: user.user_id, // 그대로 null도 허용
+                          username: user.username, // 그대로 null도 허용
+                          participationStatus: user.participation_status, // 그대로 null도 허용
+                          notificationTime: user.notification_time, // 그대로 null도 허용
+                      }))
+                    : [], // user_info가 없으면 빈 배열로 처리
         };
+
+        console.log('잘 들어갔나?', selectedEvent.value);
     } catch (error) {
         console.error('Error fetching schedules:', error);
     }
 };
 
 const updateSchedule = async (info) => {
+    console.log('이동 하자 ㅠㅠ', info.event);
     // 종일일정 여부 확인
     const isAllDay = info.event.allDay; // FullCalendar에서 종일 일정 여부
 
@@ -246,10 +293,11 @@ const updateSchedule = async (info) => {
             ? dayjs(info.event.end).tz('Asia/Seoul').startOf('day').format('YYYY-MM-DDTHH:mmZ')
             : dayjs(info.event.start).tz('Asia/Seoul').add(1, 'hour').startOf('day').format('YYYY-MM-DDTHH:mmZ')
         : info.event.end
-            ? dayjs(info.event.end).tz('Asia/Seoul').format('YYYY-MM-DDTHH:mmZ')
-            : dayjs(info.event.start).tz('Asia/Seoul').add(1, 'hour').format('YYYY-MM-DDTHH:mmZ');
+        ? dayjs(info.event.end).tz('Asia/Seoul').format('YYYY-MM-DDTHH:mmZ')
+        : dayjs(info.event.start).tz('Asia/Seoul').add(1, 'hour').format('YYYY-MM-DDTHH:mmZ');
 
     try {
+        console.log('PS', info.event.extendedProps);
         const response = await axios.put(
             `/schedule/${info.event.id}`,
             {
@@ -263,7 +311,7 @@ const updateSchedule = async (info) => {
                 meetingroom_id: info.event.extendedProps.meetingroomId,
                 public_status: info.event.extendedProps.publicStatus,
                 user_id: authStore.user.userId,
-                attendee_ids: info.event.extendedProps.attendeeIds || [],
+                attendee_ids: info.event.extendedProps.attendeeIds.map((p) => p.user_id) || [],
             },
             {
                 headers: {
@@ -285,7 +333,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-html,
+/* html,
 body,
 #app {
     height: 100%;
@@ -293,8 +341,97 @@ body,
     padding: 0;
 }
 
-div {
-    height: 100%; /* 캘린더 컨테이너에 높이 100% 설정 */
-    width: 100%; /* 캘린더 컨테이너에 너비 100% 설정 */
+/* 전체 레이아웃 */
+.app-container {
+    display: flex;
+    height: 100vh; /* 화면 전체 높이 */
+    width: 100vw; /* 화면 전체 너비 */
+    overflow: hidden;
+    position: relative;
 }
+
+/* 캘린더 영역 */
+.calendar-container {
+    flex: 1; /* 남은 공간을 캘린더가 차지 */
+    height: 100vh; /* 화면 높이 */
+    display: flex;
+    flex-direction: column;
+    padding: 1rem; /* 상하좌우 여백 */
+    box-sizing: border-box; /* 패딩 포함한 크기 계산 */
+    overflow: hidden;
+    background-color: #fff;
+}
+::v-deep(div .fc-toolbar-chunk) {
+    display: flex;
+}
+
+::v-deep(.fc .fc-toolbar .fc-header-toolbar) {
+    margin-bottom: 1rem;
+}
+
+::v-deep(.fc-direction-ltr .fc-toolbar > * > :not(:first-child)) {
+    margin-left: 2rem;
+}
+
+::v-deep(.fc-toolbar-title) {
+    display: inline-block;
+    font-size: 2.5rem;
+    margin-top: 0.3rem;
+}
+
+::V-deep(.fc-toolbar-chunk) {
+    display: flex;
+    align-items: center;
+}
+
+::v-deep(.fc-button-primary) {
+    /* border: 1px solid #FF9D85 !important; */
+    background-color: white;
+    color: black;
+    border: none;
+    font-size: 1.2rem;
+}
+
+::v-deep(.fc-dayGridMonth-button.fc-button.fc-button-primary) {
+    /* border: 1px solid #FF9D85 !important; */
+    background-color: white;
+    color: black;
+    border: none;
+    font-size: 1.2rem;
+}
+
+::v-deep(.fc-timeGridWeek-button.fc-button.fc-button-primary) {
+    /* border: 1px solid #FF9D85 !important; */
+    background-color: white;
+    color: black;
+    border: none;
+    font-size: 1.2rem;
+}
+
+::v-deep(.fc-today-button.fc-button) {
+    /* border: 1px solid #FF9D85 !important; */
+    color: #000000;
+    background-color: white;
+    padding: 0.2rem 0.6rem !important;
+    border-radius: 4px;
+    margin-top: 0.2rem;
+}
+
+::v-deep(.fc-button:hover) {
+    background-color: #FF9D85 !important;
+    color: inherit !important;
+}
+::v-deep(.fc-button.fc-button-active) {
+    border: none !important;
+}
+
+::v-deep(.fc .fc-button-primary:disabled) {
+    background-color: white;
+    border-color: #333;
+}
+::v-deep(.fc-button.fc-button-disabled) {
+    cursor: not-allowed;
+}
+
+
 </style>

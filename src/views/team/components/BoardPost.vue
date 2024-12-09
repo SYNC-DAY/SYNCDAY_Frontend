@@ -1,9 +1,17 @@
 <template>
     <div class="post-container">
-        <div v-if="postList.list && postList.list.length > 0">
-            <div v-for="post in postList.list.slice(0, 3)" :key="post.teamPostId">
-                    {{ post.title }} {{ formatDate(post.createdAt) }} {{ post.userName }} ({{ post.userPosition }})
-            </div>
+        <div v-if="postList && postList.length > 0">
+            <DataTable
+                class="board-container" :value="postList.slice(0,5)" 
+                stripedRows tableStyle="min-width: 50rem"
+                @row-click="goToPost"
+            >
+                <Column field="title" header="제목"></Column>
+                <Column field="comments" header="댓글수"></Column>
+                <Column field="createdAt" header="작성시각"></Column>
+                <Column field="userName" header="작성자"></Column>
+                <Column field="userPosition" header="직책"></Column>
+            </DataTable>
         </div>
         <div v-else>
             게시물이 없습니다.
@@ -11,10 +19,15 @@
     </div>
 </template>
 
+
 <script setup>
 import axios from 'axios';
 import { ref, defineProps, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { useTeamStore } from '@/stores/team';
 
+const teamStore = useTeamStore();
+const router = useRouter();
 const props = defineProps({
     teamBoardId: Number
 });
@@ -23,11 +36,18 @@ const postList = ref({
     list: [] 
 });
 
+const emit = defineEmits(['changeBoardName']);
+
 const getPostList = async () => {
     try {
         const response = await axios.get(`/teampost/${teamBoardId.value}`);
-        postList.value = response.data.data; 
-    } catch (error) {
+        postList.value = response.data.data.list;
+        postList.value = postList.value.map((post) => ({
+            ...post,
+            createdAt: formatDate(new Date(post.createdAt)), // Replace with formatted date
+        })); 
+        console.log(postList)
+        } catch (error) {
         console.error('Failed to fetch post list:', error);
     }
 };
@@ -38,6 +58,14 @@ const formatDate = (dateTime) => {
     return new Date(dateTime).toLocaleString('ko-KR', options);
 };
 
+const goToPost = (event) => {
+    const post = event.data;
+    emit('changeBoardName',post.teamBoardId);
+    teamStore.updateBoardId(post.teamBoardId);
+    teamStore.updatePostId(post.teamPostId);
+    router.push("/team/post/detail/view");
+}
+
 
 onMounted(() => {
     getPostList();
@@ -46,12 +74,12 @@ onMounted(() => {
 
 <style scoped>
 .post-container {
-    border: 2px solid black;
     padding: 1rem;
-    margin-top: 1rem;
 }
 
 .post-container > div {
     margin-bottom: 1rem;
 }
+
+
 </style>

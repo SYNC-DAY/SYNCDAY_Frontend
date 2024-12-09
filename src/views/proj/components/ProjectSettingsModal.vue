@@ -6,41 +6,83 @@
 			<TabList>
 				<Tab value="0">프로젝트</Tab>
 				<Tab value="1">멤버</Tab>
-				<Tab value="2">VCS</Tab>
 			</TabList>
 
 			<TabPanels>
 				<TabPanel value="0">
-					Project
-				</TabPanel>
-				<TabPanel value="1">
-					Members
-				</TabPanel>
-				<TabPanel value="2">
-					<div class="container-row justify-right">
-						<Button label="VCS" severity="secondary" @click="toggleVcsMenu"></Button>
-						<VcsTypeMenu ref="vcsMenu" @vcs-selected="handleVcsSelection" />
-					</div>
+					<!-- Project -->
+					<div class="modify-proj">
+						<span>프로젝트 명 :</span>
+						<InputText id="projName" v-model="formData.projName" class="w-full"
+							:class="{ 'p-invalid': errors.projName }" />
 
-					<div v-if="selectedVcs === 'GITHUB'" class="mt-4">
-						<h3 class="text-lg font-medium mb-4">GitHub Integration</h3>
-
-						<!-- Installation Status -->
-						<div v-if="!githubAppAuth.isInstalled" class="installation-required">
-							<div class="text-center py-6">
-								<i class="pi pi-github text-4xl mb-3"></i>
-								<h4 class="text-xl font-medium mb-2">GitHub App Installation Required</h4>
-								<p class="text-gray-600 mb-4">
-									To connect your GitHub organizations, you need to install our GitHub App first.
-								</p>
-								<Button label="Install GitHub App" severity="primary"
-									:loading="githubAppAuth.isInstalling" @click="handleInstallApp" />
-							</div>
+						<div class="mb-4">
+							<label for="startDate" class="block mb-2">시작일 : </label>
+							<Calendar id="startDate" v-model="formData.startDate" class="w-full" :showIcon="true"
+								dateFormat="yy-mm-dd" />
+						</div>
+						<div class="mb-4">
+							<label for="endDate" class="block mb-2">종료일 : </label>
+							<Calendar id="endDate" v-model="formData.endDate" class="w-full" :showIcon="true" />
+						</div>
+						<div class="modify-button">
+							<Button label="수정" @click="handleSave"></Button>
 						</div>
 					</div>
 				</TabPanel>
-
-
+				<TabPanel value="1">
+					<div class="modify-member">
+						<DataTable :value="projectMembers" tableStyle="min-width: 50rem">
+							<Column field="username" header="Member"></Column>
+							<Column field="email" header="Email"></Column>
+							<!-- <Column field="participant_status" header="Status"></Column> -->
+							<Column field="participant_status" header="Status">
+								<template #body="slotProps">
+									<!-- 데이터가 변경될 가능성이 있는 로직 -->
+									<div v-if="slotProps.data.participation_status === 'OWNER'" class="status-item">
+										<img src="@/assets/icons/crown.svg" alt="Owner Icon" class="status-icon"
+											style="width:1.3rem; " />
+										<span>OWNER</span>
+									</div>
+									<div v-if="slotProps.data.participation_status === 'MEMBER'" class="status-item">
+										<i class="pi pi-user" style="font-size: 0.9rem"></i>
+										<span>MEMBER</span>
+										<Button v-if="isOwner" icon="pi pi-trash"
+											class="p-button-text p-button-danger ml-2"
+											@click="removeMember(slotProps.data)" tooltip="Remove Member"
+											style="width:1.2rem; height:1.2rem" />
+									</div>
+								</template>
+							</Column>
+						</DataTable>
+					</div>
+					<div class="plus-member">
+						<Button icon="pi pi-plus" @click="visible1 = true" rounded aria-label="Filter"></Button>
+						<Dialog 
+        					:visible="visible1" 
+        					@update:visible="visible1 = $event" 
+        					modal 
+        					header="사용자 추가" 
+        					:style="{ width: '25rem' }"
+    					>
+						<InputText type="text" v-model="value1" placeholder="이름 입력" @input="() => searchUsers(value1)"/>
+						
+						<!-- 검색 결과 목록 -->
+						<ul v-if="searchResults.length" class="user-list">
+							<li v-for="user in searchResults" :key="user.user_id" class="user-item">
+							<span>{{ user.name }}</span>
+							<!-- 사용자 추가 버튼 -->
+							<Button 
+								icon="pi pi-user-plus" 
+								@click="addMember(user)" 
+								class="p-button-text p-button-success"
+							/>
+							</li>
+						</ul>
+						<p v-else-if="value1.trim() && !searchResults.length">검색 결과가 없습니다.</p>
+    					</Dialog>
+					</div>
+				</TabPanel>
 			</TabPanels>
 		</Tabs>
 
@@ -52,13 +94,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import axios from 'axios';
-import { useGithubAppAuthStore } from '@/stores/github/useGithubAppAuthstore';
-import { useGithubOrgStore } from '@/stores/github/useGithubOrgStore';
-import { useGithubRepoStore } from '@/stores/github/useGithubRepoStore';
+import { useAuthStore } from "@/stores/auth";
 
 
+import { debounce } from 'lodash';
 import Tabs from 'primevue/tabs';
 import TabList from 'primevue/tablist';
 import Tab from 'primevue/tab';
@@ -66,13 +108,27 @@ import TabPanels from 'primevue/tabpanels';
 import TabPanel from 'primevue/tabpanel';
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from 'primevue/usetoast';
-
-import VcsTypeMenu from '@/views/vcs/components/VcsTypeMenu.vue';
+import InputText from 'primevue/inputtext';
+import Calendar from 'primevue/calendar';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
 
 /* store */
-const githubAppAuth = useGithubAppAuthStore();
-const githubOrgStore = useGithubOrgStore();
-const githubRepoStore = useGithubRepoStore();
+
+const authStore = useAuthStore(); // 로그인된 사용자 정보
+const visible1 = ref(false);
+const value1 = ref('');
+
+const searchResults = ref([]);
+const searchQuery = ref('');
+const route = useRoute();
+
+const isOwner = computed(() => {
+	return projectMembers.value.some(member =>
+		member.participation_status === 'OWNER' &&
+		member.user_id === authStore.user.userId
+	);
+});
 
 
 /* props */
@@ -89,70 +145,14 @@ const props = defineProps({
 const emit = defineEmits(['update:visible', 'project-updated', 'project-deleted']);
 
 /* refs */
-const vcsMenu = ref(null);
-const selectedVcs = ref(null);
-const selectedOrg = ref(null);
+
 const isLoading = ref(false);
 const error = ref(null);
 
 const organizations = ref([]);
 const repositories = ref([]);
 
-const toggleVcsMenu = (event) => {
-	vcsMenu.value.toggle(event);
-}
 
-const handleVcsSelection = async (vcsType) => {
-	selectedVcs.value = vcsType;
-	if (vcsType === 'GITHUB' && githubAppAuth.isInstalled) {
-		await fetchOrganizations();
-	}
-};
-
-const handleInstallApp = async () => {
-	try {
-		await githubAppAuth.initiateInstallation();
-	} catch (err) {
-		error.value = 'Failed to initiate GitHub App installation';
-	}
-};
-const handleConfigureApp = () => {
-	// Redirect to GitHub App configuration page
-	const appName = import.meta.env.VITE_GITHUB_APP_NAME;
-	window.location.href = `https://github.com/apps/${appName}/installations/new`;
-};
-const fetchOrganizations = async () => {
-	if (!githubAppAuth.isInstalled) return;
-
-	isLoading.value = true;
-	error.value = null;
-	try {
-		const orgs = await githubOrgStore.fetchOrganizations(true);
-		organizations.value = orgs;
-	} catch (err) {
-		console.error('Error fetching organizations:', err);
-		error.value = 'Failed to fetch organizations. Please try again.';
-	} finally {
-		isLoading.value = false;
-	}
-};
-
-const selectOrganization = async (org) => {
-	selectedOrg.value = org;
-	await fetchRepositories(org.login);
-};
-const fetchRepositories = async (orgName) => {
-	isLoading.value = true;
-	try {
-		const repos = await githubOrgStore.fetchOrgRepositories(orgName);
-		repositories.value = repos;
-	} catch (err) {
-		console.error('Error fetching repositories:', err);
-		error.value = 'Failed to fetch repositories. Please try again.';
-	} finally {
-		isLoading.value = false;
-	}
-};
 // Services
 const confirm = useConfirm();
 const toast = useToast();
@@ -167,7 +167,7 @@ const formData = ref({
 
 const projectMembers = ref([]);
 const selectedUser = ref(null);
-const userSuggestions = ref([]);
+// const userSuggestions = ref([]);
 const errors = ref({});
 const isSaving = ref(false);
 
@@ -199,48 +199,104 @@ const loadProjectMembers = async () => {
 	try {
 		const response = await axios.get(`/proj-members/projs/${props.projectId}`);
 		if (response.data.success) {
-			projectMembers.value = response.data.data;
+			// projectMembers.value = response.data.data;
+			projectMembers.value = [...response.data.data];
 		}
 	} catch (error) {
 		console.error('Failed to load members:', error);
 	}
 };
 
-const searchUsers = async (event) => {
+const searchUsers = async (keyword) => {
 	try {
-		const response = await axios.get(`/users/search?query=${event.query}`);
-		userSuggestions.value = response.data.data;
-	} catch (error) {
-		console.error('User search failed:', error);
-	}
-};
+		const sanitizedKeyword = keyword.trim();
+		if (!sanitizedKeyword) {
+			searchResults.value = [];
+			return;
+		}
 
-const addMember = async () => {
-	try {
-		const response = await axios.post(`/proj-members/${props.projectId}/members`, {
-			userId: selectedUser.value.user_id
+		const response = await axios.get(`/user/search`, {
+			params: {
+				keyword: sanitizedKeyword
+			}
 		});
 
-		if (response.data.success) {
-			await loadProjectMembers();
-			selectedUser.value = null;
-			toast.add({
-				severity: 'success',
-				summary: '멤버 추가',
-				detail: '멤버가 추가되었습니다.',
-				life: 3000
-			});
+		console.log("조회된 유저들: ", response)
+
+		if (response.data.data) {
+			searchResults.value = response.data.data.filter(user => user.name.includes(sanitizedKeyword));
+			//   searchResults.value = response.data.data;
+		} else {
+			searchResults.value = [];
 		}
 	} catch (error) {
-		console.error('Failed to add member:', error);
-		toast.add({
-			severity: 'error',
-			summary: '멤버 추가 실패',
-			detail: '멤버 추가 중 오류가 발생했습니다.',
-			life: 3000
-		});
+		console.error('Error fetching search results:', error);
+		searchResults.value = [];
 	}
 };
+
+// debounce를 사용하여 입력이 끝난 후 300ms 후에 검색 실행
+const handleInput = debounce(() => {
+	searchUsers(searchQuery.value);
+}, 300);
+
+const addMember = async (selectedUser) => {
+  try {
+    if (!selectedUser || !selectedUser.userId) {
+      throw new Error("선택된 사용자가 유효하지 않습니다.");
+    }
+
+    // 이미 추가된 사용자나 OWNER인지 확인
+    const existingMember = projectMembers.value.find(
+      (member) => member.user_id === selectedUser.userId
+    );
+
+    if (existingMember) {
+      if (existingMember.participation_status === "OWNER") {
+        alert("OWNER는 추가할 수 없습니다.");
+        return;
+      }
+
+      alert("이미 추가된 사용자입니다.");
+      return;
+    }
+
+    // 요청 데이터 준비
+    const requestData = {
+      userId: selectedUser.userId,
+      projId: props.projectData.proj_id,
+      userToUpdate: authStore.user.userId, // 추가 요청을 한 사용자 ID
+    };
+
+    // 멤버 추가 API 호출
+    const response = await axios.post(`/proj-members/`, requestData);
+
+    console.log("추가된 유저 ID: ", selectedUser.userId);
+    await loadProjectMembers(); // 멤버 목록 갱신
+
+    if (response.data.success) {
+      toast.add({
+        severity: "success",
+        summary: "멤버 추가",
+        detail: "멤버가 성공적으로 추가되었습니다.",
+        life: 3000,
+      });
+    } else {
+      throw new Error(response.data.message || "응답에 실패했습니다.");
+    }
+  } catch (error) {
+    console.error("Failed to add member:", error.message || error);
+    toast.add({
+      severity: "error",
+      summary: "멤버 추가 실패",
+      detail: "멤버 추가 중 오류가 발생했습니다.",
+      life: 3000,
+    });
+  }
+};
+
+
+
 
 const updateMemberStatus = async (member) => {
 	try {
@@ -261,40 +317,82 @@ const updateMemberStatus = async (member) => {
 	}
 };
 
-const confirmRemoveMember = (member) => {
-	confirm.require({
-		message: `${member.username}님을 프로젝트에서 제외하시겠습니까?`,
-		header: '멤버 제외',
-		icon: 'pi pi-exclamation-triangle',
-		accept: () => removeMember(member)
-	});
-};
+// const confirmRemoveMember = (member) => {
+// 	console.log("member 값 확인: ", member);
+// ;	confirm.require({
+// 		message: `${member.username}님을 프로젝트에서 제외하시겠습니까?`,
+// 		header: '멤버 제외',
+// 		icon: 'pi pi-exclamation-triangle',
+// 		accept: () => removeMember(member)
+// 	});
+// };
+
+// const removeMember = async (member) => {
+// 	try {
+// 		await axios.delete(`/proj-members/${props.projectId}/members/${member.user_id}`);
+// 		await loadProjectMembers();
+
+// 		toast.add({
+// 			severity: 'success',
+// 			summary: '멤버 제외',
+// 			detail: '멤버가 제외되었습니다.',
+// 			life: 3000
+// 		});
+// 	} catch (error) {
+// 		console.error('Failed to remove member:', error);
+// 	}
+// };
 
 const removeMember = async (member) => {
-	try {
-		await axios.delete(`/proj-members/${props.projectId}/members/${member.user_id}`);
-		await loadProjectMembers();
+  try {
 
-		toast.add({
-			severity: 'success',
-			summary: '멤버 제외',
-			detail: '멤버가 제외되었습니다.',
-			life: 3000
-		});
-	} catch (error) {
-		console.error('Failed to remove member:', error);
-	}
+	if (!member.proj_id || !member.user_id) {
+      throw new Error("프로젝트 ID 또는 사용자 ID가 유효하지 않습니다.");
+    }
+	
+    const requestData = {
+		projId: member.proj_id, // 프로젝트 ID
+      	userId: member.user_id, // 삭제 당하는 사람 ID
+		userToUpdate: authStore.user.userId,  // 삭제하는 사람 ID
+    };
+
+	console.log("삭제 요청 데이터: ", requestData);
+
+    await axios.delete('/proj-members/', { data: requestData }); // DELETE 요청에 body 포함
+
+    // 멤버 목록 갱신
+    await loadProjectMembers();
+
+    toast.add({
+      severity: 'success',
+      summary: '멤버 제외',
+      detail: '멤버가 성공적으로 제외되었습니다.',
+      life: 3000,
+    });
+  } catch (error) {
+    console.error('Failed to remove member:', error);
+
+    toast.add({
+      severity: 'error',
+      summary: '멤버 제외 실패',
+      detail: '멤버를 제외하는 중 오류가 발생했습니다.',
+      life: 3000,
+    });
+  }
 };
 
 const handleSave = async () => {
 	try {
-		isSaving.value = true;
+		alert("프로젝트를 수정합니다!");
 
+		isSaving.value = true;
+		console.log("projectId: ", props.projectId);
 		const response = await axios.put(`/projs/${props.projectId}`, {
+			// id: props.projectId,
 			proj_name: formData.value.projName,
 			start_time: formData.value.startDate,
 			end_time: formData.value.endDate,
-			vcs_type: formData.value.vcsType
+			// vcs_type: formData.value.vcsType
 		});
 
 		if (response.data.success) {
@@ -348,6 +446,9 @@ onMounted(() => {
 	if (props.visible) {
 		resetForm();
 	}
+
+	loadProjectMembers();
+
 });
 
 watch(() => props.visible, (newValue) => {
@@ -356,3 +457,25 @@ watch(() => props.visible, (newValue) => {
 	}
 });
 </script>
+
+<style scoped>
+.status-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.status-icon {
+	width: 1.5rem;
+	height: 1.5rem;
+	object-fit: contain;
+	display: inline-block;
+	vertical-align: middle;
+}
+
+.plus-member {
+	align-items: center;
+	text-align: center;
+	margin-top: 5%;
+}
+</style>

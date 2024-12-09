@@ -6,120 +6,172 @@
                 <span class="pi pi-times" @click="$emit('close')"></span>
             </div>
 
-            <!-- 제목 -->
-            <div class="title">
-                <input v-model="title" class="title-input" placeholder="제목을 입력해주세요." />
-            </div>
-
-            <br />
-
-            <!-- 날짜/시간 -->
-            <div class="align-center">
-                <span class="pi pi-clock"></span>
-                <DatePicker v-model="startDate" dateFormat="mm월 dd일 (D)" size="large" @change="onStartDateChange" />
-                <Select
-                    v-if="isAllDay == false"
-                    v-model="startDateTime"
-                    :options="timeOptions"
-                    option-label="label"
-                    option-value="value"
-                    placeholder="Select a time"
-                    size="large"
-                ></Select>
-                <span style="margin-left: 0.5rem; margin-right: 0.5rem">ㅡ</span>
-                <DatePicker v-model="endDate" :minDate="startDate" dateFormat="mm월 dd일 (D)" size="large" />
-                <Select
-                    v-if="isAllDay == false"
-                    v-model="endDateTime"
-                    :options="filteredEndTimeOptions"
-                    option-label="label"
-                    option-value="value"
-                    placeholder="Select a time"
-                    size="large"
-                ></Select>
-            </div>
-
-            <!-- 종일 체크 -->
-            <div style="margin-left: 3.5rem; margin-top: 0.7rem">
-                <label>
-                    <Checkbox v-model="isAllDay" binary />
-                    종일
-                </label>
-            </div>
-
-            <br />
-
-            <!-- 내용 -->
-            <div class="text">
-                <Textarea v-model="content" placeholder="내용을 입력해주세요." />
-            </div>
-
-            <!-- 회의 토글 -->
-            <div class="toggle-section">
-                <div class="toggle-item">
-                    <div class="toggle-label">
-                        <img src="@/assets/images/meeting.svg" alt="meeting" class="icon" />
-                        <span class="title-name">회의</span>
-                        <ToggleSwitch v-model="isMeeting" />
-                    </div>
+            <div class="scrollable-content">
+                <!-- 제목 -->
+                <div class="title">
+                    <input
+                        v-model="title"
+                        class="title-input"
+                        style="outline: none; cursor: text"
+                        placeholder="제목을 입력해주세요."
+                    />
                 </div>
-            </div>
 
-            <!-- 회의실 -->
-            <div v-if="isMeeting">
-                <div class="description">
-                    <!-- 회의실 조회해서 회의실 id 가져오게 해야한다. 이때 시간을 넘겨서 조회 -->
-                    <span>회의실 추가</span>
-                </div>
-            </div>
+                <br />
 
-            <!-- 공개 토글 -->
-            <div class="toggle-section">
-                <div class="toggle-item">
-                    <div class="toggle-label">
-                        <span class="pi pi-exclamation-circle"></span>
-                        <span class="title-name">공개</span>
-                        <ToggleSwitch v-model="isPublic" />
-                    </div>
-                </div>
-            </div>
-            <span class="description"> 공개는 타인이 본인의 일정 검색 시 보여지게 됩니다. </span>
-
-            <!-- 참석자 -->
-            <div class="toggle-section">
+                <!-- 날짜/시간 -->
                 <div class="align-center">
-                    <span class="pi pi-users"></span>
-                    <span class="title-name">참석자</span>
+                    <span class="pi pi-clock"></span>
+                    <DatePicker
+                        v-model="startDate"
+                        dateFormat="mm월 dd일 (D)"
+                        size="large"
+                        @change="onStartDateChange"
+                    />
+                    <Select
+                        v-if="isAllDay == false"
+                        v-model="startDateTime"
+                        :options="timeOptions"
+                        option-label="label"
+                        option-value="value"
+                        placeholder="Select a time"
+                        size="large"
+                    ></Select>
+                    <span style="margin-left: 0.5rem; margin-right: 0.5rem">ㅡ</span>
+                    <DatePicker v-model="endDate" :minDate="startDate" dateFormat="mm월 dd일 (D)" size="large" />
+                    <Select
+                        v-if="isAllDay == false"
+                        v-model="endDateTime"
+                        :options="filteredEndTimeOptions"
+                        option-label="label"
+                        option-value="value"
+                        placeholder="Select a time"
+                        size="large"
+                    ></Select>
                 </div>
-            </div>
-            <div class="indent">
-                <!-- 엘라스틱 서치로 user_id를 리스트에 넣는다. -->
-                <span>추가</span>
-            </div>
 
-            <!-- 알람 -->
-            <!-- 시간에 대한 알람만 있다면 종일이 풀려서 시간이 보일 때 나타나게 해도 괜찮을 듯! -->
-            <div v-if="isAllDay == false">
+                <!-- 종일 체크 -->
+                <div style="margin-left: 3.5rem; margin-top: 0.7rem">
+                    <label>
+                        <Checkbox v-model="isAllDay" binary />
+                        종일
+                    </label>
+                </div>
+
+                <br />
+
+                <!-- 내용 -->
+                <div class="text">
+                    <Textarea v-model="content" placeholder="내용을 입력해주세요." />
+                </div>
+
+                <!-- 회의 토글 -->
+                <div class="toggle-section">
+                    <div class="toggle-item">
+                        <div class="toggle-label">
+                            <img src="@/assets/images/meeting.svg" alt="meeting" class="icon" />
+                            <span class="title-name">회의</span>
+                            <ToggleSwitch v-model="isMeeting" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 회의실 -->
+                <div v-if="isMeeting">
+                    <div class="description">
+                        <!-- 회의실 조회해서 회의실 id 가져오게 해야한다. 이때 시간을 넘겨서 조회 -->
+                        <span>회의실 추가</span>
+                    </div>
+                </div>
+
+                <!-- 공개 토글 -->
+                <div class="toggle-section">
+                    <div class="toggle-item">
+                        <div class="toggle-label">
+                            <span class="pi pi-exclamation-circle"></span>
+                            <span class="title-name">공개</span>
+                            <ToggleSwitch v-model="isPublic" :readonly="isMeeting" />
+                        </div>
+                    </div>
+                </div>
+                <span class="description"> 공개는 타인이 본인의 일정 검색 시 보여지게 됩니다. </span>
+
+                <!-- 참석자 -->
                 <div class="toggle-section">
                     <div class="align-center">
-                        <img src="@/assets/images/alarm-clock.svg" alt="alarm-clock" class="icon" />
-                        <span class="title-name">알람</span>
+                        <span class="pi pi-users"></span>
+                        <span class="title-name">참석자</span>
                     </div>
                 </div>
-                <div>
-                    <div class="indent" v-if="showSelectAlarm == false">
-                        <span style="cursor: pointer" @click="showSelectAlarm = !showSelectAlarm">추가</span>
+                <div class="indent">
+                    <!-- 엘라스틱 서치로 user_id를 리스트에 넣는다. -->
+                    <span v-if="!isAddingParticipant" @click="isAddingParticipant = true" class="add-participant-btn">
+                        추가
+                    </span>
+
+                    <!-- 참석자 검색 input -->
+                    <div v-if="isAddingParticipant" class="participant-search">
+                        <InputText type="text" v-model="searchKeyword" placeholder="참석자 추가" @input="searchUsers" />
+
+                        <!-- 검색 결과 목록 -->
+                        <div v-if="searchResults.length > 0" class="search-results">
+                            <div
+                                v-for="user in searchResults"
+                                :key="user.userId"
+                                @click="addParticipant(user)"
+                                class="search-result-item"
+                            >
+                                {{ user.name }} ({{ user.email }})
+                            </div>
+                        </div>
                     </div>
-                    <!-- 알람 시간 선택 드롭다운 -->
-                    <div v-if="showSelectAlarm" class="indent dropdown-container">
-                        <Select
-                            v-model="notificationTime"
-                            :options="alarmOptions"
-                            option-label="label"
-                            option-value="value"
-                            size="large"
-                        />
-                        <span class="pi pi-times" @click="showSelectAlarm = false"></span>
+
+                    <!-- 선택된 참석자 목록 -->
+                    <div class="selected-participants">
+                        <div
+                            v-for="participant in displayedParticipants"
+                            :key="participant.userId"
+                            class="participant-chip"
+                        >
+                            {{ props.isEditMode? participant.username : participant.name }}
+                            <span class="remove-participant" @click="removeParticipant(participant)">x</span>
+                        </div>
+
+                        <!-- 더보기 버튼 -->
+                        <div
+                            v-if="selectedParticipants.length > 5"
+                            class="more-participants"
+                            @click="showAllParticipants = !showAllParticipants"
+                        >
+                            {{ showAllParticipants ? '접기' : `+ ${selectedParticipants.length - 5}명 더 보기` }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 알람 -->
+                <!-- 시간에 대한 알람만 있다면 종일이 풀려서 시간이 보일 때 나타나게 해도 괜찮을 듯! -->
+                <div v-if="isAllDay == false">
+                    <div class="toggle-section">
+                        <div class="align-center">
+                            <img src="@/assets/images/alarm-clock.svg" alt="alarm-clock" class="icon" />
+                            <span class="title-name">알람</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="indent" v-if="showSelectAlarm == false">
+                            <span style="cursor: pointer" @click="showSelectAlarm = !showSelectAlarm">추가</span>
+                        </div>
+                        <!-- 알람 시간 선택 드롭다운 -->
+                        <div v-if="showSelectAlarm" class="indent dropdown-container">
+                            <Select
+                                v-model="notificationTime"
+                                :options="alarmOptions"
+                                option-label="label"
+                                option-value="value"
+                                size="large"
+                            />
+                            <span class="pi pi-times" @click="showSelectAlarm = false"></span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -136,13 +188,13 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, computed } from 'vue';
+import { ref, watch, onMounted, computed, onBeforeUnmount } from 'vue';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc'; // UTC 플러그인
 import timezone from 'dayjs/plugin/timezone'; // 타임존 플러그인
 import duration from 'dayjs/plugin/duration';
-import 'dayjs/locale/ko';
 import axios from 'axios';
+import 'dayjs/locale/ko';
 import DatePicker from 'primevue/datepicker';
 import Select from 'primevue/select';
 import Checkbox from 'primevue/checkbox';
@@ -150,9 +202,11 @@ import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
 import ToggleSwitch from 'primevue/toggleswitch';
 import 'primeicons/primeicons.css';
+import InputText from 'primevue/inputtext';
 import { usePrimeVue } from 'primevue/config';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import SearchResult from '@/views/search/SearchResult.vue';
 
 dayjs.extend(utc); // UTC 플러그인 사용
 dayjs.extend(timezone); // 타임존 플러그인 사용
@@ -206,6 +260,77 @@ const isMeeting = ref(props.isEditMode ? (props.schedule.meetingStatus === 'ACTI
 
 // 공개 여부
 const isPublic = ref(props.isEditMode ? (props.schedule.publicStatus === 'PUBLIC' ? true : false) : false);
+
+// 참석자 추가 모드 토글
+const isAddingParticipant = ref(false);
+
+// 검색 키워드
+const searchKeyword = ref('');
+
+// 검색 결과
+const searchResults = ref([]);
+
+// 선택된 참석자 목록
+const selectedParticipants = ref(props.isEditMode? props.schedule.userInfo.filter(user => user.userId !== authStore.user.userId) : []);
+
+const showAllParticipants = ref(false);
+
+// 표시할 참석자 계산
+const displayedParticipants = computed(() => {
+    return showAllParticipants.value ? selectedParticipants.value : selectedParticipants.value.slice(0, 5);
+});
+
+// 사용자 검색 함수
+const searchUsers = async () => {
+    try {
+        const sanitizedKeyword = searchKeyword.value.trim();
+        if (!sanitizedKeyword) {
+            searchResults.value = [];
+            return;
+        }
+
+        const response = await axios.get(`/user/search`, {
+            params: { keyword: sanitizedKeyword },
+        });
+
+        if (response.data.data) {
+            // 본인과 이미 선택된 참석자 제외
+            const currentUserId = authStore.user.userId;
+            searchResults.value = response.data.data.filter(
+                (user) =>
+                    user.userId !== currentUserId && // 본인 제외
+                    user.name.includes(sanitizedKeyword) &&
+                    !selectedParticipants.value.some((p) => p.userId === user.userId)
+            );
+        } else {
+            searchResults.value = [];
+        }
+    } catch (error) {
+        console.error('Error fetching search results:', error);
+        searchResults.value = [];
+    }
+};
+
+// 참석자 추가 함수
+const addParticipant = (user) => {
+    // 중복 체크
+    if (!selectedParticipants.value.some((p) => p.userId === user.userId)) {
+        selectedParticipants.value.push(user);
+    }
+
+    // 검색 초기화
+    searchKeyword.value = '';
+    searchResults.value = [];
+};
+
+// 참석자 제거 함수
+const removeParticipant = (user) => {
+    selectedParticipants.value = selectedParticipants.value.filter((p) => p.userId !== user.userId);
+    // 참석자 제거 후 5개 이하면 더보기 숨기기
+    if (selectedParticipants.value.length <= 5) {
+        showAllParticipants.value = false;
+    }
+};
 
 // Main
 // DatePicker와 v-binding
@@ -268,24 +393,12 @@ const formData = computed(() => ({
     repeatOrder: null,
     meetingStatus: isMeeting.value ? 'ACTIVE' : 'INACTIVE',
     meetingRoomId: null,
-    attendeeIds: [],
+    attendeeIds: selectedParticipants.value.map((p) => p.userId),
     notificationTime: null,
 }));
 
-// formData 확인용
-watch(formData, () => {
-    console.log('id', formData.value.id);
-    console.log('title', formData.value.title);
-    console.log('content', formData.value.content);
-    console.log('startTime', formData.value.startTime);
-    console.log('endTime', formData.value.endTime);
-    console.log('publicStatus', formData.value.publicStatus);
-    console.log('scheduleRepeatId', formData.value.scheduleRepeatId);
-    console.log('repeatOrder', formData.value.repeatOrder);
-    console.log('meetingStatus', formData.value.meetingStatus);
-    console.log('meetingRoomId', formData.value.meetingRoomId);
+watch(selectedParticipants, () => {
     console.log('attendeeIds', formData.value.attendeeIds);
-    console.log('notificationTime', formData.value.notificationTime);
 });
 
 // 10분 단위로 시간을 생성하는 함수
@@ -345,6 +458,15 @@ watch([startDate, endDate], () => {
 watch(isMeeting, (newValue) => {
     if (newValue) {
         isPublic.value = true;
+    } else {
+        isPublic.value = false;
+    }
+});
+
+// isMeeting이 false일 때는 isPublic을 자유롭게 변경 가능
+watch(isPublic, (newValue) => {
+    if (isMeeting.value) {
+        isPublic.value = true; // isMeeting이 true일 때 isPublic을 강제로 true로 고정
     }
 });
 
@@ -358,13 +480,12 @@ const submitSchedule = async () => {
             start_time: formData.value.startTime,
             end_time: formData.value.endTime,
             public_status: formData.value.publicStatus,
-            schedule_repeat_id: formData.value.scheduleRepeatId,
-            repeat_order: formData.value.repeatOrder,
             meeting_status: formData.value.meetingStatus,
             meetingroom_id: formData.value.meetingRoomId,
-            // attendee_ids: formData.value.attendeeIds,
-            attendee_ids: [1, 3, 5],
+            attendee_ids: formData.value.attendeeIds,
+            // attendee_ids: [1, 3, 5, 12],
         };
+        console.log('저장 값', dataToSend);
 
         const schedule_id = props.schedule.scheduleId;
         let response;
@@ -475,14 +596,16 @@ const alarmOptions = [
 
 const notificationTime = ref(
     props.isEditMode
-        ? (props.schedule.notificationTime ? 
-        String(
-              ((dayjs(props.schedule.startTime).diff(dayjs(props.schedule.notificationTime)) % 60000) / 1000 / 60) * 60
-            ).padStart(2, '0') +
-                ':' +
-                String(
-                    Math.floor(dayjs(props.schedule.startTime).diff(dayjs(props.schedule.notificationTime)) / 1000 / 60)
-                ).padStart(2, '0') : '00:10')
+        ? props.schedule.notificationTime
+            ? String(
+                  ((dayjs(props.schedule.startTime).diff(dayjs(props.schedule.notificationTime)) % 60000) / 1000 / 60) *
+                      60
+              ).padStart(2, '0') +
+              ':' +
+              String(
+                  Math.floor(dayjs(props.schedule.startTime).diff(dayjs(props.schedule.notificationTime)) / 1000 / 60)
+              ).padStart(2, '0')
+            : '00:10'
         : '00:10'
 );
 
@@ -508,18 +631,34 @@ watch(
     { immediate: true }
 );
 
+// 'Esc' 키를 눌렀을 때 모달을 닫는 함수
+const handleEscKey = (event) => {
+    if (event.key === 'Escape') {
+        emit('close');
+    }
+};
+
 onMounted(() => {
     changeToKorean(); // 한국어 설정 함수 호출
+    window.addEventListener('keydown', handleEscKey);
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('keydown', handleEscKey);
 });
 </script>
 
 <style scoped>
+::v-deep(.fc-direction-ltr .fc-toolbar > * > :not(:first-child)) {
+    margin-left: 0;
+}
+
 .modal-container {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
+    height: 100vh;
     background-color: rgba(0, 0, 0, 0.5);
     display: flex;
     justify-content: center;
@@ -533,8 +672,19 @@ onMounted(() => {
     border-radius: 8px;
     width: 80%;
     max-width: 500px;
+    height: 100vh;
+    max-height: 85vh;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     position: relative;
+    display: flex;
+    flex-direction: column;
+    /* overflow-y: auto; */
+}
+
+.scrollable-content {
+    flex: 1; /* 나머지 공간을 차지하게 설정 */
+    overflow-y: auto; /* 세로 스크롤 활성화 */
+    /* padding: 1rem; */
 }
 
 .close-btn {
@@ -552,7 +702,7 @@ onMounted(() => {
     border: none;
     font-size: 2rem;
     padding: 1rem 0;
-    margin-top: 1rem;
+    margin-top: 0.5rem;
     color: #333;
 }
 
@@ -626,10 +776,10 @@ onMounted(() => {
     gap: 1rem; /* 버튼 사이에 간격 추가 */
 }
 
-::v-deep(.button-section .p-button) {
+/* ::v-deep(.button-section .p-button) {
     width: 5rem;
     height: 3rem;
-}
+} */
 
 .dropdown-container {
     display: flex;
@@ -688,6 +838,72 @@ onMounted(() => {
 }
 
 .p-inputtext:hover {
-    background-color: #999;
+    background-color: #f3f3f3;
+}
+
+.participant-search {
+    position: relative;
+    margin-bottom: 10px;
+}
+
+::v-deep(.participant-search .p-inputtext) {
+    padding-left: 0.2rem !important;
+}
+
+.p-inputtext {
+    padding-left: 0.2rem;
+}
+
+.search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 80%;
+    max-height: 200px;
+    border-radius: 4px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    background-color: white;
+    z-index: 10;
+}
+
+.search-result-item {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.search-result-item:hover {
+    background-color: #f0f0f0;
+}
+
+.selected-participants {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    position: relative;
+}
+
+.participant-chip {
+    background-color: #e0e0e0;
+    padding: 5px 10px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.remove-participant {
+    margin-left: 5px;
+    cursor: pointer;
+    color: rgb(0, 0, 0);
+}
+
+.add-participant-btn {
+    cursor: pointer;
+}
+
+.more-participants {
+    cursor: pointer;
+    margin-left: 10px;
+    align-self: center;
 }
 </style>

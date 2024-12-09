@@ -9,6 +9,11 @@ export default [
                 path: 'view',
                 component: () => import('@/views/invitation/InvitationView.vue'),
                 meta: { requiresAuth: true }
+            },
+            {
+                path: 'mail-link',
+                component: () => import('@/views/invitation/InvitationAccept.vue'),
+                meta: { requiresAuth: true }
             }
         ]
     }

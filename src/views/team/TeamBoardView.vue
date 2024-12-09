@@ -1,34 +1,50 @@
 <template>
     <div class="container">
         <div class="board-view-header">
-            {{teamStore.teamName }}
-            <Button @click="goToBoardEdit">게시판 수정</Button>
+            <Button 
+                :label="teamStore.teamName"  
+                icon="pi pi-user" 
+                rounded 
+                disabled
+                class="team-name-container"
+            />
+            <Button 
+                class="team-board-edit" 
+                @click="showEditModal = true"
+                outlined
+                label="게시판 수정"
+            />
         </div>
-        <div class="board-container">
-            <div :class="['board',`board-${board.teamBoardId}`]" v-for="board in boardList" :key="board.teamBoardId">
-                <div class="board-header">
-                    <div class="board-title">{{ board.boardTitle }}</div>
-                    <Button @click="goToThatPostView(board.teamBoardId,board.boardTitle)">더보기</Button>
+        <div class="board-view-body">
+            <div class="board-container">
+                <div :class="['board',`board-${board.teamBoardId}`]" v-for="board in boardList" :key="board.teamBoardId">
+                    <div class="board-header">
+                        <div class="board-title">
+                            <Button disabled :label="board.boardTitle" class="board-title-button" />
+                        </div>
+                        <Button 
+                            rounded 
+                            class="more-button" 
+                            @click="goToThatPostView(board.teamBoardId, board.boardTitle)"
+                        >
+                            더보기
+                        </Button>
+                    </div>
+                    <BoardPost @changeBoardName="changeBoardName" :teamBoardId="board.teamBoardId"></BoardPost>
                 </div>
-                <BoardPost :teamBoardId="board.teamBoardId"></BoardPost>
             </div>
         </div>
 
-        <div class="board-plus-button-container" @click="showAddBoardModal">
-            <i class="pi pi-plus"></i>
-        </div>
-
-    <!-- 게시판 추가 모달 -->
-    <div v-if="isAddBoardModalVisible" class="add-board-modal">
-        <div class="modal-content">
-            <h2>게시판 추가</h2>
-            <input v-model="newBoardName" placeholder="게시판 이름을 입력하세요" />
-            <div class="modal-actions">
-                <button @click="addBoard">추가</button>
-                <button @click="closeAddBoardModal">취소</button>
-            </div>
-        </div>
-    </div>
+        <!-- BoardEdit 모달 -->
+        <Dialog 
+            :visible="showEditModal" 
+            modal 
+            @update:visible="showEditModal = $event; getBoardList();" 
+            class="board-edit-modal" 
+            header="게시판 수정"
+        >
+            <BoardEdit />
+        </Dialog>
     </div>
 </template>
 
@@ -39,21 +55,20 @@ import axios from 'axios';
 import BoardPost from './components/BoardPost.vue';
 import { useTeamStore } from '@/stores/team';
 import { useAuthStore } from '@/stores/auth';
+import BoardEdit from './TeamBoardEdit.vue';
 
 const teamStore = useTeamStore();
 const authStore = useAuthStore();
 const router = useRouter();
 const boardList = ref([]);
-const isAddBoardModalVisible = ref(false); // 모달 표시 여부
-const newBoardName = ref(''); // 새로운 게시판 이름
-
+const showEditModal = ref(false); // 모달 상태 관리
 
 const getBoardList = async () => {
     const response = await axios.get(`/teamboard/${authStore.user.userId}/my`);
     boardList.value = response.data.data;
 };
 
-const goToThatPostView = (boardId,boardTitle) => {
+const goToThatPostView = (boardId, boardTitle) => {
     teamStore.updateBoardId(boardId);
     teamStore.updateBoardTitle(boardTitle);
     router.push({
@@ -64,109 +79,101 @@ const goToThatPostView = (boardId,boardTitle) => {
     });
 };
 
-// 모달 표시
-const showAddBoardModal = () => {
-    isAddBoardModalVisible.value = true;
-};
+const changeBoardName = (boardId) => {
+    // boardList에서 boardId가 일치하는 항목 찾기
+    const board = boardList.value.find(item => item.teamBoardId === boardId);
 
-// 모달 닫기
-const closeAddBoardModal = () => {
-    isAddBoardModalVisible.value = false;
-    newBoardName.value = ''; // 입력 필드 초기화
-};
-
-// 게시판 추가 로직
-const addBoard = async () => {
-    if (!newBoardName.value.trim()) {
-        alert('게시판 이름을 입력해주세요!');
-        return;
-    }
-
-    try {
-        const response = await axios.post('/teamboard', {
-            boardTitle: newBoardName.value,
-            teamId: teamStore.teamId
-        });
-
-        if (response.data.success) {
-            alert('게시판이 추가되었습니다.');
-            closeAddBoardModal(); // 모달 닫기
-            // 게시판 목록을 다시 가져오는 로직 추가 (예: fetchBoards())
-        }
-    } catch (error) {
-        console.error('게시판 추가 중 오류 발생:', error);
-        alert('게시판 추가에 실패했습니다.');
+    if (board) {
+        // boardTitle 가져오기
+        const boardTitle = board.boardTitle;
+        teamStore.updateBoardTitle(boardTitle); // teamStore에 업데이트
+    } else {
+        console.error(`Board with ID ${boardId} not found.`);
     }
 };
 
-const goToBoardEdit = () => {
-    router.push("/team/board/edit");
-}
 
-onMounted( async ()=>{
+onMounted(async () => {
     await getBoardList();
     await teamStore.getTeamName(1); // userId
-})
+});
 </script>
 
 <style scoped>
-    .container {
-    }
-    .board {
-        border: 2px solid red;
-    }
-    .board-header {
-        display: flex;
-    }
-
-    .board-plus-button-container {
-    cursor: pointer;
-    width: 50px;
-    height: 50px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.add-board-modal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 400px;
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-}
-
-.modal-content {
+.container {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    align-items: center;
+    margin: 0 auto;
+    max-width: 100%;
 }
 
-.modal-actions {
+.board-view-header {
     display: flex;
-    justify-content: flex-end;
-    gap: 10px;
+    align-items: center;
+    margin-bottom: 1.5rem;
 }
 
-.modal-actions button {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.modal-actions button:first-child {
-    background-color: #007bff;
-    color: white;
-}
-
-.modal-actions button:last-child {
-    background-color: #ccc;
+.team-name-container {
+    margin-top: 1rem;
+    margin-right: 1rem;
+    background-color: #FDC387;
+    border-color: #FDC387;
+    cursor: default;
     color: black;
+    opacity: 1;
+    
 }
 
+.team-board-edit {
+    margin-top: 1rem;
+
+    padding: 0.8rem 1.5rem;
+    border-radius: 0.5rem;
+    height: 2.5rem;
+    opacity: 1;
+}
+
+
+
+.board {
+    border: 1px solid #FF9D85;
+    border-radius: 2.5rem;
+    box-shadow: 0 4px 8px rgba(255, 157, 133, 0.5);
+    margin: 1rem;
+}
+
+.board-header {
+    display: flex;
+    justify-content: space-between;
+    margin: 1rem;
+}
+
+.board-title-button {
+    color: black;
+    opacity: 1;
+    background-color: #FF9D85;
+    border-color: #FF9D85;
+}
+
+.more-button {
+    background-color: white;
+    border-color: #FF9D85;
+    color: black;
+    height: 2rem;
+    width: 4.5rem;
+    margin-right: 3rem;
+}
+
+.more-button:hover {
+    background-color: #FF9D85;
+}
+
+/* 모달 스타일 */
+.board-edit-modal {
+    width: 40%;
+    max-width: 600px;
+}
 </style>
+
+
