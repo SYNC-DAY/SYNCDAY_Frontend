@@ -8,7 +8,7 @@
       <div class="chat-messages" ref="chatMessages">
         <template v-for="(message, index) in messages" :key="index" class="message-line">
           <div v-if="shouldShowDate(index)" class="date-divider">
-            {{ formatDate(messages[index].sentTime) }}
+            {{ formatDate() }}
           </div>
           <div class="message-line">
             <img :src="message.userProfileImg" alt="프로필 이미지" class="profile-img" />
@@ -295,7 +295,7 @@ const formatTime = (timeString) => {
   transform: translateX(-50%);
   width: 500px;
   height: 70%;
-  background-color: #f7f6f6;
+  background-color: #d6f5ef;
   border: 1px solid #ddd;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -309,7 +309,7 @@ const formatTime = (timeString) => {
     top: 15px;
     right: 10px;
     background: none;
-    border-color: #ffdae7;
+    border-color: #d6f5ef;
     border-style:solid;
     border-radius: 20rem;
     font-size: 0.9rem;
@@ -317,7 +317,7 @@ const formatTime = (timeString) => {
     color: #c7c5c5;
   }
   .leave-chat:hover{
-    background-color: #ffe7ec;
+    background-color: #d6f5ef;
   }
 
   .popup-content {
@@ -341,7 +341,7 @@ h2 {
   gap: 10px;
   overflow-y: auto;
   padding: 1px;
-  background-color: #fdf6f9;
+  background-color: #f9fffe;
   border-radius: 5px;
   margin-bottom: 20px;
 }
@@ -353,15 +353,18 @@ h2 {
 
 /* 스크롤바의 막대 */
 .chat-messages::-webkit-scrollbar-thumb {
-  background-color: #ffe0ea; /* 색상 */
-  border-radius: 4px; /* 둥근 모서리 */
+  background-color: #97f3e1; /* 색상 */
+  border-radius: 50px; /* 둥근 모서리 */
 }
+
 
 .date-divider {
   text-align: center;
   font-size: 0.7rem;
   color: #aaaaaa;
-  margin: 10px 0;
+  margin: 10px 100px;
+  background-color: #d6f5ef;
+  border-radius: 50px;
 }
 
 .message-line {
@@ -429,7 +432,7 @@ h2 {
 }
 .chat-input button {
   /* padding: 8px 16px; */
-  background-color: #fd8eaa;
+  background-color: #20c2a4;
   color: #fcfcfc;
   border: none;
   border-radius: 15px;
@@ -438,7 +441,7 @@ h2 {
 }
 
 .chat-input button:hover {
-  background-color: #fc7294;
+  background-color: #10c2a1;
 }
 
 .close-button {

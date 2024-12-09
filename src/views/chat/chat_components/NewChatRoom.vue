@@ -204,8 +204,8 @@ loadUsers();
 
 /* 체크박스 선택 시 스타일 */
 .user-check:checked + .user-check-circle {
-  background-color: #ffd8e5;
-  border-color: #fdaec9;
+  background-color: #c6f1e9;
+  border-color: #6bdfc9;
   position: relative;
 }
 
@@ -227,18 +227,18 @@ loadUsers();
   max-height: 200px;
   overflow-y: auto;
   border: 1px solid #ddd;
-  padding: 10px;
+  padding: 8px;
   border-radius: 4px;
 }
 .scrollable-list::-webkit-scrollbar{
-  width: 10px;
+  width: 8px;
 }
 .scrollable-list::-webkit-scrollbar-thumb {
-    background: #ffe0ea; /* 스크롤바 색상 */
+    background: #d6f5ef; /* 스크롤바 색상 */
     border-radius: 10px; /* 스크롤바 둥근 테두리 */
 }
 .scrollable-list::-webkit-scrollbar-track {
-    background: #fdebf1;
+    background: #f5fdfc;
 }
 .user-item {
   display: flex;
@@ -251,9 +251,9 @@ loadUsers();
 
 /* 생성 버튼 */
 .create-new {
-  background-color: #fd8eaa;
+  background-color: #20c2a4;
   color: #fff2f2;
-  padding: 8px 10px;
+  padding: 3px 10px;
   font-size: 1rem;
   border: none;
   border-radius: 15px;
@@ -262,6 +262,6 @@ loadUsers();
   margin: 0 auto;
 }
 .create-new:hover {
-  background-color: #fc7294;
+  background-color: #10c2a1;
 }
 </style>

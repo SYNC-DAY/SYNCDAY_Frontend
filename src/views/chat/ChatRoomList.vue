@@ -221,7 +221,7 @@ onUnmounted(() => {
   border-radius: 4px; /* 둥근 모서리 */
 }
   .new-chat {
-  background-color: #fd8eaa;
+  background-color: #20c2a4;
   border-radius: 13px;
   font-size: 1rem;
   color: #fff2f2;
@@ -232,7 +232,7 @@ onUnmounted(() => {
 }
 
 .new-chat:hover {
-  background-color: #fc7294;
+  background-color: #10c2a1;
 }
 
   .chat-room {
