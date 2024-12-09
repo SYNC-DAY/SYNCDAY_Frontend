@@ -60,12 +60,13 @@ export const useGithubMilestoneStore = defineStore("githubMilestoneStore", {
 
       try {
         const octokit = await this.getOctokitInstance(installationId);
-        const response = await octokit.issues.listMilestones({
+        const response = await octokit.rest.issues.listMilestonesForRepo({
           owner,
           repo,
           state: "open",
           sort: "due_on",
           direction: "asc",
+          per_page: 100,
         });
 
         // Process milestones to add computed properties
@@ -93,7 +94,7 @@ export const useGithubMilestoneStore = defineStore("githubMilestoneStore", {
 
       try {
         const octokit = await this.getOctokitInstance(installationId);
-        const response = await octokit.issues.createMilestone({
+        const response = await octokit.rest.issues.createMilestone({
           owner,
           repo,
           ...milestoneData,
@@ -120,7 +121,7 @@ export const useGithubMilestoneStore = defineStore("githubMilestoneStore", {
 
       try {
         const octokit = await this.getOctokitInstance(installationId);
-        const response = await octokit.issues.updateMilestone({
+        const response = await octokit.rest.issues.updateMilestone({
           owner,
           repo,
           milestone_number: milestoneNumber,
@@ -148,7 +149,7 @@ export const useGithubMilestoneStore = defineStore("githubMilestoneStore", {
 
       try {
         const octokit = await this.getOctokitInstance(installationId);
-        const response = await octokit.issues.deleteMilestone({
+        const response = await octokit.rest.issues.deleteMilestone({
           owner,
           repo,
           milestone_number: milestoneNumber,
