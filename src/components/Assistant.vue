@@ -232,7 +232,7 @@
         }
 
         eventSource.value = new EventSourcePolyfill(
-            `http://localhost:5000/sse/notification/subscribe/${authStore.user.userId}`,
+            `camp-alb-1280020804.ap-northeast-2.elb.amazonaws.com/sse/notification/subscribe/${authStore.user.userId}`,
 
             {
                 headers: {
