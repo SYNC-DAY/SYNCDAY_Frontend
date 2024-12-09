@@ -72,8 +72,8 @@
 			required: true
 		},
 		installationId: {
-			type: String,
-			required: true
+			type: Number,
+			required: false
 		},
 		owner: {
 			type: String,
@@ -131,6 +131,7 @@
 	// Methods
 	const fetchMilestones = async () => {
 		isLoading.value = true;
+		console.log(props.installationId)
 		try {
 			await milestoneStore.fetchMilestones(
 				props.installationId,

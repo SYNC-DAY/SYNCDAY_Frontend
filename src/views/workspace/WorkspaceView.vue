@@ -109,8 +109,8 @@
   <RepoSettingModal v-model="showModal" :project-id="projectId" :workspace-id="workspaceId"
     :workspaceData="workspaceDetails" @update="updateRepositoryInfo" />
 
-  <MilestoneSelection :is-open="showMilestoneSelection" :installation-id="installationId" :owner="owner" :repo="repo"
-    :project-id="projectId" @close="showModal = false" :repositoryInfo="repositoryInfo" />
+  <MilestoneSelection :is-open="showMilestoneSelection" :installationId="githubInstallationId" :owner="owner"
+    :repo="repo" :project-id="projectId" @close="showModal = false" :repositoryInfo="repositoryInfo" />
 </template>
 
 <script setup>
@@ -264,6 +264,7 @@
   }
 
   onMounted(() => {
+    fetchInstallationId();
     fetchWorkspace();
     fetchCardTag();
     // addNewTag();
