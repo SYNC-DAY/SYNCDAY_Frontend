@@ -49,7 +49,7 @@ jobs:
         cp server.js deploy/ 
         cp Procfile deploy/Procfile
         mkdir -p deploy/.platform
-        cp .github/workflows/.platform/nginx-config.yml deploy/.platform/custom-proxy.yml
+        cp nginx-config.yml deploy/.platform/
         cd deploy && zip -r deploy.zip .
 
     - name: Beanstalk Deploy
