@@ -110,7 +110,8 @@
     :workspaceData="workspaceDetails" @update="updateRepositoryInfo" />
 
   <MilestoneSelection :is-open="showMilestoneSelection" :installationId="githubInstallationId" :owner="owner"
-    :projectId="projectId" @close="showModal = false" :repoUrl="workspaceDetails?.vcs_repo_url || null" />
+    :projectId="projectId" :workspaceId="workspaceId" @close="showModal = false"
+    :repoUrl="workspaceDetails?.vcs_repo_url || null" />
 </template>
 
 <script setup>

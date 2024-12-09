@@ -83,6 +83,10 @@
 			type: String,
 			required: true
 		},
+		workspaceId: {
+			type: [Number, String],
+			required: true
+		}
 
 	});
 
@@ -175,36 +179,27 @@
 		try {
 			isLoading.value = true;
 
-			// Create cardboard from milestone
-			const cardboard = {
+			const request = {
 				project_id: props.projectId,
+				workspace_id: props.workspaceId,
 				title: selectedMilestone.value.title,
-				description: selectedMilestone.value.description,
 				due_date: selectedMilestone.value.due_on,
-				source: 'github',
-				source_id: selectedMilestone.value.id,
+				progress_status: selectedMilestone.value.progress_percentage,
+				vcs_type: 'GITHUB',
+				cards: milestoneIssues.value.map(issue => ({
+					title: issue.title,
+					content: issue.body,
+					status: issue.state === 'OPEN' ? 'TODO' : 'DONE',
+					created_at: issue.createdAt,
+					updated_at: issue.updatedAt,
+					assignee: issue.assignees[0].login,
+					assignee_avatar: issue.assignees[0].avatarUrl,
+					vcs_object_type: "ISSUE",
+					vcs_object_url: issue.url,
+				}))
 			};
 
-			// Create cardboard and get its ID
-			const cardboardId = await cardboardStore.createCardboard(cardboard);
-
-			// Convert issues to cards
-			const cards = milestoneIssues.value.map(issue => ({
-				cardboard_id: cardboardId,
-				title: issue.title,
-				description: issue.body,
-				status: issue.state === 'closed' ? 'done' : 'todo',
-				assignees: issue.assignees,
-				labels: issue.labels,
-				source: 'github',
-				source_id: issue.id
-			}));
-
-			// Create all cards
-			await Promise.all(cards.map(card =>
-				cardboardStore.createCard(card)
-			));
-
+			await cardboardStore.createCardboardWithCards(request);
 			emit('close');
 		} catch (error) {
 			console.error('Failed to convert milestone to cardboard:', error);

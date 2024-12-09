@@ -52,14 +52,14 @@ export const useCardboardStore = defineStore("cardboard", {
     },
 
     // Create a new cardboard
-    async createCardboard(cardboardData) {
+    async createCardboardWithCards(cardboardData) {
       if (!cardboardData.project_id) {
         throw new Error("Project ID is required");
       }
 
       try {
         this.isLoading = true;
-        const response = await axios.post("/cardboards", cardboardData);
+        const response = await axios.post("/cardboards/convert", cardboardData);
 
         const cardboard = response.data;
         this.cardboards[cardboard.id] = cardboard;
