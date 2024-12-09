@@ -43,6 +43,8 @@ export const useProjectStore = defineStore("project", {
         this.setProjects(data);
       } catch (err) {
         console.error(err);
+      } finally {
+        this.isLoading = false;
       }
     },
     setProjects(projectsData) {
