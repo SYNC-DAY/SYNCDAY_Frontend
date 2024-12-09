@@ -144,13 +144,10 @@
 		});
 	};
 
+	// Inside ProjectView.vue script setup
 	const toggleBookmark = async () => {
 		try {
-			const newStatus = project.value.bookmark_status === 'BOOKMARKED' ? 'NONE' : 'BOOKMARKED';
-			await projectStore.updateProject(project.value.proj_id, {
-				bookmark_status: newStatus
-			});
-
+			await projectStore.toggleBookmark(project.value.proj_id);
 			toast.add({
 				severity: 'success',
 				summary: '북마크 업데이트',
@@ -171,7 +168,6 @@
 		try {
 			await projectStore.updateProject(project.value.proj_id, updatedData);
 			showSettings.value = false;
-
 			toast.add({
 				severity: 'success',
 				summary: '설정 업데이트',
@@ -187,49 +183,6 @@
 			});
 		}
 	};
-
-	const handleProjectDelete = async () => {
-		try {
-			await projectStore.deleteProject(project.value.proj_id);
-			router.push({ name: 'Projects' });
-
-			toast.add({
-				severity: 'success',
-				summary: '프로젝트 삭제',
-				detail: '프로젝트가 삭제되었습니다.',
-				life: 3000
-			});
-		} catch (error) {
-			toast.add({
-				severity: 'error',
-				summary: '삭제 실패',
-				detail: error.message || '프로젝트 삭제에 실패했습니다.',
-				life: 3000
-			});
-		}
-	};
-
-	const handleNewWorkspace = async (workspaceData) => {
-		try {
-			await projectStore.addWorkspace(project.value.proj_id, workspaceData);
-			showNewWorkspaceModal.value = false;
-
-			toast.add({
-				severity: 'success',
-				summary: '워크스페이스 생성',
-				detail: '새 워크스페이스가 생성되었습니다.',
-				life: 3000
-			});
-		} catch (error) {
-			toast.add({
-				severity: 'error',
-				summary: '생성 실패',
-				detail: error.message || '워크스페이스 생성에 실패했습니다.',
-				life: 3000
-			});
-		}
-	};
-
 	onMounted(() => {
 		if (!project.value) {
 			router.push({ name: 'Projects' });

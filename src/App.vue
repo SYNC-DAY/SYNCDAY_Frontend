@@ -35,7 +35,6 @@
   // 현재 페이지가 로그인 페이지인지 확인
   const isLoginPage = computed(() => route.path === '/login');
 
-
 </script>
 
 <style scoped>

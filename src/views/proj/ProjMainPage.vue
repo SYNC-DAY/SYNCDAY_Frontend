@@ -47,7 +47,7 @@
 </template>
 
 <script setup>
-  import { ref, onMounted, onUnmounted, computed, provide } from 'vue';
+  import { ref, onMounted, onUnmounted, computed, provide, inject } from 'vue';
   import { useRouter } from 'vue-router';
   import { storeToRefs } from 'pinia';
   import { useProjectStore } from '@/stores/proj/useProjectStore';
@@ -66,7 +66,6 @@
   const authStore = useAuthStore();
   const router = useRouter();
   const toast = useToast();
-
   // Destructure store properties with storeToRefs for reactivity
   const {
     projects,
@@ -78,19 +77,21 @@
   } = storeToRefs(projectStore);
 
   const { user } = storeToRefs(authStore);
-
+  const userId = user.value.userId;
+  provide('userId', userId)
   // Local state
   const expandedProjects = ref([]);
   const showNewProjModal = ref(false);
 
   // Provide active IDs to child components
+  provide('userId', userId);
   provide('activeProjectId', activeProjectId);
   provide('activeWorkspaceId', activeWorkspaceId);
 
   // Methods
   const handleRetryLoad = async () => {
     try {
-      await projectStore.initializeStore(user.value.userId);
+      await projectStore.initializeStore(userId);
     } catch (error) {
       toast.add({
         severity: 'error',

@@ -1,18 +1,16 @@
+// stores/proj/useProjectStore.js
 import { defineStore } from "pinia";
-import axios from "axios";
 import { projectApi } from "@/api/proj/project";
-
 export const useProjectStore = defineStore("project", {
   state: () => ({
     projects: {},
-    isLoading: true,
+    isLoading: false,
     error: null,
     activeProjectId: null,
     activeWorkspaceId: null,
   }),
 
   getters: {
-    hasProjects: state => Object.keys(state.projects).length > 0,
     hasProjects: state => Object.keys(state.projects).length > 0,
 
     getProjectById: state => id => state.projects[id] || null,
@@ -26,176 +24,90 @@ export const useProjectStore = defineStore("project", {
       return project?.workspaces?.find(workspace => workspace.workspace_id === state.activeWorkspaceId);
     },
 
-    // Get projects as an array for v-for iteration
     projectsArray: state =>
       Object.values(state.projects).sort((a, b) => {
-        // Sort by bookmark status (bookmarked first) then by created date
         if (a.bookmark_status === b.bookmark_status) {
           return new Date(b.created_at) - new Date(a.created_at);
         }
         return a.bookmark_status === "BOOKMARKED" ? -1 : 1;
       }),
 
-    // Get bookmarked projects
     bookmarkedProjects: state => Object.values(state.projects).filter(project => project.bookmark_status === "BOOKMARKED"),
   },
-
   actions: {
     async initializeStore(userId) {
       this.isLoading = true;
       this.error = null;
-
       try {
         const data = await projectApi.getUserProjects(userId);
-        const userProjects = data[0]?.proj_member_infos || [];
+        this.setProjects(data);
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    setProjects(projectsData) {
+      this.projects = projectsData;
+    },
 
-        this.projects = userProjects.reduce((acc, projectInfo) => {
-          const validWorkspaces = projectInfo.workspaces.filter(workspace => workspace.workspace_id !== null);
+    addProject(project) {
+      this.projects[project.proj_id] = {
+        ...project,
+        workspaces: project.workspaces || [],
+      };
+    },
 
-          acc[projectInfo.proj_id] = {
-            proj_id: projectInfo.proj_id,
-            proj_name: projectInfo.proj_name,
-            start_time: projectInfo.start_time,
-            end_time: projectInfo.end_time,
-            created_at: projectInfo.created_at,
-            progress_status: projectInfo.progress_status,
-            bookmark_status: projectInfo.bookmark_status,
-            participation_status: projectInfo.participation_status,
-            vcs_type: projectInfo.vcs_type,
-            vcs_proj_url: projectInfo.vcs_proj_url,
-            vcs_installation_id: projectInfo.vcs_installation_id,
-            workspaces: validWorkspaces,
-          };
-          return acc;
-        }, {});
-      } catch (error) {
-        this.error = error.message;
-        throw error;
-      } finally {
-        this.isLoading = false;
+    updateProject(projectId, updates) {
+      this.projects[projectId] = {
+        ...this.projects[projectId],
+        ...updates,
+      };
+    },
+
+    removeProject(projectId) {
+      delete this.projects[projectId];
+      if (this.activeProjectId === projectId) {
+        this.clearActiveStates();
       }
     },
 
-    async createProject(projectData) {
-      try {
-        const newProject = await projectApi.createProject(projectData);
-        this.projects[newProject.proj_id] = {
-          ...newProject,
-          workspaces: [],
-        };
-        return newProject;
-      } catch (error) {
-        throw error;
+    // Workspace state updates
+    addWorkspace(projectId, workspace) {
+      if (!this.projects[projectId].workspaces) {
+        this.projects[projectId].workspaces = [];
+      }
+      this.projects[projectId].workspaces.push(workspace);
+    },
+
+    updateWorkspace(projectId, workspaceId, updates) {
+      const workspace = this.projects[projectId].workspaces.find(w => w.workspace_id === workspaceId);
+      if (workspace) {
+        Object.assign(workspace, updates);
       }
     },
 
-    async updateProject(projectId, updateData) {
-      try {
-        const updatedProject = await projectApi.updateProject(projectId, updateData);
-        this.projects[projectId] = {
-          ...this.projects[projectId],
-          ...updatedProject,
-        };
-        return updatedProject;
-      } catch (error) {
-        throw error;
+    removeWorkspace(projectId, workspaceId) {
+      const project = this.projects[projectId];
+      if (project?.workspaces) {
+        project.workspaces = project.workspaces.filter(w => w.workspace_id !== workspaceId);
+      }
+      if (this.activeWorkspaceId === workspaceId) {
+        this.activeWorkspaceId = null;
       }
     },
 
-    async deleteProject(projectId) {
-      try {
-        await projectApi.deleteProject(projectId);
-        delete this.projects[projectId];
-        if (this.activeProjectId === projectId) {
-          this.clearActiveStates();
-        }
-      } catch (error) {
-        throw error;
-      }
+    // Loading state
+    setLoading(status) {
+      this.isLoading = status;
     },
 
-    async toggleBookmark(projectId) {
-      try {
-        const newStatus = this.projects[projectId].bookmark_status === "BOOKMARKED" ? "NONE" : "BOOKMARKED";
-
-        await projectApi.updateBookmarkStatus(projectId, newStatus);
-        this.projects[projectId].bookmark_status = newStatus;
-        return newStatus;
-      } catch (error) {
-        throw error;
-      }
+    setError(error) {
+      this.error = error;
     },
 
-    async createWorkspace(projectId, workspaceData) {
-      try {
-        const newWorkspace = await projectApi.createWorkspace(projectId, workspaceData);
-        this.projects[projectId].workspaces.push(newWorkspace);
-        return newWorkspace;
-      } catch (error) {
-        throw error;
-      }
-    },
-
-    async createProject({ userId, projectData }) {
-      try {
-        const response = await axios.post("/proj-members/projs", {
-          user_id: userId,
-          proj_name: projectData.name,
-          start_time: projectData.startDate ? new Date(projectData.startDate).toISOString() : null,
-          end_time: projectData.endDate ? new Date(projectData.endDate).toISOString() : null,
-        });
-
-        if (response.data.success) {
-          const newProject = {
-            proj_id: response.data.data.proj_id,
-            proj_name: projectData.name,
-            start_time: projectData.startDate,
-            end_time: projectData.endDate,
-            progress_status: 0,
-            bookmark_status: "NONE",
-            participation_status: "OWNER",
-            created_at: new Date().toISOString(),
-            workspaces: [],
-          };
-
-          // Add new project to state
-          this.projects[newProject.proj_id] = newProject;
-
-          // Set as active project
-          this.setActiveProject(newProject.proj_id);
-
-          return newProject;
-        } else {
-          throw new Error(response.data.message || "Failed to create project");
-        }
-      } catch (error) {
-        throw error;
-      }
-    },
-
-    async updateProject(projectId, updateData) {
-      try {
-        const response = await axios.put(`/proj-members/projs/${projectId}`, updateData);
-
-        if (response.data.success) {
-          // Update project in state
-          this.projects[projectId] = {
-            ...this.projects[projectId],
-            ...updateData,
-          };
-
-          return this.projects[projectId];
-        } else {
-          throw new Error(response.data.message || "Failed to update project");
-        }
-      } catch (error) {
-        throw error;
-      }
-    },
-
+    // Active states
     setActiveProject(projectId) {
       this.activeProjectId = projectId;
-      this.activeWorkspaceId = null; // Clear active workspace when changing projects
+      this.activeWorkspaceId = null;
     },
 
     setActiveWorkspace(projectId, workspaceId) {
@@ -207,7 +119,5 @@ export const useProjectStore = defineStore("project", {
       this.activeProjectId = null;
       this.activeWorkspaceId = null;
     },
-
-    // Workspace related actions
   },
 });
