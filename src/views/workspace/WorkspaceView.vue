@@ -156,7 +156,11 @@
       type: [String, Number],
       required: true
     },
-
+    cardId: {
+      type: [String, Number], // 전달되는 데이터 타입에 맞게 설정
+      required: false, // 필수인지 여부
+      default: null, // 기본값 설정
+    },
   });
 
   const emit = defineEmits(['update:projects']);
