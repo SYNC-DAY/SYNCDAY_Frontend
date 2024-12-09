@@ -107,6 +107,7 @@ export const useGithubRepoStore = defineStore("githubRepo", {
         const transformedRepos = repositories.map(repo => ({
           id: repo.id,
           name: repo.name,
+          accountName: accountName,
           full_name: repo.fullName,
           private: repo.private,
           html_url: repo.url,
@@ -168,5 +169,11 @@ export const useGithubRepoStore = defineStore("githubRepo", {
     isLoadingRepositories: state => state.isLoading,
 
     getError: state => state.error,
+    getRepoName: state => installationId => {
+      return state.repositories[installationId].repoName;
+    },
+    getOwnerName: state => installationId => {
+      return state.repositories[installationId].owner;
+    },
   },
 });

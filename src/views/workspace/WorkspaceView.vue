@@ -109,7 +109,8 @@
   <RepoSettingModal v-model="showModal" :project-id="projectId" :workspace-id="workspaceId"
     :workspaceData="workspaceDetails" />
 
-  <MilestoneSelector v-model="showMilestoneSelection" />
+  <MilestoneSelection :is-open="showMilestoneSelection" :installation-id="installationId" :owner="owner" :repo="repo"
+    :project-id="projectId" @close="showModal = false" />
 </template>
 
 <script setup>
@@ -134,6 +135,7 @@
 
   import WorkspaceAPI from '@/api/proj/workspace';
   import RepoSettingModal from './components/RepoSettingModal.vue';
+  import MilestoneSelection from './components/MilestoneSelection.vue';
   import { useProjectStore } from '@/stores/proj/useProjectStore';
 
   const route = useRoute();
@@ -149,6 +151,7 @@
   const showColorPicker = ref(false);
   const projectStore = useProjectStore();
   const githubInstallationId = ref(null);
+  const repositoryInfo = ref(null);
   const showModal = ref(false)
   const showMilestoneSelection = ref(false)
   const props = defineProps({
