@@ -75,6 +75,9 @@ export const useGithubRepoStore = defineStore("githubRepo", {
         if (!targetType) {
           throw new Error(`Could not determine target type for installation ${installationId}`);
         }
+        if (this.repositories[installationId]) {
+          return this.repositories[installationId];
+        }
 
         // GraphQL query to fetch repositories
         const query = `

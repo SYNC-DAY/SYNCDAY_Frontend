@@ -280,7 +280,9 @@
   const updateRepositoryInfo = (repoInfo) => {
     // Update your local state with the new repository info
     // For example:
-    projectStore.updateWorkspace({ workspaceDetails, ...repoInfo })
+    console.log("repoInfo:")
+    console.log(repoInfo)
+    projectStore.updateWorkspace({ ...workspaceDetails.value, ...repoInfo })
     repositoryInfo.value = repoInfo
 
   }
