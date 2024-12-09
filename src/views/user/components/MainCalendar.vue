@@ -6,7 +6,7 @@
         Loading...
     </div>
     
-    <Dialog class="dialog"
+    <Dialog class="dialog" modal
         v-model:visible="isvisibleToday"
         :header="`${formatDateToKorean(todayList[0].start)} 시작 일정`"
         :style="{ width: '25rem' }"

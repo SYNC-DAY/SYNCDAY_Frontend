@@ -15,7 +15,7 @@
             />- 
             <Button 
                 :label="teamStore.boardTitle"  
-                icon="pi pi-user" 
+                icon="pi pi-align-justify" 
                 disabled 
                 rounded 
                 class="board-name-container"
@@ -214,8 +214,8 @@ onMounted(async () => {
 .team-name-container {
     margin-top: 1rem;
     margin-right: 1rem;
-    background-color: #FDC387;
-    border-color: #FDC387;
+    background-color: #4DB6AC;
+    border-color: #4DB6AC;
     cursor: default;
     color: black;
     opacity:1;
@@ -223,8 +223,8 @@ onMounted(async () => {
 .board-name-container {
     margin-top: 1rem;
     margin-right: 1rem;
-    background-color: #FDC387;
-    border-color: #FDC387;
+    background-color: #4DB6AC;
+    border-color: #4DB6AC;
     cursor: default;
     color: black;
     opacity:1;
@@ -297,7 +297,7 @@ onMounted(async () => {
 }
 
 .pagination Button.active {
-    background-color:#FE5D86;
+    background-color:#009688;
     color: white;
     font-weight: bold;
 }
@@ -308,9 +308,9 @@ onMounted(async () => {
 
 .board{
     width: 70vw;
-    border: 1px solid #FF9D85;
+    border: 1px solid #009688;
     border-radius: 2.5rem;
-    box-shadow: 0 4px 8px rgba(255, 157, 133, 0.5);
+    box-shadow: 0 1.5px 3px rgba(59, 122, 63, 0.5);   
     padding: 2rem;
 }
 
