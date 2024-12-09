@@ -48,8 +48,8 @@ jobs:
         cp package.json deploy/
         cp server.js deploy/ 
         cp Procfile deploy/Procfile
-        mkdir -p deploy/.platform/nginx/conf.d
-        echo '[{ "proxy": { "enabled": false } }]' > deploy/.platform/nginx/conf.d/disable-proxy.conf
+        mkdir -p deploy/.platform
+        cp .github/workflows/.platform/nginx-config.yaml deploy/.platform/custom-proxy.yaml
         cd deploy && zip -r deploy.zip .
 
     - name: Beanstalk Deploy
