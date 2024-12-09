@@ -563,11 +563,12 @@ const submitSchedule = async () => {
                 `/meetingroom_reservation`,
                 {
                     title: formData.value.title,
-                    description: formData.value.content,
+                    content: formData.value.content,
                     startTime: formData.value.startTime,
                     endTime: formData.value.endTime,
                     meetingroomId: selectedRoomId.value,
                     userId: authStore.user.userId,
+                    attendeeIds: formData.value.attendeeIds,
                 },
                 {
                     headers: {
