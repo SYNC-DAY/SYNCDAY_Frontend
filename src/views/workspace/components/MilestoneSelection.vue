@@ -58,7 +58,7 @@
 </template>
 
 <script setup>
-	import { ref, computed, watch } from 'vue';
+	import { ref, computed, watch, inject } from 'vue';
 	import { useGithubMilestoneStore } from '@/stores/github/useGithubMilestoneStore';
 	import { useGithubIssueStore } from '@/stores/github/useGithubIssueStore';
 	import { useCardboardStore } from '@/stores/proj/useCardboardStore';
@@ -97,7 +97,7 @@
 	const selectedMilestone = ref(null);
 	const milestoneIssues = ref([]);
 	const isLoading = ref(false);
-
+	const milestones = ref([])
 	// Computed properties
 	const isVisible = computed({
 		get: () => props.isOpen,
@@ -115,6 +115,9 @@
 	watch(() => props.isOpen, async (newValue) => {
 		if (newValue) {
 			await fetchMilestones();
+			if (!props.installationId) {
+				throw new Error("installationId가 없습니다")
+			}
 		} else {
 			// Reset state when modal closes
 			selectedMilestone.value = null;
@@ -135,7 +138,7 @@
 			repo.value = props.repoUrl.split('/')[4]
 		}
 		try {
-			await milestoneStore.fetchMilestones(
+			milestones.value = await milestoneStore.fetchMilestones(
 				props.installationId,
 				owner,
 				repo

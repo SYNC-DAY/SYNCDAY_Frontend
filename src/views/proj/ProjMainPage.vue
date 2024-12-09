@@ -46,7 +46,7 @@
 </template>
 
 <script setup>
-  import { ref, onMounted, onUnmounted } from 'vue';
+  import { ref, onMounted, onUnmounted, provide } from 'vue';
   import { useRouter } from 'vue-router';
   import axios from 'axios';
   import { useToast } from 'primevue/usetoast';

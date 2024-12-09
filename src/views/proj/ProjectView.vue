@@ -101,7 +101,7 @@
 </template>
 
 <script setup>
-	import { ref, computed, onMounted } from 'vue';
+	import { ref, computed, onMounted, provide } from 'vue';
 	import { storeToRefs } from 'pinia';
 	import { useRoute, useRouter } from 'vue-router';
 	import { useToast } from 'primevue/usetoast';

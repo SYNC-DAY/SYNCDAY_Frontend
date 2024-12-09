@@ -114,7 +114,7 @@
 </template>
 
 <script setup>
-  import { ref, onMounted, watch, computed } from 'vue';
+  import { ref, onMounted, watch, computed, provide } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import axios from 'axios';
 
@@ -188,6 +188,7 @@
       throw new Error(err)
     }
   }
+  provide('proj-installatoin-id', props.installationId)
   const fetchCardTag = async () => {
     if (!props.workspaceId) {
       throw new Error('WorkspaceID is Missing');
