@@ -169,7 +169,7 @@
 
 	const selectWorkspace = async (projId, workspaceId) => {
 		try {
-			await projectStore.setActiveWorkspace(projId, workspaceId);
+			projectStore.setActiveWorkspace(projId, workspaceId);
 			await router.push({
 				name: "Workspace",
 				params: {
