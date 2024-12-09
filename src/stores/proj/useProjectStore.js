@@ -12,6 +12,9 @@ export const useProjectStore = defineStore("project", {
 
   getters: {
     hasProjects: state => Object.keys(state.projects).length > 0,
+    hasProjects: state => Object.keys(state.projects).length > 0,
+
+    getProjectById: state => id => state.projects[id] || null,
 
     activeProject: state => (state.activeProjectId ? state.projects[state.activeProjectId] : null),
 
@@ -24,10 +27,16 @@ export const useProjectStore = defineStore("project", {
 
     // Get projects as an array for v-for iteration
     projectsArray: state =>
-      Object.entries(state.projects).map(([id, project]) => ({
-        ...project,
-        proj_id: parseInt(id),
-      })),
+      Object.values(state.projects).sort((a, b) => {
+        // Sort by bookmark status (bookmarked first) then by created date
+        if (a.bookmark_status === b.bookmark_status) {
+          return new Date(b.created_at) - new Date(a.created_at);
+        }
+        return a.bookmark_status === "BOOKMARKED" ? -1 : 1;
+      }),
+
+    // Get bookmarked projects
+    bookmarkedProjects: state => Object.values(state.projects).filter(project => project.bookmark_status === "BOOKMARKED"),
   },
 
   actions: {

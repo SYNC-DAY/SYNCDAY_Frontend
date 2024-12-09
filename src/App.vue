@@ -20,42 +20,41 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
-import { useRoute } from 'vue-router';
-import { useAuthStore } from "@/stores/auth.js";
-import { useAssistantStore } from "@/stores/assistant.js";
-import { EventSourcePolyfill } from 'event-source-polyfill';
-import Navigation from "@/components/Navigation.vue";
-import Assistant from './components/Assistant.vue';
+  import { ref, computed, onMounted, watch, provide } from 'vue';
+  import { useRoute } from 'vue-router';
+  import { useAuthStore } from "@/stores/auth.js";
+  import { useAssistantStore } from "@/stores/assistant.js";
+  import { EventSourcePolyfill } from 'event-source-polyfill';
+  import Navigation from "@/components/Navigation.vue";
+  import Assistant from './components/Assistant.vue';
 
 
+  const route = useRoute();
+  const authStore = useAuthStore();
 
-const route = useRoute();
-const authStore = useAuthStore();
-
-// 현재 페이지가 로그인 페이지인지 확인
-const isLoginPage = computed(() => route.path === '/login');
+  // 현재 페이지가 로그인 페이지인지 확인
+  const isLoginPage = computed(() => route.path === '/login');
 
 
 </script>
 
 <style scoped>
-.app-container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  max-width: 100vw;
-}
+  .app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-width: 100vw;
+  }
 
-.main-container {
-  width: 100vw;
-  display: flex;
-  flex: 1;
-}
+  .main-container {
+    width: 100vw;
+    display: flex;
+    flex: 1;
+  }
 
-.content {
-  flex: 1;
-  display: flex;
-  /*   background-color: #f5f5f5; */
-}
+  .content {
+    flex: 1;
+    display: flex;
+    /*   background-color: #f5f5f5; */
+  }
 </style>
