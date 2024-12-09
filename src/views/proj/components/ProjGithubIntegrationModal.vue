@@ -179,9 +179,14 @@
 
 	// Methods
 	const handleVisibilityChange = (newValue) => {
-
-		emit('update:visible', newValue)
-	}
+		if (!newValue) {
+			// Reset state when dialog closes
+			selectedInstallationId.value = null;
+			selectedGithubProjectId.value = null;
+			githubProjects.value = null;
+		}
+		emit('update:visible', newValue);
+	};
 
 	const getInitials = (name) => {
 		return name
@@ -211,11 +216,11 @@
 	const handleProjectSelect = (id) => {
 		selectedGithubProjectId.value = id;
 	}
-	watch(props.visible, async (newVal) => {
-		if (newVal) {
-			githubAppStore.fetchInstallations();
+	watch(() => props.visible, async (newVal, oldVal) => {
+		if (newVal && !oldVal) {
+			await initializeDialog();
 		}
-	})
+	}, { immediate: true });
 	watch(selectedInstallationId, async (newVal) => {
 		if (newVal) {
 			try {
@@ -239,31 +244,27 @@
 		}
 	});
 
-	const confirmRevokeAccess = () => {
-		confirm.require({
-			message: 'Are you sure you want to revoke GitHub access?',
-			header: 'Revoke Access',
-			icon: 'pi pi-exclamation-triangle',
-			accept: async () => {
-				try {
-					await githubAuthStore.revokeAccess()
-					toast.add({
-						severity: 'success',
-						summary: 'Success',
-						detail: 'GitHub access has been revoked',
-						life: 3000
-					})
-				} catch (error) {
-					toast.add({
-						severity: 'error',
-						summary: 'Error',
-						detail: 'Failed to revoke access',
-						life: 3000
-					})
-				}
+
+	const initializeDialog = async () => {
+		try {
+			loading.value = true;
+			await githubAppStore.fetchInstallations();
+
+			// If there's a previous installation, select it
+			if (props.projectData?.github_installation_id) {
+				selectedInstallationId.value = props.projectData.github_installation_id;
 			}
-		})
-	}
+		} catch (error) {
+			toast.add({
+				severity: 'error',
+				summary: 'Error',
+				detail: 'Failed to fetch GitHub installations: ' + error.message,
+				life: 3000
+			});
+		} finally {
+			loading.value = false;
+		}
+	};
 
 	const handleAuthMessage = async (event) => {
 		if (event.origin !== window.location.origin) return
