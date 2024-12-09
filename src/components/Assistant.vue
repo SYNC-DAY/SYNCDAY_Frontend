@@ -382,7 +382,6 @@
         border-collapse: separate;
         /* 기본 테이블 간격 유지 */
         border-spacing: 1rem;
-        /* 요소 간 간격을 1rem으로 설정 */
     }
 
 
