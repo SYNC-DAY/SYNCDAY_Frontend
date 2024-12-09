@@ -7,16 +7,36 @@ export const useGithubProjectsStore = defineStore("githubProjects", {
     userProjects: [],
     orgProjects: {},
     selectedProject: null,
-    octokitInstances: {}, // Store Octokit instances per installation
+    octokitInstances: {},
     isLoading: false,
     error: null,
   }),
 
   getters: {
-    getOrgProjects: state => orgName => state.orgProjects[orgName] || [],
+    getProjects: state => installationId => state.orgProjects[installationId] || [],
   },
 
   actions: {
+    cleanupProjects(projects) {
+      // Create a map to store projects by normalized title
+      const projectMap = new Map();
+
+      // Process each project and keep only the latest version of non-closed projects
+      projects.forEach(project => {
+        if (project.closed) return; // Skip closed projects
+
+        const normalizedTitle = project.title.toLowerCase();
+        const existingProject = projectMap.get(normalizedTitle);
+
+        if (!existingProject || new Date(project.updatedAt) > new Date(existingProject.updatedAt)) {
+          projectMap.set(normalizedTitle, project);
+        }
+      });
+
+      // Convert map back to array and sort by updatedAt
+      return Array.from(projectMap.values()).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    },
+
     async initializeOctokit(installationId) {
       if (!installationId) {
         throw new Error("Installation ID is required");
@@ -27,18 +47,15 @@ export const useGithubProjectsStore = defineStore("githubProjects", {
         const installation = githubAppStore.installations[installationId];
 
         if (!installation?.access_token) {
-          // Request new token if not exists
           await githubAppStore.requestInstallationToken(installationId);
         }
 
-        // Get fresh installation data after potential token refresh
         const updatedInstallation = githubAppStore.installations[installationId];
 
         if (!updatedInstallation?.access_token) {
           throw new Error("No access token available for this installation");
         }
 
-        // Create new Octokit instance with installation token
         if (!this.octokitInstances[installationId]) {
           this.octokitInstances[installationId] = new Octokit({
             auth: updatedInstallation.access_token,
@@ -58,11 +75,8 @@ export const useGithubProjectsStore = defineStore("githubProjects", {
         return await octokit.graphql(query, variables);
       } catch (error) {
         if (error.message.includes("Bad credentials")) {
-          // Token might be expired, try to refresh and retry once
           const githubAppStore = useGithubAppStore();
           await githubAppStore.requestInstallationToken(installationId);
-
-          // Retry with new token
           const octokit = await this.initializeOctokit(installationId);
           return await octokit.graphql(query, variables);
         }
@@ -79,71 +93,42 @@ export const useGithubProjectsStore = defineStore("githubProjects", {
         this.isLoading = true;
         const githubAppStore = useGithubAppStore();
         const targetType = githubAppStore.getTargetType(installationId);
+
         if (!targetType) {
           throw new Error(`Could not determine target type for installation ${installationId}`);
         }
-        this.isLoading = true;
 
-        let query;
-        if (targetType === "ORGANIZATION") {
-          query = `
-    query($orgName: String!) {
-      organization(login: $orgName) {
-        projectsV2(first: 100) {
-          nodes {
-            id
-            title
-            shortDescription
-            url
-            closed
-            updatedAt
-            number
-            items {
-              nodes {
-                id
+        const query = `
+          query($orgName: String!) {
+            ${targetType.toLowerCase()}(login: $orgName) {
+              projectsV2(first: 100) {
+                nodes {
+                  id
+                  title
+                  shortDescription
+                  url
+                  closed
+                  updatedAt
+                  number
+                  items {
+                    nodes {
+                      id
+                    }
+                  }
+                }
               }
             }
           }
-        }
-      }
-    }
-  `;
-        } else if (targetType === "USER") {
-          query = `
-    query($orgName: String!) {
-      user(login: $orgName) {
-        projectsV2(first: 100) {
-          nodes {
-            id
-            title
-            shortDescription
-            url
-            closed
-            updatedAt
-            number
-            items {
-              nodes {
-                id
-              }
-            }
-          }
-        }
-      }
-    }
-  `;
-        } else {
-          throw new Error(`Invalid target type: ${targetType}`);
-        }
+        `;
 
         const response = await this.executeGraphQLQuery(installationId, query, { orgName });
+        const projects = response?.organization?.projectsV2?.nodes || response?.user?.projectsV2?.nodes || [];
 
-        if (response?.organization?.projectsV2?.nodes) {
-          this.orgProjects[installationId] = response.organization.projectsV2.nodes;
-          return this.orgProjects[installationId];
-        }
+        // Clean up projects before storing
+        const cleanedProjects = this.cleanupProjects(projects);
+        this.orgProjects[installationId] = cleanedProjects;
 
-        this.orgProjects[installationId] = [];
-        return [];
+        return cleanedProjects;
       } catch (error) {
         console.error(`Error fetching projects for org ${orgName}:`, error);
         this.error = error.message;
@@ -153,79 +138,8 @@ export const useGithubProjectsStore = defineStore("githubProjects", {
       }
     },
 
-    async fetchAllOrgProjects(installationId, orgNames) {
-      if (!installationId || !Array.isArray(orgNames)) {
-        throw new Error("Installation ID and organization names array are required");
-      }
-
-      const githubAppStore = useGithubAppStore();
-
-      try {
-        if (!githubAppStore.installations[installationId]) {
-          await githubAppStore.requestInstallationToken(installationId);
-        }
-
-        const targetType = githubAppStore.getTargetType(installationId);
-        if (!targetType) {
-          throw new Error(`Could not determine target type for installation ${installationId}`);
-        }
-
-        let query;
-        if (targetType.toUpperCase() === "ORGANIZATION") {
-          query = `
-      query($orgName: String!) {
-        organization(login: $orgName) {
-          projectsV2(first: 100) {
-            nodes {
-              id
-              title
-              url
-            }
-          }
-        }
-      }
-    `;
-        } else if (targetType.toUpperCase() === "USER") {
-          query = `
-      query($orgName: String!) {
-        user(login: $orgName) {
-          projectsV2(first: 100) {
-            nodes {
-              id
-              title
-              url
-            }
-          }
-        }
-      }
-    `;
-        }
-
-        const response = await this.executeGraphQLQuery(installationId, query, { orgName });
-
-        // Extract projects from either organization or user response
-        const projects = response?.organization?.projectsV2?.nodes || response?.user?.projectsV2?.nodes || [];
-
-        // Store projects under the installation ID
-        console.log(installationId);
-        this.orgProjects[installationId] = projects.map(project => ({
-          id: project.id,
-          title: project.title,
-          url: project.url,
-        }));
-
-        return this.orgProjects[installationId];
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-        this.error = error.message;
-        throw error;
-      } finally {
-        this.isLoading = false;
-      }
-    },
-
     clearState() {
-      this.orgProjects = [];
+      this.userProjects = [];
       this.orgProjects = {};
       this.selectedProject = null;
       this.error = null;
@@ -243,8 +157,5 @@ export const useGithubProjectsStore = defineStore("githubProjects", {
     removeOctokitInstance(installationId) {
       delete this.octokitInstances[installationId];
     },
-  },
-  getters: {
-    getProjects: state => installationId => state.orgProjects[installationId] || [],
   },
 });
