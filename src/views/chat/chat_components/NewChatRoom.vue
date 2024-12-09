@@ -1,15 +1,15 @@
+<!-- NewChatRoom.vue -->
 <template>
   <div class="modal" draggable="true">
     <div class="modal-content">
       <button class="close-button" @click="$emit('close')">X</button>
-      <h3>새 채팅방 생성</h3>
+      <p>새 채팅방 만들기</p>
 
       <div v-if="isLoading">로딩 중...</div>
       <div v-else>
       <!-- 멤버 검색 및 선택 -->
       <div class="member-selection">
         <div class="search-container">
-          <label for="search">멤버 검색</label>
           <input
             id="search"
             type="text"
@@ -59,6 +59,7 @@ const authStore = useAuthStore();
 const currentUserId = ref(authStore.user?.userId);
 const chatRoomName = ref(""); // 채팅방 이름
 const isLoading = ref(true);
+const emit = defineEmits(["chatCreated","close"]);
 
 // 사용자 목록 로드
 async function loadUsers() {
@@ -86,7 +87,7 @@ const filteredUsers = computed(() => {
   }
 });
 
-const emit = defineEmits(["close"]);
+
 // 새 채팅방 생성
 async function createNewChat() {
   try {
@@ -101,11 +102,15 @@ async function createNewChat() {
     });
     console.log("응답 데이터 확인: ",response)
 
-    const newRoomId = response.data.data ? response.data.data.roomId : response.data.roomId;
-    const newRoomName = chatRoomName.value;
-    console.log("새 채팅방 생성 성공:", newRoomId);
+    const newRoom = {
+      roomId: response.data?.data?.roomId || response.data?.roomId,
+      chatRoomName: chatRoomName.value,
+      lastMessage: "",
+    };
+
+    console.log("새 채팅방 생성: ", newRoom)
+    emit("chatCreated", newRoom)
     emit("close");
-    router.push({name: "ChatRoom", params: {roomId: newRoomId, chatRoomName: newRoomName}});
   } catch (error) {
     console.error("채팅방 생성 실패:", error);
     alert("채팅방 생성에 실패하였습니다. 다시 시도해주세요.");
@@ -141,6 +146,13 @@ loadUsers();
   overflow: hidden;
 }
 
+.modal-content p {
+  font-size: 20px;
+  font-weight: 400;
+  color: #383838;
+  margin-bottom: 15px;
+  margin-left: 20px;
+}
 /* 닫기 버튼 */
 .close-button {
   position: absolute;
@@ -148,13 +160,14 @@ loadUsers();
   right: 10px;
   background: none;
   border: none;
-  font-size: 1rem;
+  font-size: 0.8rem;
   cursor: pointer;
-  color: #888;
+  color: #c7c5c5;
 }
 .close-button:hover {
   color: #555;
 }
+
 
 /* 멤버 선택 스타일 */
 .member-selection {
@@ -191,8 +204,8 @@ loadUsers();
 
 /* 체크박스 선택 시 스타일 */
 .user-check:checked + .user-check-circle {
-  background-color: #ff9d85;
-  border-color: #fc8d71;
+  background-color: #ffd8e5;
+  border-color: #fdaec9;
   position: relative;
 }
 
@@ -221,11 +234,11 @@ loadUsers();
   width: 10px;
 }
 .scrollable-list::-webkit-scrollbar-thumb {
-    background: #fccfc4; /* 스크롤바 색상 */
+    background: #ffe0ea; /* 스크롤바 색상 */
     border-radius: 10px; /* 스크롤바 둥근 테두리 */
 }
 .scrollable-list::-webkit-scrollbar-track {
-    background: #fff4f1;
+    background: #fdebf1;
 }
 .user-item {
   display: flex;
@@ -238,17 +251,17 @@ loadUsers();
 
 /* 생성 버튼 */
 .create-new {
-  background-color: #ff9d85;
-  color: rgb(34, 34, 34);
+  background-color: #fd8eaa;
+  color: #fff2f2;
   padding: 8px 10px;
   font-size: 1rem;
   border: none;
-  border-radius: 4px;
+  border-radius: 15px;
   cursor: pointer;
   display: block;
   margin: 0 auto;
 }
 .create-new:hover {
-  background-color: #fc8d71;
+  background-color: #fc7294;
 }
 </style>

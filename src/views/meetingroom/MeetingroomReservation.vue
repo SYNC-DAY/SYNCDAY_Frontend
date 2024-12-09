@@ -1,6 +1,6 @@
 <template>
   <div class="reservation-page">
-    <Dialog v-model:visible="isVisible" :style="{ width: '50vw' }" @hide="cancel">
+    <Dialog v-model:visible="isVisible" :style="{ width: '50vw' }" @hide="cancel" modal>
       <div class="reservation-info">
         <p>장소: {{ resourcePlace }}</p>
         <p>회의실 명: {{ resourceName }}</p>
@@ -41,7 +41,7 @@
           </div>
           <div>
             <label for="description">회의 내용:</label>
-            <textarea v-model="formData.description" id="description" required></textarea>
+            <textarea v-model="formData.content" id="description" required></textarea>
           </div>
         </form>
       </div>
@@ -164,7 +164,7 @@ const removeMember = (user) => {
 const handleReservation = async () => {
   const reservationData = {
     title: formData.value.title,
-    description: formData.value.description,
+    content: formData.value.content,
     startTime: new Date(start).toISOString(),
     endTime: new Date(end).toISOString(),
     meetingroomId: resourceId,
@@ -177,6 +177,7 @@ const handleReservation = async () => {
   try {
 
     const response = await axios.post("/meetingroom_reservation", reservationData);
+    console.log("response확인: ", response);
     alert("회의실이 성공적으로 예약되었습니다!");
     emit("closeDialog");
   } catch (error) {

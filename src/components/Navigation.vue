@@ -99,9 +99,6 @@ const authStore = useAuthStore();
 const isPopupVisible = ref(false);
 const searchText = ref(''); // 초기값을 빈 문자열로 변경
 
-// 현재 라우트 경로 계산
-const currentRoute = computed(() => route.path);
-
 // 검색 처리 함수 수정
 const handleSearch = () => {
   const trimmedSearch = searchText.value.trim();
@@ -177,7 +174,6 @@ onUnmounted(() => {
 });
 
 const isRouteActive = (routeName) => {
-	// 경로에 routeName이 포함되어 있는지 확인
 	return route.path.includes(`/${routeName}`);
 };
 </script>
