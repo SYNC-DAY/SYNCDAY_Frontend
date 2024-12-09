@@ -155,8 +155,7 @@
 		isLoading.value = true;
 
 		try {
-			await issueStore.fetchIssues(props.installationId, owner, repo);
-			milestoneIssues.value = issueStore.getIssuesByMilestone(
+			await issueStore.fetchIssuesByMilestone(
 				props.installationId,
 				owner,
 				repo,
