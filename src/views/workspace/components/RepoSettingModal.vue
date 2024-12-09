@@ -3,7 +3,7 @@
 		:closable="true">
 
 		<div>
-			<Listbox v-model="selectedRepo" :options="repositories" filter optionLabel="repoName" />
+			<Listbox v-model="selectedRepo" :options="repositories" filter optionLabel="name" />
 		</div>
 
 
@@ -49,7 +49,7 @@
 	const emit = defineEmits(['update:modelValue']);
 	const projectStore = useProjectStore();
 	const toast = useToast();
-	const repositories = ref([]);
+	const repositories = ref(null);
 	const isVisible = ref(props.modelValue);
 	const selectedRepo = ref();
 	const githubInstallationId = ref(null);
@@ -86,7 +86,7 @@
 	onMounted(async () => {
 		githubInstallationId.value = await projectStore.getInstallationId(props.projectId);
 		console.log(githubInstallationId.value)
-		await fetchRepositories(githubInstallationId.value);
+		repositories.value = await githubRepoStore.fetchRepositories(githubInstallationId.value);
 	});
 
 	// Watch for changes in props.modelValue
@@ -101,8 +101,8 @@
 	const onClickSave = async () => {
 		const projMemberId = await projectStore.getProjMemberId(props.projectId);
 		console.log(selectedRepo.value)
-		console.log({ workspace_id: props.workspaceId, proj_id: props.workspaceId, workspace_name: props.workspaceData.workspace_name, vcs_repo_name: selectedRepo.value.repoName, vcs_repo_url: selectedRepo.value.htmlUrl, proj_member_id: projMemberId })
-		await projectStore.updateWorkspace({ workspace_id: props.workspaceId, proj_id: props.workspaceId, workspace_name: props.workspaceData.workspace_name, vcs_repo_name: selectedRepo.value.repoName, vcs_repo_url: selectedRepo.value.htmlUrl, proj_member_id: projMemberId })
+		console.log({ workspace_id: props.workspaceId, proj_id: props.workspaceId, workspace_name: props.workspaceData.workspace_name, vcs_repo_name: selectedRepo.value.repoName, vcs_repo_url: selectedRepo.value.html_url, proj_member_id: projMemberId })
+		await projectStore.updateWorkspace({ workspace_id: props.workspaceId, proj_id: props.workspaceId, workspace_name: props.workspaceData.workspace_name, vcs_repo_name: selectedRepo.value.name, vcs_repo_url: selectedRepo.value.html_url, proj_member_id: projMemberId })
 		emit('update:modelValue', false)
 	}
 
