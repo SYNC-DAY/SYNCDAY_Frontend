@@ -55,8 +55,6 @@
   import ProgressSpinner from 'primevue/progressspinner';
 
   import SideBar from '@/components/SideBar.vue';
-  import ProjItem from './sidebar/ProjItem.vue';
-  import WorkspaceItem from './sidebar/WorkspaceItem.vue';
 
   const router = useRouter();
   const toast = useToast();
