@@ -35,84 +35,90 @@ import Card from "primevue/card";
 import ProgressBar from "primevue/progressbar";
 import Avatar from "primevue/avatar";
 import InputText from "primevue/inputtext";
-
 import Listbox from "primevue/listbox";
-
 import Checkbox from "primevue/checkbox";
-
 import Menu from "primevue/menu";
 import MultiSelect from "primevue/multiselect";
 /* css */
 import "@/assets/styles/syncday/main.css";
 
-/* authStore */
+/* 비동기 초기화 함수 */
+async function initializeApp() {
+  const app = createApp(App);
 
-const app = createApp(App);
+  /* pinia */
+  const pinia = createPinia();
+  const pinia_persisted_state = createPersistedState({
+    storage: sessionStorage,
+  });
+  pinia.use(pinia_persisted_state);
+  app.use(pinia);
 
-/* pinia */
-const pinia = createPinia();
-const pinia_persisted_state = createPersistedState({
-  storage: sessionStorage,
-});
-pinia.use(pinia_persisted_state);
-app.use(pinia);
-const authStore = useAuthStore();
-await authStore.initializeAuth(); // 초기 인증 상태 설정
+  const authStore = useAuthStore();
+  await authStore.initializeAuth(); // 초기 인증 상태 설정
 
-/* axios */
-setupAxiosInterceptors();
+  /* axios */
+  setupAxiosInterceptors();
 
-/* router */
-const router = await setupRouter();
-app.use(router);
+  /* router */
+  const router = await setupRouter();
+  app.use(router);
 
-/* prime vue */
-const SyncDayPreset = definePreset(Aura, {
-  semantic: {
-    primary: {
-      50: "{pink.50}",
-      100: "{pink.100}",
-      200: "{pink.200}",
-      300: "{pink.300}",
-      400: "{pink.400}",
-      500: "{pink.500}",
-      600: "{pink.600}",
-      700: "{pink.700}",
-      800: "{pink.800}",
-      900: "{pink.900}",
-      950: "{pink.950}",
+  /* prime vue */
+  const SyncDayPreset = definePreset(Aura, {
+    semantic: {
+      primary: {
+        50: "{pink.50}",
+        100: "{pink.100}",
+        200: "{pink.200}",
+        300: "{pink.300}",
+        400: "{pink.400}",
+        500: "{pink.500}",
+        600: "{pink.600}",
+        700: "{pink.700}",
+        800: "{pink.800}",
+        900: "{pink.900}",
+        950: "{pink.950}",
+      },
     },
-  },
-});
-app.use(PrimeVue, {
-  theme: {
-    preset: SyncDayPreset,
-    options: {
-      prefix: "p",
-      darkModeSelector: ".fake-dark-selector",
-      cssLayer: false,
+  });
+  app.use(PrimeVue, {
+    theme: {
+      preset: SyncDayPreset,
+      options: {
+        prefix: "p",
+        darkModeSelector: ".fake-dark-selector",
+        cssLayer: false,
+      },
     },
-  },
+  });
+
+  app.component("Accordion", Accordion);
+  app.component("AccordionTab", AccordionTab);
+  app.component("DataTable", DataTable);
+  app.component("Column", Column);
+  app.component("Button", Button);
+  app.component("Tag", Tag);
+  app.component("ProgressSpinner", ProgressSpinner);
+  app.component("Message", Message);
+  app.use(ConfirmationService);
+  app.use(ToastService);
+  app.component("Toast", Toast);
+  app.component("Dialog", Dialog);
+  app.component("Card", Card);
+  app.component("ProgressBar", ProgressBar);
+  app.component("Avatar", Avatar);
+  app.component("InputText", InputText);
+  app.component("Menu", Menu);
+  app.component("Listbox", Listbox);
+  app.component("Checkbox", Checkbox);
+  app.component("MultiSelect", MultiSelect);
+
+  /* mount */
+  app.mount("#app");
+}
+
+/* 앱 초기화 실행 */
+initializeApp().catch((error) => {
+  console.error("App initialization failed:", error);
 });
-app.component("Accordion", Accordion);
-app.component("AccordionTab", AccordionTab);
-app.component("DataTable", DataTable);
-app.component("Column", Column);
-app.component("Button", Button);
-app.component("Tag", Tag);
-app.component("ProgressSpinner", ProgressSpinner);
-app.component("Message", Message);
-app.use(ConfirmationService);
-app.use(ToastService);
-app.component("Toast", Toast);
-app.component("Dialog", Dialog);
-app.component("Card", Card);
-app.component("ProgressBar", ProgressBar);
-app.component("Avatar", Avatar);
-app.component("InputText", InputText);
-app.component("Menu", Menu);
-app.component("Listbox", Listbox);
-app.component("Checkbox", Checkbox);
-app.component("MultiSelect", MultiSelect);
-/* mount */
-app.mount("#app");
