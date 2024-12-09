@@ -5,7 +5,7 @@
     <button class="leave-chat" @click="leaveChat">채팅방 나가기</button>
     <div class="popup-content">
       <h2>{{ props.chatRoomName }}</h2>
-      <div class="chat-messages">
+      <div class="chat-messages" ref="chatMessages">
         <template v-for="(message, index) in messages" :key="index" class="message-line">
           <div v-if="shouldShowDate(index)" class="date-divider">
             {{ formatDate(messages[index].sentTime) }}
@@ -33,12 +33,11 @@
 </template>
 
 <script setup>
-  import { onUnmounted, onMounted, ref, defineProps, computed } from 'vue';
+  import { onUnmounted, onMounted, ref, defineProps, computed, nextTick } from 'vue';
   import SockJS from 'sockjs-client';
   import { Client } from '@stomp/stompjs';
   import { useAuthStore } from '@/stores/auth';
   import axios from 'axios';
-import { conformsTo } from 'lodash';
 
   const props = defineProps({
     roomId: {
@@ -64,6 +63,7 @@ import { conformsTo } from 'lodash';
   const newMessage = ref(''); // 새 입력 메세지
   const subscriptions = ref({}) // 토픽 구독 채팅방 연결
   const messagesInRoom = ref({})  // 각 채팅방 당 메세지
+  const chatMessages = ref(null)
 
 
 // 날짜 설정
@@ -167,7 +167,6 @@ const formatTime = (timeString) => {
   };
 
   const fetchMessages = async (roomId) => {
-
   try {
     const response = await axios.get(`/chat/room/${roomId}/message`);
     console.log('메세지 데이터 가져오기');
@@ -176,13 +175,21 @@ const formatTime = (timeString) => {
         sentTime: formatDate(message.sentTime),
         sentTime: formatTime(message.sentTime),
       }
+     
       ));
+       await nextTick(() => {
+        scrollToBottom();
+      })
     } catch (error) {
       console.error('채팅 메시지 불러오기 실패:', error);
       messagesInRoom.value[roomId] = [];
     }
   };
-
+  const scrollToBottom = () => {
+    if (chatMessages.value) {
+      chatMessages.value.scrollTop = chatMessages.value.scrollHeight;
+    }
+  };
 
   const sendMessage = () => {
     console.log('전송 시도~!')
