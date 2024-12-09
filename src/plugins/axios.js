@@ -2,7 +2,7 @@
 import axios from "axios";
 import { useAuthStore } from "@/stores/auth";
 
-axios.defaults.baseURL = "/api";
+axios.defaults.baseURL = "http://camp-alb-1280020804.ap-northeast-2.elb.amazonaws.com/api";
 axios.defaults.withCredentials = true; // 쿠키 전송을 위해 필수
 
 export function setupAxiosInterceptors() {
