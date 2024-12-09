@@ -1,52 +1,50 @@
 <template>
     <div v-if="isAssistantVisible" class="assistant-container">
-        <div class="assistant-balloon">
-            <div class="tab-Button-container">
-                <Button :class="{ active: tab === 'today' }" @click="selectTab('today')" outlined>
-                    오늘의 일정
-                </Button>
-                <Button :class="{ active: tab === 'notified' }" @click="selectTab('notice')" outlined>
-                    일정 알림
-                </Button>
-            </div>
-            <div v-if="tab == 'today'" class="today-schedule">
-                <p>반갑습니다! Syncday 비서 문어입니다.</p>
-                <p>오늘의 일정을 안내드립니다.</p>
-                <div class="today-schedule-container">
-                    <table class="today-schedule-table">
-                        <thead>
-                            <tr>
-                                <th>제목</th>
-                                <th>시작</th>
-                                <th>알림여부</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="(schedule, index) in todaySchedules" :key="index"
-                                :class="{ 'past-schedule': isPastSchedule(schedule.start_time) }">
-                                <td>{{ schedule.title }}</td>
-                                <td>{{ formatStart(schedule.start_time) }}</td>
-                                <template v-if="isPastSchedule(schedule.start_time)">
-                                    <td> 이미 시작한 일정</td>
-                                </template>
-                                <template v-else>
-                                    <td class="edit-td" v-if="editingSchedule === schedule.schedule_id">
-                                        <div class="dropdown-menu">
-                                            <select v-model="selectedNotificationTimes[schedule.schedule_id]"
-                                                class="dropdown-select">
-                                                <option disabled value="">시간 선택</option>
-                                                <option v-for="time in notificationTimes" :key="time" :value="time">
-                                                    {{ time }}분 전
-                                                </option>
-                                                <option value="cancle">알림 취소</option>
-                                            </select>
-                                        </div>
-                                        <div v-if="editingSchedule === schedule.schedule_id">
-                                            <Button @click="saveNotificationTime(schedule)" outlined>확인</Button>
-                                            <Button @click="cancelEditing()" outlined>취소</Button>
-                                        </div>
-                                    </td>
+    <div class="assistant-balloon">
+        <div class="tab-Button-container">
+            <Button :class="{ active: tab === 'today' }" @click="selectTab('today')" outlined>
+                오늘의 일정
+            </Button>
+            <Button :class="{ active: tab === 'notice' }" @click="selectTab('notice') " outlined>
+                일정 알림
+            </Button>
+        </div>
+        <div v-if="tab == 'today'" class="today-schedule">
+            <p>반갑습니다! Syncday 비서 문어입니다.</p>
+            <p>오늘의 일정을 안내드립니다.</p>
+            <div class="today-schedule-container">
+                <table class="today-schedule-table">
+                    <thead>
+                        <tr>
+                            <th>제목</th>
+                            <th>시작</th>
+                            <th>알림여부</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(schedule, index) in todaySchedules" :key="index" :class="{'past-schedule': isPastSchedule(schedule.start_time)}">
+                            <td>{{ schedule.title }}</td>
+                            <td>{{ formatStart(schedule.start_time) }}</td>
+                            <template v-if="isPastSchedule(schedule.start_time)">
+                                <td> 이미 시작한 일정</td>
+                            </template>
+                            <template v-else>
+                                <td class="edit-td" v-if="editingSchedule === schedule.schedule_id">
+                                    <div class="dropdown-menu">
+                                        <select v-model="selectedNotificationTimes[schedule.schedule_id]" class="dropdown-select">
+                                            <option disabled value="">시간 선택</option>
+                                            <option v-for="time in notificationTimes" :key="time" :value="time">
+                                                {{ time }}분 전
+                                            </option>
+                                            <option value="cancle">알림 취소</option>
+                                        </select>
+                                    </div>
+                                    <div v-if="editingSchedule === schedule.schedule_id">
+                                        <Button @click="saveNotificationTime(schedule)" outlined>확인</Button>
+                                        <Button @click="cancelEditing()" outlined>취소</Button>
+                                    </div>
+                                </td>
 
                                     <template v-else>
                                         <td>
@@ -91,7 +89,8 @@
         </div>
     </div>
     <div v-else class="assistant-Button-container" @click="show">
-        <img alt="누르면 비서가 나오는 이미지" />
+    <i class="pi pi-briefcase" ></i>
+
     </div>
 </template>
 
@@ -306,16 +305,20 @@
 </script>
 
 <style scoped>
-
-    .assistant-container {
-        position: fixed;
-        bottom: 1rem;
-        right: 1rem;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        z-index: 1;
-    }
+.active {
+    background-color:#FE5D86;
+    color: white;
+    font-weight: bold;
+}
+.assistant-container {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1;
+}
 
     /* 비서 아바타 */
     .assistant-avatar {

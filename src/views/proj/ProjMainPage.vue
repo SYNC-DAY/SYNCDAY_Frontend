@@ -53,10 +53,11 @@
   import { useProjectStore } from '@/stores/proj/useProjectStore';
   import { useAuthStore } from '@/stores/auth.js';
   import ProgressSpinner from 'primevue/progressspinner';
-
+  import NewProjModal from './components/NewProjModal.vue';
   import SideBar from '@/components/SideBar.vue';
-  import ProjItem from './sidebar/ProjItem.vue';
-  import WorkspaceItem from './sidebar/WorkspaceItem.vue';
+  import ProjItem from './SideBar/ProjItem.vue';
+  import WorkspaceItem from './SideBar/WorkspaceItem.vue';
+  // import WorkspaceItem from './sidebar/WorkspaceItem.vue';
 
   const router = useRouter();
   const toast = useToast();
