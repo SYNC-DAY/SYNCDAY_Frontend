@@ -155,12 +155,13 @@
 		isLoading.value = true;
 
 		try {
-			await issueStore.fetchIssuesByMilestone(
+			milestoneIssues.value = await issueStore.fetchIssuesByMilestone(
 				props.installationId,
 				owner,
 				repo,
 				milestone.number
 			);
+
 		} catch (error) {
 			console.error('Failed to fetch milestone issues:', error);
 		} finally {
