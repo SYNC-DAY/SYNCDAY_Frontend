@@ -17,7 +17,6 @@ export function useSearch() {
     { id: "cardboard", name: "카드보드", icon: "pi pi-credit-card" },
     { id: "card", name: "카드", icon: "pi pi-th-large" },
     { id: "comments", name: "댓글", icon: "pi pi-comment" },
-    { id: "chats", name: "채팅", icon: "pi pi-comments" },
     { id: "files", name: "파일", icon: "pi pi-file" },
   ];
 
@@ -27,7 +26,6 @@ export function useSearch() {
     "cardboard",
     "card",
     "comments",
-    "chats",
     "files",
   ];
 
@@ -38,7 +36,6 @@ export function useSearch() {
     cardboard: "/cardboards/search",
     card: "/cards/search",
     // comments: '/comments/search',
-    // chats: '/chats/search',
     // files: '/files/search'
   };
 
@@ -56,7 +53,6 @@ export function useSearch() {
     cardboard: [],
     card: [],
     comments: [],
-    chats: [],
     files: [],
   });
 
