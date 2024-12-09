@@ -13,6 +13,4 @@ export default defineConfig({
       "sockjs-client": "sockjs-client/dist/sockjs.min.js",
     },
   },
-  server: {
-  },
 });
