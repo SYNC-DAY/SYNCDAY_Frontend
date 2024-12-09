@@ -17,7 +17,7 @@
                 />- 
                 <Button 
                     :label="teamStore.boardTitle"  
-                    icon="pi pi-user" 
+                    icon="pi pi-align-justify" 
                     disabled 
                     rounded 
                     class="board-name-container"
@@ -189,7 +189,7 @@ onMounted(async () => {
 
 /* 수정 모드 스타일 */
 .detail-header{
-    margin-bottom: 0.5rem;
+    margin-bottom: 3rem;
 }
 .post-detail-container{
     display:flex;
@@ -226,9 +226,9 @@ onMounted(async () => {
 }
 
 .detail-body{
-    border: 1px solid #FF9D85;
+    border: 1px solid #009688;
     border-radius: 2.5rem;
-    box-shadow: 0 4px 8px rgba(255, 157, 133, 0.5);
+    box-shadow: 0 1.5px 3px rgba(59, 122, 63, 0.5);   
     padding: 2rem;
     width: 70vw;
 }
@@ -240,8 +240,8 @@ onMounted(async () => {
 .team-name-container {
     margin-top: 1rem;
     margin-right: 1rem;
-    background-color: #FDC387;
-    border-color: #FDC387;
+    background-color: #4DB6AC;
+    border-color: #4DB6AC;
     cursor: default;
     color: black;
     opacity:1;
@@ -249,8 +249,8 @@ onMounted(async () => {
 .board-name-container {
     margin-top: 1rem;
     margin-right: 1rem;
-    background-color: #FDC387;
-    border-color: #FDC387;
+    background-color: #4DB6AC;
+    border-color: #4DB6AC;
     cursor: default;
     color: black;
     opacity:1;
@@ -264,7 +264,7 @@ onMounted(async () => {
 }
 
 .content{
-    border-top: #FDC387 solid 1px;
+    border-top: #009688 solid 1px;
     margin-top: 2rem;
     padding: 2rem;
     font-size: 1.2rem;
