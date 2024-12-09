@@ -155,6 +155,7 @@
   const repositoryInfo = ref(null);
   const showModal = ref(false)
   const showMilestoneSelection = ref(false)
+  const repoUrl = ref(null)
   const props = defineProps({
     projectId: {
       type: [String, Number],
@@ -291,7 +292,7 @@
     // For example:
     console.log("repoInfo:")
     console.log(repoInfo)
-    this.repoUrl.value = repoInfo?.vcs_repo_url;
+    repoUrl.value = repoInfo?.vcs_repo_url;
     projectStore.updateWorkspace({ ...workspaceDetails.value, ...repoInfo })
 
   }
