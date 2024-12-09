@@ -69,7 +69,7 @@ import { conformsTo } from 'lodash';
 // 날짜 설정
 const formatDate = (timeString) => {
   const date = new Date(timeString);
-  return `---------- ${date.getFullYear()}년 ${String(date.getMonth() + 1).padStart(2, "0")}월 ${String(date.getDate()).padStart(2, "0")}일 ----------`
+  return ` ${date.getFullYear()}년 ${String(date.getMonth() + 1).padStart(2, "0")}월 ${String(date.getDate()).padStart(2, "0")}일 `
 }
 // 시간 설정
 const formatTime = (timeString) => {
@@ -229,7 +229,7 @@ const formatTime = (timeString) => {
     });
     console.log('채팅방 나가기 응답: ', response.data);
 
-    if (response.data.success) {
+    if (response.status === 200) {
       isVisible.value = false;
       props.removeChatFromList(props.roomId);
       console.log('채팅방 나가기 성공: ', props.removeChatFromList);
