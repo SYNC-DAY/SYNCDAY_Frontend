@@ -1,7 +1,6 @@
 // stores/cardboardStore.js
 import { defineStore } from "pinia";
-// import { api } from "@/api";
-
+import axios from "axios";
 export const useCardboardStore = defineStore("cardboard", {
   state: () => ({
     cardboards: {}, // Keyed by cardboard ID
@@ -35,7 +34,7 @@ export const useCardboardStore = defineStore("cardboard", {
 
       try {
         this.isLoading = true;
-        // const response = await axios.get(`/cardboards/workacp/${cardboardId}`);
+        const response = await axios.get(`/cardboards/workspaces/${cardboardId}`);
 
         const cardboards = response.data;
         cardboards.forEach(cardboard => {
@@ -60,7 +59,7 @@ export const useCardboardStore = defineStore("cardboard", {
 
       try {
         this.isLoading = true;
-        const response = await api.post(`/projects/${cardboardData.project_id}/cardboards`, cardboardData);
+        const response = await axios.post("/cardboards", cardboardData);
 
         const cardboard = response.data;
         this.cardboards[cardboard.id] = cardboard;
@@ -82,7 +81,7 @@ export const useCardboardStore = defineStore("cardboard", {
 
       try {
         this.isLoading = true;
-        const response = await api.patch(`/cardboards/${cardboardId}`, updates);
+        const response = await axios.patch(`/cardboards/${cardboardId}`, updates);
 
         const updatedCardboard = response.data;
         this.cardboards[cardboardId] = updatedCardboard;
@@ -103,7 +102,7 @@ export const useCardboardStore = defineStore("cardboard", {
 
       try {
         this.isLoading = true;
-        // await api.delete(`/cardboards/${cardboardId}`);
+        // await axios.delete(`/cardboards/${cardboardId}`);
 
         delete this.cardboards[cardboardId];
         delete this.cards[cardboardId];
@@ -122,7 +121,7 @@ export const useCardboardStore = defineStore("cardboard", {
 
       try {
         this.isLoading = true;
-        // const response = await api.get(`/cardboards/${cardboardId}/cards`);
+        // const response = await axios.get(`/cardboards/${cardboardId}/cards`);
 
         const cards = response.data;
         this.cards[cardboardId] = cards;
@@ -145,7 +144,7 @@ export const useCardboardStore = defineStore("cardboard", {
 
       try {
         this.isLoading = true;
-        // const response = await api.post(`/cardboards/${cardData.cardboard_id}/cards`, cardData);
+        // const response = await axios.post(`/cardboards/${cardData.cardboard_id}/cards`, cardData);
 
         const card = response.data;
         if (!this.cards[cardData.cardboard_id]) {
@@ -171,7 +170,7 @@ export const useCardboardStore = defineStore("cardboard", {
 
       try {
         this.isLoading = true;
-        // const response = await api.patch(`/cardboards/${cardboardId}/cards/${cardId}`, updates);
+        // const response = await axios.patch(`/cardboards/${cardboardId}/cards/${cardId}`, updates);
 
         const updatedCard = response.data;
         const cardIndex = this.cards[cardboardId].findIndex(card => card.id === cardId);
@@ -198,7 +197,7 @@ export const useCardboardStore = defineStore("cardboard", {
 
       try {
         this.isLoading = true;
-        // await api.delete(`/cardboards/${cardboardId}/cards/${cardId}`);
+        // await axios.delete(`/cardboards/${cardboardId}/cards/${cardId}`);
 
         this.cards[cardboardId] = this.cards[cardboardId].filter(card => card.id !== cardId);
       } catch (error) {
