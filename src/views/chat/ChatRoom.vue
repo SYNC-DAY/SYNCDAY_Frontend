@@ -5,7 +5,7 @@
     <button class="leave-chat" @click="leaveChat">채팅방 나가기</button>
     <div class="popup-content">
       <h2>{{ props.chatRoomName }}</h2>
-      <div class="chat-messages">
+      <div class="chat-messages" ref="chatMessages">
         <template v-for="(message, index) in messages" :key="index" class="message-line">
           <div v-if="shouldShowDate(index)" class="date-divider">
             {{ formatDate(messages[index].sentTime) }}
@@ -33,12 +33,11 @@
 </template>
 
 <script setup>
-  import { onUnmounted, onMounted, ref, defineProps, computed } from 'vue';
+  import { onUnmounted, onMounted, ref, defineProps, computed, nextTick } from 'vue';
   import SockJS from 'sockjs-client';
   import { Client } from '@stomp/stompjs';
   import { useAuthStore } from '@/stores/auth';
   import axios from 'axios';
-import { conformsTo } from 'lodash';
 
   const props = defineProps({
     roomId: {
@@ -64,22 +63,30 @@ import { conformsTo } from 'lodash';
   const newMessage = ref(''); // 새 입력 메세지
   const subscriptions = ref({}) // 토픽 구독 채팅방 연결
   const messagesInRoom = ref({})  // 각 채팅방 당 메세지
+  const chatMessages = ref(null)
 
 
 // 날짜 설정
 const formatDate = (timeString) => {
   const date = new Date(timeString);
-  return ` ${date.getFullYear()}년 ${String(date.getMonth() + 1).padStart(2, "0")}월 ${String(date.getDate()).padStart(2, "0")}일 `
-}
+  if (isNaN(date.getTime())) {
+    console.warn('유효하지 않은 날짜:', timeString);
+    return '유효하지 않은 날짜';
+  }
+  return `${date.getFullYear()}년 ${String(date.getMonth() + 1).padStart(2, "0")}월 ${String(date.getDate()).padStart(2, "0")}일`;
+};
 // 시간 설정
 const formatTime = (timeString) => {
   const date = new Date(timeString);
+  if (isNaN(date.getTime())) {
+    console.warn('유효하지 않은 시간:', timeString);
+    return '';
+  }
   const hours = String(date.getHours() % 12 || 12).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
   const ampm = date.getHours() < 12 ? '오전' : '오후';
-
-    return `${ampm} ${hours}:${minutes}`;
-  };
+  return `${ampm} ${hours}:${minutes}`;
+};
   const shouldShowDate = (index) => {
     if (index === 0) return true;
     const currentDate = formatDate(messages.value[index].sentTime);
@@ -167,7 +174,6 @@ const formatTime = (timeString) => {
   };
 
   const fetchMessages = async (roomId) => {
-
   try {
     const response = await axios.get(`/chat/room/${roomId}/message`);
     console.log('메세지 데이터 가져오기');
@@ -176,13 +182,21 @@ const formatTime = (timeString) => {
         sentTime: formatDate(message.sentTime),
         sentTime: formatTime(message.sentTime),
       }
+     
       ));
+       await nextTick(() => {
+        scrollToBottom();
+      })
     } catch (error) {
       console.error('채팅 메시지 불러오기 실패:', error);
       messagesInRoom.value[roomId] = [];
     }
   };
-
+  const scrollToBottom = () => {
+    if (chatMessages.value) {
+      chatMessages.value.scrollTop = chatMessages.value.scrollHeight;
+    }
+  };
 
   const sendMessage = () => {
     console.log('전송 시도~!')
@@ -279,7 +293,7 @@ const formatTime = (timeString) => {
   top: 50px;
   right: 0%;
   transform: translateX(-50%);
-  width: 30%;
+  width: 500px;
   height: 70%;
   background-color: #f7f6f6;
   border: 1px solid #ddd;
@@ -324,9 +338,9 @@ h2 {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  gap: 15px;
+  gap: 10px;
   overflow-y: auto;
-  padding: 10px;
+  padding: 1px;
   background-color: #fdf6f9;
   border-radius: 5px;
   margin-bottom: 20px;
