@@ -29,7 +29,7 @@
     <div class="widget-container">
       <div class="content-container">
         <div class="title-container">
-          <p class="widget-title">팀 최신</p>
+          <p class="widget-title">팀 최신 게시글</p>
         </div>
         <TeamBoardList/>
       </div>

@@ -31,9 +31,10 @@
                     <h1 class="post-title">{{ post.title }}</h1>
                     <div class="post-meta">
                         <div class="author">작성자: {{ post.userName }}({{ post.userPosition }})</div>
-                        <div class="date">작성일: {{ post.createdAt }}</div>
-                        <div v-if="post.createdAt != post.updatedAt" class="date">수정일: {{ post.updatedAt }}</div>
-                    </div>
+                        <div class="date">작성일: {{ formatDate(post.createdAt) }}</div>
+                        <div v-if="post.createdAt != post.updatedAt" class="date">
+                            수정일: {{ formatDate(post.updatedAt) }}</div>
+                        </div>
                     <div class="button-container">
                         <div v-if="isMyPost" class="my-post-button">
                             <Button outlined v-if="!isEditMode" @click="toggleEditMode">수정</Button>
@@ -89,6 +90,11 @@ const post = ref({}); // 게시글 정보
 const isMyPost = ref(false); // 내가 작성한 글 여부
 const isEditMode = ref(false); // 수정 모드 여부
 const editedPost = ref({}); // 수정 중인 게시글
+
+const formatDate = (date) => {
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
+    return new Date(date).toLocaleDateString('ko-KR', options);
+};
 
 const removeHtmlTags = (html) => {
     const tempElement = document.createElement('div');
