@@ -9,6 +9,7 @@ export const useGithubAppStore = defineStore("githubApp", {
     error: null,
     installationWindow: null,
     checkWindowInterval: null,
+    isinitialized: false,
   }),
 
   getters: {
@@ -82,6 +83,7 @@ export const useGithubAppStore = defineStore("githubApp", {
         this.error = error.response?.data?.error || "Failed to fetch installations";
       } finally {
         this.isLoading = false;
+        this.isinitialized = true;
       }
     },
 

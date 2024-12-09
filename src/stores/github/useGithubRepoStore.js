@@ -66,6 +66,9 @@ export const useGithubRepoStore = defineStore("githubRepo", {
       try {
         this.isLoading = true;
         const githubAppStore = useGithubAppStore();
+        if (!githubAppStore.isinitialized) {
+          await githubAppStore.fetchInstallations();
+        }
         const targetType = githubAppStore.getTargetType(installationId);
         const accountName = githubAppStore.getLogin(installationId);
         console.log("Account Name:", accountName); // Log the correct variable

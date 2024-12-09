@@ -211,6 +211,11 @@
 	const handleProjectSelect = (id) => {
 		selectedGithubProjectId.value = id;
 	}
+	watch(props.visible, async (newVal) => {
+		if (newVal) {
+			githubAppStore.fetchInstallations();
+		}
+	})
 	watch(selectedInstallationId, async (newVal) => {
 		if (newVal) {
 			try {
@@ -325,7 +330,7 @@
 
 	// Lifecycle hooks
 	onMounted(() => {
-		githubAppStore.fetchInstallations();
+		// githubAppStore.fetchInstallations();
 
 		window.addEventListener('message', handleAuthMessage)
 	})
