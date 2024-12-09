@@ -1,184 +1,205 @@
 import { defineStore } from "pinia";
 import { useGithubAppStore } from "./useGithubAppStore";
-import { useGithubRepoStore } from "./useGithubRepoStore";
-export const useGithubMilestoneStore = defineStore("githubMilestone", {
+import { Octokit } from "@octokit/rest";
+
+export const useGithubMilestoneStore = defineStore("githubMilestoneStore", {
   state: () => ({
-    milestones: {}, // Keyed by `${owner}-${repo}`
+    milestones: {}, // { [installationId:owner:repo]: milestoneData[] }
     isLoading: false,
+    isFetching: false,
     error: null,
+    isInitialized: false,
+    octokitInstances: {}, // { [installationId]: OctokitInstance }
   }),
 
-  getters: {
-    getMilestones: state => (owner, repo) => {
-      const key = `${owner}-${repo}`;
-      return state.milestones[key] || [];
+  actions: {
+    async getOctokitInstance(installationId) {
+      try {
+        const githubAppStore = useGithubAppStore();
+        const installation = githubAppStore.installations[installationId];
+
+        if (!installation?.access_token) {
+          await githubAppStore.requestInstallationToken(installationId);
+        }
+
+        const updatedInstallation = githubAppStore.installations[installationId];
+
+        if (!updatedInstallation?.access_token) {
+          throw new Error("No access token available for this installation");
+        }
+
+        if (!this.octokitInstances[installationId]) {
+          this.octokitInstances[installationId] = new Octokit({
+            auth: updatedInstallation.access_token,
+          });
+        }
+
+        return this.octokitInstances[installationId];
+      } catch (error) {
+        console.error("Failed to initialize Octokit:", error);
+        throw new Error(`Failed to initialize GitHub client: ${error.message}`);
+      }
+    },
+
+    async initializeStore(installationId, owner, repo) {
+      if (this.isInitialized) return;
+
+      this.isLoading = true;
+      try {
+        await this.fetchMilestones(installationId, owner, repo);
+        this.isInitialized = true;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async fetchMilestones(installationId, owner, repo) {
+      this.isFetching = true;
+      this.error = null;
+      const key = `${installationId}:${owner}:${repo}`;
+
+      try {
+        const octokit = await this.getOctokitInstance(installationId);
+        const response = await octokit.issues.listMilestones({
+          owner,
+          repo,
+          state: "open",
+          sort: "due_on",
+          direction: "asc",
+        });
+
+        // Process milestones to add computed properties
+        const processedMilestones = response.data.map(milestone => ({
+          ...milestone,
+          total_issues: milestone.open_issues + milestone.closed_issues,
+          progress_percentage: milestone.open_issues + milestone.closed_issues === 0 ? 0 : Math.round((milestone.closed_issues / (milestone.open_issues + milestone.closed_issues)) * 100),
+        }));
+
+        // Update store with new milestones
+        this.milestones[key] = processedMilestones;
+        return processedMilestones;
+      } catch (error) {
+        this.error = error.message || "Failed to fetch milestones";
+        console.error("Error fetching milestones:", error);
+        throw error;
+      } finally {
+        this.isFetching = false;
+      }
+    },
+
+    async createMilestone(installationId, owner, repo, milestoneData) {
+      this.isLoading = true;
+      this.error = null;
+
+      try {
+        const octokit = await this.getOctokitInstance(installationId);
+        const response = await octokit.issues.createMilestone({
+          owner,
+          repo,
+          ...milestoneData,
+        });
+
+        if (response.status === 201) {
+          // Refresh milestones after creation
+          await this.fetchMilestones(installationId, owner, repo);
+          return response.data;
+        }
+        return null;
+      } catch (error) {
+        this.error = error.message || "Failed to create milestone";
+        console.error("Error creating milestone:", error);
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async updateMilestone(installationId, owner, repo, milestoneNumber, milestoneData) {
+      this.isLoading = true;
+      this.error = null;
+
+      try {
+        const octokit = await this.getOctokitInstance(installationId);
+        const response = await octokit.issues.updateMilestone({
+          owner,
+          repo,
+          milestone_number: milestoneNumber,
+          ...milestoneData,
+        });
+
+        if (response.status === 200) {
+          // Refresh milestones after update
+          await this.fetchMilestones(installationId, owner, repo);
+          return response.data;
+        }
+        return null;
+      } catch (error) {
+        this.error = error.message || "Failed to update milestone";
+        console.error("Error updating milestone:", error);
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async deleteMilestone(installationId, owner, repo, milestoneNumber) {
+      this.isLoading = true;
+      this.error = null;
+
+      try {
+        const octokit = await this.getOctokitInstance(installationId);
+        const response = await octokit.issues.deleteMilestone({
+          owner,
+          repo,
+          milestone_number: milestoneNumber,
+        });
+
+        if (response.status === 204) {
+          // Remove from local state
+          const key = `${installationId}:${owner}:${repo}`;
+          if (this.milestones[key]) {
+            this.milestones[key] = this.milestones[key].filter(m => m.number !== milestoneNumber);
+          }
+          return true;
+        }
+        return false;
+      } catch (error) {
+        this.error = error.message || "Failed to delete milestone";
+        console.error("Error deleting milestone:", error);
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    clearMilestones(installationId, owner, repo) {
+      const key = `${installationId}:${owner}:${repo}`;
+      this.milestones[key] = [];
+      this.error = null;
     },
   },
 
-  actions: {
-    async fetchMilestones(installationId) {
-      const githubAppStore = useGithubAppStore();
-      const githubRepoStore = useGithubRepoStore();
-      if (!installationId) {
-        throw new Error("No active GitHub installation found");
-      }
-      const owner = await githubRepoStore.getOwnerName(installationId);
-      const repo = await githubRepoStore.getRepoName(installationId);
-      try {
-        this.isLoading = true;
+  getters: {
+    isLoadingAny: state => state.isLoading || state.isFetching,
 
-        const query = `
-          query($owner: String!, $repo: String!) {
-            repository(owner: $owner, name: $repo) {
-              milestones(first: 100, orderBy: {field: DUE_DATE, direction: DESC}) {
-                nodes {
-                  id
-                  number
-                  title
-                  description
-                  dueOn
-                  state
-                  closedAt
-                  progressPercentage: closed
-                  totalIssueCount: issues {
-                    totalCount
-                  }
-                  openIssueCount: issues(states: OPEN) {
-                    totalCount
-                  }
-                }
-              }
-            }
-          }
-        `;
-
-        const response = await this.executeGraphQLQuery(installationId, query, {
-          owner,
-          repo,
-        });
-
-        const milestones = response?.repository?.milestones?.nodes || [];
-        const transformedMilestones = milestones.map(milestone => ({
-          id: milestone.id,
-          number: milestone.number,
-          title: milestone.title,
-          description: milestone.description,
-          due_on: milestone.dueOn,
-          state: milestone.state.toLowerCase(),
-          closed_at: milestone.closedAt,
-          progress_percentage: milestone.progressPercentage,
-          total_issues: milestone.totalIssueCount.totalCount,
-          open_issues: milestone.openIssueCount.totalCount,
-        }));
-
-        const key = `${owner}-${repo}`;
-        this.milestones[key] = transformedMilestones;
-        return transformedMilestones;
-      } catch (error) {
-        console.error(`Error fetching milestones for ${owner}/${repo}:`, error);
-        this.error = error.message;
-        throw error;
-      } finally {
-        this.isLoading = false;
-      }
+    getMilestones: state => (installationId, owner, repo) => {
+      const key = `${installationId}:${owner}:${repo}`;
+      return state.milestones[key] || [];
     },
 
-    async createMilestone(owner, repo, { title, description, dueOn }) {
-      const githubAppStore = useGithubAppStore();
-      const installationId = githubAppStore.installationId;
-
-      if (!installationId) {
-        throw new Error("No active GitHub installation found");
-      }
-
-      if (!owner || !repo) {
-        throw new Error("Owner and repo are required");
-      }
-
-      try {
-        this.isLoading = true;
-        const mutation = `
-          mutation($input: CreateMilestoneInput!) {
-            createMilestone(input: $input) {
-              milestone {
-                id
-                number
-                title
-                description
-                dueOn
-                state
-              }
-            }
-          }
-        `;
-
-        const response = await this.executeGraphQLQuery(installationId, mutation, {
-          input: {
-            repositoryId: `${owner}/${repo}`,
-            title,
-            description,
-            dueOn,
-          },
-        });
-
-        // Refresh milestones after creation
-        await this.fetchMilestones(owner, repo);
-        return response?.createMilestone?.milestone;
-      } catch (error) {
-        console.error(`Error creating milestone in ${owner}/${repo}:`, error);
-        this.error = error.message;
-        throw error;
-      } finally {
-        this.isLoading = false;
-      }
+    getMilestoneById: state => (installationId, owner, repo, milestoneId) => {
+      const key = `${installationId}:${owner}:${repo}`;
+      return state.milestones[key]?.find(m => m.id === milestoneId);
     },
 
-    async updateMilestone(owner, repo, milestoneNumber, updates) {
-      const githubAppStore = useGithubAppStore();
-      const installationId = githubAppStore.installationId;
+    getMilestoneByNumber: state => (installationId, owner, repo, milestoneNumber) => {
+      const key = `${installationId}:${owner}:${repo}`;
+      return state.milestones[key]?.find(m => m.number === milestoneNumber);
+    },
 
-      if (!installationId) {
-        throw new Error("No active GitHub installation found");
-      }
-
-      if (!owner || !repo || !milestoneNumber) {
-        throw new Error("Owner, repo, and milestone number are required");
-      }
-
-      try {
-        this.isLoading = true;
-        const mutation = `
-          mutation($input: UpdateMilestoneInput!) {
-            updateMilestone(input: $input) {
-              milestone {
-                id
-                number
-                title
-                description
-                dueOn
-                state
-              }
-            }
-          }
-        `;
-
-        const response = await this.executeGraphQLQuery(installationId, mutation, {
-          input: {
-            milestoneId: milestoneNumber,
-            ...updates,
-          },
-        });
-
-        // Refresh milestones after update
-        await this.fetchMilestones(owner, repo);
-        return response?.updateMilestone?.milestone;
-      } catch (error) {
-        console.error(`Error updating milestone ${milestoneNumber} in ${owner}/${repo}:`, error);
-        this.error = error.message;
-        throw error;
-      } finally {
-        this.isLoading = false;
-      }
+    hasMilestones: state => (installationId, owner, repo) => {
+      const key = `${installationId}:${owner}:${repo}`;
+      return (state.milestones[key]?.length || 0) > 0;
     },
   },
 });

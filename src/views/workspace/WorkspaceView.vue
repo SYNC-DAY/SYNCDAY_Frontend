@@ -110,7 +110,7 @@
     :workspaceData="workspaceDetails" @update="updateRepositoryInfo" />
 
   <MilestoneSelection :is-open="showMilestoneSelection" :installationId="githubInstallationId" :owner="owner"
-    :repo="repo" :project-id="projectId" @close="showModal = false" :repositoryInfo="repositoryInfo" />
+    :projectId="projectId" @close="showModal = false" :repoUrl="workspaceDetails?.vcs_repo_url || null" />
 </template>
 
 <script setup>
@@ -284,7 +284,6 @@
     console.log("repoInfo:")
     console.log(repoInfo)
     projectStore.updateWorkspace({ ...workspaceDetails.value, ...repoInfo })
-    repositoryInfo.value = repoInfo
 
   }
   watch(
