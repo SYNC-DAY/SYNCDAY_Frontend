@@ -24,7 +24,7 @@
                     </thead>
                     <tbody>
                         <tr v-for="(schedule, index) in todaySchedules" :key="index" :class="{'past-schedule': isPastSchedule(schedule.start_time)}">
-                            <td>{{ schedule.title }}</td>
+                            <td>{{ schedule.title || '(제목없음)' }}</td>
                             <td>{{ formatStart(schedule.start_time) }}</td>
                             <template v-if="isPastSchedule(schedule.start_time)">
                                 <td> 이미 시작한 일정</td>
@@ -66,13 +66,13 @@
                     <table class="notice-schedule-table">
                         <thead>
                             <tr>
-                                <th>Title</th>
-                                <th>Start Time</th>
+                                <th>제목</th>
+                                <th>시작</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="(schedule, index) in notiedSchedules" :key="index">
-                                <td>{{ schedule.title }}</td>
+                                <td>{{ schedule.title || '(제목없음)' }}</td>
                                 <td>{{ formatStart(schedule.start_time) }}</td>
                             </tr>
                         </tbody>
@@ -306,7 +306,7 @@
 
 <style scoped>
 .active {
-    background-color:#FE5D86;
+    background-color:#009688;
     color: white;
     font-weight: bold;
 }

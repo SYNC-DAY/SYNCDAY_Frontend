@@ -99,8 +99,8 @@ onMounted(async () => {
 }
 
 .team-post-container:hover {
-    border-color: #FE5D86;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-color: #009688;
+    box-shadow: 0 1.5px 3px rgba(59, 122, 63, 0.5);
 }
 
 .no-boards-container {
@@ -115,10 +115,7 @@ onMounted(async () => {
     border-radius: 4px;
 }
 
-.team-post-container span {
-    font-weight: bold;
-    color: #007bff;
-}
+
 
 .team-post-container p {
     margin: 0;
@@ -131,15 +128,6 @@ onMounted(async () => {
     color: #999;
 }
 
-.team-post-container .comments-count {
-    background-color: #007bff;
-    color: #fff;
-    padding: 0.2rem 0.5rem;
-    border-radius: 3px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    text-align: center;
-}
 
 
 </style>
