@@ -65,7 +65,9 @@
 	import Dialog from 'primevue/dialog';
 	import Button from 'primevue/button';
 	import ProgressBar from 'primevue/progressbar';
+	import { useAuthStore } from '@/stores/auth';
 
+	const authStore = useAuthStore();
 	const props = defineProps({
 		isOpen: {
 			type: Boolean,
@@ -187,6 +189,7 @@
 				progress_status: selectedMilestone.value.progress_percentage,
 				vcs_type: 'GITHUB',
 				cards: milestoneIssues.value.map(issue => ({
+					user_id: authStore.user.userId,
 					title: issue.title,
 					content: issue.body,
 					status: issue.state === 'OPEN' ? 'TODO' : 'DONE',
