@@ -167,10 +167,11 @@ export const useProjectStore = defineStore("projectStore", {
         if (response.data.success) {
           const workspaceData = this.workspaces[projectId][workspaceId];
           this.workspaces[projectId][workspaceId] = { ...workspaceData, ...response.data.data };
+          return this.workspaces[projectId][workspaceId];
         }
       } catch (error) {
-        return false;
         console.error(error);
+        return false;
       }
     },
     async updateWorkspace(workspaceData) {

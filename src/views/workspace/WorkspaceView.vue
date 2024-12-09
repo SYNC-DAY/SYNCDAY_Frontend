@@ -173,7 +173,7 @@
   const showCardTag = ref(null);
 
   const fetchWorkspace = async () => {
-    workspaceDetails.value = projectStore.fetchWorkspace(props.projectId, props.workspaceId)
+    workspaceDetails.value = await projectStore.fetchWorkspace(props.projectId, props.workspaceId)
   }
   const fetchInstallationId = async () => {
     try {
