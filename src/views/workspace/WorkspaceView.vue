@@ -107,7 +107,7 @@
     </div>
   </div>
   <RepoSettingModal v-model="showModal" :project-id="projectId" :workspace-id="workspaceId"
-    :workspaceData="workspaceDetails" />
+    :workspaceData="workspaceDetails" @update="updateRepositoryInfo" />
 
   <MilestoneSelection :is-open="showMilestoneSelection" :installation-id="installationId" :owner="owner" :repo="repo"
     :project-id="projectId" @close="showModal = false" />
@@ -277,7 +277,11 @@
       }
     });
   };
-
+  const updateRepositoryInfo = (repoInfo) => {
+    // Update your local state with the new repository info
+    // For example:
+    repositoryInfo.value = repoInfo
+  }
   watch(
     [
       () => props.workspaceId,

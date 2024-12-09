@@ -46,7 +46,7 @@
 		}
 	});
 
-	const emit = defineEmits(['update:modelValue']);
+	const emit = defineEmits(['update:modelValue', 'update:updateRepositoryInfo']);
 	const projectStore = useProjectStore();
 	const toast = useToast();
 	const repositories = ref(null);
@@ -103,6 +103,11 @@
 		console.log(selectedRepo.value)
 		console.log({ workspace_id: props.workspaceId, proj_id: props.workspaceId, workspace_name: props.workspaceData.workspace_name, vcs_repo_name: selectedRepo.value.repoName, vcs_repo_url: selectedRepo.value.html_url, proj_member_id: projMemberId })
 		await projectStore.updateWorkspace({ workspace_id: props.workspaceId, proj_id: props.workspaceId, workspace_name: props.workspaceData.workspace_name, vcs_repo_name: selectedRepo.value.name, vcs_repo_url: selectedRepo.value.html_url, proj_member_id: projMemberId })
+		emit('update', selectedRepo.value)
+		closeModal();
+	}
+	const closeModal = () => {
+		selectedRepo.value = null
 		emit('update:modelValue', false)
 	}
 
