@@ -18,7 +18,7 @@ import { setupAxiosInterceptors } from "../src/plugins/axios.js";
 import { definePreset } from "@primevue/themes";
 import Aura from "@primevue/themes/aura";
 import PrimeVue from "primevue/config";
-import { ConfirmationService } from "primevue";
+import ConfirmationService from "primevue/confirmationservice";
 import ToastService from "primevue/toastservice";
 import Toast from "primevue/toast";
 import "primeicons/primeicons.css";
@@ -34,6 +34,14 @@ import Dialog from "primevue/dialog";
 import Card from "primevue/card";
 import ProgressBar from "primevue/progressbar";
 import Avatar from "primevue/avatar";
+import InputText from "primevue/inputtext";
+import Listbox from "primevue/listbox";
+import Checkbox from "primevue/checkbox";
+import RadioButton from "primevue/radiobutton";
+import Menu from "primevue/menu";
+import MultiSelect from "primevue/multiselect";
+import ConfirmDialog from "primevue/confirmdialog";
+
 /* css */
 import "@/assets/styles/syncday/main.css";
 
@@ -101,5 +109,12 @@ app.component("Dialog", Dialog);
 app.component("Card", Card);
 app.component("ProgressBar", ProgressBar);
 app.component("Avatar", Avatar);
+app.component("InputText", InputText);
+app.component("Menu", Menu);
+app.component("Listbox", Listbox);
+app.component("Checkbox", Checkbox);
+app.component("MultiSelect", MultiSelect);
+app.component("RadioButton", RadioButton);
+app.component("ConfirmDialog", ConfirmDialog);
 /* mount */
 app.mount("#app");

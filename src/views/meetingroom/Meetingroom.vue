@@ -42,7 +42,7 @@
       v-if="isDetailsDialogVisible"
       :scheduleId="selectedScheduleId"
       @closeDialog="closeDetailsDialog"
-  @reservationDeleted="closeDetailsDialog"
+      @reservationDeleted="handleReservationDeleted"
     />
   </div>
 </template>
@@ -67,6 +67,7 @@ export default {
       selectedRoomName: "",
       rooms: [],
       filteredRooms: [],
+      reservations: [], // 초기화
       reservationData: {},
       selectedDate: new Date().toISOString().split("T")[0],
       showReservationButton: false,
@@ -158,11 +159,12 @@ export default {
         .then((response) => {
           const scheduleMap = {};
           response.data.data.forEach((reservation) => {
-            const { schedule_id, meeting_time, meetingroom_id } = reservation;
+            const { schedule_id, meeting_time, meetingroom_id, userInfo } = reservation;
             if (!scheduleMap[schedule_id]) {
               scheduleMap[schedule_id] = {
                 id: schedule_id,
-                title: `예약 ID: ${schedule_id}`,
+                // title: `예약 ID: ${schedule_id}`,
+                title: `예약자: ${userInfo[0].username}`,
                 start: meeting_time,
                 end: meeting_time,
                 resourceId: meetingroom_id,
@@ -293,16 +295,24 @@ export default {
 
   console.log("예약 정보:", this.reservationDetails);
 
-  // 모달 열기 및 데이터 전달
+// 버튼을 숨김
+this.showReservationButton = false;
+
+// 모달 열기 상태를 false로 했다가 다시 true로 변경
+this.isReservationDialogVisible = false;
+this.$nextTick(() => {
   this.isReservationDialogVisible = true;
+});
+
   console.log("isReservationDialogVisible 상태:", this.isReservationDialogVisible);
 
-  this.showReservationButton = false;
 
 },
 async closeReservationDialog() {
       this.isReservationDialogVisible = false; // 모달 닫기
       console.log("모달이 닫혔습니다.");
+      this.reservationDetails = {}; // 예약 세부 정보 초기화
+      this.showReservationButton = false; // 버튼 초기화
       await this.fetchReservations(this.selectedRoomName);
     },
 
@@ -316,6 +326,21 @@ async closeReservationDialog() {
 
     },
    
+    handleReservationDeleted(deletedScheduleId) {
+    // reservations 배열에서 삭제된 예약을 필터링
+    this.reservations = this.reservations.filter(
+      (reservation) => reservation.schedule_id !== deletedScheduleId
+    );
+
+    // 캘린더 업데이트 (만약 캘린더를 사용 중이라면)
+    const calendarApi = this.getCalendar2Api();
+    if (calendarApi) {
+      const event = calendarApi.getEventById(deletedScheduleId);
+      if (event) {
+        event.remove(); // 해당 이벤트를 캘린더에서 삭제
+      }
+    }
+  },
   },
 
 

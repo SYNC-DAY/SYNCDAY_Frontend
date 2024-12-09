@@ -11,6 +11,7 @@ import searchRoutes from "./search.js";
 import oauthRoutes from "./oauth.js";
 import inviationRoutes from "./inviation.js";
 import TeamRoutes from "./team.js";
+import ChatRoom from "@/views/chat/ChatRoom.vue";
 export async function setupRouter() {
   const router = createRouter({
     history: createWebHistory(),
@@ -21,12 +22,11 @@ export async function setupRouter() {
         component: () => import("@/views/user/Main.vue"),
         meta: { requiresAuth: true },
       },
-      // {
-      //   path: "/:roomId",
-      //   name: "ChatRoom",
-      //   component: () => import("@/views/chat/ChatRoom.vue"),
-      //   props: true,
-      // },
+      {
+        path: "/chat",
+        name: "ChatRoomList",
+        component: () => import("@/views/chat/ChatRoomList.vue"), // 채팅방 목록
+      },
       ...userRoutes,
       ...projectRoutes,
       ...calendarRoutes,

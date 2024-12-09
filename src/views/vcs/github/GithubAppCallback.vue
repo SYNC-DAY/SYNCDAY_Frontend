@@ -6,103 +6,96 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
-import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
-import { useGithubAppStore } from '@/stores/github/useGithubAppStore';
+	import { onMounted, ref } from 'vue';
+	import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
+	import { useGithubAppStore } from '@/stores/github/useGithubAppStore';
 
-const loading = ref(true);
-const error = ref(null);
-const githubAuthStore = useGithubAuthStore();
-const githubAppStore = useGithubAppStore();
-
-
-const handleOAuthCallback = async (code, state) => {
-	// Validate state exists
-	if (!state) {
-		throw new Error('State parameter is missing');
-	}
-
-	// Get stored state
+	const loading = ref(true);
+	const error = ref(null);
+	const githubAuthStore = useGithubAuthStore();
+	const githubAppStore = useGithubAppStore();
 
 
-	try {
-		// Decode and parse state data
+	onMounted(async () => {
+		try {
+			const urlParams = new URLSearchParams(window.location.search);
+			const code = urlParams.get('code');
+			const state = urlParams.get('state');
+			const installationId = urlParams.get('installation_id')
+			const setupAction = urlParams.get('setup_action')
 
-		// Handle OAuth
-		await githubAuthStore.handleAuthCallback(code);
-
-		// Clear stored state
-		sessionStorage.removeItem('github_auth_state');
-
-		// Notify opener with original context
-		notifyOpener('auth-success', {
-			redirect: stateData.redirect,
-			projectId: stateData.projectId
-		});
-
-	} catch (error) {
-		console.error('OAuth callback error:', error);
-		throw new Error('Failed to process OAuth callback');
-	}
-};
-
-onMounted(async () => {
-	try {
-		const urlParams = new URLSearchParams(window.location.search);
-		const code = urlParams.get('code');
-		const state = urlParams.get('state');
-		const installationId = urlParams.get('installation_id')
-		const setupAction = urlParams.get('setup_action')
-		console.log(code)
-		console.log(state)
-		if (code && state) {
-			await handleOAuthCallback(code, state);
-		} else if (installationId && setupAction) {
-			await handleInstallationCallback(installationId, setupAction);
-		} else {
-			throw new Error('Invalid callback parameters');
+			console.log((`urlParamsd:${urlParams}`))
+			if (code && state) {
+				await handleOAuthCallback(code, state);
+			}
+			else if (installationId && setupAction) {
+				await handleInstallationCallback(installationId, setupAction);
+			} else {
+				throw new Error('Invalid callback parameters');
+			}
+		} catch (err) {
+			error.value = err.message;
+			notifyOpener('error', err.message);
+		} finally {
+			loading.value = false;
+			setTimeout(() => window.close(), 1000);
 		}
-	} catch (err) {
-		error.value = err.message;
-		notifyOpener('error', err.message);
-	} finally {
-		loading.value = false;
-		// Close window after short delay
-		setTimeout(() => window.close(), 1000);
-	}
-});
+	});
+	const handleOAuthCallback = async (code, state) => {
+		try {
+			// state 유효성 검증에 store의 getter 사용
+			if (!githubAuthStore.isStateValid) {
+				throw new Error('State validation failed');
+			}
+			if (state !== githubAuthStore.state) {
+				throw new Error('State mismatch');
+			}
 
-const handleInstallationCallback = async (installationId, setupAction) => {
+			// 리다이렉트 URL 가져오기
+			const redirectUrl = localStorage.getItem('github_auth_redirect');
 
+			// OAuth 처리
+			await githubAuthStore.handleAuthCallback(code, state);
 
-	await githubAppStore.handleInstallationCallback(installationId, setupAction);
-	localStorage.removeItem('github_installation_project_id');
+			// 성공 알림
+			notifyOpener('auth-success', {
+				redirect: redirectUrl
+			});
 
-	notifyOpener('installation-success', { installationId });
-};
+		} catch (error) {
+			console.error('OAuth callback error:', error);
+			throw new Error('Failed to process OAuth callback');
+		}
+	};
 
-const notifyOpener = (type, data = null) => {
-	if (window.opener) {
-		const message = {
-			type: `github-${type}`,
-			data: data
-		};
-		window.opener.postMessage(message, window.location.origin);
-		window.close();
-	}
-};
+	const handleInstallationCallback = async (installationId, setupAction) => {
+		await githubAppStore.handleInstallationCallback(installationId, setupAction);
+		localStorage.removeItem('github_installation_project_id');
+		notifyOpener('installation-success', { installationId });
+	};
+
+	const notifyOpener = (type, data = null) => {
+		if (window.opener) {
+			const message = {
+				type: `github-${type}`,
+				data: data
+			};
+			window.opener.postMessage(message, window.location.origin);
+			window.close();
+		}
+	};
 </script>
 
 <style scoped>
-.github-callback {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	height: 100vh;
-}
+	.github-callback {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		height: 100vh;
+	}
 
-.error {
-	color: red;
-	text-align: center;
-}
+	.error {
+		color: red;
+		text-align: center;
+	}
 </style>

@@ -5,7 +5,20 @@
     <div v-else>
         Loading...
     </div>
+    
+    <Dialog class="dialog"
+        v-model:visible="isvisibleToday"
+        :header="`${formatDateToKorean(todayList[0].start)} 시작 일정`"
+        :style="{ width: '25rem' }"
+    >
+        <div v-for="schedule in todayList">
+            {{ schedule.title }}
+            {{ schedule.allDay ? '종일' : formatTime(schedule.start )}}
+        </div>
+    </Dialog>
+
 </template>
+
 
 <script setup>
 import { ref, onMounted } from 'vue';
@@ -14,15 +27,44 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import FullCalendar from '@fullcalendar/vue3';
 import axios from 'axios';
+import { useAuthStore } from '@/stores/auth';
 
+const isvisibleToday = ref(false);
+const authStore = useAuthStore();
 const events = ref([]);
 const dayMap = ref(new Map());
 const isLoaded = ref(false); // 로딩 상태 관리
+const todayList = ref([{start:null}]);
+
+
+const formatTime = (dateString) => {
+    const date = new Date(dateString); // 문자열을 Date 객체로 변환
+
+    let hours = date.getHours(); // 시 (24시간 형식)
+    hours = hours-9 >0 ? hours-9 : hours + 15;
+    const minutes = String(date.getMinutes()).padStart(2, '0'); // 분 (두 자리)
+
+    const period = hours >= 12 ? '오후' : '오전'; // 오전/오후 구분
+    hours = hours % 12 || 12; // 12시간 형식으로 변환 (0시 -> 12시)
+
+    return `${period} ${hours}:${minutes}`;
+};
+
+
+const formatDateToKorean = (dateString) => {
+    const date = new Date(dateString); // 문자열을 Date 객체로 변환
+
+    // 월과 일을 두 자리로 가져오기
+    const month = date.getMonth() + 1; // 월은 0부터 시작하므로 +1
+    const day = date.getDate();
+
+    return `${month}월 ${day}일`;
+};
 
 // 스케줄 데이터를 가져오고 `dayMap` 업데이트
 const fetchSchedules = async () => {
     try {
-        const response = await axios.get(`/schedule/my?userId=1`);
+        const response = await axios.get(`/schedule/my?userId=${authStore.user.userId}`);
         const data = response.data.data;
         events.value = data.map(schedule => ({
             id: schedule.schedule_id,
@@ -30,7 +72,7 @@ const fetchSchedules = async () => {
             content: schedule.content,
             start: new Date(new Date(schedule.start_time).getTime() + 9 * 60 * 60 * 1000), // UTC+09 변환
             end: new Date(new Date(schedule.end_time).getTime() + 9 * 60 * 60 * 1000), // UTC+09 변환
-            allDay: false,
+            allDay: new Date(schedule.start_time).getHours() === 0 && new Date(schedule.start_time).getMinutes() === 0? true: false,
             backgroundColor: '#FF9D85',
             borderColor: '#FF9D85',
         }));
@@ -81,15 +123,15 @@ const calendarOptions = ref({
                 let color;
 
                 if (intensity === 1 / 5) {
-                    color = "#FFDD00"; // 연핑크
+                    color = "#bfbfbf "; // 연핑크
                 } else if (intensity === 2 / 5) {
-                    color = "#FFB200"; // 핑크
+                    color = "#808080 "; // 핑크
                 } else if (intensity === 3 / 5) {
-                    color = "#FF9500"; // 연주황
+                    color = "#404040 "; // 연주황
                 } else if (intensity === 4 / 5) {
-                    color = "#FF5E00";   // 주황
+                    color = "#202020";   // 주황
                 } else if (intensity === 1) {
-                    color = "#FF0000";     // 빨강
+                    color = "#000000";     // 빨강
                 }
 
                 // 배경색 설정
@@ -109,11 +151,11 @@ const calendarOptions = ref({
 
                 // 클릭 이벤트 추가
                 info.el.addEventListener('click', () => {
-                    const eventDetails = todayEvents
-                        .map(event => `Title: ${event.title}\n Content: ${event.content} \n Time: ${new Date(event.start).toISOString()} - ${event.end.toLocaleString()}`)
-                        .join('\n\n');
-                    alert(`Events on ${dateKey}:\n\n${eventDetails}`);
+                    isvisibleToday.value = true;
+                    // todayEvents 배열을 start 값 기준으로 내림차순 정렬
+                    todayList.value = [...todayEvents].sort((a, b) => new Date(a.start) -  new Date(b.start));
                 });
+
             } else {
                 dayNumber.style.backgroundColor = 'transparent';
                 info.el.style.cursor = 'default'; // 클릭 불가능한 느낌

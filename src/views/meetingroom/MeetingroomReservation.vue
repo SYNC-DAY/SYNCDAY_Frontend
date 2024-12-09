@@ -1,13 +1,39 @@
 <template>
   <div class="reservation-page">
-    <Dialog v-model:visible="isVisible" :style="{ width: '50vw' } " @hide="cancel">
+    <Dialog v-model:visible="isVisible" :style="{ width: '50vw' }" @hide="cancel" modal>
       <div class="reservation-info">
         <p>장소: {{ resourcePlace }}</p>
         <p>회의실 명: {{ resourceName }}</p>
         <p>수용인원: {{ resourceCapacity }}</p>
       </div>
       <div class="reservation-detail">
-        <p>예약 날짜: {{ formatKST(start)  }} ~ {{ formatKST(end) }}</p>
+        <p>예약 날짜: {{ formatKST(start) }} ~ {{ formatKST(end) }}</p>
+        <span>참석자 추가: </span>
+        <InputText type="text" v-model="value1" placeholder="이름 입력" @input="() => searchUsers(value1)" />
+        <ul v-if="searchResults.length" class="user-list">
+          <li v-for="user in searchResults" :key="user.userId" class="user-item">
+            <span>{{ user.name }}</span>
+            <Button
+              icon="pi pi-user-plus"
+              @click="addMember(user)"
+              class="p-button-text p-button-success"
+            />
+          </li>
+        </ul>
+        <p v-else-if="value1.trim() && !searchResults.length">검색 결과가 없습니다.</p>
+        <div>
+          <h4>참석자 목록:</h4>
+          <ul>
+            <li v-for="attendee in selectedAttendees" :key="attendee.user_id">
+              {{ attendee.name }}
+              <Button
+                icon="pi pi-user-minus"
+                class="p-button-text p-button-danger"
+                @click="removeMember(attendee)"
+              />
+            </li>
+          </ul>
+        </div>
         <form @submit.prevent="handleReservation">
           <div>
             <label for="title">회의 제목:</label>
@@ -15,7 +41,7 @@
           </div>
           <div>
             <label for="description">회의 내용:</label>
-            <textarea v-model="formData.description" id="description" required></textarea>
+            <textarea v-model="formData.content" id="description" required></textarea>
           </div>
         </form>
       </div>
@@ -24,7 +50,6 @@
         <p>이메일: {{ user.email || "정보 없음" }}</p>
         <p>전화번호: {{ user.phoneNumber || "정보 없음" }}</p>
       </div>
-      <!-- <button @click="$emit('closeDialog')">취소</button> -->
       <Button @click="handleReservation">확인</Button>
     </Dialog>
   </div>
@@ -32,8 +57,8 @@
 
 <script setup>
 import { ref } from "vue";
-
 import axios from "axios";
+import { InputText } from "primevue";
 import { useAuthStore } from "@/stores/auth";
 
 const props = defineProps({
@@ -47,8 +72,11 @@ const props = defineProps({
 
 const emit = defineEmits(["closeDialog"]);
 const { start, end, resourceId, resourceName, resourcePlace, resourceCapacity } = props;
+
 const isVisible = ref(true);
-const visible1 = ref(false);
+const value1 = ref("");
+const searchResults = ref([]);
+const selectedAttendees = ref([]);
 const authStore = useAuthStore();
 const user = ref({});
 const formData = ref({
@@ -56,8 +84,6 @@ const formData = ref({
   description: "",
 });
 
-
-// 한국 표준시(KST) 형식으로 변환하는 함수
 const formatKST = (utcTime) => {
   const date = new Date(utcTime);
   return date.toLocaleString("ko-KR", {
@@ -71,7 +97,6 @@ const formatKST = (utcTime) => {
   });
 };
 
-// 사용자 정보 가져오기
 const fetchUserInfo = async () => {
   if (!authStore.user.userId) {
     console.error("userId가 없습니다.");
@@ -85,20 +110,74 @@ const fetchUserInfo = async () => {
   }
 };
 
-// 예약 정보 제출
+const searchUsers = async (keyword) => {
+  try {
+    const sanitizedKeyword = keyword.trim();
+    if (!sanitizedKeyword) {
+      searchResults.value = [];
+      return;
+    }
+
+    const response = await axios.get(`/user/search`, {
+      params: {
+        keyword: sanitizedKeyword,
+      },
+    });
+
+    if (response.data.data) {
+      searchResults.value = response.data.data.filter((user) =>
+        user.name.includes(sanitizedKeyword)
+      );
+
+    } else {
+      searchResults.value = [];
+    }
+  } catch (error) {
+    console.error("Error fetching search results:", error);
+    searchResults.value = [];
+  }
+};
+
+const addMember = (user) => {
+  // 주관자인 경우 추가 불가
+  if (user.userId === authStore.user.userId) {
+    alert("주관자는 참석자로 추가할 수 없습니다.");
+    return;
+  }
+
+  // 이미 참석자로 추가된 경우 추가 불가
+  if (selectedAttendees.value.some((attendee) => attendee.userId === user.userId)) {
+    alert("이미 추가된 사용자입니다.");
+    return;
+  }
+
+  // 참석자 추가
+  selectedAttendees.value.push(user);
+};
+
+const removeMember = (user) => {
+  selectedAttendees.value = selectedAttendees.value.filter(
+    (attendee) => attendee.userId !== user.userId
+  );
+};
+
 const handleReservation = async () => {
   const reservationData = {
     title: formData.value.title,
-    description: formData.value.description,
+    content: formData.value.content,
     startTime: new Date(start).toISOString(),
     endTime: new Date(end).toISOString(),
     meetingroomId: resourceId,
-    userId: authStore.user.userId, 
+    userId: authStore.user.userId,
+    // attendeeIds: selectedAttendees.value.map((user) => user.userId),
+    attendeeIds: selectedAttendees.value.map((user) => user.userId),
   };
+  console.log("회의실 예약정보: ", reservationData);
 
   try {
+
     const response = await axios.post("/meetingroom_reservation", reservationData);
-    console.log("API 응답:", response.data);
+    console.log("response확인: ", response);
     alert("회의실이 성공적으로 예약되었습니다!");
     emit("closeDialog");
   } catch (error) {
@@ -107,14 +186,9 @@ const handleReservation = async () => {
   }
 };
 
-// 취소 버튼 클릭 시
-const cancel = () => {
-  emit("closeDialog");
-};
-
-// 컴포넌트가 렌더링될 때 사용자 정보를 가져옵니다.
 fetchUserInfo();
 </script>
+
 
 <style scoped>
 .reservation-page {

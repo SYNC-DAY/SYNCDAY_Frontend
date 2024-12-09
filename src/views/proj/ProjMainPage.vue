@@ -1,99 +1,114 @@
 <template>
   <SideBar>
-    <!-- Project List -->
-    <template v-for="proj in projects" :key="proj.proj_id">
-      <ProjItem :title="proj.proj_name" :isActive="activeProject === proj.proj_id"
-        :initialBookmarked="proj.bookmark_status === 'BOOKMARKED'" :progress="proj.progress_status"
-        :isExpanded="expandedProjects.includes(proj.proj_id)" @toggle-expansion="toggleProjectExpansion(proj.proj_id)"
-        @select="selectProject(proj.proj_id)" @bookmark-changed="handleBookmarkChange(proj.proj_id, $event)">
-        <!-- Workspace List -->
-        <template v-for="workspace in proj.workspaces" :key="workspace.workspace_id">
-          <WorkspaceItem :workspaceId="workspace.workspace_id" :projectId="proj.proj_id"
-            :title="workspace.workspace_name" :isActive="activeWorkspace === workspace.workspace_id"
-            :progress="workspace.progress_status" :initialBookmarked="workspace.bookmark_status === 'BOOKMARKED'"
-            @select="selectWorkspace" @bookmark-changed="handleWorkspaceBookmark(workspace.workspace_id, $event)" />
-        </template>
-      </ProjItem>
-    </template>
+    <!-- Loading state -->
+    <div v-if="isLoading" class="p-4">
+      <ProgressSpinner />
+    </div>
 
-    <!-- New Project Button -->
-    <div class="container-row justify-center" style="padding: 1rem">
+    <!-- Error state -->
+    <div v-else-if="error" class="p-4 text-red-600">
+      {{ error }}
+      <Button label="Retry" icon="pi pi-refresh" @click="handleRetryLoad" />
+    </div>
+
+    <!-- Empty state -->
+    <div v-else-if="!hasProjects" class="p-4">
+      <p class="text-gray-500 mb-4">No projects available</p>
       <Button label="New Project" icon="pi pi-plus" @click="showNewProjModal = true" />
     </div>
+
+    <!-- Projects list -->
+    <template v-else>
+      <template v-for="project in projects" :key="project.proj_id">
+        <ProjItem :proj="project" :isActive="project.proj_id === activeProjectId"
+          :isExpanded="expandedProjects.includes(project.proj_id)" :projId="project.proj_id" :userId="userId"
+          @toggle-expansion="toggleProjectExpansion(project.proj_id)" @select="selectProject(project.proj_id)">
+          <template v-for="workspace in project.workspaces" :key="workspace.workspace_id">
+            <WorkspaceItem :workspaceId="workspace.workspace_id" :projectId="project.proj_id"
+              :title="workspace.workspace_name" :isActive="workspace.workspace_id === activeWorkspaceId"
+              :progress="workspace.progress_status" :initialBookmarked="workspace.bookmark_status === 'BOOKMARKED'"
+              @select="selectWorkspace(project.proj_id, workspace.workspace_id)"
+              @bookmark-changed="handleWorkspaceBookmark" />
+          </template>
+        </ProjItem>
+      </template>
+
+      <div class="container-row justify-center p-4">
+        <Button label="New Project" icon="pi pi-plus" @click="showNewProjModal = true" />
+      </div>
+    </template>
   </SideBar>
 
-  <!-- New Project Modal -->
   <NewProjModal v-model:visible="showNewProjModal" @submit="handleProjectSubmit" />
 
-  <!-- Project Settings Modal -->
-  <!-- Main Content Area -->
   <div class="proj-main">
-    <router-view :projects="projects" />
+    <router-view />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, provide, nextTick } from 'vue';
-import { useAuthStore } from "@/stores/auth.js";
+  import { ref, onMounted, onUnmounted, computed, provide } from 'vue';
+  import { useRouter } from 'vue-router';
+  import { storeToRefs } from 'pinia';
+  import { useProjectStore } from '@/stores/proj/useProjectStore';
+  import { useAuthStore } from '@/stores/auth';
+  import { useToast } from 'primevue/usetoast';
 
-import { useGithubAppStore } from '@/stores/github/useGithubAppStore';
+  // Components
+  import ProgressSpinner from 'primevue/progressspinner';
+  import NewProjModal from './components/NewProjModal.vue';
+  import SideBar from '@/components/SideBar.vue';
+  import ProjItem from './sidebar/ProjItem.vue';
+  import WorkspaceItem from './sidebar/WorkspaceItem.vue';
 
-import { storeToRefs } from "pinia";
-import { useRouter } from 'vue-router';
-import axios from 'axios';
-import { useToast } from 'primevue/usetoast';
+  // Store setup
+  const projectStore = useProjectStore();
+  const authStore = useAuthStore();
+  const router = useRouter();
+  const toast = useToast();
 
-import SideBar from '@/components/SideBar.vue';
-import ProjItem from './sidebar/ProjItem.vue';
-import WorkspaceItem from './sidebar/WorkspaceItem.vue';
-import NewProjModal from './components/NewProjModal.vue';
+  // Destructure store properties with storeToRefs for reactivity
+  const {
+    projects,
+    isLoading,
+    error,
+    activeProjectId,
+    activeWorkspaceId,
+    hasProjects
+  } = storeToRefs(projectStore);
 
+  const { user } = storeToRefs(authStore);
 
-// Initialize services
-const toast = useToast();
-const router = useRouter();
-const authStore = useAuthStore();
-const githubAppStore = useGithubAppStore();
-const { user } = storeToRefs(authStore);
+  // Local state
+  const expandedProjects = ref([]);
+  const showNewProjModal = ref(false);
 
-// State management
-const projects = ref([]);
-const workspaces = ref([]);
-provide('projects', projects);
-provide('workspaces', workspaces);
+  // Provide active IDs to child components
+  provide('activeProjectId', activeProjectId);
+  provide('activeWorkspaceId', activeWorkspaceId);
 
-const activeWorkspace = ref(null);
-const activeProject = ref(null);
-const expandedProjects = ref([]);
-const showNewProjModal = ref(false);
+  // Methods
+  const handleRetryLoad = async () => {
+    try {
+      await projectStore.initializeStore(user.value.userId);
+    } catch (error) {
+      toast.add({
+        severity: 'error',
+        summary: '로드 실패',
+        detail: '프로젝트를 불러오는데 실패했습니다.',
+        life: 3000
+      });
+    }
+  };
 
+  const handleProjectSubmit = async (projectData) => {
+    try {
+      await projectStore.createProject({
+        userId: userId.value,
+        projectData
+      });
 
-// Project submission handler
-const handleProjectSubmit = async (projectData) => {
-  try {
-    console.log(projectData);
-    const response = await axios.post("/projs/", {
-      user_id: user.value.userId,
-      proj_name: projectData.name,
-      start_time: projectData.startDate ? new Date(projectData.startDate).toISOString() : null,
-      end_time: projectData.endDate ? new Date(projectData.endDate).toISOString() : null
-    });
-
-    if (response.data.success) {
-      // Add new project to local state
-      const newProject = {
-        proj_id: response.data.data.proj_id,
-        proj_name: projectData.name,
-        start_time: projectData.startDate,
-        end_time: projectData.endDate,
-        progress_status: 0,
-        bookmark_status: 'NONE',
-        participation_status: 'OWNER',
-        created_at: new Date().toISOString(),
-        workspaces: []
-      };
-
-      projects.value.push(newProject);
+      showNewProjModal.value = false;
 
       toast.add({
         severity: 'success',
@@ -101,244 +116,81 @@ const handleProjectSubmit = async (projectData) => {
         detail: '새 프로젝트가 생성되었습니다.',
         life: 3000
       });
-
-      // Auto-select the new project
-      nextTick(() => {
-        selectProject(newProject.proj_id);
+    } catch (error) {
+      toast.add({
+        severity: 'error',
+        summary: '프로젝트 생성 실패',
+        detail: error.message || '프로젝트 생성 중 오류가 발생했습니다.',
+        life: 3000
       });
-
-    } else {
-      throw new Error(response.data.message || '프로젝트 생성에 실패했습니다.');
     }
-  } catch (error) {
-    console.error('Project creation failed:', error);
-    toast.add({
-      severity: 'error',
-      summary: '프로젝트 생성 실패',
-      detail: error.message || '프로젝트 생성 중 오류가 발생했습니다.',
-      life: 3000
-    });
-  }
-};
+  };
 
-// Navigation handlers
-const selectWorkspace = async (workspaceId, projId) => {
-  try {
-    activeWorkspace.value = workspaceId;
-    activeProject.value = projId;
-
-    await router.push({
-      name: 'Workspace',
-      params: {
-        projectId: projId,
-        workspaceId: workspaceId
-      }
-    });
-  } catch (err) {
-    console.error('Workspace navigation failed:', err);
-    toast.add({
-      severity: 'error',
-      summary: '이동 실패',
-      detail: '워크스페이스로 이동하는 중 오류가 발생했습니다.',
-      life: 3000
-    });
-  }
-};
-
-const selectProject = async (projId) => {
-  try {
-    activeProject.value = projId;
-    activeWorkspace.value = null;
-    await router.push({
-      name: 'Project',
-      params: { projectId: projId }
-    });
-  } catch (err) {
-    console.error('Project navigation failed:', err);
-    toast.add({
-      severity: 'error',
-      summary: '이동 실패',
-      detail: '프로젝트로 이동하는 중 오류가 발생했습니다.',
-      life: 3000
-    });
-  }
-};
-
-// Project expansion handler
-const toggleProjectExpansion = (projId) => {
-  const index = expandedProjects.value.indexOf(projId);
-  if (index === -1) {
-    expandedProjects.value.push(projId);
-  } else {
-    expandedProjects.value.splice(index, 1);
-  }
-};
-
-// Bookmark handlers
-const handleBookmarkChange = async (projId, isBookmarked) => {
-  try {
-    const response = await axios({
-      method: isBookmarked ? 'POST' : 'DELETE',
-      url: '/proj-members/bookmark',
-      params: {
-        userId: user.value.userId,
-        projId: projId
-      }
-    });
-
-    if (response.data.success) {
-      // Update local state
-      const projIndex = projects.value.findIndex(p => p.proj_id === projId);
-      if (projIndex !== -1) {
-        projects.value[projIndex] = {
-          ...projects.value[projIndex],
-          bookmark_status: isBookmarked ? 'BOOKMARKED' : 'NONE'
-        };
-      }
-    } else {
-      throw new Error(response.data.error || '북마크 상태 변경에 실패했습니다');
+  const selectProject = async (projId) => {
+    try {
+      projectStore.setActiveProject(projId);
+      await router.push({
+        name: 'Project',
+        params: { projectId: projId }
+      });
+    } catch (err) {
+      toast.add({
+        severity: 'error',
+        summary: '이동 실패',
+        detail: '프로젝트로 이동하는 중 오류가 발생했습니다.',
+        life: 3000
+      });
     }
-  } catch (err) {
-    console.error('Bookmark update failed:', err);
-    toast.add({
-      severity: 'error',
-      summary: '북마크 실패',
-      detail: '북마크 상태를 변경하는 중 오류가 발생했습니다.',
-      life: 3000
-    });
-  }
-};
+  };
 
-// Initial data fetch
-const fetchProjs = async () => {
-  try {
-    const response = await axios.get(`/proj-members/users/${user.value.userId}`);
-    if (!response.data.success) {
-      throw new Error(response.data.error || '프로젝트 목록을 불러오는데 실패했습니다');
-    }
-
-    const userProjMembers = response.data.data[0]?.proj_member_infos || [];
-    projects.value = userProjMembers.map(proj => ({
-      proj_id: proj.proj_id,
-      proj_name: proj.proj_name,
-      bookmark_status: proj.bookmark_status,
-      participation_status: proj.participation_status,
-      progress_status: proj.progress_status,
-      start_time: proj.start_time,
-      end_time: proj.end_time,
-      created_at: proj.created_at,
-      // Add VCS installation information
-      vcs_installation_id: proj.vcs_installation_id,
-      vcs_installation: proj.vcs_installation_id ? githubAppStore.getInstallationById(proj.vcs_installation_id) : null,
-      vcs_type: proj.vcs_type,
-      vcs_proj_url: proj.vcs_proj_url,
-      workspaces: proj.workspaces.map(ws => ({
-        workspace_id: ws.workspace_id,
-        workspace_name: ws.workspace_name,
-        created_at: ws.created_at,
-        progress_status: ws.progress_status,
-        vcs_type: ws.vcs_type,
-        vcs_repo_url: ws.vcs_repo_url,
-        proj_id: ws.proj_id
-      }))
-    }));
-
-    // Keep workspace mapping
-    workspaces.value = userProjMembers.flatMap(proj =>
-      proj.workspaces.map(ws => ({
-        ...ws,
-        project_id: proj.proj_id
-      }))
-    );
-
-    // If needed, you can also fetch GitHub installation details for projects with vcs_installation_id
-    for (const project of projects.value) {
-      if (project.vcs_installation_id) {
-        try {
-          await githubAppStore.fetchProjectInstallation(project.vcs_installation_id);
-
-        } catch (error) {
-          console.error(`Failed to fetch GitHub installation for project ${project.proj_id}:`, error);
+  const selectWorkspace = async (projId, workspaceId) => {
+    try {
+      await projectStore.setActiveWorkspace(projId, workspaceId);
+      await router.push({
+        name: 'Workspace',
+        params: {
+          projectId: projId,
+          workspaceId: workspaceId
         }
-      }
+      });
+    } catch (err) {
+      toast.add({
+        severity: 'error',
+        summary: '이동 실패',
+        detail: '워크스페이스로 이동하는 중 오류가 발생했습니다.',
+        life: 3000
+      });
     }
+  };
 
-  } catch (err) {
-    console.error('Projects fetch failed:', err);
-    toast.add({
-      severity: 'error',
-      summary: '로딩 실패',
-      detail: '프로젝트 목록을 불러오는데 실패했습니다.',
-      life: 3000
-    });
-  }
-};
+  const toggleProjectExpansion = (projId) => {
+    const index = expandedProjects.value.indexOf(projId);
+    if (index === -1) {
+      expandedProjects.value.push(projId);
+    } else {
+      expandedProjects.value.splice(index, 1);
+    }
+  };
 
-onMounted(() => {
-  fetchProjs();
-});
+  // Lifecycle hooks
+  onMounted(async () => {
+    await handleRetryLoad();
+  });
 
-
+  onUnmounted(() => {
+    projectStore.clearActiveStates();
+  });
 </script>
 
 <style scoped>
-.proj-main {
-  flex: 1;
-}
-</style>
+  .loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+  }
 
-<style scoped>
-.proj-main {
-  flex: 1;
-
-}
-
-.error-message {
-  background-color: #fee2e2;
-  border: 1px solid #ef4444;
-  color: #dc2626;
-  padding: 0.75rem;
-  border-radius: 0.375rem;
-  margin-bottom: 1rem;
-}
-
-.loading-indicator {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-}
-
-.new-project-btn {
-  width: 100%;
-  padding: 0.5rem;
-  text-align: left;
-  color: #6b7280;
-  border-radius: 0.375rem;
-  transition: all 0.2s;
-}
-
-.new-project-btn:hover {
-  background-color: #f3f4f6;
-  color: #374151;
-}
-
-.new-project-input-container {
-  padding: 0.25rem 0;
-}
-
-.new-project-input {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.new-project-input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
+  .proj-main {
+    flex: 1;
+  }
 </style>
