@@ -260,8 +260,8 @@ const addMember = async (selectedUser) => {
       alert("이미 추가된 사용자입니다.");
       return;
     }
-
-    // 요청 데이터 준비
+	console.log("유저 확인: ", authStore.user);
+	    // 요청 데이터 준비
     const requestData = {
       userId: selectedUser.userId,
       projId: props.projectData.proj_id,
