@@ -18,11 +18,12 @@ const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
         </div>
        
 
+        <div class="flex justify-center gap-x-4">
+            <RouterLink to="/project">Calendar</RouterLink>
+            <RouterLink to="/project">Team</RouterLink>
+            <RouterLink to="/project">Projects</RouterLink>
+        </div>
         <div class="layout-topbar-actions">
-            <div class="container-row align-center justify-left gap-1rem">
-             
-                <RouterLink to="/project">프로젝트</RouterLink>
-            </div>
             
             <div class="layout-config-menu">
                 <button type="button" class="layout-topbar-action" @click="toggleDarkMode">

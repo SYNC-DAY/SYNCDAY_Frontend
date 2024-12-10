@@ -1,7 +1,9 @@
 <script setup></script>
 
 <template>
-    <router-view />
+    <div class="debug-screens">
+        <router-view />
+    </div>
 </template>
 
-<style scoped></style>
+<style></style>
