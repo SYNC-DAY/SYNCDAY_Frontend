@@ -162,7 +162,7 @@
 
 		try {
 			const { owner, repo } = repoInfo.value;
-			milestoneIssues.value = await issueStore.fetchIssuesByMilestone(props.installationId.value, owner, repo, milestone.number);
+			milestoneIssues.value = await issueStore.fetchIssuesByMilestone(props.installationId, owner, repo, milestone.number);
 		} catch (error) {
 			console.error("Failed to fetch milestone issues:", error);
 			showError("Failed to load milestone issues");
