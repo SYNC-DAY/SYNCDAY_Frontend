@@ -32,3 +32,4 @@ export const workspaceApi = {
 		return response.data;
 	},
 };
+export default workspaceApi;
