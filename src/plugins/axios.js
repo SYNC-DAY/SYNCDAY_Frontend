@@ -3,7 +3,7 @@ import axios from "axios";
 import { useAuthStore } from "@/stores/auth";
 
 // 모든 API 요청의 기본 경로를 /api로 설정
-axios.defaults.baseURL = '/api';
+axios.defaults.baseURL = 'https://api.syncday.me/api';
 
 axios.defaults.withCredentials = true;
 
