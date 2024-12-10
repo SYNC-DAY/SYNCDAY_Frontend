@@ -2,11 +2,9 @@
 	<Dialog
 		v-if="showNoInstallationWarning"
 		:visible="true"
-		:modal="true"
-		:closable="true"
+		modal
 		header="Missing GitHub Installation"
 		:style="{ width: '400px' }"
-		:closeOnEscape="true"
 		@hide="handleClose">
 		<div class="p-4 text-center">
 			<i class="pi pi-exclamation-triangle text-yellow-500 text-4xl mb-4" />
@@ -14,21 +12,18 @@
 			<p class="text-sm text-gray-500">Please install GitHub integration first.</p>
 		</div>
 		<template #footer>
-			<div class="flex justify-end">
-				<Button
-					label="Close"
-					class="p-button-outlined"
-					@click="handleClose" />
-			</div>
+			<Button
+				label="Close"
+				class="p-button-outlined"
+				@click="handleClose" />
 		</template>
 	</Dialog>
+
 	<Dialog
 		v-model:visible="isVisible"
-		:modal="true"
-		:closable="true"
+		modal
 		header="Select GitHub Milestone"
 		:style="{ width: '80vw', maxWidth: '900px' }"
-		:closeOnEscape="true"
 		@hide="handleClose">
 		<!-- Loading State -->
 		<div
@@ -42,84 +37,20 @@
 		<div
 			v-else
 			class="grid grid-cols-2 gap-4">
-			<!-- Milestones List -->
-			<div class="border rounded-lg p-4">
-				<h3 class="font-medium mb-4">Milestones</h3>
-				<div
-					v-if="isLoadingMilestones"
-					class="flex justify-center p-4">
-					<ProgressSpinner />
-				</div>
-				<div
-					v-else-if="!milestones.length"
-					class="text-center p-4 text-gray-500">
-					No milestones found
-				</div>
-				<div
-					v-else
-					class="space-y-2">
-					<div
-						v-for="milestone in milestones"
-						:key="milestone.id"
-						@click="handleMilestoneClick(milestone)"
-						:class="['p-3 rounded-lg cursor-pointer hover:bg-gray-100', selectedMilestone?.id === milestone.id ? 'bg-gray-100' : '']">
-						<div class="flex items-center justify-between">
-							<h4 class="font-medium">{{ milestone.title }}</h4>
-							<div
-								v-if="milestone.due_on"
-								class="flex items-center text-sm text-gray-500">
-								<i class="pi pi-calendar mr-1" />
-								{{ formatDate(milestone.due_on) }}
-							</div>
-						</div>
-						<ProgressBar
-							:value="milestone.progress_percentage"
-							class="mt-2" />
-						<div class="text-sm text-gray-500 mt-1">{{ milestone.open_issues }} open / {{ milestone.total_issues }} total issues</div>
-					</div>
-				</div>
-			</div>
+			<!-- Milestones Panel -->
+			<MilestonesPanel
+				:milestones="milestones"
+				:selected-milestone="selectedMilestone"
+				:is-loading="isLoadingMilestones"
+				@select="handleMilestoneClick" />
 
-			<!-- Issues List -->
-			<div class="border rounded-lg p-4">
-				<h3 class="font-medium mb-4">Milestone Issues</h3>
-				<div
-					v-if="isLoadingIssues"
-					class="flex justify-center p-4">
-					<ProgressSpinner />
-				</div>
-				<div
-					v-else-if="!selectedMilestone"
-					class="text-center p-4 text-gray-500">
-					Select a milestone to view issues
-				</div>
-				<div
-					v-else-if="!milestoneIssues.length"
-					class="text-center p-4 text-gray-500">
-					No issues found in this milestone
-				</div>
-				<div
-					v-else
-					class="space-y-2">
-					<div
-						v-for="issue in milestoneIssues"
-						:key="issue.id"
-						class="p-3 rounded-lg border">
-						<div class="flex items-center gap-2">
-							<i :class="['pi', issue.state === 'closed' ? 'pi-check-circle text-green-500' : 'pi-exclamation-circle text-yellow-500']" />
-							<span>{{ issue.title }}</span>
-						</div>
-						<div
-							v-if="issue.assignees?.length"
-							class="text-sm text-gray-500 mt-1">
-							Assigned to: {{ formatAssignees(issue.assignees) }}
-						</div>
-					</div>
-				</div>
-			</div>
+			<!-- Issues Panel -->
+			<IssuesPanel
+				:issues="milestoneIssues"
+				:selected-milestone="selectedMilestone"
+				:is-loading="isLoadingIssues" />
 		</div>
 
-		<!-- Footer -->
 		<template #footer>
 			<div class="flex justify-end gap-2">
 				<Button
@@ -144,27 +75,17 @@
 	import { useCardboardStore } from "@/stores/proj/useCardboardStore";
 	import { useAuthStore } from "@/stores/auth";
 	import { useToast } from "primevue/usetoast";
-	import Dialog from "primevue/dialog";
-	import Button from "primevue/button";
-	import ProgressBar from "primevue/progressbar";
-	import ProgressSpinner from "primevue/progressspinner";
-	const installationId = inject("installationId");
-	const props = defineProps({
-		isOpen: {
-			type: Boolean,
-			required: true,
-		},
+	import MilestonesPanel from "./MilestonesPanel.vue";
+	import IssuesPanel from "./IssuesPanel.vue";
 
-		repoUrl: {
-			type: String,
-			required: false,
-		},
-		// ... (keep other existing props)
+	const props = defineProps({
+		isOpen: Boolean,
+		repoUrl: String,
+		projectId: [String, Number],
+		workspaceId: [String, Number],
+		installationId: { type: Number, required: false },
 	});
-	const showNoInstallationWarning = computed(() => {
-		return props.isOpen && !props.installationId;
-	});
-	// Emits
+
 	const emit = defineEmits(["close"]);
 
 	// Store instances
@@ -191,13 +112,11 @@
 		},
 	});
 
-	const isReady = computed(() => {
-		return !!installationId || (!!repoInfo.value.owner && !!repoInfo.value.repo);
-	});
+	const showNoInstallationWarning = computed(() => props.isOpen && !props.installationId);
 
-	const canSave = computed(() => {
-		return !isLoading.value && selectedMilestone.value && milestoneIssues.value.length > 0;
-	});
+	const isReady = computed(() => !!props.installationId && !!repoInfo.value.owner && !!repoInfo.value.repo);
+
+	const canSave = computed(() => !isLoading.value && selectedMilestone.value && milestoneIssues.value.length > 0);
 
 	// Methods
 	const parseRepoUrl = url => {
@@ -213,14 +132,6 @@
 		}
 	};
 
-	const formatDate = dateString => {
-		return new Date(dateString).toLocaleDateString();
-	};
-
-	const formatAssignees = assignees => {
-		return assignees.map(a => a.login).join(", ");
-	};
-
 	const showError = message => {
 		toast.add({
 			severity: "error",
@@ -231,15 +142,15 @@
 	};
 
 	const loadMilestones = async () => {
+		if (!isReady.value) return;
+
 		isLoadingMilestones.value = true;
 		try {
 			const { owner, repo } = repoInfo.value;
-
 			milestones.value = await milestoneStore.fetchMilestones(props.installationId, owner, repo);
 		} catch (error) {
-			console.error("Failed to fetch milestones:", error);
 			showError("Failed to load milestones");
-			handleClose();
+			console.error("Milestone fetch error:", error);
 		} finally {
 			isLoadingMilestones.value = false;
 		}
@@ -251,7 +162,7 @@
 
 		try {
 			const { owner, repo } = repoInfo.value;
-			milestoneIssues.value = await issueStore.fetchIssuesByMilestone(props.installationId, owner, repo, milestone.number);
+			milestoneIssues.value = await issueStore.fetchIssuesByMilestone(props.installationId.value, owner, repo, milestone.number);
 		} catch (error) {
 			console.error("Failed to fetch milestone issues:", error);
 			showError("Failed to load milestone issues");
@@ -314,22 +225,18 @@
 		isLoadingIssues.value = false;
 	};
 
+	// Watchers
 	watch(
 		() => props.isOpen,
 		async newValue => {
-			if (newValue) {
-				if (!props.installationId) {
-					// No need to do anything here as the warning dialog will show
-					return;
-				}
-				if (isReady.value) {
-					await loadMilestones();
-				}
+			if (newValue && isReady.value) {
+				await loadMilestones();
 			} else {
 				resetState();
 			}
 		}
 	);
+
 	// Lifecycle
 	onMounted(() => {
 		if (props.repoUrl) {
@@ -337,18 +244,3 @@
 		}
 	});
 </script>
-
-<style scoped>
-	:deep(.p-dialog-header) {
-		padding: 1.5rem;
-	}
-
-	:deep(.p-dialog-content) {
-		padding: 0 1.5rem 1.5rem 1.5rem;
-	}
-
-	:deep(.p-dialog-footer) {
-		padding: 1rem 1.5rem;
-		border-top: 1px solid #e5e7eb;
-	}
-</style>
