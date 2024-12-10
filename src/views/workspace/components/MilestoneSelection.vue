@@ -1,5 +1,28 @@
 <template>
 	<Dialog
+		v-if="showNoInstallationWarning"
+		:visible="true"
+		:modal="true"
+		:closable="true"
+		header="Missing GitHub Installation"
+		:style="{ width: '400px' }"
+		:closeOnEscape="true"
+		@hide="handleClose">
+		<div class="p-4 text-center">
+			<i class="pi pi-exclamation-triangle text-yellow-500 text-4xl mb-4" />
+			<p class="mb-4">GitHub installation is required to access milestones.</p>
+			<p class="text-sm text-gray-500">Please install GitHub integration first.</p>
+		</div>
+		<template #footer>
+			<div class="flex justify-end">
+				<Button
+					label="Close"
+					class="p-button-outlined"
+					@click="handleClose" />
+			</div>
+		</template>
+	</Dialog>
+	<Dialog
 		v-model:visible="isVisible"
 		:modal="true"
 		:closable="true"
@@ -126,7 +149,6 @@
 	import ProgressBar from "primevue/progressbar";
 	import ProgressSpinner from "primevue/progressspinner";
 
-	// Props
 	const props = defineProps({
 		isOpen: {
 			type: Boolean,
@@ -134,27 +156,17 @@
 		},
 		installationId: {
 			type: Number,
-			required: true,
-			validator: value => !isNaN(Number(value)) && value > 0,
-		},
-		repoUrl: {
-			type: String,
-			required: true,
+			required: false, // Changed to false since we'll handle the case when it's missing
 			validator: value => {
-				const parts = value?.split("/") || [];
-				return parts.length >= 4;
+				if (!value) return true; // Allow null/undefined
+				return !isNaN(Number(value)) && value > 0;
 			},
 		},
-		projectId: {
-			type: String,
-			required: true,
-		},
-		workspaceId: {
-			type: [Number, String],
-			required: true,
-		},
+		// ... (keep other existing props)
 	});
-
+	const showNoInstallationWarning = computed(() => {
+		return props.isOpen && !props.installationId;
+	});
 	// Emits
 	const emit = defineEmits(["close"]);
 
@@ -304,28 +316,22 @@
 		isLoadingIssues.value = false;
 	};
 
-	// Watchers
-	watch(
-		() => props.repoUrl,
-		newUrl => {
-			if (newUrl) {
-				repoInfo.value = parseRepoUrl(newUrl);
-			}
-		},
-		{ immediate: true }
-	);
-
 	watch(
 		() => props.isOpen,
 		async newValue => {
-			if (newValue && isReady.value) {
-				await loadMilestones();
+			if (newValue) {
+				if (!props.installationId) {
+					// No need to do anything here as the warning dialog will show
+					return;
+				}
+				if (isReady.value) {
+					await loadMilestones();
+				}
 			} else {
 				resetState();
 			}
 		}
 	);
-
 	// Lifecycle
 	onMounted(() => {
 		if (props.repoUrl) {
