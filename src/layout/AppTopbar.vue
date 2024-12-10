@@ -3,6 +3,8 @@
     import AppConfigurator from './AppConfigurator.vue';
 
     const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
+
+    const navigateToMyPage = () => {};
 </script>
 
 <template>
@@ -62,10 +64,13 @@
                         <i class="pi pi-inbox"></i>
                         <span>Messages</span>
                     </button>
-                    <button type="button" class="layout-topbar-action">
-                        <i class="pi pi-user"></i>
-                        <span>Profile</span>
-                    </button>
+
+                    <RouterLink to="/mypage">
+                        <button class="layout-topbar-action">
+                            <i class="pi pi-user"></i>
+                            <span>Profile</span>
+                        </button>
+                    </RouterLink>
                 </div>
             </div>
         </div>
