@@ -266,7 +266,7 @@
             if (isConnecting) return; // 중복 방지
             isConnecting = true;
 
-            const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 30000);
+            const retryDelay = Math.min(5000 * Math.pow(2, retryCount), 30000);
             console.log(`Reconnecting in ${retryDelay / 1000} seconds...`);
 
             setTimeout(() => {
@@ -388,9 +388,21 @@
         /* 요소 간 간격을 1rem으로 설정 */
     }
 
+    .notice-schedule-table {
+        width: 100%;
+        border-collapse: separate;
+        /* 기본 테이블 간격 유지 */
+        border-spacing: 1rem;
+        /* 요소 간 간격을 1rem으로 설정 */
+    }
+
 
 
     .today-schedule-table th {
+        background-color: #f4f4f4;
+        font-weight: bold;
+    }
+    .notice-schedule-table th {
         background-color: #f4f4f4;
         font-weight: bold;
     }
@@ -398,6 +410,9 @@
 
 
     .today-schedule-table tr.past-schedule {
+        color: grey;
+    }
+    .notice-schedule-table tr.past-schedule {
         color: grey;
     }
 
