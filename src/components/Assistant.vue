@@ -172,7 +172,13 @@
         const selectedTime = selectedNotificationTimes.value[schedule.schedule_id];
 
         if (!selectedTime) {
-            alert("알림 시간을 선택해주세요.");
+            // alert("알림 시간을 선택해주세요.");
+            toast.add({
+                everity: "warn",
+                summary: "알람 시간 선택",
+                detail: "알람 시간을 선택해주세요!",
+                life: 3000,
+            });
             return;
         }
 
@@ -231,7 +237,7 @@
         }
 
         eventSource.value = new EventSourcePolyfill(
-            `http://localhost:5000/sse/notification/subscribe/${authStore.user.userId}`,
+            `http://localhost:8080/sse/notification/subscribe/${authStore.user.userId}`,
 
             {
                 headers: {
@@ -266,7 +272,7 @@
             if (isConnecting) return; // 중복 방지
             isConnecting = true;
 
-            const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 30000);
+            const retryDelay = Math.min(5000 * Math.pow(2, retryCount), 30000);
             console.log(`Reconnecting in ${retryDelay / 1000} seconds...`);
 
             setTimeout(() => {
@@ -388,9 +394,21 @@
         /* 요소 간 간격을 1rem으로 설정 */
     }
 
+    .notice-schedule-table {
+        width: 100%;
+        border-collapse: separate;
+        /* 기본 테이블 간격 유지 */
+        border-spacing: 1rem;
+        /* 요소 간 간격을 1rem으로 설정 */
+    }
+
 
 
     .today-schedule-table th {
+        background-color: #f4f4f4;
+        font-weight: bold;
+    }
+    .notice-schedule-table th {
         background-color: #f4f4f4;
         font-weight: bold;
     }
@@ -398,6 +416,9 @@
 
 
     .today-schedule-table tr.past-schedule {
+        color: grey;
+    }
+    .notice-schedule-table tr.past-schedule {
         color: grey;
     }
 

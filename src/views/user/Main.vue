@@ -69,7 +69,8 @@
     height: 100%;
     display: flex;
     flex-wrap: wrap;
-    justify-content: flex-start;
+    /* justify-content: flex-start; */
+    justify-content: space-around;
     gap: 1rem; /* 위젯 간 간격 */
     overflow-y: auto;
 }

@@ -77,7 +77,8 @@ defineProps({
 
 .title-section h3 {
   margin: 0;
-  color: #FE5D86;
+  /* color: #FE5D86; */
+  color: #15B8A6;
   font-size: large;
 }
 
