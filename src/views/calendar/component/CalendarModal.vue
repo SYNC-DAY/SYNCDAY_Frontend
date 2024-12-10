@@ -71,7 +71,7 @@
                         <div class="toggle-label">
                             <img src="@/assets/images/meeting.svg" alt="meeting" class="icon" />
                             <span class="title-name">회의</span>
-                            <ToggleSwitch v-model="isMeeting" :disabled="isAllDay" />
+                            <ToggleSwitch v-model="isMeeting" />
                         </div>
                     </div>
                 </div>
