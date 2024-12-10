@@ -47,6 +47,7 @@ const props = defineProps({
   removeChatFromList: { type: Function, required: true }
 });
 
+const subscriptions = ref({});
 const authStore = useAuthStore();
 const isVisible = ref(true);
 const messagesInRoom = ref({});
@@ -146,17 +147,65 @@ const subscribeToRoom = (roomId) => {
     const receivedMessage = JSON.parse(message.body);
     if (!messagesInRoom.value[roomId]) messagesInRoom.value[roomId] = [];
     messagesInRoom.value[roomId].push(receivedMessage);
+
+    nextTick(() => {
+      scrollToBottom();
+    })
   });
 };
 
-onMounted(() => {
-  fetchMessages();
-  connectWebSocket();
-});
+const leaveChat = async () => {
+    const confirmLeave = window.confirm(' 정말 나가시겠습니까? ')
+    if(!confirmLeave) {
+      console.log('사용자가 채팅방 나가기를 원하지 않습니다.');
+      return
+    }
+  try {
+    const response = await axios.post(`/chat/room/${props.roomId}/leave`, null, {
+      params: { userId: authStore.user?.userId },
+    });
+    console.log('채팅방 나가기 응답: ', response.data);
 
-onUnmounted(() => {
-  stompClient.value.deactivate();
-});
+
+    if (response.status === 200) {
+      isVisible.value = false;
+      props.removeChatFromList(props.roomId);
+      console.log('채팅방 나가기 성공: ', props.removeChatFromList);
+
+      if (subscriptions.value[props.roomId]) {
+        subscriptions.value[props.roomId].unsubscribe();
+        delete subscriptions.value[props.roomId];
+      }
+      delete messagesInRoom.value[props.roomId];
+      console.log('해당 채팅방 메세지들 삭제. 구독 취소')
+    } else {
+      console.error('채팅방 나가기 실패: ', response.data.error.message);
+      alert('채팅방 나가기에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    }
+  } catch (error) {
+    console.error('채팅방 나가는 중 오류 발생:', error);
+    alert('오류가 발생했습니다. 다시 시도해주세요.');
+  }
+};
+
+onMounted(() => {
+    console.log('마운트: ', props.roomId)
+    fetchMessages(props.roomId);
+    connectWebSocket(); // WebSocket 연결
+  });
+
+  onUnmounted(() => {
+    if (props.roomId && messagesInRoom.value[props.roomId]) {
+      console.log(`채팅방 ${props.roomId}의 모든 데이터 초기화`);
+      delete messagesInRoom.value[props.roomId];
+      if (subscriptions.value[props.roomId]) {
+        subscriptions.value[props.roomId].unsubscribe();
+        delete subscriptions.value[props.roomId];
+      }
+    } else {
+      console.warn('언: 유효하지 않은 roomId');
+    }
+  });
 </script>
 
 <style scoped>
