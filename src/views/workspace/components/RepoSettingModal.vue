@@ -40,14 +40,10 @@
 			type: Boolean,
 			default: false
 		},
-		// workspaceData: {
-		// 	type: Object,
-		// 	required: true
-		// }
 		workspaceData: {
-    		type: [Object, null], // Object 또는 null 허용
-    		required: false,
-  },
+			type: Object,
+			required: true
+		}
 	});
 
 	const emit = defineEmits(['update:modelValue', 'update:updateRepositoryInfo']);

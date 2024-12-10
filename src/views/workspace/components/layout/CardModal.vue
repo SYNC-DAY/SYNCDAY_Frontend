@@ -70,14 +70,9 @@ const props = defineProps({
     type: Boolean,
     required: true
   },
-  // card: {
-  //   type: Object,
-  //   required: true
-  // }
-  // 수정 
   card: {
     type: Object,
-    required: false,
+    required: true
   }
 });
 
