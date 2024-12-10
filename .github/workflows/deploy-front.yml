@@ -45,11 +45,11 @@ jobs:
     - name: Generate deployment package
       run: |
         # 기본 디렉토리 구조 생성
-        mkdir -p deploy/.platform/nginx/conf.d
+        mkdir -p deploy/.platform/nginx/conf.d/elasticbeanstalk/
       
         # nginx 설정 파일 복사 및 확인
         if [ -f .platform/nginx/nginx.conf ]; then
-          cp .platform/nginx/nginx.conf deploy/.platform/nginx/
+          cp .platform/nginx/nginx.conf deploy/.platform/nginx/conf.d/elasticbeanstalk/00_application.conf
         else
           echo "Error: nginx.conf not found in expected location"
           exit 1
