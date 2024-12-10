@@ -17,7 +17,7 @@
           <Listbox v-model="selectedUser" :options="searchResults" optionLabel="name" style="width: 16.5vw" emptyMessage="검색 결과가 없습니다." class="name">
             <template #option="slotProps">
               <div class="user-item">
-                <span>{{ slotProps.option.name }}</span>
+                
                 <Button icon="pi pi-user-plus" class="p-button-text p-button-success ml-2" @click.stop="addMember(slotProps.option)"/>
               </div>
             </template>
@@ -375,7 +375,8 @@ form textarea {
 }
 
 form button {
-  background-color: #007bff;
+  /* background-color: #007bff; */
+  background-color: #15B8A6;
   color: white;
   border: none;
   padding: 10px 15px;
@@ -384,7 +385,8 @@ form button {
 }
 
 form button:hover {
-  background-color: #0056b3;
+  /* background-color: #0056b3; */
+  background-color: #15B8A6;
 }
 
 .reservation-button {
