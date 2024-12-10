@@ -39,7 +39,11 @@
 }
 
 .header {
-	padding: 0 1.5rem;
+	padding: 1rem;
+}
+
+.header strong {
+	font-size: 2rem
 }
 
 .header-left {
@@ -48,7 +52,7 @@
 }
 
 .header-right {
-	justify-content: left;
+	justify-content: right;
 	gap: 1rem;
 }
 

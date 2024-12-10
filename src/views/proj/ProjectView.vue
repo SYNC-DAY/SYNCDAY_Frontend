@@ -1,20 +1,22 @@
 <template>
 	<div
 		v-if="project"
-		class="container-col">
-		<header class="container-row underline-gray">
-			<div class="header-left container-row flex justify-between items-center mb-4 ph-1rem">
-				<h3 class="text-2xl font-bold">{{ project.proj_name }}</h3>
+		class="container-col ph-1rem">
+		<header class="header container-row underline-gray">
+			<div class="header-left container-row flex justify-between items-center">
+				<strong>{{ project.proj_name }}</strong>
 			</div>
 
-			<div class="header-right container-row ph-1rem">
+			<div class="header-right container-row">
 				<Button
-					:icon="project.bookmark_status == 'BOOKMARKED' ? 'pi pi-bookmark' : 'pi pi-star'"
+					:icon="project.bookmark_status == 'BOOKMARKED' ? 'pi pi-bookmark' : 'pi pi-bookmark-fill'"
 					@click.stop="toggleBookmark"
-					:class="{ 'text-yellow-500': project.bookmark_status === 'BOOKMARKED' }" />
+					:class="{ 'text-yellow-500': project.bookmark_status == 'BOOKMARKED' }"
+					text />
 				<Button
 					icon="pi pi-cog"
-					@click="showSettings = true" />
+					@click="showSettings = true"
+					text />
 			</div>
 		</header>
 		<div class="flex gap-4 text-sm text-gray-600">
@@ -180,7 +182,7 @@
 	// Inside ProjectView.vue script setup
 	const toggleBookmark = async () => {
 		try {
-			await projectStore.handleBookmark(props.projectId, project.value.proj_member_id);
+			await projectStore.handleBookmark(props.projectId);
 			toast.add({
 				severity: "success",
 				summary: "북마크 업데이트",
