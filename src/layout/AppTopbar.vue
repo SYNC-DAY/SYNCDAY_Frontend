@@ -12,11 +12,11 @@ const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
                 <i class="pi pi-bars"></i>
             </button>
             <router-link to="/" class="layout-topbar-logo">
-                <img src="/src/assets/img/SyncDay_SVG.svg" alt="" />
+                <img src="/src/assets/img/SyncDay_SVG.svg" alt=""></img>
                 <span>SYNCDAY</span>
             </router-link>
         </div>
-        <div></div>
+       
 
         <div class="layout-topbar-actions">
             <div class="layout-config-menu">
