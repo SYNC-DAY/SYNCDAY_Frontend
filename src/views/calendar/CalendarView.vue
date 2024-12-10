@@ -88,6 +88,8 @@ const selectedInfo = ref({});
 // 이벤트 데이터
 const events = ref([]);
 
+const eventsMember = ref([]);
+
 const visible = ref(false);
 
 const calendarOptions = ref({
@@ -97,7 +99,7 @@ const calendarOptions = ref({
     height: '100%', // 캘린더 높이를 부모 컨테이너에 맞춤
     headerToolbar: {
         left: 'today prev next title',
-        right: 'searchMemberSchedule dayGridMonth,timeGridWeek addEventButton',
+        right: 'searchMemberSchedule dayGridMonth timeGridWeek addEventButton',
     },
     buttonText: {
         today: '오늘',
@@ -134,6 +136,8 @@ const calendarOptions = ref({
                     end: end,
                 };
                 isModalVisible.value = true;
+
+                console.log('selectedInfo', selectedInfo.value);
             },
         },
         searchMemberSchedule: {
@@ -149,16 +153,18 @@ const calendarOptions = ref({
     locale: 'ko',
     dateClick: (info) => {
         console.log('dateClick:', info);
+        // selectedInfo.value = info;
+        // isModalVisible.value = true; // 모달 열기
+        // alert(`Date clicked: ${info.dateStr}`);
     },
     select: (info) => {
         selectedInfo.value = info;
         isModalVisible.value = true; // 모달 열기
+        console.log('selectInfo 보자!', info);
+        console.log('start???:', info.start);
+        console.log('end???:', info.end);
     },
     eventClick: async (info) => {
-        if (info.event.extendedProps.sortEvents !== authStore.user.userId) {
-            return;
-        }
-
         await fetchDetailSchedules(info.event.id, authStore.user.userId);
 
         // 클릭된 이벤트의 allDay 값을 추가로 설정
@@ -166,9 +172,11 @@ const calendarOptions = ref({
             ...selectedEvent.value, // 기존의 상세 데이터 유지
             // allDay: info.event.allDay, // allDay 속성 추가
         };
+        console.log('selectedEvent:', selectedEvent.value);
 
         // 모달 열기
         showEventModal.value = true;
+        console.log('showEventModal:', showEventModal.value);
     },
     eventDrop: async (info) => {
         if (info.event.extendedProps.meetingStatus === 'ACTIVE') {
@@ -253,12 +261,11 @@ const fetchSchedules = async () => {
                     borderColor.value = '#76818D';
                     textColor.value = 'black';
                 }
-            } 
-            // else {
-            //     backgroundColor.value = 'white';
-            //     borderColor.value = '#646464';
-            //     textColor.value = 'black';
-            // }
+            } else {
+                backgroundColor.value = 'white';
+                borderColor.value = '#646464';
+                textColor.value = 'black';
+            }
 
             return {
                 id: schedule.schedule_id,
@@ -292,12 +299,12 @@ const fetchDetailSchedules = async (scheduleId, userId) => {
         const response = await axios.get(`/schedule/my/${scheduleId}?userId=${userId}`);
         const data = response.data.data[0];
 
-        console.log('data?', data);
-
         if (!data) {
             console.error('No data found in the response');
             return;
         }
+
+        console.log('data??', data);
 
         // selectedEvent를 가져온 데이터로 업데이트
         selectedEvent.value = {
@@ -310,8 +317,6 @@ const fetchDetailSchedules = async (scheduleId, userId) => {
             publicStatus: data.public_status,
             meetingStatus: data.meeting_status,
             meetingroomId: data.meetingroom_id,
-            meetingroomPlace: data.meetingroom_place,
-            meetingroomName: data.meetingroom_name,
             ownerUserId: data.owner_user_id,
             ownerUsername: data.owner_username,
             myNotificationTime: data.my_notification_time ? new Date(data.my_notification_time) : null,
@@ -325,12 +330,15 @@ const fetchDetailSchedules = async (scheduleId, userId) => {
                       }))
                     : [], // user_info가 없으면 빈 배열로 처리
         };
+
+        console.log('잘 들어갔나?', selectedEvent.value);
     } catch (error) {
         console.error('Error fetching schedules:', error);
     }
 };
 
 const updateSchedule = async (info) => {
+    console.log('이동 하자 ㅠㅠ', info.event);
     // 종일일정 여부 확인
     const isAllDay = info.event.allDay; // FullCalendar에서 종일 일정 여부
 
@@ -348,6 +356,7 @@ const updateSchedule = async (info) => {
         : dayjs(info.event.start).tz('Asia/Seoul').add(1, 'hour').format('YYYY-MM-DDTHH:mmZ');
 
     try {
+        console.log('PS', info.event.extendedProps);
         const response = await axios.put(
             `/schedule/${info.event.id}`,
             {
@@ -408,6 +417,7 @@ const searchUsers = async () => {
 
         if (response.data.data) {
             // 본인과 이미 선택된 참석자 제외
+            console.log('response', response.data.data);
             const currentUserId = authStore.user.userId;
             searchResults.value = response.data.data.filter(
                 (user) =>
@@ -434,20 +444,17 @@ const searchUsers = async () => {
 //     return color;
 // };
 
-// const generateRandomColor = () => {
-//     const hue = Math.floor(Math.random() * 360); // 색상: 0~360도 (모든 색상 포함)
-//     const saturation = Math.floor(Math.random() * 50) + 50; // 채도: 50% ~ 100% (밝고 선명한 색상)
-//     const lightness = Math.floor(Math.random() * 40) + 30; // 명도: 30% ~ 70% (너무 어둡거나 밝지 않은 색상)
+const generateRandomColor = () => {
+    const hue = Math.floor(Math.random() * 360); // 색상: 0~360도 (모든 색상 포함)
+    const saturation = Math.floor(Math.random() * 50) + 50; // 채도: 50% ~ 100% (밝고 선명한 색상)
+    const lightness = Math.floor(Math.random() * 40) + 30; // 명도: 30% ~ 70% (너무 어둡거나 밝지 않은 색상)
     
-//     return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-// };
-
-const colors = ['#226DF5', '#BE3749', '#C2BB38', '#E8E799', '#A4139E', '#A433CE', '#7B405A',  '#CF1165', '#BDBA8B', '#7F7F33', '#864950', '#A4F8AC', '#91046F', '#E84DA7', '#574B16', '#99A350', '#0A4C10', '#8A57CF', '#CEC6BB', '#CB56CE', '#F6ADAC', '#376C23', '#D306FF', '#F4E7E9', '#7C1234', '#F2B7B3', '#BAE9F5', '#CE76C1', '#39A994', '#DE194A', '#8C5D41', '#81D0A9', '#02D636', '#8D08A5', '#A8FCD1', '#571B64', '#19C89B', '#9E5038', '#0991BD', '#FEA69A', '#DB1D48', '#1F5F9B', '#3C612D', '#7EF10C', '#E9A805', '#D9D653', '#231AB9', '#2CCF38', '#48C9DC', '#B08BCF', '#BEEA79', '#9684C0', '#FB0F7F', '#ADFD85', '#539F52', '#7A11AE', '#4F0511', '#3DA30A', '#3B3E0E', '#101C04', '#3D9F0C', '#99C380', '#EF8D2E', '#E1594D', '#EBFA1A', '#95444F', '#EE240B', '#9BC943', '#254AD5', '#8E2C14', '#220588', '#36D24E', '#8E2C58', '#5E5202', '#EDACA5', '#A94CA6', '#F2D99D', '#CD4A09', '#9CE22B', '#15DF4D', '#D007C7', '#A60049', '#B6FB78', '#4D685F', '#6F6F4E', '#2A9A6F', '#D484CE', '#8E938E', '#0BF575', '#16ED3A', '#E912AD', '#76E15B', '#BB2456', '#5D75C7', '#35738E', '#FFC0A7', '#F12404', '#B1D877', '#91098B', '#BA2906']
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+};
 
 // 멤버 일정 조회
 const addMemberSchedule = async (user) => {
-    // const color = generateRandomColor();
-    const color = colors[user.userId%100];
+    const color = generateRandomColor();
 
     // 중복 체크
     if (!selectedParticipants.value.some((p) => p.userId === user.userId)) {
@@ -488,12 +495,8 @@ const addMemberSchedule = async (user) => {
                     isAllDay = true;
                 }
             }
-
-            // 고유한 id 생성
-            const eventId = `${schedule.schedule_id}-${user.userId}`;
-
             return {
-                id: eventId,
+                id: schedule.schedule_id,
                 title: 'BUSY',
                 start: startDate,
                 end: endDate,
@@ -506,7 +509,8 @@ const addMemberSchedule = async (user) => {
             };
         });
         events.value.push(...data);
-        // events.value = [...events.value, ...data];
+        // searchMember.value = `${teamName} ${userName}`;
+        // searchResults.value = [];
 
         console.log('Fetched Events:', events.value);
     } catch (error) {
@@ -541,6 +545,14 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* html,
+body,
+#app {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
 /* 전체 레이아웃 */
 .app-container {
     display: flex;
@@ -654,8 +666,8 @@ onMounted(async () => {
 }
 
 ::v-deep(.fc-button:hover) {
-    background-color: #15B8A6 !important;
-    color: white !important;
+    background-color: #ff9d85 !important;
+    color: inherit !important;
 }
 ::v-deep(.fc-button.fc-button-active) {
     border: none !important;

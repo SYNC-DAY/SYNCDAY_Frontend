@@ -352,11 +352,10 @@ if (currentUser) {
             backgroundColor.value = 'white';
             border.value = '2px solid #76818D';
         }
+    } else {
+        backgroundColor.value = 'white';
+        border.value = '2px solid #646464';
     }
-    // else {
-    //     backgroundColor.value = 'white';
-    //     border.value = '2px solid #646464';
-    // }
 }
 
 const startTimeAdj = dayjs(startTime);
@@ -641,13 +640,5 @@ onBeforeUnmount(() => {
 
 .tooltip li {
     margin: 5px 0;
-}
-
-.meeting-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    margin-left: 3rem;
-    margin-top: 0.5rem;
 }
 </style>

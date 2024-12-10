@@ -74,8 +74,12 @@
                         <div class="toggle-label">
                             <img src="@/assets/images/meeting.svg" alt="meeting" class="icon" />
                             <span class="title-name">회의</span>
+<<<<<<< HEAD
                             <!-- <ToggleSwitch v-model="isMeeting" :disabled="selectedRoomName && selectedRoomTitle && props.isEditMode" /> -->
                             <ToggleSwitch v-model="isMeeting" :disabled="props.isEditMode ? props.schedule.meetingStatus === 'ACTIVE' : selectedRoomName && selectedRoomTitle" />
+=======
+                            <ToggleSwitch v-model="isMeeting" />
+>>>>>>> develop
                         </div>
                     </div>
                 </div>
@@ -94,7 +98,6 @@
                                 <div>회의실 명 : {{ selectedRoomTitle }}</div>
                             </div>
                             <span
-                                v-if="!props.isEditMode"
                                 class="pi pi-times meeting-close"
                                 style="cursor: pointer"
                                 @click="clearRoomSelection"
@@ -151,7 +154,7 @@
                         <div class="toggle-label">
                             <span class="pi pi-exclamation-circle"></span>
                             <span class="title-name">공개</span>
-                            <ToggleSwitch v-model="isPublic" :readonly="isMeeting" :disabled="isMeeting" />
+                            <ToggleSwitch v-model="isPublic" :readonly="isMeeting" />
                         </div>
                     </div>
                 </div>
@@ -277,6 +280,7 @@ import InputText from 'primevue/inputtext';
 import { usePrimeVue } from 'primevue/config';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import SearchResult from '@/views/search/SearchResult.vue';
 
 dayjs.extend(utc); // UTC 플러그인 사용
 dayjs.extend(timezone); // 타임존 플러그인 사용
@@ -284,6 +288,8 @@ dayjs.extend(duration);
 dayjs.locale('ko');
 
 const authStore = useAuthStore();
+const router = useRouter();
+const route = useRoute();
 
 const props = defineProps({
     schedule: {
@@ -296,8 +302,6 @@ const props = defineProps({
     },
 });
 
-console.log('받은거', props.schedule);
-
 const handleOutsideClick = (event) => {
     if (event.target === event.currentTarget) {
         emit('close');
@@ -305,6 +309,8 @@ const handleOutsideClick = (event) => {
 };
 
 const emit = defineEmits(['close', 'submit']);
+
+console.log('모달로 넘어온 값:', props.schedule);
 
 // 제목 부분
 const title = ref(props.isEditMode ? props.schedule.title : null);
@@ -476,6 +482,10 @@ const formData = computed(() => ({
     notificationTime: null,
 }));
 
+watch(selectedParticipants, () => {
+    console.log('attendeeIds', formData.value.attendeeIds);
+});
+
 // 10분 단위로 시간을 생성하는 함수
 const generateTimeOptions = () => {
     const times = [];
@@ -560,6 +570,7 @@ const submitSchedule = async () => {
             attendee_ids: formData.value.attendeeIds,
             // attendee_ids: [1, 3, 5, 12],
         };
+        console.log('저장 값', dataToSend);
 
         const schedule_id = props.schedule.scheduleId;
         let response;
@@ -720,7 +731,7 @@ watch(
 );
 
 const visible = ref(false);
-const selectedRoomName = ref(props.isEditMode ? props.schedule.meetingroomPlace : null); // 선택된 탭
+const selectedRoomName = ref('7층'); // 선택된 탭
 const rooms = ref([]); // 회의실 전체 객체
 const filteredRooms = ref([]);
 
@@ -749,7 +760,6 @@ const calendarOptions = ref({
     plugins: [resourceTimelinePlugin, interactionPlugin],
     initialView: 'resourceTimelineDay',
     initialDate: dayjs(startDate.value).format('YYYY-MM-DD'),
-    height: 'auto',
     locale: 'ko',
     // headerToolbar: false,
     slotDuration: '00:10:00',
@@ -766,8 +776,6 @@ const calendarOptions = ref({
             alert('지난 시간은 예약할 수 없습니다.');
             return;
         }
-        isAllDay.value = false;
-
         startMeeting.value = info.start;
         endMeeting.value = info.end;
 
@@ -803,7 +811,7 @@ const confirmReservation = () => {
 };
 
 // x 버튼 클릭 시 선택된 회의실 정보 초기화하는 함수
-const clearRoomSelection = async() => {
+const clearRoomSelection = () => {
     selectedRoomId.value = null;
     selectedRoomTitle.value = null;
     selectedRoomName.value = null;
@@ -924,7 +932,7 @@ onBeforeUnmount(() => {
     padding: 2rem;
     border-radius: 8px;
     width: 80%;
-    max-width: 550px;
+    max-width: 500px;
     height: 100vh;
     max-height: 85vh;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);

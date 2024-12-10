@@ -87,12 +87,17 @@ const filteredUsers = computed(() => {
   }
 });
 
-
 // 새 채팅방 생성
 async function createNewChat() {
   try {
     if (selectedMembers.value.length === 0) {
-      alert("채팅할 멤버를 선택해주세요");
+      // alert("채팅할 멤버를 선택해주세요");
+      toast.add({
+        severity: "warn",
+        summary: "채팅할 멤버 선택",
+        detail: "채팅할 멤버를 선택해주세요!",
+        life: 3000,
+      });
       return;
     }
 
@@ -113,7 +118,13 @@ async function createNewChat() {
     emit("close");
   } catch (error) {
     console.error("채팅방 생성 실패:", error);
-    alert("채팅방 생성에 실패하였습니다. 다시 시도해주세요.");
+    // alert("채팅방 생성에 실패하였습니다. 다시 시도해주세요.");
+    toast.add({
+      severity: "error",
+      summary: "채팅방 생성 실패",
+      detail: "채팅방 생성에 실패하였습니다. 다시 시도해주세요.",
+      life: 3000,
+    });
   }
 }
 

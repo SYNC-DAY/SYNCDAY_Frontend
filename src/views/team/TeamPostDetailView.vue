@@ -77,7 +77,7 @@ import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import PostComment from './components/PostComment.vue'; 
 import Editor from 'primevue/editor';
-
+import { useToast } from 'primevue/usetoast';
 
 const teamStore = useTeamStore();
 const authStore = useAuthStore();
@@ -85,6 +85,7 @@ const router = useRouter();
 const route = useRoute();
 const searchType = route.query.searchType;
 const searchQuery = route.query.searchQuery;
+const toast = useToast();
 
 const post = ref({}); // 게시글 정보
 const isMyPost = ref(false); // 내가 작성한 글 여부
@@ -131,13 +132,25 @@ const updatePost = async () => {
         });
 
         if (response.data.success) {
-            alert('게시글이 수정되었습니다.');
+            // alert('게시글이 수정되었습니다.');
+            toast.add({
+                severity: "success",
+                summary: "게시글 수정",
+                detail: "게시글이 수정되었습니다.",
+                life: 3000,
+            });
             post.value = { ...editedPost.value }; // 게시글 업데이트
             isEditMode.value = false; // 수정 모드 종료
         }
     } catch (error) {
         console.error('게시글 수정 중 오류 발생:', error);
-        alert('게시글 수정에 실패했습니다.');
+        // alert('게시글 수정에 실패했습니다.');
+        toast.add({
+            severity: "error",
+            summary: "게시글 수정 중 오류 발생",
+            detail: "게시글 수정에 실패했습니다.",
+            life: 3000,
+        });
     }
 };
 
@@ -149,17 +162,29 @@ const cancelEdit = () => {
 
 // 게시글 삭제
 const deletePost = async () => {
-    if (!confirm('정말로 이 게시글을 삭제하시겠습니까?')) return;
+    // if (!confirm('정말로 이 게시글을 삭제하시겠습니까?')) return;
 
     try {
         const response = await axios.delete(`/teampost/${teamStore.postId}`);
         if (response.data.success) {
-            alert('게시글이 삭제되었습니다.');
+            // alert('게시글이 삭제되었습니다.');
+            toast.add({
+                severity: "success",
+                summary: "게시글이 삭제",
+                detail: "게시글이 삭제되었습니다.",
+                life: 3000,
+            });
             router.push('/team/post/view'); // 목록으로 이동
         }
     } catch (error) {
         console.error('게시글 삭제 중 오류 발생:', error);
-        alert('게시글 삭제에 실패했습니다.');
+        // alert('게시글 삭제에 실패했습니다.');
+        toast.add({
+            severity: "error",
+            summary: "게시글 삭제 중 오류 발생",
+            detail: "게시글 삭제에 실패했습니다.",
+            life: 3000,
+        });
     }
 };
 

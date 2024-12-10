@@ -1,5 +1,6 @@
 <template>
   <div class="app-container">
+    <Toast/>
     <!-- Navigation은 로그인 페이지가 아니고, 인증 초기화가 완료됐을 때만 표시 -->
     <Navigation v-if="!isLoginPage && authStore.isInitialized && authStore.user" />
     <!-- 로그인 페이지일 때는 router-view만 표시 -->
@@ -27,7 +28,7 @@
   import { EventSourcePolyfill } from 'event-source-polyfill';
   import Navigation from "@/components/Navigation.vue";
   import Assistant from './components/Assistant.vue';
-
+  // import { useToast } from 'primevue/usetoast';
 
   const route = useRoute();
   const authStore = useAuthStore();

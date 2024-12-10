@@ -144,13 +144,9 @@ const props = defineProps({
     required: true,
     default: () => []
   },
-  // cardboardId: {
-	// 	type: [String, Number],
-	// 	required: true
-  // },
   cardboardId: {
 		type: [String, Number],
-		required: false
+		required: true
   },
   workspaceId: { // workspace_id를 직접 전달받도록 수정
     type: [String, Number],
