@@ -19,6 +19,12 @@ const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
        
 
         <div class="layout-topbar-actions">
+            <div class="container-row align-center justify-left gap-1rem">
+                <RouterLink to="/calendar">캘린더</RouterLink>
+                <RouterLink to="/team">팀</RouterLink>
+                <RouterLink to="/calendar">프로젝트</RouterLink>
+            </div>
+            
             <div class="layout-config-menu">
                 <button type="button" class="layout-topbar-action" @click="toggleDarkMode">
                     <i :class="['pi', { 'pi-moon': isDarkTheme, 'pi-sun': !isDarkTheme }]"></i>
