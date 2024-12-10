@@ -60,9 +60,11 @@ import axios from 'axios';
 import { useTeamStore } from '@/stores/team';
 import { useAuthStore } from '@/stores/auth';
 import { Textarea } from 'primevue';
+import { useToast } from 'primevue/usetoast';
 
 const teamStore = useTeamStore();
 const authStore = useAuthStore();
+const toast = useToast();
 
 const commentList = ref([]); // 댓글 리스트
 const commentNum = ref(0);
@@ -102,7 +104,13 @@ const changePage = async (page) => {
 // 댓글 작성
 const submitComment = async () => {
     if (!newComment.value.trim()) {
-        alert('댓글 내용을 입력하세요!');
+        // alert('댓글 내용을 입력하세요!');
+        toast.add({
+            severity: "warn",
+            summary: "댓글 내용",
+            detail: "댓글 내용을 입력하세요!",
+            life: 3000,
+      });
         return;
     }
 
@@ -114,14 +122,26 @@ const submitComment = async () => {
         });
 
         if (response.data.success) {
-            alert('댓글이 작성되었습니다.');
+            // alert('댓글이 작성되었습니다.');
+            toast.add({
+                severity: "success",
+                summary: "댓글 작성",
+                detail: "댓글이 작성되었습니다!",
+                life: 3000,
+            });
             newComment.value = ''; // 입력 필드 초기화
             currentPage.value = 1; // 첫 페이지로 이동
             await getComment(); // 댓글 목록 다시 불러오기
         }
     } catch (error) {
         console.error('댓글 작성 중 오류 발생:', error);
-        alert('댓글 작성에 실패했습니다.');
+        // alert('댓글 작성에 실패했습니다.');
+        toast.add({
+            severity: "error",
+            summary: "댓글 작성 실패",
+            detail: "댓글 작성에 실패했습니다!",
+            life: 3000,
+        });
     }
 };
 
@@ -134,7 +154,13 @@ const startEditComment = (comment) => {
 // 댓글 수정 완료
 const updateComment = async () => {
     if (!editedComment.value.trim()) {
-        alert('수정할 댓글 내용을 입력하세요!');
+        // alert('수정할 댓글 내용을 입력하세요!');
+        toast.add({
+            severity: "warn",
+            summary: "수정할 댓글 내용",
+            detail: "수정할 댓글 내용을 입력해주세요!",
+            life: 3000,
+        });
         return;
     }
 
@@ -144,14 +170,27 @@ const updateComment = async () => {
         });
 
         if (response.data.success) {
-            alert('댓글이 수정되었습니다.');
+            // alert('댓글이 수정되었습니다.');
+            toast.add({
+                severity: "success",
+                summary: "댓글 수정",
+                detail: "댓글이 수정되었습니다!",
+                life: 3000,
+            });
+
             editCommentId.value = null; // 수정 상태 해제
             editedComment.value = ''; // 입력 필드 초기화
             await getComment(); // 댓글 목록 다시 불러오기
         }
     } catch (error) {
         console.error('댓글 수정 중 오류 발생:', error);
-        alert('댓글 수정에 실패했습니다.');
+        // alert('댓글 수정에 실패했습니다.');
+        toast.add({
+            severity: "error",
+            summary: "댓글 수정 중 오류 발생",
+            detail: "댓글 수정에 실패했습니다!",
+            life: 3000,
+        });
     }
 };
 
@@ -163,18 +202,30 @@ const cancelEdit = () => {
 
 // 댓글 삭제
 const deleteComment = async (commentId) => {
-    if (!confirm('정말로 이 댓글을 삭제하시겠습니까?')) return;
+    // if (!confirm('정말로 이 댓글을 삭제하시겠습니까?')) return;
 
     try {
         const response = await axios.delete(`/teamcomment/${commentId}`);
 
         if (response.data.success) {
-            alert('댓글이 삭제되었습니다.');
+            // alert('댓글이 삭제되었습니다.');
+            toast.add({
+                severity: "success",
+                summary: "댓글 삭제",
+                detail: "댓글이 삭제되었습니다!",
+                life: 3000,
+            });
             await getComment(); // 댓글 목록 다시 불러오기
         }
     } catch (error) {
         console.error('댓글 삭제 중 오류 발생:', error);
-        alert('댓글 삭제에 실패했습니다.');
+        // alert('댓글 삭제에 실패했습니다.');
+        toast.add({
+            severity: "error",
+            summary: "댓글 삭제 중 오류 발생",
+            detail: "댓글 삭제 중 오류가 발생하였습니다!",
+            life: 3000,
+        });
     }
 };
 

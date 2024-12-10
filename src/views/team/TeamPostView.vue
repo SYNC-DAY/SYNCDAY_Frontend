@@ -12,7 +12,7 @@
                 disabled 
                 rounded 
                 class="team-name-container"
-            />- 
+            />
             <Button 
                 :label="teamStore.boardTitle"  
                 icon="pi pi-align-justify" 
@@ -28,10 +28,11 @@
                 :options="searchTypes" 
                 optionLabel="name" 
                 placeholder="---"
-                class="w-full md:w-56" />
+                class="w-full md:w-56" 
+                />
                 <IconField>
                     <InputIcon class="pi pi-search" />
-                    <InputText v-model="searchQuery" placeholder="검색어를 입력하세요"
+                    <InputText v-model="searchQuery" placeholder="검색어를 입력하세요" style="width: 20vw; height: 5vh"
                     @keyup.enter="search" />
                 </IconField>
                 <Button @click="search" outlined class="search-Button" :disabled="!searchQuery.trim()">검색</Button>
@@ -245,9 +246,10 @@ onMounted(async () => {
 }
 
 .create-Button {
-
     padding: 10px 20px;
     cursor: pointer;
+    /* gap: 10px; */
+    margin-left:3px;
 }
 
 .search-bar {
