@@ -56,21 +56,11 @@
                 </div>
 
                 <!-- 회의 여부 -->
-                <div>
-                    <div class="text" v-if="meetingStatus === 'ACTIVE'">
-                        <span class="pi pi-book"></span>
-                        <span class="detail-content">
-                            {{ meetingStatus == 'ACTIVE' ? '회의' : null }}
-                        </span>
-                    </div>
-                    <div v-if="meetingroomName && meetingroomPlace" class="meeting-info">
-                        <div>
-                            {{ meetingroomPlace }}
-                        </div>
-                        <div>
-                            {{ meetingroomName }}
-                        </div>
-                    </div>
+                <div class="text" v-if="meetingStatus === 'ACTIVE'">
+                    <span class="pi pi-book"></span>
+                    <span class="detail-content">
+                        {{ meetingStatus == 'ACTIVE' ? '회의' : null }}
+                    </span>
                 </div>
 
                 <!-- 회의실 있으면 회의랑 같이 보여주기 -->
@@ -207,8 +197,6 @@ const endTime = props.schedule.endTime;
 const publicStatus = props.schedule.publicStatus;
 const meetingStatus = props.schedule.meetingStatus;
 // const meetingroomId = props.schedule.meetingroomId;
-const meetingroomPlace = props.schedule.meetingroomPlace;
-const meetingroomName = props.schedule.meetingroomName;
 const ownerUserId = props.schedule.ownerUserId;
 const ownerUsername = props.schedule.ownerUsername;
 const userInfo = props.schedule.userInfo; // 이걸로 참석자 확인!!
@@ -338,25 +326,24 @@ if (currentUser) {
 
     if (participationStatus === 'ATTEND') {
         if (meetingStatus === 'ACTIVE') {
-            backgroundColor.value = 'white';
-            border.value = '2px solid #15B8A6';
+            backgroundColor.value = '#FE5D86';
+            border.value = '2px solid #FE5D86';
         } else {
-            backgroundColor.value = '#15B8A6';
-            border.value = '2px solid #15B8A6';
+            backgroundColor.value = '#FF9D85';
+            border.value = '2px solid #FF9D85';
         }
     } else if (participationStatus === 'PENDING') {
         if (meetingStatus === 'ACTIVE') {
             backgroundColor.value = 'white';
-            border.value = '2px solid #76818D';
+            border.value = '2px solid #FE5D86';
         } else {
-            backgroundColor.value = '#76818D';
-            border.value = '2px solid #76818D';
+            backgroundColor.value = 'white';
+            border.value = '2px solid #FF9D85';
         }
+    } else {
+        backgroundColor.value = 'white';
+        border.value = '2px solid #646464';
     }
-    // else {
-    //     backgroundColor.value = 'white';
-    //     border.value = '2px solid #646464';
-    // }
 }
 
 const startTimeAdj = dayjs(startTime);
@@ -641,13 +628,5 @@ onBeforeUnmount(() => {
 
 .tooltip li {
     margin: 5px 0;
-}
-
-.meeting-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    margin-left: 3rem;
-    margin-top: 0.5rem;
 }
 </style>
