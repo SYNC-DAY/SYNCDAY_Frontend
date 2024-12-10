@@ -63,6 +63,7 @@ import CalendarViewModal from './component/CalendarViewModal.vue';
 import CalendarModal from './component/CalendarModal.vue';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
+import InputText from 'primevue/inputtext';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc'; // UTC 플러그인
 import timezone from 'dayjs/plugin/timezone'; // 타임존 플러그인
@@ -228,29 +229,29 @@ const fetchSchedules = async () => {
                 }
             }
 
-            const backgroundColor = ref('#FF9D85');
-            const borderColor = ref('#FF9D85');
+            const backgroundColor = ref('#76818D');
+            const borderColor = ref('#76818D');
             const textColor = ref('white');
 
             if (schedule.status === 'ATTEND') {
                 if (schedule.meeting_status === 'ACTIVE') {
-                    backgroundColor.value = 'white';
-                    borderColor.value = '#15B8A6';
-                    textColor.value = 'black';
-                } else {
                     backgroundColor.value = '#15B8A6';
                     borderColor.value = '#15B8A6';
+                    textColor.value = 'white';
+                } else {
+                    backgroundColor.value = '#76818D';
+                    borderColor.value = '#76818D';
                     textColor.value = 'white';
                 }
             } else if (schedule.status === 'PENDING') {
                 if (schedule.meeting_status === 'ACTIVE') {
                     backgroundColor.value = 'white';
-                    borderColor.value = '#76818D';
+                    borderColor.value = '#15B8A6';
                     textColor.value = 'black';
                 } else {
-                    backgroundColor.value = '#76818D';
+                    backgroundColor.value = 'white';
                     borderColor.value = '#76818D';
-                    textColor.value = 'white';
+                    textColor.value = 'black';
                 }
             } 
             // else {

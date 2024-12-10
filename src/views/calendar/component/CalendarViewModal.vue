@@ -56,7 +56,7 @@
                 </div>
 
                 <!-- 회의 여부 -->
-                <div>
+                <div v-if="meetingStatus === 'ACTIVE'">
                     <div class="text" v-if="meetingStatus === 'ACTIVE'">
                         <span class="pi pi-book"></span>
                         <span class="detail-content">
@@ -206,7 +206,7 @@ const endTime = props.schedule.endTime;
 // const updateTime = props.schedule.updateTime;
 const publicStatus = props.schedule.publicStatus;
 const meetingStatus = props.schedule.meetingStatus;
-// const meetingroomId = props.schedule.meetingroomId;
+const meetingroomId = props.schedule.meetingroomId;
 const meetingroomPlace = props.schedule.meetingroomPlace;
 const meetingroomName = props.schedule.meetingroomName;
 const ownerUserId = props.schedule.ownerUserId;
@@ -338,18 +338,18 @@ if (currentUser) {
 
     if (participationStatus === 'ATTEND') {
         if (meetingStatus === 'ACTIVE') {
-            backgroundColor.value = 'white';
-            border.value = '2px solid #15B8A6';
-        } else {
             backgroundColor.value = '#15B8A6';
             border.value = '2px solid #15B8A6';
+        } else {
+            backgroundColor.value = '#76818D';
+            border.value = '2px solid #76818D';
         }
     } else if (participationStatus === 'PENDING') {
         if (meetingStatus === 'ACTIVE') {
             backgroundColor.value = 'white';
-            border.value = '2px solid #76818D';
+            border.value = '2px solid #15B8A6';
         } else {
-            backgroundColor.value = '#76818D';
+            backgroundColor.value = 'white';
             border.value = '2px solid #76818D';
         }
     }
@@ -444,7 +444,7 @@ const updateSelectAlarm = async () => {
         }
 
         emit('submit');
-        // emit('close');
+        emit('close');
     } catch (error) {
         console.error(
             props.isEditMode ? '스케줄 수정 실패' : '스케줄 등록 실패',
