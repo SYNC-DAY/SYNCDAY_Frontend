@@ -138,9 +138,11 @@ export default {
         this.reservationData = {};
         this.$router.push({ path: "/meetingroom" });
       } else {
+        // 겹치는 듯??
         this.filteredRooms = this.rooms.filter(
           (room) => room.meetingroom_place === this.selectedRoomName
         );
+        
         this.fetchReservations(this.selectedRoomName);
         this.updateResources();
         this.$router.push({
@@ -204,7 +206,7 @@ export default {
         
         // 추가추가
         place: room.meetingroom_place, // 장소 추가
-    capacity: room.meetingroom_capacity, // 수용인원 추가
+        capacity: room.meetingroom_capacity, // 수용인원 추가
       }));
       const calendar2Api = this.getCalendar2Api();
       if (calendar2Api) {
@@ -276,17 +278,6 @@ export default {
       console.log("예약 정보 업데이트:", this.reservationDetails);
     },
     
-
-    // navigateToReservation() {
-    //   const { start, end, resourceId,  } = this.reservationDetails;
-    //   console.log(this.reservationDetails);
-    //   this.$router.push({
-    //     path: "/meetingroom/reservation",
-    //     query: { start, end, resourceId },
-    //   });
-    //   this.showReservationButton = false;
-    // },
-
     navigateToReservation() {
   if (!this.reservationDetails || !this.reservationDetails.resourceId) {
     alert("예약 정보를 확인해주세요.");
@@ -397,7 +388,7 @@ async closeReservationDialog() {
 }
 
 .selected-room {
-  margin-top: 5%;
+  margin-top: 3%;
   font-weight: bold;
   color: #333;
 }

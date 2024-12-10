@@ -1,268 +1,238 @@
 <template>
-	<div class="container-col">
-		<!-- Not Found State -->
-		<div v-if="!projects[props.projectId]" class="flex flex-column items-center justify-center p-6">
-			<h2>Project Not Found</h2>
-			<p class="text-gray-600 mb-4">The requested project could not be found.</p>
-			<Button label="Go Back" @click="router.back()" />
-		</div>
+	<div v-if="project" class="p-6">
+		<header class="mb-8">
+			<div class="flex justify-between items-center mb-4">
+				<h1 class="text-2xl font-bold">{{ project.proj_name }}</h1>
+				<div class="flex gap-2">
+					<Button :icon="project.bookmark_status === 'BOOKMARKED' ? 'pi pi-star-fill' : 'pi pi-star'"
+						@click="toggleBookmark"
+						:class="{ 'text-yellow-500': project.bookmark_status === 'BOOKMARKED' }" />
+					<Button icon="pi pi-cog" @click="showSettings = true" />
+				</div>
+			</div>
 
-		<!-- Project Content -->
-		<div v-else class="proj-container ph-1rem width-100">
-			<!-- Header Section -->
-			<div class="container-row header underline-gray width-100">
-				<div class="header-left container-row">
-					<div class="project-title">
-						<h3>{{ projects[props.projectId].proj_name }}</h3>
-						<div v-if="projects[props.projectId].vcs_proj_url">
-							<a :href="projects[props.projectId].vcs_proj_url" target="_blank" rel="noopener noreferrer"
-								@click.prevent="openInPopup">
-								Open Project
+			<div class="flex gap-4 text-sm text-gray-600">
+				<div>
+					<i class="pi pi-calendar mr-2" />
+					{{ formatDateRange(project.start_time, project.end_time) }}
+				</div>
+				<div>
+					<i class="pi pi-chart-bar mr-2" />
+					진행률: {{ project.progress_status }}%
+				</div>
+				<div v-if="project.vcs_type">
+					<i :class="`pi ${getVcsIcon(project.vcs_type)} mr-2`" />
+					{{ project.vcs_type }}
+				</div>
+			</div>
+		</header>
+
+		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+			<!-- Project Stats Card -->
+			<Card class="shadow-sm">
+				<template #title>Project Overview</template>
+				<template #content>
+					<div class="space-y-4">
+						<ProgressBar :value="project.progress_status" />
+						<div class="flex justify-between text-sm">
+							<span>Workspaces: {{ project.workspaces.length }}</span>
+							<span>Created: {{ formatDate(project.created_at) }}</span>
+						</div>
+					</div>
+				</template>
+			</Card>
+
+			<!-- Workspaces List Card -->
+			<Card class="shadow-sm">
+				<template #title>Workspaces</template>
+				<template #content>
+					<div class="space-y-2">
+						<div v-for="workspace in project.workspaces" :key="workspace.workspace_id"
+							class="p-2 border rounded hover:bg-gray-50 cursor-pointer"
+							@click="navigateToWorkspace(workspace.workspace_id)">
+							<div class="flex justify-between items-center">
+								<span>{{ workspace.workspace_name }}</span>
+								<span class="text-sm text-gray-600">{{ workspace.progress_status }}%</span>
+							</div>
+						</div>
+						<Button label="New Workspace" icon="pi pi-plus" class="w-full mt-4"
+							@click="showNewWorkspaceModal = true" />
+					</div>
+				</template>
+			</Card>
+
+			<!-- VCS Info Card -->
+			<Card v-if="project.vcs_type" class="shadow-sm">
+				<template #title>Version Control</template>
+				<template #content>
+					<div class="space-y-2">
+						<div class="flex items-center gap-2">
+							<i :class="`pi ${getVcsIcon(project.vcs_type)}`" />
+							<span>{{ project.vcs_type }}</span>
+						</div>
+						<div v-if="project.vcs_proj_url" class="text-sm break-all">
+							<a :href="project.vcs_proj_url" target="_blank" class="text-blue-600 hover:underline">
+								{{ project.vcs_proj_url }}
 							</a>
 						</div>
 					</div>
-					<div class="container-row role">
-						<img v-if="projects[props.projectId].participation_status === 'OWNER'"
-							src="@/assets/icons/Crown.svg" alt="Owner" class="role-icon" />
-						<span>{{ projects[props.projectId].participation_status }}</span>
-					</div>
-				</div>
-
-				<div class="header-right">
-					<Button severity="secondary" icon="pi pi-cog" @click="openProjectSettings" aria-haspopup="true"
-						aria-controls="overlay-menu" text />
-					<Button @click="toggleVcsMenu" icon='pi pi-code' severity="secondary" />
-					<VcsTypeMenu ref="vcsMenu" @vcs-selected="handleVcsSelection" />
-				</div>
-			</div>
-
-			<!-- Workspaces Section -->
-			<div class="ph-1rem container-col">
-				<div class="container-row header">
-					<h3 class="semibold">Workspaces</h3>
-					<Button label="New Workspace" icon="pi pi-plus" severity="secondary"
-						@click="openNewWorkspaceDialog = true" />
-				</div>
-
-				<!-- Workspaces Grid -->
-				<div v-if="projects[props.projectId].workspaces?.length" class="workspaces-grid">
-					<div v-for="workspace in projects[props.projectId].workspaces" :key="workspace.workspace_id"
-						class="workspace-card" @click="navigateToWorkspace(workspace.workspace_id)">
-						<Card>
-							<template #title>
-								{{ workspace.workspace_name }}
-								<Button icon="pi pi-code" variant="text" />
-							</template>
-							<template #content>
-								<ProgressBar :value="workspace.progress_status" severity="secondary" />
-							</template>
-						</Card>
-					</div>
-				</div>
-
-				<!-- Empty State -->
-				<div v-else class="empty-state text-center p-6 bg-gray-50 rounded-lg">
-					<i class="pi pi-folder-open text-4xl text-gray-400 mb-3" />
-					<p class="text-gray-600">No workspaces found. Create a new workspace to get started.</p>
-				</div>
-			</div>
+				</template>
+			</Card>
 		</div>
 
-		<!-- Modals -->
-		<Dialog v-model:visible="openNewWorkspaceDialog" modal header="새 워크스페이스 생성" :style="{ width: '30rem' }">
-			<InputText v-model="newWorkspaceName" type="text" placeholder="워크스페이스 이름 입력" />
-			<div class="modal-footer mt-4">
-				<Button label="확인" icon="pi pi-check" @click="createWorkspace" class="p-button-primary" />
-			</div>
+		<!-- Settings Dialog -->
+		<Dialog v-model:visible="showSettings" header="Project Settings" :modal="true">
+			<ProjectSettingsForm :project="project" @submit="handleSettingsSubmit" @delete="handleProjectDelete" />
 		</Dialog>
-		<Toast />
-		<ProjectSettingsModal v-model:visible="showProjectSettings" :project-id="projectId"
-			:project-data="projects[props.projectId]" @project-updated="handleProjectUpdate"
-			@project-deleted="handleProjectDelete" />
 
-		<ProjVcsSettingsModal v-model:visible="showProjVcsSettings" :project-id="projectId"
-			:project-data="projects[props.projectId]" @update:project="updateProjectInfo" />
+		<!-- New Workspace Dialog -->
+		<Dialog v-model:visible="showNewWorkspaceModal" header="New Workspace" :modal="true">
+			<NewWorkspaceForm :projectId="project.proj_id" @submit="handleNewWorkspace" />
+		</Dialog>
+	</div>
+	<div v-else class="flex justify-center items-center h-full">
+		<ProgressSpinner v-if="isLoading" />
+		<div v-else class="text-gray-500">Project not found</div>
 	</div>
 </template>
 
 <script setup>
 	import { ref, computed, onMounted } from 'vue';
-	import { storeToRefs } from 'pinia';
 	import { useRoute, useRouter } from 'vue-router';
-	import { useToast } from 'primevue/usetoast';
-	import axios from 'axios';
-
-	import { useAuthStore } from '@/stores/auth';
-	import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
+	import { storeToRefs } from 'pinia';
 	import { useProjectStore } from '@/stores/proj/useProjectStore';
+	import { useToast } from 'primevue/usetoast';
+	import Card from 'primevue/card';
+	import Dialog from 'primevue/dialog';
+	import ProgressBar from 'primevue/progressbar';
+	import ProgressSpinner from 'primevue/progressspinner';
+	// import ProjectSettingsForm from './components/ProjectSettingsForm.vue';
+	// import NewWorkspaceForm from './components/NewWorkspaceForm.vue';
 
-	import Button from 'primevue/button';
-	import InputText from 'primevue/inputtext';
-	import ProjectSettingsModal from './components/ProjectSettingsModal.vue';
-	import ProjVcsSettingsModal from './components/ProjGithubIntegrationModal.vue';
-	import VcsTypeMenu from '../vcs/components/VcsTypeMenu.vue';
-
-	// Props definition
-	const props = defineProps({
-		projectId: {
-			type: Number,
-			required: true
-		}
-	});
-
-	// Emits definition
-	const emit = defineEmits(['update:project']);
-
-	// Router and Stores
-	const router = useRouter();
 	const route = useRoute();
+	const router = useRouter();
 	const toast = useToast();
-	const githubAuthStore = useGithubAuthStore();
-	const authStore = useAuthStore();
 	const projectStore = useProjectStore();
 
-	// Store refs
-	const { user } = storeToRefs(authStore);
-	const { projects } = storeToRefs(projectStore);
+	const { isLoading } = storeToRefs(projectStore);
+	const showSettings = ref(false);
+	const showNewWorkspaceModal = ref(false);
 
-	// Component refs
-	const vcsMenu = ref(null);
-	const showProjectSettings = ref(false);
-	const showProjVcsSettings = ref(false);
-	const openNewWorkspaceDialog = ref(false);
-	const newWorkspaceName = ref('');
-	const workspaceDetails = ref(null);
-	const fetchWorkspace = async () => {
-		workspaceDetails.value = projectStore.getWorkspace(props.projectId, props.workspaceId);
-	}
+	const project = computed(() => {
+		return projectStore.getProjectById(parseInt(route.params.projectId));
+	});
 
-	// Methods
+	const getVcsIcon = (vcsType) => {
+		return vcsType === 'GITHUB' ? 'pi-github' : 'pi-gitlab';
+	};
+
+	const formatDate = (dateString) => {
+		return new Date(dateString).toLocaleDateString();
+	};
+
+	const formatDateRange = (startDate, endDate) => {
+		return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+	};
+
 	const navigateToWorkspace = (workspaceId) => {
 		router.push({
 			name: 'Workspace',
 			params: {
-				projectId: props.projectId,
+				projectId: project.value.proj_id,
 				workspaceId
 			}
 		});
 	};
 
-	const toggleVcsMenu = (event) => {
-		vcsMenu.value?.toggle(event);
-	};
-
-	const openProjectSettings = () => {
-		showProjectSettings.value = true;
-	};
-
-	const handleVcsSelection = async (vcsType) => {
+	const toggleBookmark = async () => {
 		try {
-			if (vcsType === 'GITHUB') {
-				showProjVcsSettings.value = true;
-			}
+			const newStatus = project.value.bookmark_status === 'BOOKMARKED' ? 'NONE' : 'BOOKMARKED';
+			await projectStore.updateProject(project.value.proj_id, {
+				bookmark_status: newStatus
+			});
+
+			toast.add({
+				severity: 'success',
+				summary: '북마크 업데이트',
+				detail: '북마크 상태가 변경되었습니다.',
+				life: 3000
+			});
 		} catch (error) {
 			toast.add({
 				severity: 'error',
-				summary: 'VCS Connection Failed',
-				detail: error.message,
+				summary: '업데이트 실패',
+				detail: '북마크 상태 변경에 실패했습니다.',
 				life: 3000
 			});
 		}
 	};
 
-	const createWorkspace = async () => {
-		if (!newWorkspaceName.value.trim()) {
+	const handleSettingsSubmit = async (updatedData) => {
+		try {
+			await projectStore.updateProject(project.value.proj_id, updatedData);
+			showSettings.value = false;
+
 			toast.add({
-				severity: 'warn',
-				summary: '이름 입력 필요',
-				detail: '워크스페이스 이름을 입력해주세요.',
+				severity: 'success',
+				summary: '설정 업데이트',
+				detail: '프로젝트 설정이 업데이트되었습니다.',
 				life: 3000
 			});
-			return;
-		}
-
-		try {
-			const response = await axios.post('/workspaces', {
-				workspace_name: newWorkspaceName.value.trim(),
-				proj_id: props.projectId
-			});
-
-			if (response.data.success) {
-				await projectStore.fetchProjects(); // Refresh projects data
-
-				toast.add({
-					severity: 'success',
-					summary: '워크스페이스 생성',
-					detail: `워크스페이스 '${newWorkspaceName.value}'가 생성되었습니다.`,
-					life: 3000
-				});
-
-				openNewWorkspaceDialog.value = false;
-				newWorkspaceName.value = '';
-			}
 		} catch (error) {
-			console.error('워크스페이스 생성 실패:', error);
 			toast.add({
 				severity: 'error',
-				summary: '워크스페이스 생성 실패',
-				detail: '워크스페이스 생성 중 오류가 발생했습니다.',
+				summary: '업데이트 실패',
+				detail: error.message || '프로젝트 설정 업데이트에 실패했습니다.',
 				life: 3000
 			});
 		}
 	};
 
-	const openInPopup = async () => {
-		const url = projects.value[props.projectId].vcs_proj_url;
-		const width = 800;
-		const height = 600;
-		const left = (window.screen.width / 2) - (width / 2);
-		const top = (window.screen.height / 2) - (height / 2);
+	const handleProjectDelete = async () => {
+		try {
+			await projectStore.deleteProject(project.value.proj_id);
+			router.push({ name: 'Projects' });
 
-		window.open(
-			url,
-			'ProjectWindow',
-			`width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes`
-		);
-	}
+			toast.add({
+				severity: 'success',
+				summary: '프로젝트 삭제',
+				detail: '프로젝트가 삭제되었습니다.',
+				life: 3000
+			});
+		} catch (error) {
+			toast.add({
+				severity: 'error',
+				summary: '삭제 실패',
+				detail: error.message || '프로젝트 삭제에 실패했습니다.',
+				life: 3000
+			});
+		}
+	};
 
+	const handleNewWorkspace = async (workspaceData) => {
+		try {
+			await projectStore.addWorkspace(project.value.proj_id, workspaceData);
+			showNewWorkspaceModal.value = false;
+
+			toast.add({
+				severity: 'success',
+				summary: '워크스페이스 생성',
+				detail: '새 워크스페이스가 생성되었습니다.',
+				life: 3000
+			});
+		} catch (error) {
+			toast.add({
+				severity: 'error',
+				summary: '생성 실패',
+				detail: error.message || '워크스페이스 생성에 실패했습니다.',
+				life: 3000
+			});
+		}
+	};
+
+	onMounted(() => {
+		if (!project.value) {
+			router.push({ name: 'Projects' });
+		}
+	});
 </script>
-
-<style scoped>
-	.role {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-	}
-
-	.role img {
-		width: 1.5rem;
-		height: 1.5rem;
-	}
-
-	.role span {
-		color: var(--muted-text-color);
-	}
-
-	.workspaces-grid {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: 1rem;
-	}
-
-	.workspace-card {
-		border-radius: 1.2rem;
-		transition: transform 0.2s ease;
-	}
-
-	.workspace-card:hover {
-		transform: translateY(-2px);
-	}
-
-	.empty-state {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		min-height: 200px;
-	}
-</style>
