@@ -58,8 +58,8 @@
   import ProgressSpinner from 'primevue/progressspinner';
   import NewProjModal from './components/NewProjModal.vue';
   import SideBar from '@/components/SideBar.vue';
-  import ProjItem from './sidebar/ProjItem.vue';
-  import WorkspaceItem from './sidebar/WorkspaceItem.vue';
+  import ProjItem from './SideBar/ProjItem.vue';
+  import WorkspaceItem from './SideBar/WorkspaceItem.vue';
 
   // Store setup
   const projectStore = useProjectStore();
@@ -89,6 +89,10 @@
 
   // Methods
   const handleRetryLoad = async () => {
+  // 임의 추가
+  const handleWorkspaceBookmark = ref(false);
+  //
+  const retryLoad = async () => {
     try {
       await projectStore.initializeStore(user.value.userId);
     } catch (error) {
@@ -180,6 +184,7 @@
   onUnmounted(() => {
     projectStore.clearActiveStates();
   });
+}
 </script>
 
 <style scoped>
