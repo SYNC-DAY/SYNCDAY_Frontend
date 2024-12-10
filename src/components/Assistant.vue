@@ -266,7 +266,7 @@
             if (isConnecting) return; // 중복 방지
             isConnecting = true;
 
-            const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 30000);
+            const retryDelay = Math.min(5000 * Math.pow(2, retryCount), 30000);
             console.log(`Reconnecting in ${retryDelay / 1000} seconds...`);
 
             setTimeout(() => {
