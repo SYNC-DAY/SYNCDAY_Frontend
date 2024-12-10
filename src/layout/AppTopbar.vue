@@ -1,22 +1,21 @@
 <script setup>
-import { useLayout } from '@/layout/composables/layout';
-import AppConfigurator from './AppConfigurator.vue';
+    import { useLayout } from '@/layout/composables/layout';
+    import AppConfigurator from './AppConfigurator.vue';
 
-const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
+    const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
 </script>
 
 <template>
-    <div class="layout-topbar container-row">
+    <div class="layout-topbar container-row gap-x-4">
         <div class="layout-topbar-logo-container">
             <button class="layout-menu-button layout-topbar-action" @click="toggleMenu">
                 <i class="pi pi-bars"></i>
             </button>
             <router-link to="/" class="layout-topbar-logo">
-                <img src="/src/assets/img/SyncDay_SVG.svg" alt=""></img>
+                < src="/src/assets/img/SyncDay_SVG.svg" alt=""/>
                 <span class="logo-text">SYNCDAY</span>
             </router-link>
         </div>
-       
 
         <div class="flex justify-center gap-x-4">
             <RouterLink to="/project">Calendar</RouterLink>
@@ -24,7 +23,12 @@ const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
             <RouterLink to="/project">Projects</RouterLink>
         </div>
         <div class="layout-topbar-actions">
-            
+            <IconField>
+                <InputIcon>
+                    <i class="pi pi-search" />
+                </InputIcon>
+                <InputText placeholder="Search" />
+            </IconField>
             <div class="layout-config-menu">
                 <button type="button" class="layout-topbar-action" @click="toggleDarkMode">
                     <i :class="['pi', { 'pi-moon': isDarkTheme, 'pi-sun': !isDarkTheme }]"></i>
