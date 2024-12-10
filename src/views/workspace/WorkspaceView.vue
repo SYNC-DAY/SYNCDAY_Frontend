@@ -138,7 +138,6 @@
   import RepoSettingModal from './components/RepoSettingModal.vue';
   import MilestoneSelection from './components/MilestoneSelection.vue';
   import { useProjectStore } from '@/stores/proj/useProjectStore';
-  import fetchTagsByWorkspaceId from './views/KanbanBoardView.vue'
 
   const route = useRoute();
   const router = useRouter();
@@ -229,9 +228,12 @@
       return;
     }
     try {
+
+
       const response = await axios.post("card-tags/", {
+
         tag_name: newTagName.value,
-        color: '#' + newTagColor.value,  
+        color: '#' + newTagColor.value,
         workspace_id: props.workspaceId, // 워크스페이스 ID 추가
       });
       if (response.data.success) {
@@ -239,10 +241,7 @@
 
 
         // 태그 리스트 다시 가져오기
-        await fetchWorkspace();
         await fetchCardTag();
-        await fetchTagsByWorkspaceId();
-
 
         newTagName.value = ""; // 초기화
         newTagColor.value = "#FFFFFF"; // 초기화
