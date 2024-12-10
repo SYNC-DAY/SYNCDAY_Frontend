@@ -43,6 +43,7 @@
             @update:visible="showEditModal = $event; getBoardList();" 
             class="board-edit-modal" 
             header="게시판 수정"
+            :style="{ width: '30rem', height: '20rem' }"
         >
             <BoardEdit />
         </Dialog>
@@ -171,7 +172,7 @@ onMounted(async () => {
 
 /* 모달 스타일 */
 .board-edit-modal {
-    width: 40%;
+    width: 80%;
     max-width: 600px;
 }
 </style>
