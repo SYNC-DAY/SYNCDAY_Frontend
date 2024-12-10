@@ -133,9 +133,21 @@ const calendarOptions = ref({
         console.log('showEventModal:', showEventModal.value);
     },
     eventDrop: async (info) => {
+        if (info.event.extendedProps.meetingStatus === 'ACTIVE') {
+            alert('회의 중인 일정은 수정할 수 없습니다.');
+            // FullCalendar의 드래그 동작을 원래 위치로 되돌리기
+            info.revert();
+            return;
+        }
         await updateSchedule(info);
     },
     eventResize: async (info) => {
+        if (info.event.extendedProps.meetingStatus === 'ACTIVE') {
+            alert('회의 중인 일정은 수정할 수 없습니다.');
+            // FullCalendar의 리사이즈 동작을 원래 위치로 되돌리기
+            info.revert();
+            return;
+        }
         await updateSchedule(info);
     },
     events: events,
@@ -379,7 +391,7 @@ body,
     margin-top: 0.3rem;
 }
 
-::V-deep(.fc-toolbar-chunk) {
+::v-deep(.fc-toolbar-chunk) {
     display: flex;
     align-items: center;
 }
@@ -418,7 +430,7 @@ body,
 }
 
 ::v-deep(.fc-button:hover) {
-    background-color: #FF9D85 !important;
+    background-color: #ff9d85 !important;
     color: inherit !important;
 }
 ::v-deep(.fc-button.fc-button-active) {
@@ -432,6 +444,4 @@ body,
 ::v-deep(.fc-button.fc-button-disabled) {
     cursor: not-allowed;
 }
-
-
 </style>
