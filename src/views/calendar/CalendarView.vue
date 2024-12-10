@@ -135,8 +135,6 @@ const calendarOptions = ref({
                     end: end,
                 };
                 isModalVisible.value = true;
-
-                console.log('selectedInfo', selectedInfo.value);
             },
         },
         searchMemberSchedule: {
