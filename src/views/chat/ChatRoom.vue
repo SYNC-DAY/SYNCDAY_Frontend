@@ -4,7 +4,7 @@
     <button class="leave-chat" @click="leaveChat">채팅방 나가기</button>
     <div class="popup-content">
       <div class="a-chat">
-        <button class="close-button" @click="$emit('close')"><i class="pi-angle-double-left"></i></button>
+        <button class="close-button" @click="$emit('close')"><i class="pi pi-angle-double-left" style="font-size: 2rem;"></i></button>
         <h2>{{ props.chatRoomName }}</h2>
       </div>
       <div class="chat-messages" ref="chatMessages">
@@ -38,6 +38,7 @@ import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 import { useAuthStore } from '@/stores/auth';
 import axios from 'axios';
+import 'primeicons/primeicons.css';
 
 const props = defineProps({
   roomId: { type: String, required: true },
@@ -314,6 +315,7 @@ h2 {
     cursor: pointer;
     padding: 0;
     margin-top: 0rem;
+    color: #20c2a4;
 }
 
 .a-chat {
