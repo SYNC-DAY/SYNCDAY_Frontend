@@ -1,52 +1,50 @@
 <template>
     <div v-if="isAssistantVisible" class="assistant-container">
-        <div class="assistant-balloon">
-            <div class="tab-Button-container">
-                <Button :class="{ active: tab === 'today' }" @click="selectTab('today')" outlined>
-                    오늘의 일정
-                </Button>
-                <Button :class="{ active: tab === 'notified' }" @click="selectTab('notice')" outlined>
-                    일정 알림
-                </Button>
-            </div>
-            <div v-if="tab == 'today'" class="today-schedule">
-                <p>반갑습니다! Syncday 비서 문어입니다.</p>
-                <p>오늘의 일정을 안내드립니다.</p>
-                <div class="today-schedule-container">
-                    <table class="today-schedule-table">
-                        <thead>
-                            <tr>
-                                <th>제목</th>
-                                <th>시작</th>
-                                <th>알림여부</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="(schedule, index) in todaySchedules" :key="index"
-                                :class="{ 'past-schedule': isPastSchedule(schedule.start_time) }">
-                                <td>{{ schedule.title }}</td>
-                                <td>{{ formatStart(schedule.start_time) }}</td>
-                                <template v-if="isPastSchedule(schedule.start_time)">
-                                    <td> 이미 시작한 일정</td>
-                                </template>
-                                <template v-else>
-                                    <td class="edit-td" v-if="editingSchedule === schedule.schedule_id">
-                                        <div class="dropdown-menu">
-                                            <select v-model="selectedNotificationTimes[schedule.schedule_id]"
-                                                class="dropdown-select">
-                                                <option disabled value="">시간 선택</option>
-                                                <option v-for="time in notificationTimes" :key="time" :value="time">
-                                                    {{ time }}분 전
-                                                </option>
-                                                <option value="cancle">알림 취소</option>
-                                            </select>
-                                        </div>
-                                        <div v-if="editingSchedule === schedule.schedule_id">
-                                            <Button @click="saveNotificationTime(schedule)" outlined>확인</Button>
-                                            <Button @click="cancelEditing()" outlined>취소</Button>
-                                        </div>
-                                    </td>
+    <div class="assistant-balloon">
+        <div class="tab-Button-container">
+            <Button :class="{ active: tab === 'today' }" @click="selectTab('today')" outlined>
+                오늘의 일정
+            </Button>
+            <Button :class="{ active: tab === 'notice' }" @click="selectTab('notice') " outlined>
+                일정 알림
+            </Button>
+        </div>
+        <div v-if="tab == 'today'" class="today-schedule">
+            <p>반갑습니다! Syncday 비서 문어입니다.</p>
+            <p>오늘의 일정을 안내드립니다.</p>
+            <div class="today-schedule-container">
+                <table class="today-schedule-table">
+                    <thead>
+                        <tr>
+                            <th>제목</th>
+                            <th>시작</th>
+                            <th>알림여부</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(schedule, index) in todaySchedules" :key="index" :class="{'past-schedule': isPastSchedule(schedule.start_time)}">
+                            <td>{{ schedule.title || '(제목없음)' }}</td>
+                            <td>{{ formatStart(schedule.start_time) }}</td>
+                            <template v-if="isPastSchedule(schedule.start_time)">
+                                <td> 이미 시작한 일정</td>
+                            </template>
+                            <template v-else>
+                                <td class="edit-td" v-if="editingSchedule === schedule.schedule_id">
+                                    <div class="dropdown-menu">
+                                        <select v-model="selectedNotificationTimes[schedule.schedule_id]" class="dropdown-select">
+                                            <option disabled value="">시간 선택</option>
+                                            <option v-for="time in notificationTimes" :key="time" :value="time">
+                                                {{ time }}분 전
+                                            </option>
+                                            <option value="cancle">알림 취소</option>
+                                        </select>
+                                    </div>
+                                    <div v-if="editingSchedule === schedule.schedule_id">
+                                        <Button @click="saveNotificationTime(schedule)" outlined>확인</Button>
+                                        <Button @click="cancelEditing()" outlined>취소</Button>
+                                    </div>
+                                </td>
 
                                     <template v-else>
                                         <td>
@@ -68,13 +66,13 @@
                     <table class="notice-schedule-table">
                         <thead>
                             <tr>
-                                <th>Title</th>
-                                <th>Start Time</th>
+                                <th>제목</th>
+                                <th>시작</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="(schedule, index) in notiedSchedules" :key="index">
-                                <td>{{ schedule.title }}</td>
+                                <td>{{ schedule.title || '(제목없음)' }}</td>
                                 <td>{{ formatStart(schedule.start_time) }}</td>
                             </tr>
                         </tbody>
@@ -91,7 +89,8 @@
         </div>
     </div>
     <div v-else class="assistant-Button-container" @click="show">
-        <img alt="누르면 비서가 나오는 이미지" />
+    <i class="pi pi-briefcase" ></i>
+
     </div>
 </template>
 
@@ -173,7 +172,13 @@
         const selectedTime = selectedNotificationTimes.value[schedule.schedule_id];
 
         if (!selectedTime) {
-            alert("알림 시간을 선택해주세요.");
+            // alert("알림 시간을 선택해주세요.");
+            toast.add({
+                everity: "warn",
+                summary: "알람 시간 선택",
+                detail: "알람 시간을 선택해주세요!",
+                life: 3000,
+            });
             return;
         }
 
@@ -232,7 +237,7 @@
         }
 
         eventSource.value = new EventSourcePolyfill(
-            `camp-alb-1280020804.ap-northeast-2.elb.amazonaws.com/sse/notification/subscribe/${authStore.user.userId}`,
+            `https://api.syncday.me/sse/notification/subscribe/${authStore.user.userId}`,
 
             {
                 headers: {
@@ -267,7 +272,7 @@
             if (isConnecting) return; // 중복 방지
             isConnecting = true;
 
-            const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 30000);
+            const retryDelay = Math.min(5000 * Math.pow(2, retryCount), 30000);
             console.log(`Reconnecting in ${retryDelay / 1000} seconds...`);
 
             setTimeout(() => {
@@ -306,16 +311,20 @@
 </script>
 
 <style scoped>
-
-    .assistant-container {
-        position: fixed;
-        bottom: 1rem;
-        right: 1rem;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        z-index: 1;
-    }
+.active {
+    background-color:#009688;
+    color: white;
+    font-weight: bold;
+}
+.assistant-container {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1;
+}
 
     /* 비서 아바타 */
     .assistant-avatar {
@@ -384,9 +393,29 @@
         border-spacing: 1rem;
     }
 
+    .notice-schedule-table {
+        width: 100%;
+        border-collapse: separate;
+        /* 기본 테이블 간격 유지 */
+        border-spacing: 1rem;
+        /* 요소 간 간격을 1rem으로 설정 */
+    }
+
+    .notice-schedule-table {
+        width: 100%;
+        border-collapse: separate;
+        /* 기본 테이블 간격 유지 */
+        border-spacing: 1rem;
+        /* 요소 간 간격을 1rem으로 설정 */
+    }
+
 
 
     .today-schedule-table th {
+        background-color: #f4f4f4;
+        font-weight: bold;
+    }
+    .notice-schedule-table th {
         background-color: #f4f4f4;
         font-weight: bold;
     }
@@ -394,6 +423,9 @@
 
 
     .today-schedule-table tr.past-schedule {
+        color: grey;
+    }
+    .notice-schedule-table tr.past-schedule {
         color: grey;
     }
 

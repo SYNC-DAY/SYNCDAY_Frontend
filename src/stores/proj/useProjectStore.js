@@ -132,7 +132,7 @@ export const useProjectStore = defineStore("projectStore", {
 
     async updateProject(projData) {
       try {
-        const response = await axios.put("/proj-members/", projData);
+        const response = await axios.put("/proj-members/projs", projData);
 
         if (response.data.success) {
           const resultData = response.data.data;
@@ -146,10 +146,61 @@ export const useProjectStore = defineStore("projectStore", {
         return false;
       }
     },
+    removeCircularReferences(obj, seen = new WeakSet()) {
+      // Handle primitives and null
+      if (!obj || typeof obj !== "object") {
+        return obj;
+      }
 
+      // Detect circular references
+      if (seen.has(obj)) {
+        return null; // or {} or [] depending on your needs
+      }
+
+      // Add this object to our set of seen objects
+      seen.add(obj);
+
+      // Handle arrays
+      if (Array.isArray(obj)) {
+        return obj.map(item => this.removeCircularReferences(item, seen));
+      }
+
+      // Handle objects
+      const cleanObj = {};
+      for (const [key, value] of Object.entries(obj)) {
+        if (value && typeof value === "object") {
+          cleanObj[key] = this.removeCircularReferences(value, seen);
+        } else {
+          cleanObj[key] = value;
+        }
+      }
+
+      return cleanObj;
+    },
+    async fetchWorkspace(projectId, workspaceId) {
+      try {
+        const response = await axios.get(`/workspaces/${workspaceId}`);
+        if (response.data.success) {
+          const workspaceData = this.workspaces[projectId][workspaceId];
+          this.workspaces[projectId][workspaceId] = { ...workspaceData, ...response.data.data };
+          return this.workspaces[projectId][workspaceId];
+        }
+      } catch (error) {
+        console.error(error);
+        return false;
+      }
+    },
     async updateWorkspace(workspaceData) {
       try {
-        const response = await axios.put("/proj-members/workspaces", workspaceData);
+        // Create a plain object with only the necessary fields
+        const requestData = {
+          ...workspaceData,
+          proj_member_id: this.getProjMemberId(workspaceData.proj_id),
+        };
+
+        console.log("Request data:", requestData);
+
+        const response = await axios.put("/proj-members/workspaces", requestData);
 
         if (response.data.success) {
           const resultData = response.data.data;
@@ -162,17 +213,13 @@ export const useProjectStore = defineStore("projectStore", {
           }
 
           // Update the workspace
-          console.log(resultData);
-          this.workspaces[projId][workspaceId] = {
-            ...resultData,
-          };
-
+          this.workspaces[projId][workspaceId] = resultData;
           return true;
         }
         return false;
       } catch (error) {
         console.error("Error updating workspace:", error);
-        return false;
+        throw error;
       }
     },
   },
@@ -191,7 +238,11 @@ export const useProjectStore = defineStore("projectStore", {
     },
 
     getInstallationId: state => projId => {
-      return state.projects[projId]?.github_installation_id;
+      if (!state.projects[projId]) {
+        console.warn(`Project ${projId} not found in store`);
+        return null;
+      }
+      return state.projects[projId].vcs_installation_id ?? null;
     },
 
     getProjMemberId: state => projId => {

@@ -25,7 +25,7 @@
       :style="buttonStyles"
       @click="navigateToReservation"
     />
-        <!-- 예약 모달 -->
+    
         <MeetingroomReservation
       v-if="isReservationDialogVisible"
       :start="reservationDetails.start"
@@ -45,7 +45,7 @@
       @reservationDeleted="handleReservationDeleted"
     />
   </div>
-</template>
+</template> 
 
 <script>
 import FullCalendar from "@fullcalendar/vue3";
@@ -55,6 +55,8 @@ import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
 import MeetingroomReservation from "./MeetingroomReservation.vue";
 import MeetingroomDetails from "./MeetingroomDetails.vue";
 import Button from "primevue/button";
+import { useToast } from "primevue/usetoast";
+
 import { ref } from "vue";
 
 import axios from "axios";
@@ -64,6 +66,7 @@ export default {
   components: { FullCalendar, Button, MeetingroomReservation, MeetingroomDetails },
   data() {
     return {
+      
       selectedRoomName: "",
       rooms: [],
       filteredRooms: [],
@@ -80,7 +83,14 @@ export default {
         plugins: [dayGridPlugin, interactionPlugin],
         initialView: "dayGridMonth",
         dateClick: (info) => {
-          alert(`선택된 날짜: ${info.dateStr}`);
+          const toast = this.$toast; 
+          // alert(`선택된 날짜: ${info.dateStr}`);
+          toast.add({
+            severity: "success",
+            summary: "선택된 날짜",
+            detail: `선택된 날짜: ${info.dateStr}`,
+            life: 3000,
+      })
           this.highlightDate(info.dateStr);
           this.handleDateClick(info);
         },
@@ -105,6 +115,7 @@ export default {
         slotMaxTime: "24:00:00",
         resources: [],
         events: [],
+        height: "auto",
       },
     };
   },
@@ -114,6 +125,7 @@ export default {
     },
   },
   methods: {
+    
     //현재 회의실 불러오기 
     async fetchRooms() {
       await axios.get("/meetingroom").then((response) => {
@@ -138,9 +150,11 @@ export default {
         this.reservationData = {};
         this.$router.push({ path: "/meetingroom" });
       } else {
+        // 겹치는 듯??
         this.filteredRooms = this.rooms.filter(
           (room) => room.meetingroom_place === this.selectedRoomName
         );
+        
         this.fetchReservations(this.selectedRoomName);
         this.updateResources();
         this.$router.push({
@@ -204,10 +218,11 @@ export default {
         
         // 추가추가
         place: room.meetingroom_place, // 장소 추가
-    capacity: room.meetingroom_capacity, // 수용인원 추가
+        capacity: room.meetingroom_capacity, // 수용인원 추가
       }));
       const calendar2Api = this.getCalendar2Api();
       if (calendar2Api) {
+        calendar2Api.removeAllEvents(); // 모든 이벤트 제거
         calendar2Api.setOption("resources", resources);
       }
     },
@@ -240,15 +255,29 @@ export default {
 
     handleSelectEvent(info) {
       const { start, end, resource, jsEvent } = info;
-
+      // const toast = useToast(); 
+      const toast = this.$toast; 
       const now = new Date();
       if (start < now) {
-        alert("지난 시간은 예약할 수 없습니다.");
+        // alert("지난 시간은 예약할 수 없습니다.");
+        toast.add({
+          severity: "warn",
+          summary: "지난 시간 예약 불가",
+          detail: "지난 시간은 예약할 수 없습니다!",
+          life: 3000,
+    });
+
         return;
       }
 
       if (!start || !end || !resource || !resource.id) {
-        alert("올바른 예약 데이터를 선택해주세요.");
+        // alert("올바른 예약 데이터를 선택해주세요.");
+        toast.add({
+          severity: "error",
+          summary: "올바른 예약 데이터 선택",
+          detail: "올바른 예약 데이터를 선택해주세요!",
+          life: 3000,
+        });
         return;
       }
 
@@ -274,22 +303,24 @@ export default {
       };
 
       console.log("예약 정보 업데이트:", this.reservationDetails);
+
+        // 3초 뒤에 버튼 숨김
+  setTimeout(() => {
+    this.showReservationButton = false;
+    console.log("예약하기 버튼이 사라졌습니다.");
+  }, 3000); // 3000ms = 3초
     },
     
-
-    // navigateToReservation() {
-    //   const { start, end, resourceId,  } = this.reservationDetails;
-    //   console.log(this.reservationDetails);
-    //   this.$router.push({
-    //     path: "/meetingroom/reservation",
-    //     query: { start, end, resourceId },
-    //   });
-    //   this.showReservationButton = false;
-    // },
-
     navigateToReservation() {
   if (!this.reservationDetails || !this.reservationDetails.resourceId) {
-    alert("예약 정보를 확인해주세요.");
+    // alert("예약 정보를 확인해주세요.");
+    const toast = this.$toast; 
+    toast.add({
+      severity: "error",
+      summary: "예약 정보 확인",
+      detail: "예약 정보 확인 중 오류가 발생하였습니다!",
+      life: 3000,
+    });
     return;
   }
 
@@ -305,7 +336,6 @@ this.$nextTick(() => {
 });
 
   console.log("isReservationDialogVisible 상태:", this.isReservationDialogVisible);
-
 
 },
 async closeReservationDialog() {
@@ -343,8 +373,6 @@ async closeReservationDialog() {
   },
   },
 
-
-
   mounted: async function () {
     const queryPlace = this.$route.query.place || "";
     this.selectedRoomName = queryPlace;
@@ -354,7 +382,7 @@ async closeReservationDialog() {
     }
   },
 };
-</script>
+</script> 
 
 <style scoped>
 ::v-deep(.calender-1 .fc) {
@@ -397,7 +425,7 @@ async closeReservationDialog() {
 }
 
 .selected-room {
-  margin-top: 5%;
+  margin-top: 3%;
   font-weight: bold;
   color: #333;
 }

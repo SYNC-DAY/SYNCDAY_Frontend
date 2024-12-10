@@ -49,7 +49,7 @@
 										<span>MEMBER</span>
 										<Button v-if="isOwner" icon="pi pi-trash"
 											class="p-button-text p-button-danger ml-2"
-											@click="confirmRemoveMember(slotProps.data)" tooltip="Remove Member"
+											@click="removeMember(slotProps.data)" tooltip="Remove Member"
 											style="width:1.2rem; height:1.2rem" />
 									</div>
 								</template>
@@ -246,14 +246,33 @@ const addMember = async (selectedUser) => {
       throw new Error("선택된 사용자가 유효하지 않습니다.");
     }
 
+    // 이미 추가된 사용자나 OWNER인지 확인
+    const existingMember = projectMembers.value.find(
+      (member) => member.user_id === selectedUser.userId
+    );
+
+    if (existingMember) {
+      if (existingMember.participation_status === "OWNER") {
+        alert("OWNER는 추가할 수 없습니다.");
+        return;
+      }
+
+      alert("이미 추가된 사용자입니다.");
+      return;
+    }
+
+    // 요청 데이터 준비
     const requestData = {
       userId: selectedUser.userId,
-      participation_status: "MEMBER", // 본문에 데이터 포함
+      projId: props.projectData.proj_id,
+      userToUpdate: authStore.user.userId, // 추가 요청을 한 사용자 ID
     };
 
-    const response = await axios.post(`/proj-members/${props.projectId}/members`, requestData);
+    // 멤버 추가 API 호출
+    const response = await axios.post(`/proj-members/`, requestData);
 
     console.log("추가된 유저 ID: ", selectedUser.userId);
+    await loadProjectMembers(); // 멤버 목록 갱신
 
     if (response.data.success) {
       toast.add({
@@ -262,9 +281,11 @@ const addMember = async (selectedUser) => {
         detail: "멤버가 성공적으로 추가되었습니다.",
         life: 3000,
       });
+    } else {
+      throw new Error(response.data.message || "응답에 실패했습니다.");
     }
   } catch (error) {
-    console.error("Failed to add member:", error);
+    console.error("Failed to add member:", error.message || error);
     toast.add({
       severity: "error",
       summary: "멤버 추가 실패",
@@ -273,6 +294,7 @@ const addMember = async (selectedUser) => {
     });
   }
 };
+
 
 
 
@@ -295,29 +317,68 @@ const updateMemberStatus = async (member) => {
 	}
 };
 
-const confirmRemoveMember = (member) => {
-	confirm.require({
-		message: `${member.username}님을 프로젝트에서 제외하시겠습니까?`,
-		header: '멤버 제외',
-		icon: 'pi pi-exclamation-triangle',
-		accept: () => removeMember(member)
-	});
-};
+// const confirmRemoveMember = (member) => {
+// 	console.log("member 값 확인: ", member);
+// ;	confirm.require({
+// 		message: `${member.username}님을 프로젝트에서 제외하시겠습니까?`,
+// 		header: '멤버 제외',
+// 		icon: 'pi pi-exclamation-triangle',
+// 		accept: () => removeMember(member)
+// 	});
+// };
+
+// const removeMember = async (member) => {
+// 	try {
+// 		await axios.delete(`/proj-members/${props.projectId}/members/${member.user_id}`);
+// 		await loadProjectMembers();
+
+// 		toast.add({
+// 			severity: 'success',
+// 			summary: '멤버 제외',
+// 			detail: '멤버가 제외되었습니다.',
+// 			life: 3000
+// 		});
+// 	} catch (error) {
+// 		console.error('Failed to remove member:', error);
+// 	}
+// };
 
 const removeMember = async (member) => {
-	try {
-		await axios.delete(`/proj-members/${props.projectId}/members/${member.user_id}`);
-		await loadProjectMembers();
+  try {
 
-		toast.add({
-			severity: 'success',
-			summary: '멤버 제외',
-			detail: '멤버가 제외되었습니다.',
-			life: 3000
-		});
-	} catch (error) {
-		console.error('Failed to remove member:', error);
-	}
+	if (!member.proj_id || !member.user_id) {
+      throw new Error("프로젝트 ID 또는 사용자 ID가 유효하지 않습니다.");
+    }
+	
+    const requestData = {
+		projId: member.proj_id, // 프로젝트 ID
+      	userId: member.user_id, // 삭제 당하는 사람 ID
+		userToUpdate: authStore.user.userId,  // 삭제하는 사람 ID
+    };
+
+	console.log("삭제 요청 데이터: ", requestData);
+
+    await axios.delete('/proj-members/', { data: requestData }); // DELETE 요청에 body 포함
+
+    // 멤버 목록 갱신
+    await loadProjectMembers();
+
+    toast.add({
+      severity: 'success',
+      summary: '멤버 제외',
+      detail: '멤버가 성공적으로 제외되었습니다.',
+      life: 3000,
+    });
+  } catch (error) {
+    console.error('Failed to remove member:', error);
+
+    toast.add({
+      severity: 'error',
+      summary: '멤버 제외 실패',
+      detail: '멤버를 제외하는 중 오류가 발생했습니다.',
+      life: 3000,
+    });
+  }
 };
 
 const handleSave = async () => {

@@ -24,6 +24,7 @@
                         </div>
                         <Button 
                             rounded 
+                            outlined
                             class="more-button" 
                             @click="goToThatPostView(board.teamBoardId, board.boardTitle)"
                         >
@@ -42,6 +43,7 @@
             @update:visible="showEditModal = $event; getBoardList();" 
             class="board-edit-modal" 
             header="게시판 수정"
+            :style="{ width: '30rem', height: '20rem' }"
         >
             <BoardEdit />
         </Dialog>
@@ -117,8 +119,8 @@ onMounted(async () => {
 .team-name-container {
     margin-top: 1rem;
     margin-right: 1rem;
-    background-color: #FDC387;
-    border-color: #FDC387;
+    background-color: #4DB6AC;
+    border-color: #4DB6AC;
     cursor: default;
     color: black;
     opacity: 1;
@@ -137,41 +139,40 @@ onMounted(async () => {
 
 
 .board {
-    border: 1px solid #FF9D85;
+    border: 1px solid #009688;
     border-radius: 2.5rem;
-    box-shadow: 0 4px 8px rgba(255, 157, 133, 0.5);
-    margin: 1rem;
+    box-shadow: 0 1.5px 3px rgba(59, 122, 63, 0.5);   
+     margin: 1rem;
 }
 
 .board-header {
     display: flex;
     justify-content: space-between;
     margin: 1rem;
+    margin-left: 4rem;
 }
 
 .board-title-button {
     color: black;
     opacity: 1;
-    background-color: #FF9D85;
-    border-color: #FF9D85;
+    background-color: #4DB6AC;
+    border-color: #4DB6AC;
 }
 
 .more-button {
-    background-color: white;
-    border-color: #FF9D85;
-    color: black;
+
     height: 2rem;
     width: 4.5rem;
     margin-right: 3rem;
 }
 
 .more-button:hover {
-    background-color: #FF9D85;
+    background-color: #4DB6AC;
 }
 
 /* 모달 스타일 */
 .board-edit-modal {
-    width: 40%;
+    width: 80%;
     max-width: 600px;
 }
 </style>

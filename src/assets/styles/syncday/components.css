@@ -31,7 +31,7 @@
 }
 
 .gradient-horizontal {
-	background: linear-gradient(90deg, var(--pink-color) 50%, var(--apricot-color));
+	background: linear-gradient(90deg, var(--mint-color) 50%, var(--lightmint-color));
 }
 
 .underline-gray {

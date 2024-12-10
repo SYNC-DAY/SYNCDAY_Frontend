@@ -3,7 +3,7 @@
 		:closable="true">
 
 		<div>
-			<Listbox v-model="selectedRepo" :options="repositories" filter optionLabel="repoName" />
+			<Listbox v-model="selectedRepo" :options="repositories" filter optionLabel="name" />
 		</div>
 
 
@@ -21,8 +21,12 @@
 	import { ref, watch, onMounted } from 'vue';
 	import { useToast } from 'primevue/usetoast';
 	import { useProjectStore } from '@/stores/proj/useProjectStore';
+	import { useGithubAppStore } from '@/stores/github/useGithubAppStore';
+	import { useGithubRepoStore } from '@/stores/github/useGithubRepoStore';
 	import { useRoute } from 'vue-router';
+
 	import axios from 'axios';
+	import { useGithubProjectsStore } from '@/stores/github/useGithubProjectsStore';
 	const props = defineProps({
 		projectId: {
 			type: [String, Number],
@@ -42,32 +46,27 @@
 		}
 	});
 
-	const emit = defineEmits(['update:modelValue']);
+	const emit = defineEmits(['update:modelValue', 'update:updateRepositoryInfo']);
 	const projectStore = useProjectStore();
 	const toast = useToast();
 	const repositories = ref([]);
 	const isVisible = ref(props.modelValue);
 	const selectedRepo = ref();
 	const githubInstallationId = ref(null);
-
-
+	const githubAppStore = useGithubAppStore();
+	const githubRepoStore = useGithubRepoStore();
 	const fetchRepositories = async (installationId) => {
+		if (!installationId) {
+			return;
+		}
 		try {
 			console.log('Starting request for installationId:', installationId);
-			// Replace with your actual API call
-			const response = await axios.get(`/github/repositories/installations/${installationId}`);
-
-			if (response.data.success) {
-				const resultData = response.data.data;
-				console.log(resultData);
-				repositories.value = resultData
-				// Create a new object to hold all repositories
-
-			}
-			else {
-				console.log("response data fail")
-			}
+			// The response is the array of repositories directly
+			const repos = await githubRepoStore.fetchRepositories(installationId);
+			repositories.value = repos;
+			console.log('Fetched repositories:', repos);
 		} catch (error) {
+			console.error('Error fetching repositories:', error);
 			toast.add({
 				severity: 'error',
 				summary: 'Error',
@@ -76,25 +75,77 @@
 			});
 		}
 	};
-	onMounted(async () => {
-		githubInstallationId.value = await projectStore.getInstallationId(props.projectId);
-		await fetchRepositories(githubInstallationId.value);
-	});
+
 
 	// Watch for changes in props.modelValue
-	watch(() => props.modelValue, (newValue) => {
+	watch(() => props.modelValue, async (newValue) => {
 		isVisible.value = newValue;
+
+		if (newValue === true) {
+			const id = projectStore.getInstallationId(props.projectId);
+			if (!id) {
+				toast.add({
+					severity: 'error',
+					summary: 'Error',
+					detail: 'No GitHub installation found',
+					life: 3000
+				});
+				return;
+			}
+			githubInstallationId.value = id;
+			await fetchRepositories(id);
+		}
 	});
 
 	// Watch for changes in isVisible
 	watch(() => isVisible.value, (newValue) => {
 		emit('update:modelValue', newValue);
 	});
+
 	const onClickSave = async () => {
-		const projMemberId = await projectStore.getProjMemberId(props.projectId);
-		console.log(selectedRepo.value)
-		console.log({ workspace_id: props.workspaceId, proj_id: props.workspaceId, workspace_name: props.workspaceData.workspace_name, vcs_repo_name: selectedRepo.value.repoName, vcs_repo_url: selectedRepo.value.htmlUrl, proj_member_id: projMemberId })
-		await projectStore.updateWorkspace({ workspace_id: props.workspaceId, proj_id: props.workspaceId, workspace_name: props.workspaceData.workspace_name, vcs_repo_name: selectedRepo.value.repoName, vcs_repo_url: selectedRepo.value.htmlUrl, proj_member_id: projMemberId })
+		if (!selectedRepo.value) {
+			toast.add({
+				severity: 'warn',
+				summary: 'Warning',
+				detail: 'Please select a repository',
+				life: 3000
+			});
+			return;
+		}
+
+		try {
+			const projMemberId = await projectStore.getProjMemberId(props.projectId);
+
+			const updateData = {
+				workspace_id: String(props.workspaceId),
+				proj_id: String(props.projectId),
+				workspace_name: String(props.workspaceData.workspace_name),
+				vcs_repo_name: String(selectedRepo.value.name),
+				vcs_repo_url: String(selectedRepo.value.html_url),
+				proj_member_id: projMemberId
+			};
+			console.log(updateData)
+			// await projectStore.updateWorkspace({ ...props.workspaceData, ...updateData });
+
+			// Emit a simple object with only necessary data
+			emit('update', {
+				vcs_repo_name: selectedRepo.value.name,
+				vcs_repo_url: selectedRepo.value.html_url
+			});
+
+			closeModal();
+		} catch (error) {
+			console.error('Error saving workspace:', error);
+			toast.add({
+				severity: 'error',
+				summary: 'Error',
+				detail: 'Failed to save repository selection',
+				life: 3000
+			});
+		}
+	};
+	const closeModal = () => {
+		selectedRepo.value = null
 		emit('update:modelValue', false)
 	}
 

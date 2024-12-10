@@ -46,15 +46,18 @@
 </template>
 
 <script setup>
-  import { ref, onMounted, onUnmounted } from 'vue';
+  import { ref, onMounted, onUnmounted, provide } from 'vue';
   import { useRouter } from 'vue-router';
   import axios from 'axios';
   import { useToast } from 'primevue/usetoast';
   import { useProjectStore } from '@/stores/proj/useProjectStore';
   import { useAuthStore } from '@/stores/auth.js';
   import ProgressSpinner from 'primevue/progressspinner';
-
+  import NewProjModal from './components/NewProjModal.vue';
   import SideBar from '@/components/SideBar.vue';
+  import ProjItem from './SideBar/ProjItem.vue';
+  import WorkspaceItem from './SideBar/WorkspaceItem.vue';
+  // import WorkspaceItem from './sidebar/WorkspaceItem.vue';
 
   const router = useRouter();
   const toast = useToast();
@@ -81,7 +84,7 @@
 
   const handleProjectSubmit = async (projectData) => {
     try {
-      const response = await axios.post("/projs/", {
+      const response = await axios.post("/proj-members/projs", {
         user_id: authStore.user.userId,
         proj_name: projectData.name,
         start_time: projectData.startDate ? new Date(projectData.startDate).toISOString() : null,
