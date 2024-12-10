@@ -9,8 +9,8 @@
       <div v-if="details">
         <p><strong>제목:</strong> {{ details.title || "제목 없음" }}</p>
         <p><strong>장소:</strong> {{ details.meetingroom_place || "정보 없음" }}</p>
-        <p><strong>시작 시간:</strong> {{ details.start_time || "정보 없음" }}</p>
-        <p><strong>종료 시간:</strong> {{ details.end_time || "정보 없음" }}</p>
+        <p><strong>시작 시간:</strong> {{ formatKoreanDate(details.start_time) || "정보 없음" }}</p>
+        <p><strong>종료 시간:</strong> {{ formatKoreanDate(details.end_time) || "정보 없음" }}</p>
         <p><strong>참석자:</strong> {{ userNames }} </p>
         <!-- <ul>
           <li v-for="user in details.userInfo" :key="user.userId">
@@ -40,6 +40,7 @@
   import { ref, computed, onMounted, watch } from "vue";
   import axios from "axios";
   import { useAuthStore } from "@/stores/auth";
+  import { useToast } from 'primevue/usetoast';
   
   // Props와 Emits 정의
   const props = defineProps({
@@ -52,6 +53,7 @@ const emit = defineEmits(["closeDialog", "reservationDeleted"])
   const user = ref({});
   const authStore = useAuthStore();
   const isDialogVisible = ref(true);
+  const toast = useToast();
   const { scheduleId } = props;
 
   // 예약 정보 가져오기
@@ -119,16 +121,22 @@ const emit = defineEmits(["closeDialog", "reservationDeleted"])
 
   // 예약 삭제
   const deleteReservation = async () => {
-    if (confirm("정말 삭제하시겠습니까?")) {
+    // if (confirm("정말 삭제하시겠습니까?")) {
       try {
         await axios.delete(`/meetingroom_reservation/${props.scheduleId}`);
-        alert("예약이 삭제되었습니다.");
+        // alert("예약이 삭제되었습니다.");
+        toast.add({
+          severity: "success",
+          summary: "회의실 예약 삭제",
+          detail: "회의실 예약이 삭제되었습니다!",
+          life: 3000,
+      });
         emit("reservationDeleted", props.scheduleId); // 부모에게 삭제된 ID 전달
         emit("closeDialog"); // 부모 컴포넌트로 닫기 이벤트 전달
       } catch (error) {
         console.error("예약 삭제 중 오류 발생:", error);
       }
-    }
+    // }
   };
 
   // Dialog 닫기
@@ -155,14 +163,32 @@ const isFutureReservation = computed(() => {
 
   const cancel = () => {
   emit("closeDialog");
-
-
-    
 };
 
 const userNames = computed(() => {
   return details.value.userInfo.map(user => user.username).join(", ");
 });
+
+const formatKoreanDate = (date) => {
+    if (!(date instanceof Date)) {
+        throw new Error("Input must be a Date object");
+    }
+
+    // 요일 배열
+    const days = ['일', '월', '화', '수', '목', '금', '토'];
+
+    // 필요한 데이터 추출
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1; // 월은 0부터 시작하므로 +1
+    const day = date.getDate();
+    const dayOfWeek = days[date.getDay()];
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+
+    // 결과 문자열 조합
+    return `${year}년 ${month}월 ${day}일(${dayOfWeek}) ${hours}시 ${minutes.toString().padStart(2, '0')}분`;
+  };
+
   
   // 컴포넌트 로드 시 데이터 가져오기
   onMounted(() => {
