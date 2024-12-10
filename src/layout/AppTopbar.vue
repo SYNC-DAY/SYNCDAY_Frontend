@@ -12,7 +12,7 @@
                 <i class="pi pi-bars"></i>
             </button>
             <router-link to="/" class="layout-topbar-logo">
-                < src="/src/assets/img/SyncDay_SVG.svg" alt=""/>
+                <img src="/src/assets/img/SyncDay_SVG.svg" alt="" />
                 <span class="logo-text">SYNCDAY</span>
             </router-link>
         </div>
@@ -23,7 +23,7 @@
             <RouterLink to="/project">Projects</RouterLink>
         </div>
         <div class="layout-topbar-actions">
-            <IconField>
+            <IconField class="flex-1">
                 <InputIcon>
                     <i class="pi pi-search" />
                 </InputIcon>
