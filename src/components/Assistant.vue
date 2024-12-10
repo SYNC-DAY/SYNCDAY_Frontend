@@ -231,7 +231,7 @@
         }
 
         eventSource.value = new EventSourcePolyfill(
-            `http://localhost:5000/sse/notification/subscribe/${authStore.user.userId}`,
+            `http://localhost:8080/sse/notification/subscribe/${authStore.user.userId}`,
 
             {
                 headers: {
