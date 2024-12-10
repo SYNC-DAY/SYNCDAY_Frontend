@@ -17,7 +17,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://camp-alb-1280020804.ap-northeast-2.elb.amazonaws.com',
+        target: 'https://api.syncday.me',
         changeOrigin: true,  // 호스트 헤더를 대상 URL로 변경하여 CORS 문제 해결
         secure: true  // HTTPS 요청에 대한 SSL 인증서 검증 활성화
       }
