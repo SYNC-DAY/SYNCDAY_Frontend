@@ -38,7 +38,7 @@ const props = defineProps({
     required: true
   },
   projectId: {  // Changed from projId to projectId
-    type: [Number, String],
+    type: Number,
     required: true
   }
 });
