@@ -138,7 +138,7 @@
 </template>
 
 <script setup>
-	import { ref, computed, watch, onMounted } from "vue";
+	import { ref, computed, watch, onMounted, inject } from "vue";
 	import { useGithubMilestoneStore } from "@/stores/github/useGithubMilestoneStore";
 	import { useGithubIssueStore } from "@/stores/github/useGithubIssueStore";
 	import { useCardboardStore } from "@/stores/proj/useCardboardStore";
@@ -148,19 +148,16 @@
 	import Button from "primevue/button";
 	import ProgressBar from "primevue/progressbar";
 	import ProgressSpinner from "primevue/progressspinner";
-
+	const installationId = inject("installationId");
 	const props = defineProps({
 		isOpen: {
 			type: Boolean,
 			required: true,
 		},
-		installationId: {
-			type: Number,
-			required: false, // Changed to false since we'll handle the case when it's missing
-			validator: value => {
-				if (!value) return true; // Allow null/undefined
-				return !isNaN(Number(value)) && value > 0;
-			},
+
+		repoUrl: {
+			type: String,
+			required: false,
 		},
 		// ... (keep other existing props)
 	});
@@ -195,7 +192,7 @@
 	});
 
 	const isReady = computed(() => {
-		return !!props.installationId && !!repoInfo.value.owner && !!repoInfo.value.repo;
+		return !!installationId || (!!repoInfo.value.owner && !!repoInfo.value.repo);
 	});
 
 	const canSave = computed(() => {
@@ -237,6 +234,7 @@
 		isLoadingMilestones.value = true;
 		try {
 			const { owner, repo } = repoInfo.value;
+
 			milestones.value = await milestoneStore.fetchMilestones(props.installationId, owner, repo);
 		} catch (error) {
 			console.error("Failed to fetch milestones:", error);

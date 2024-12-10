@@ -65,6 +65,7 @@
 	const githubAppStore = useGithubAppStore();
 	const githubRepoStore = useGithubRepoStore();
 	const fetchRepositories = async installationId => {
+		console.log(installationId);
 		if (!installationId) {
 			return;
 		}

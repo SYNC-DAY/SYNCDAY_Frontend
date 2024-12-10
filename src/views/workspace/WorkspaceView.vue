@@ -161,10 +161,11 @@
 		:workspaceData="workspaceDetails"
 		@update="updateRepositoryInfo" />
 
+	<!--  -->
 	<MilestoneSelection
 		:is-open="showMilestoneSelection"
-		:installation-id="githubInstallationId"
-		:repo-url="repositoryUrl"
+		:installationId="githubInstallationId"
+		:repoUrl="workspaceDetails?.vcs_repo_url"
 		:project-id="currentProjectId"
 		:workspace-id="workspaceId"
 		@close="showMilestoneSelection = false" />
@@ -233,7 +234,11 @@
 	const error = ref(null);
 	const workspaceDetails = ref(null);
 	const showCardTag = ref(null);
-
+	watch(showMilestoneSelection, async newValue => {
+		if (newValue && !workspaceDetails.value) {
+			await fetchWorkspace();
+		}
+	});
 	const fetchWorkspace = async () => {
 		console.log(props.projectId);
 		console.log(props.workspaceId);
@@ -250,7 +255,7 @@
 			throw new Error(err);
 		}
 	};
-	provide("proj-installatoin-id", props.installationId);
+	provide("installationId", githubInstallationId.value);
 	const fetchCardTag = async () => {
 		if (!props.workspaceId) {
 			throw new Error("WorkspaceID is Missing");

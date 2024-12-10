@@ -252,7 +252,7 @@
 		if (newVal) {
 			try {
 				loading.value = true;
-				const installation = githubAppStore.installations.find(inst => inst.id === newVal);
+				const installation = githubAppStore.installations[newVal];
 
 				if (installation) {
 					githubProjects.value = await githubProjectStore.fetchOrgProjects(newVal, installation.accountName);
@@ -338,7 +338,7 @@
 	const handleSave = async () => {
 		if (!selectedInstallationId.value) return;
 
-		const selectedInstallation = githubAppStore.installations.find(inst => inst.id === selectedInstallationId.value);
+		const selectedInstallation = githubAppStore.installations[selectedInstallationId.value];
 		const selectedProject = githubProjects.value?.find(p => p.id === selectedGithubProjectId.value);
 
 		if (selectedInstallation) {
