@@ -21,6 +21,7 @@ jobs:
       uses: actions/setup-node@v2
       with:
         node-version: '16'
+        cache: 'npm' 
 
     - name: Install dependencies
       run: npm install
@@ -46,8 +47,8 @@ jobs:
         mkdir -p deploy
         mkdir -p deploy/.platform/nginx/conf.d
         cp .platform/nginx/nginx.conf deploy/.platform/nginx/
-        cp -r dist deploy/
-        cp package.json deploy/
+        cp -r dist/* deploy/
+        cp package*.json deploy/
         cp server.js deploy/ 
         cp Procfile deploy/Procfile
         cd deploy && zip -r deploy.zip .
@@ -66,3 +67,6 @@ jobs:
         version_label: "syncdayfront-${{ github.sha }}-${{ steps.current-time.outputs.formattedTime }}"
         region: ap-northeast-2
         deployment_package: deploy/deploy.zip
+        use_existing_version_if_available: false
+        wait_for_deployment: true 
+        wait_for_environment_recovery: true  
