@@ -17,7 +17,7 @@
           <Listbox v-model="selectedUser" :options="searchResults" optionLabel="name" style="width: 16.5vw" emptyMessage="검색 결과가 없습니다." class="name">
             <template #option="slotProps">
               <div class="user-item">
-                
+                <span>{{ slotProps.option.name }}</span>
                 <Button icon="pi pi-user-plus" class="p-button-text p-button-success ml-2" @click.stop="addMember(slotProps.option)"/>
               </div>
             </template>
@@ -138,6 +138,7 @@ const { start, end, resourceId, resourceName, resourcePlace, resourceCapacity } 
 
 const isVisible = ref(true);
 const value1 = ref("");
+const selectedUser = ref("");
 const searchResults = ref([]);
 const selectedAttendees = ref([]);
 const authStore = useAuthStore();

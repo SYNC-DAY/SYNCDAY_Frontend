@@ -11,15 +11,24 @@
           {{ place }}
         </option>
       </select> -->
-      <Select v-model="selectedRoomName" :options="name" placeholder="장소를 선택하세요" @change="filterRooms">
-        <option value="">----</option>
+      <Select
+      v-if="uniquePlaces.length > 0"
+      v-model="selectedRoomName"
+      :options="uniquePlaces"
+      
+      placeholder="장소를 선택하세요"
+      @change="filterRooms"
+      class="w-full"
+    />
+      <!-- <Select v-model="selectedRoomName" :options="uniquePlaces" optionLabel="place"  placeholder="장소를 선택하세요" @change="filterRooms"> -->
+        <!-- <option value="">----</option>
         <option v-for="place in uniquePlaces" :key="place" :value="place">
           {{ place }}
-        </option>
-      </Select>
+        </option> -->
+      <!-- </Select> -->
     </div>
     <div class="calendar-section">
-      <p v-if="selectedRoomName === ''" class="select-message">장소를 선택해주세요.</p>
+      <p v-if="selectedRoomName === ''" class="select-message"></p>
       <p v-else class="selected-room">선택된 장소: {{ selectedRoomName }}</p>
       <p class="selected-date">날짜: {{ selectedDate }}</p>
       <FullCalendar v-if="selectedRoomName !== ''" :options="calendarOptions2" ref="calendar2" />
@@ -128,6 +137,7 @@ export default {
   },
   computed: {
     uniquePlaces() {
+      this.filterRooms();
       return [...new Set(this.rooms.map((room) => room.meetingroom_place))];
     },
   },
@@ -151,7 +161,7 @@ export default {
   },
 
     // 필터링 된 회의실 
-    filterRooms() {
+    async filterRooms() {
       if (this.selectedRoomName === "") {
         this.filteredRooms = [];
         this.reservationData = {};
@@ -437,6 +447,7 @@ async closeReservationDialog() {
   flex-direction: column;
   height: 100%;
   width: 100%;
+  margin-left: 1rem;
 }
 
 .calendar-setting span {
@@ -457,6 +468,12 @@ async closeReservationDialog() {
   margin-top: 3%;
   font-weight: bold;
   color: #333;
+}
+
+.filter-area {
+  margin-top: 1rem;
+  margin-bottom: -1rem;
+  margin-left: 1rem;
 }
 
 .selected-room p {
