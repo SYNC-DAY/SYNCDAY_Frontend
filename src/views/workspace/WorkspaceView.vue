@@ -1,446 +1,284 @@
 <template>
-  <div class="ph-1rem container-col width-100">
-    <div v-if="isLoading" class="loading-state">
-      Loading...
-    </div>
+	<div
+		v-if="workspace"
+		class="p-6">
+		<header class="mb-8">
+			<div class="flex justify-between items-center mb-4">
+				<div class="space-y-1">
+					<h1 class="text-2xl font-bold">{{ workspace.workspace_name }}</h1>
+				</div>
+				<div class="flex gap-2">
+					<Button
+						icon="pi pi-cog"
+						@click="showSettings = true" />
+				</div>
+			</div>
 
-    <div v-else-if="error" class="error-state">
-      <p>{{ error }}</p>
-      <button @click="fetchWorkspace" class="retry-button">
-        Retry
-      </button>
-    </div>
+			<div class="flex gap-4 text-sm text-gray-600">
+				<div>
+					<i class="pi pi-chart-bar mr-2" />
+					진행률: {{ workspace.progress_status }}%
+				</div>
+				<div v-if="workspace.vcs_type">
+					<i :class="`pi ${getVcsIcon(workspace.vcs_type)} mr-2`" />
+					{{ workspace.vcs_repo_url || "Repository not linked" }}
+				</div>
+			</div>
+		</header>
 
-    <template v-else-if="workspaceDetails">
-      <div class="workspace-header container-row underline-gray">
-        <div class="container-row header-left">
-          <h4>{{ workspaceDetails.workspace_name }}</h4>
-          <Button icon="pi pi-code" text @click.stop="showModal = true" v-tooltip="'Repository Settings'"></Button>
-          <Button icon="pi pi-sync" text @click.stop="showMilestoneSelection = true"
-            v-tooltip="'sync milestones'"></Button>
-        </div>
+		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+			<!-- Workspace Progress Card -->
+			<Card class="shadow-sm">
+				<template #title>Progress Overview</template>
+				<template #content>
+					<div class="space-y-4">
+						<ProgressBar :value="workspace.progress_status" />
+						<div class="flex justify-between text-sm">
+							<span>Tasks Completed: {{ completedTasks }}/{{ totalTasks }}</span>
+							<Button
+								icon="pi pi-sync"
+								text
+								@click="refreshProgress"
+								:loading="isRefreshing" />
+						</div>
+					</div>
+				</template>
+			</Card>
 
-        <div class="container-row header-right">
+			<!-- Repository Info Card -->
+			<Card
+				v-if="workspace.vcs_type"
+				class="shadow-sm">
+				<template #title>Repository Information</template>
+				<template #content>
+					<div class="space-y-4">
+						<div class="flex items-center gap-2">
+							<i :class="`pi ${getVcsIcon(workspace.vcs_type)}`" />
+							<span>{{ workspace.vcs_type }}</span>
+						</div>
+						<div
+							v-if="workspace.vcs_repo_url"
+							class="text-sm break-all">
+							<a
+								:href="workspace.vcs_repo_url"
+								target="_blank"
+								class="text-blue-600 hover:underline">
+								{{ workspace.vcs_repo_url }}
+							</a>
+						</div>
+						<div
+							v-else
+							class="text-sm text-gray-500">
+							No repository linked
+							<Button
+								label="Link Repository"
+								icon="pi pi-link"
+								text
+								@click="showLinkRepoModal = true" />
+						</div>
+					</div>
+				</template>
+			</Card>
 
-          <Button icon="pi pi-cog" severity="secondary"></Button>
-          <Button icon="pi pi-tag" @click="showTagDialog = true"></Button>
-          <!-- 태그 관리 Dialog -->
-          <Dialog v-model:visible="showTagDialog" header="태그 관리" :style="{ width: '30rem' }" modal>
-            <div class="header-row">
-              <Button icon="pi pi-plus" @click="openAddTagDialog" />
-              <!-- <Button label="삭제" icon="pi pi-trash" class="p-button-danger" @click="deleteTag" /> -->
-              <Dialog v-model:visible="addCardTag" header="새 태그 추가" :style="{ width: '30rem' }" modal>
+			<!-- Activity Feed Card -->
+			<Card class="shadow-sm">
+				<template #title>Recent Activity</template>
+				<template #content>
+					<div class="space-y-2 max-h-60 overflow-y-auto">
+						<div
+							v-for="activity in recentActivities"
+							:key="activity.id"
+							class="p-2 text-sm border-b last:border-b-0">
+							<div class="flex items-center gap-2">
+								<i :class="`pi ${getActivityIcon(activity.type)}`" />
+								<span>{{ activity.description }}</span>
+							</div>
+							<div class="text-xs text-gray-500 mt-1">
+								{{ formatDate(activity.timestamp) }}
+							</div>
+						</div>
+						<div
+							v-if="!recentActivities.length"
+							class="text-sm text-gray-500 text-center py-4">
+							No recent activity
+						</div>
+					</div>
+				</template>
+			</Card>
+		</div>
 
-                <div class="add-tag-form">
-                  <span>태그 이름 입력: </span>
-                  <InputText v-model="newTagName" placeholder="태그 이름을 입력하세요: " />
-                  <div></div>
-                  <span>색상 설정: </span>
-                  <Button label="색상 선택" icon="pi pi-palette" class="p-button-outlined" @click="toggleColorPicker" />
-                  <!-- ColorPicker -->
-                  <div v-if="showColorPicker" class="color-picker-popup">
-                    <ColorPicker v-model="newTagColor" inline />
-                    <!-- <Button label="확인" icon="pi pi-check" class="p-button-success" @click="toggleColorPicker"/> -->
-                  </div>
-                  <!-- <ColorPicker v-model="newTagColor" inline /> -->
-                  <div></div>
-                  <Button label="추가" icon="pi pi-check" @click="addNewTag" />
-                  <!-- <Button label="취소" icon="pi pi-times" @click="cancelAddTag" class="p-button-danger" /> -->
-                </div>
-              </Dialog>
-            </div>
-            <div v-if="tags.length > 0">
-              <div class="tags-container">
-                <div v-for="tag in tags" :key="tag.value" :style="{
-                  backgroundColor: getBackgroundWithOpacity(tag.color, 0.125), // 배경색만 투명도 적용
-                  color: tag.color,               // 텍스트 색상
-                  padding: '4px 8px',
-                  borderRadius: '4px',
-                  margin: '4px',
-                  display: 'inline-block',
-                }">
-                  {{ tag.name }}
-                  <Button icon="pi pi-times" class="custom-delete-button" @click="deleteTag(tag)" />
-                </div>
-              </div>
-            </div>
-            <div v-else>
-              <p>태그가 없습니다.</p>
-            </div>
+		<!-- Settings Dialog -->
+		<Dialog
+			v-model:visible="showSettings"
+			header="Workspace Settings"
+			:modal="true">
+			<WorkspaceSettingsForm
+				:workspace="workspace"
+				@submit="handleSettingsSubmit"
+				@delete="handleWorkspaceDelete" />
+		</Dialog>
 
-          </Dialog>
-        </div>
-      </div>
-
-      <!-- select view mode -->
-      <div>
-        <Tabs value="0">
-          <TabList>
-            <Tab value="0">CardBoard</Tab>
-            <Tab value="1">Kanban</Tab>
-            <Tab value="2">Calendar</Tab>
-          </TabList>
-
-          <TabPanels>
-            <TabPanel value="0">
-              <CardBoard :cardboards="workspaceDetails.cardboards || []" :workspaceId="workspaceDetails.workspace_id">
-              </CardBoard>
-            </TabPanel>
-            <TabPanel value="1">
-              <KanbanBoard :cardboards="workspaceDetails.cardboards || []" />
-
-            </TabPanel>
-            <TabPanel value="2">
-              <CalendarView :cardboards="workspaceDetails.cardboards" />
-
-            </TabPanel>
-            <!-- Calendar view -->
-          </TabPanels>
-        </Tabs>
-        <CardModal v-if="showCardModal" :show="showCardModal" :card="selectedCard" @close="handleCloseModal" />
-      </div>
-
-    </template>
-
-    <div v-else class="empty-state">
-      No workspace data available
-    </div>
-  </div>
-  <RepoSettingModal v-model="showModal" :project-id="projectId" :workspace-id="workspaceId"
-    :workspaceData="workspaceDetails" @update="updateRepositoryInfo" />
-
-  <MilestoneSelection :is-open="showMilestoneSelection" :installationId="githubInstallationId" :owner="owner"
-    :projectId="projectId" :workspaceId="workspaceId" @close="showModal = false"
-    :repoUrl="workspaceDetails?.vcs_repo_url || null" />
+		<!-- Link Repository Dialog -->
+		<Dialog
+			v-model:visible="showLinkRepoModal"
+			header="Link Repository"
+			:modal="true">
+			<LinkRepositoryForm
+				:workspace="workspace"
+				@submit="handleLinkRepository" />
+		</Dialog>
+	</div>
+	<div
+		v-else
+		class="flex justify-center items-center h-full">
+		<ProgressSpinner v-if="isLoading" />
+		<div
+			v-else
+			class="text-gray-500">
+			Workspace not found
+		</div>
+	</div>
 </template>
 
 <script setup>
-  import { ref, onMounted, watch, computed, provide } from 'vue';
-  import { useRoute, useRouter } from 'vue-router';
-  import axios from 'axios';
+	import { ref, computed, onMounted } from "vue";
+	import { useRoute, useRouter } from "vue-router";
+	import { useWorkspaceStore } from "@/stores/proj/useWorkspaceStore";
+	import { useToast } from "primevue/usetoast";
 
-  import Tabs from 'primevue/tabs';
-  import TabList from 'primevue/tablist';
-  import Tab from 'primevue/tab';
-  import { useToast } from "primevue/usetoast";
-  import TabPanels from 'primevue/tabpanels';
-  import TabPanel from 'primevue/tabpanel';
-  import InputText from 'primevue/inputtext';
-  import ColorPicker from 'primevue/colorpicker';
+	// Components
+	import Card from "primevue/card";
+	import Dialog from "primevue/dialog";
+	import ProgressBar from "primevue/progressbar";
+	import ProgressSpinner from "primevue/progressspinner";
+	import Button from "primevue/button";
 
-  /* views */
-  import CardBoard from './views/CardBoardView.vue';
-  import KanbanBoard from './views/KanbanBoardView.vue';
-  import CalendarView from './views/CalendarView.vue';
-  import CardModal from './components/layout/CardModal.vue';
+	const route = useRoute();
+	const router = useRouter();
+	const toast = useToast();
+	const workspaceStore = useWorkspaceStore();
 
-  import WorkspaceAPI from '@/api/proj/workspace';
-  import RepoSettingModal from './components/RepoSettingModal.vue';
-  import MilestoneSelection from './components/MilestoneSelection.vue';
-  import { useProjectStore } from '@/stores/proj/useProjectStore';
+	// Local state
+	const showSettings = ref(false);
+	const showLinkRepoModal = ref(false);
+	const isRefreshing = ref(false);
 
-  const route = useRoute();
-  const router = useRouter();
-  const toast = useToast();
-  const showCardModal = ref(false);
-  const selectedCard = ref(null);
-  const showTagDialog = ref(false); // 태그 관리 다이얼로그 표시 여부
-  const selectedTags = ref([]); // 선택된 태그
-  const addCardTag = ref(false);
-  const newTagName = ref(""); // 새 태그 이름 입력
-  const newTagColor = ref("#FFFFFF"); // 새 태그 색상
-  const showColorPicker = ref(false);
-  const projectStore = useProjectStore();
-  const githubInstallationId = ref(null);
-  const repositoryInfo = ref(null);
-  const showModal = ref(false)
-  const showMilestoneSelection = ref(false)
-  const repoUrl = ref(null)
-  const props = defineProps({
-    projectId: {
-      type: [String, Number],
-      required: true
-    },
-    workspaceId: {
-      type: [String, Number],
-      required: true
-    },
-    cardId: {
-      type: [String, Number], // 전달되는 데이터 타입에 맞게 설정
-      required: false, // 필수인지 여부
-      default: null, // 기본값 설정
-    },
-  });
+	// Computed properties
+	const workspaceId = computed(() => parseInt(route.params.workspaceId));
+	const workspace = computed(() => workspaceStore.currentWorkspace);
+	const recentActivities = computed(() => workspaceStore.recentActivities);
+	const isLoading = computed(() => workspaceStore.isLoading);
+	const completedTasks = computed(() => workspaceStore.completedTasks);
+	const totalTasks = computed(() => workspaceStore.totalTasks);
 
-  const emit = defineEmits(['update:projects']);
-  const isLoading = ref(false);
-  const error = ref(null);
-  const workspaceDetails = ref(null);
-  const showCardTag = ref(null);
+	// Helper functions
+	const getVcsIcon = vcsType => {
+		return vcsType === "GITHUB" ? "pi-github" : "pi-gitlab";
+	};
 
-  const fetchWorkspace = async () => {
-    console.log(props.projectId)
-    console.log(props.workspaceId)
-    workspaceDetails.value = await projectStore.fetchWorkspace(props.projectId, props.workspaceId)
-  }
-  const fetchInstallationId = async () => {
-    try {
-      const id = await projectStore.getInstallationId(props.projectId);
-      console.log(props.projectId)
-      githubInstallationId.value = id;
-      console.log(githubInstallationId.value)
-      return id;
-    } catch (err) {
-      throw new Error(err)
-    }
-  }
-  provide('proj-installatoin-id', props.installationId)
-  const fetchCardTag = async () => {
-    if (!props.workspaceId) {
-      throw new Error('WorkspaceID is Missing');
-    }
+	const getActivityIcon = type => {
+		const icons = {
+			commit: "pi-code",
+			issue: "pi-exclamation-circle",
+			pullRequest: "pi-sync",
+			default: "pi-circle-fill",
+		};
+		return icons[type] || icons.default;
+	};
 
-    try {
-      const response = await axios.get(`card-tags/tag/${props.workspaceId}`);
-      showCardTag.value = response.data.data;
-      console.log("showCardTag 확인: ", showCardTag.value)
-    } catch (err) {
-      error.value = err.message || 'Fail to load CardTag';
-      console.error('Fail to fetch cardTag: ', err);
-    } finally {
-      isLoading.value = false;
-    }
-  };
+	const formatDate = date => {
+		return new Date(date).toLocaleString();
+	};
 
-  // 새 태그 추가 다이얼로그 열기
-  const openAddTagDialog = () => {
-    addCardTag.value = true;
-  };
+	// Methods
+	const refreshProgress = async () => {
+		isRefreshing.value = true;
+		try {
+			await workspaceStore.refreshProgress(workspaceId.value);
+			toast.add({
+				severity: "success",
+				summary: "진행률 업데이트",
+				detail: "워크스페이스 진행률이 업데이트되었습니다.",
+				life: 3000,
+			});
+		} catch (error) {
+			toast.add({
+				severity: "error",
+				summary: "업데이트 실패",
+				detail: "진행률 업데이트에 실패했습니다.",
+				life: 3000,
+			});
+		} finally {
+			isRefreshing.value = false;
+		}
+	};
 
-  const toggleColorPicker = () => {
-    showColorPicker.value = !showColorPicker.value;
-  };
+	const handleSettingsSubmit = async updatedData => {
+		try {
+			await workspaceStore.updateWorkspace(workspaceId.value, updatedData);
+			showSettings.value = false;
+			toast.add({
+				severity: "success",
+				summary: "설정 업데이트",
+				detail: "워크스페이스 설정이 업데이트되었습니다.",
+				life: 3000,
+			});
+		} catch (error) {
+			toast.add({
+				severity: "error",
+				summary: "업데이트 실패",
+				detail: "워크스페이스 설정 업데이트에 실패했습니다.",
+				life: 3000,
+			});
+		}
+	};
 
-  const addNewTag = async () => {
+	const handleWorkspaceDelete = async () => {
+		try {
+			await workspaceStore.deleteWorkspace(workspaceId.value);
+			router.push({ name: "Workspaces" });
+			toast.add({
+				severity: "success",
+				summary: "워크스페이스 삭제",
+				detail: "워크스페이스가 삭제되었습니다.",
+				life: 3000,
+			});
+		} catch (error) {
+			toast.add({
+				severity: "error",
+				summary: "삭제 실패",
+				detail: "워크스페이스 삭제에 실패했습니다.",
+				life: 3000,
+			});
+		}
+	};
 
-    if (!newTagName.value.trim()) {
-      alert("태그 이름을 입력하세요!");
-      return;
-    }
-    try {
+	const handleLinkRepository = async repoData => {
+		try {
+			await workspaceStore.linkRepository(workspaceId.value, repoData);
+			showLinkRepoModal.value = false;
+			toast.add({
+				severity: "success",
+				summary: "저장소 연결",
+				detail: "저장소가 연결되었습니다.",
+				life: 3000,
+			});
+		} catch (error) {
+			toast.add({
+				severity: "error",
+				summary: "연결 실패",
+				detail: "저장소 연결에 실패했습니다.",
+				life: 3000,
+			});
+		}
+	};
 
-
-      const response = await axios.post("card-tags/", {
-
-        tag_name: newTagName.value,
-        color: '#' + newTagColor.value,
-        workspace_id: props.workspaceId, // 워크스페이스 ID 추가
-      });
-      if (response.data.success) {
-        alert("태그가 성공적으로 추가되었습니다!");
-
-
-        // 태그 리스트 다시 가져오기
-        await fetchCardTag();
-
-        newTagName.value = ""; // 초기화
-        newTagColor.value = "#FFFFFF"; // 초기화
-        addCardTag.value = false;
-      } else {
-        throw new Error(response.data.message || "태그 추가 실패");
-      }
-
-    } catch (error) {
-      console.error("태그 추가 실패: ", error);
-      alert("태그 추가 중 오류가 발생했습니다.")
-    }
-  };
-
-  const deleteTag = async (tag) => {
-    try {
-      // API 호출로 태그 삭제
-      const response = await axios.delete(`/card-tags/${tag.value}`);
-      // 로컬 상태에서 태그 삭제
-      if (response.data.success) {
-        // 데이터 원본에서 태그 삭제
-        showCardTag.value = showCardTag.value.filter((t) => t.tag_id !== tag.value);
-        alert("태그가 삭제되었습니다!");
-      }
-    } catch (error) {
-      console.error("태그 삭제 실패:", error);
-      alert("태그 삭제 중 오류가 발생했습니다.");
-    }
-  }
-
-  onMounted(() => {
-    fetchInstallationId();
-    fetchWorkspace();
-    fetchCardTag();
-    // addNewTag();
-  });
-
-  const handleCloseModal = () => {
-    router.replace({
-      query: {
-        ...route.query,
-        cardId: undefined
-      }
-    });
-  };
-  const updateRepositoryInfo = (repoInfo) => {
-    // Update your local state with the new repository info
-    // For example:
-    console.log("repoInfo:")
-    console.log(repoInfo)
-    repoUrl.value = repoInfo?.vcs_repo_url;
-    projectStore.updateWorkspace({ ...workspaceDetails.value, ...repoInfo })
-
-  }
-  watch(
-    [
-      () => props.workspaceId,
-      () => props.projectId,
-      () => route.query.cardId
-    ],
-    async ([newWorkspaceId, newProjectId, newCardId], [oldWorkspaceId, oldProjectId, oldCardId]) => {
-      // 워크스페이스나 프로젝트가 변경되었을 때
-      if ((newWorkspaceId && newWorkspaceId !== oldWorkspaceId) ||
-        (newProjectId && newProjectId !== oldProjectId)) {
-        await fetchWorkspace();
-      }
-
-      // cardId가 변경되었을 때
-      if (newCardId !== oldCardId) {
-        if (newCardId) {
-          // 워크스페이스 데이터가 없다면 먼저 로드
-          if (!workspaceDetails.value) {
-            await fetchWorkspace();
-          }
-
-          // 카드 데이터 찾기
-          const card = findCardInWorkspace(newCardId);
-          if (card) {
-            selectedCard.value = card;
-            showCardModal.value = true;
-          }
-        } else {
-          // cardId가 없어졌을 때 (모달 닫기)
-          showCardModal.value = false;
-          selectedCard.value = null;
-        }
-      }
-    }
-  );
-
-  const tags = computed(() => {
-    console.log("tag 확인: ", tags);
-
-    return showCardTag.value?.map(tag => ({
-      name: tag.tag_name,
-      value: tag.tag_id,
-      color: tag.color,
-
-    })) || [];
-
-  });
-
-  // 워크스페이스 내에서 카드 찾기 헬퍼 함수
-  const findCardInWorkspace = (cardId) => {
-    if (!workspaceDetails.value?.cardboards) return null;
-
-    for (const cardboard of workspaceDetails.value.cardboards) {
-      const card = cardboard.cards?.find(c => c.card_id === Number(cardId));
-      if (card) return card;
-    }
-    return null;
-  };
-
-
-  function hexToRgba(hex, opacity) {
-    // Remove "#" if present
-    const sanitizedHex = hex.replace('#', '');
-
-    // Parse RGB values
-    const r = parseInt(sanitizedHex.substring(0, 2), 16);
-    const g = parseInt(sanitizedHex.substring(2, 4), 16);
-    const b = parseInt(sanitizedHex.substring(4, 6), 16);
-
-    // Return rgba string
-    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-  }
-
-  function getBackgroundWithOpacity(color, opacity) {
-    // Ensure the color is a valid hex and convert to rgba
-    return hexToRgba(color, opacity);
-  }
-
+	// Lifecycle hooks
+	onMounted(async () => {
+		try {
+			await workspaceStore.fetchWorkspace(workspaceId.value);
+		} catch (error) {
+			router.push({ name: "Workspaces" });
+		}
+	});
 </script>
-<style scoped>
-  .workspace-header {
-    padding: 0 2rem;
-  }
-
-  .workspace-header h4 {
-    font-size: 1.4rem;
-  }
-
-  .workspace-header>h3 {
-    font-size: 2rem;
-  }
-
-  .workspace-content {}
-
-  .header-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .boards-container {
-    height: 100%;
-    padding: 1rem;
-    overflow-x: auto;
-    display: flex;
-    gap: 1rem;
-  }
-
-  /* Add custom scrollbar styling */
-  .boards-container::-webkit-scrollbar {
-    height: 6px;
-  }
-
-  .boards-container::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
-  }
-
-  .boards-container::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 3px;
-  }
-
-  .boards-container::-webkit-scrollbar-thumb:hover {
-    background: #555;
-  }
-
-  .tags-container {
-    display: flex;
-    /* 태그들을 한 줄로 정렬 */
-    flex-wrap: wrap;
-    /* 가로 공간이 부족하면 다음 줄로 넘김 */
-    gap: 8px;
-    /* 태그 간 간격 */
-  }
-
-  .custom-delete-button {
-    /* font-size: 0.5rem; */
-    width: 1vw;
-    height: 1vh;
-    /* background-color: transparent; */
-    /* border:transparent; */
-    /* margin-top: 1%; */
-    /* color: black; */
-    /* justify-content: center; */
-    /* align-items: center; */
-  }
-</style>
