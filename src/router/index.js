@@ -1,6 +1,7 @@
 import AppLayout from '@/layout/AppLayout.vue';
 import { createRouter, createWebHistory } from 'vue-router';
 
+import projectRoutes from './project';
 const router = createRouter({
     history: createWebHistory(),
     routes: [
@@ -103,7 +104,8 @@ const router = createRouter({
                     path: '/documentation',
                     name: 'documentation',
                     component: () => import('@/views/pages/Documentation.vue')
-                }
+                },
+                ...projectRoutes
             ]
         },
         {

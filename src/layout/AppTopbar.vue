@@ -13,15 +13,14 @@ const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
             </button>
             <router-link to="/" class="layout-topbar-logo">
                 <img src="/src/assets/img/SyncDay_SVG.svg" alt=""></img>
-                <span>SYNCDAY</span>
+                <span class="logo-text">SYNCDAY</span>
             </router-link>
         </div>
        
 
         <div class="layout-topbar-actions">
             <div class="container-row align-center justify-left gap-1rem">
-                <RouterLink to="/calendar">캘린더</RouterLink>
-                <RouterLink to="/team">팀</RouterLink>
+             
                 <RouterLink to="/project">프로젝트</RouterLink>
             </div>
             
