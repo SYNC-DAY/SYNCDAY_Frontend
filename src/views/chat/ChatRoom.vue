@@ -1,14 +1,16 @@
-<!-- ChatRoom.vue -->
+<!-- ChatRoom.vue v-if="shouldShowDate(index)"-->
 <template>
   <div v-if="isVisible" class="popup">
-    <button class="close-button" @click="$emit('close')">X</button>
     <button class="leave-chat" @click="leaveChat">채팅방 나가기</button>
     <div class="popup-content">
-      <h2>{{ props.chatRoomName }}</h2>
+      <div class="a-chat">
+        <button class="close-button" @click="$emit('close')"><i class="pi-angle-double-left"></i></button>
+        <h2>{{ props.chatRoomName }}</h2>
+      </div>
       <div class="chat-messages" ref="chatMessages">
         <template v-for="(message, index) in messages" :key="index" class="message-line">
           <div v-if="shouldShowDate(index)" class="date-divider">
-            {{ formatDate() }}
+            {{ formatDate(messages[index].sentTime) }}
           </div>
           <div class="message-line">
             <img :src="message.userProfileImg" alt="프로필 이미지" class="profile-img" />
@@ -16,275 +18,135 @@
               <span class="sender">{{ message.senderName }}</span>
               <div class="content-and-time">
                 <span class="content">{{ message.content }}</span>
-                <span class="time-right">{{ message.sentTime }}</span>
+                <span class="time-right">{{ formatTime(message.sentTime) }}</span>
               </div>
             </div>
           </div>
         </template>
       </div>
       <div class="chat-input">
-        <input v-model="newMessage" type="text" placeholder=" 메시지를 입력하세요" @keyup.enter="sendMessage" />
-        <button @click="sendMessage">전송</button>
+        <input v-model="newMessage" type="text" placeholder="메시지를 입력하세요" @keyup.enter="sendMessage" />
+        <button @click="sendMessage"><i class="pi pi-send"></i></button>
       </div>
     </div>
   </div>
-
-
 </template>
 
 <script setup>
-  import { onUnmounted, onMounted, ref, defineProps, computed, nextTick } from 'vue';
-  import SockJS from 'sockjs-client';
-  import { Client } from '@stomp/stompjs';
-  import { useAuthStore } from '@/stores/auth';
-  import axios from 'axios';
+import { onUnmounted, onMounted, ref, defineProps, computed, nextTick } from 'vue';
+import SockJS from 'sockjs-client';
+import { Client } from '@stomp/stompjs';
+import { useAuthStore } from '@/stores/auth';
+import axios from 'axios';
 
-  const props = defineProps({
-    roomId: {
-      type: String,
-      required: true
-    },
-    chatRoomName: {
-      type: String,
-      required: true
-    },
-    removeChatFromList: {
-      type: Function,
-      required: true
-    }
-  });
+const props = defineProps({
+  roomId: { type: String, required: true },
+  chatRoomName: { type: String, required: true },
+  removeChatFromList: { type: Function, required: true }
+});
 
-  const authStore = useAuthStore()
-  const connectionStatus = ref('웹 소켓 시작')
-  const isConnected = ref(false)
-  const stompClient = ref(null)
-  const isVisible = ref(true);
-  const messages = computed(() => messagesInRoom.value[props.roomId] || []);
-  const newMessage = ref(''); // 새 입력 메세지
-  const subscriptions = ref({}) // 토픽 구독 채팅방 연결
-  const messagesInRoom = ref({})  // 각 채팅방 당 메세지
-  const chatMessages = ref(null)
+const authStore = useAuthStore();
+const isVisible = ref(true);
+const messagesInRoom = ref({});
+const messages = computed(() => messagesInRoom.value[props.roomId] || []);
+const newMessage = ref('');
+const stompClient = ref(null);
 
-
-// 날짜 설정
+// 날짜 포맷팅 함수
 const formatDate = (timeString) => {
   const date = new Date(timeString);
-  if (isNaN(date.getTime())) {
-    console.warn('유효하지 않은 날짜:', timeString);
-    return '유효하지 않은 날짜';
-  }
-  return `${date.getFullYear()}년 ${String(date.getMonth() + 1).padStart(2, "0")}월 ${String(date.getDate()).padStart(2, "0")}일`;
+  if (isNaN(date)) return '';
+  return `${date.getFullYear()}년 ${String(date.getMonth() + 1).padStart(2, '0')}월 ${String(date.getDate()).padStart(2, '0')}일`;
 };
-// 시간 설정
+
+// 시간 포맷팅 함수
 const formatTime = (timeString) => {
   const date = new Date(timeString);
-  if (isNaN(date.getTime())) {
-    console.warn('유효하지 않은 시간:', timeString);
-    return '';
-  }
+  if (isNaN(date)) return '';
   const hours = String(date.getHours() % 12 || 12).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
   const ampm = date.getHours() < 12 ? '오전' : '오후';
   return `${ampm} ${hours}:${minutes}`;
 };
-  const shouldShowDate = (index) => {
-    if (index === 0) return true;
-    const currentDate = formatDate(messages.value[index].sentTime);
-    const previousDate = formatDate(messages.value[index - 1].sentTime);
-    return currentDate !== previousDate;
-  };
 
-  const connectWebSocket = () => {
-    console.log('웹소켓 연결 시도 중...')
-    if (stompClient.value?.connected) {
-      console.log('이미 웹소켓이 연결되어 있습니다.');
-      return;
-    }
-
-    // 환경변수나 설정에서 URL을 가져오는 것이 좋습니다
-    const socket = new SockJS(`http://localhost:5000/ws?token=${authStore.accessToken}`, null, {
-      transports: ['websocket', 'xhr-streaming', 'xhr-polling']
-    });
-
-    stompClient.value = new Client({
-      webSocketFactory: () => socket,
-      reconnectDelay: 5000, // 재연결 시간 줄임
-      heartbeatIncoming: 4000,
-      heartbeatOutgoing: 4000,
-      debug: function (str) {
-        console.log('웹소켓 연결 상태: ', str)
-        isConnected.value = true;
-      },
-      onConnect: (frame) => {
-        console.log('STOMP 연결됨(success!!!): ' + frame)
-        isConnected.value = true
-        connectionStatus.value = '연결됨'
-        subscribeToRoom(props.roomId) // 연결 성공 시 구독 실행
-      },
-      onStompError: (frame) => {
-        console.error('STOMP 오류:', frame)
-        isConnected.value = false;
-        handleConnectionFailure('STOMP 오류: ' + frame.headers['messages'])
-      },
-      onDisconnect: () => {
-        console.log('STOMP 연결 끊김');
-        isConnected.value = false;
-        connectionStatus.value = '연결 끊김';
-        reconnectWebSocket();
-      },
-    });
-
-
-    try {
-      console.log('activate: ', stompClient.value)
-      stompClient.value.activate()
-      console.log('클라이언트 활성화 호출 성공!')
-    } catch (error) {
-      console.error('STOMP 클라이언트 활성화 실패:', error)
-      isConnected.value = false;
-    }
-  }
-
-  const subscribeToRoom = (roomId) => {
-    if (subscriptions.value[roomId]) {
-      console.warn(`이미 방 ${roomId}에 구독 중입니다.`);
-      return;
-    }
-
-  subscriptions.value[roomId] = stompClient.value.subscribe(`/topic/room/${roomId}`, message => {
-    console.log('메시지 수신:', message.body)
-        const receivedMessage = JSON.parse(message.body); // 메시지 JSON 파싱
-        receivedMessage.sentTime = formatDate(receivedMessage.sentTime);
-        receivedMessage.sentTime = formatTime(receivedMessage.sentTime);
-    if (!messagesInRoom.value[roomId]) {
-      messagesInRoom.value[roomId] = []
-    }
-    console.log("메세지:", receivedMessage)
-    // messagesInRoom.value[roomId].push(receivedMessage)
-    messagesInRoom.value[roomId] = [...messagesInRoom.value[roomId], receivedMessage]
-  })
+// 날짜 표시 여부 결정
+const shouldShowDate = (index) => {
+  if (index === 0) return true;
+  const currentDate = formatDate(messages.value[index].sentTime);
+  const previousDate = formatDate(messages.value[index - 1].sentTime);
+  return currentDate !== previousDate;
 };
 
-
-  /** WebSocket 재연결 */
-  const reconnectWebSocket = () => {
-    setTimeout(() => {
-      if (!isConnected.value) connectWebSocket();
-    }, 5000);
-  };
-
-  const fetchMessages = async (roomId) => {
+// 메시지 가져오기
+const fetchMessages = async () => {
   try {
-    const response = await axios.get(`/chat/room/${roomId}/message`);
-    console.log('메세지 데이터 가져오기');
-      messagesInRoom.value[roomId] = response.data.map(message => ({
-        ...message,
-        sentTime: formatDate(message.sentTime),
-        sentTime: formatTime(message.sentTime),
-      }
-     
-      ));
-       await nextTick(() => {
-        scrollToBottom();
-      })
-    } catch (error) {
-      console.error('채팅 메시지 불러오기 실패:', error);
-      messagesInRoom.value[roomId] = [];
-    }
-  };
-  const scrollToBottom = () => {
-    if (chatMessages.value) {
-      chatMessages.value.scrollTop = chatMessages.value.scrollHeight;
-    }
-  };
-
-  const sendMessage = () => {
-    console.log('전송 시도~!')
-    console.log('현재 메시지 값:', newMessage.value);
-    if (!newMessage.value || !newMessage.value.trim()) {
-      console.warn('빈 메시지는 전송할 수 없습니다.');
-      return;
-    }
-
-    if (!isConnected.value) {
-      console.error('웹소켓에 연결되지 않았습니다. 연결을 시도합니다...');
-      connectWebSocket(); // 연결 시도
-      return;
-    }
-
-    const chatMessage = {
-      content: newMessage.value.trim(),
-      roomId: props.roomId,
-      senderId: authStore.user?.userId,
-      senderName: authStore.user?.name,
-      userProfileImg: authStore.user?.userProfileImg,
-      chatType: 'TALK',
-      sentTime: new Date().toISOString(),
-    };
-
-    try {
-      console.log("publish")
-      stompClient.value.publish({
-        destination: `/app/room/${props.roomId}`,
-        body: JSON.stringify(chatMessage),
-      });
-      newMessage.value = ''; // 메시지 초기화
-    } catch (error) {
-      console.error('메시지 전송 중 오류:', error);
-    }
-
-  };
-
-
-  const leaveChat = async () => {
-  try {
-    const response = await axios.post(`/chat/room/${props.roomId}/leave`, null, {
-      params: { userId: authStore.user?.userId },
-    });
-    console.log('채팅방 나가기 응답: ', response.data);
-
-    if (response.status === 200) {
-      isVisible.value = false;
-      props.removeChatFromList(props.roomId);
-      console.log('채팅방 나가기 성공: ', props.removeChatFromList);
-
-      if (subscriptions.value[props.roomId]) {
-        subscriptions.value[props.roomId].unsubscribe();
-        delete subscriptions.value[props.roomId];
-      }
-      delete messagesInRoom.value[props.roomId];
-      console.log('해당 채팅방 메세지들 삭제. 구독 취소')
-    } else {
-      console.error('채팅방 나가기 실패: ', response.data.error.message);
-      alert('채팅방 나가기에 실패했습니다. 잠시 후 다시 시도해주세요.');
-    }
+    const response = await axios.get(`/chat/room/${props.roomId}/message`);
+    messagesInRoom.value[props.roomId] = response.data;
+    await nextTick(() => scrollToBottom());
   } catch (error) {
-    console.error('채팅방 나가는 중 오류 발생:', error);
-    alert('오류가 발생했습니다. 다시 시도해주세요.');
+    console.error('메시지 가져오기 실패:', error);
   }
 };
 
+// 메시지 전송
+const sendMessage = () => {
+  if (!newMessage.value.trim()) return;
 
-  // 컴포넌트가 마운트될 때 메시지 로드
-  onMounted(() => {
-    console.log('마운트: ', props.roomId)
-    fetchMessages(props.roomId);
-    connectWebSocket(); // WebSocket 연결
+  const chatMessage = {
+    content: newMessage.value.trim(),
+    roomId: props.roomId,
+    senderId: authStore.user?.userId,
+    senderName: authStore.user?.name,
+    userProfileImg: authStore.user?.userProfileImg,
+    chatType: 'TALK',
+    sentTime: new Date().toISOString(),
+  };
+
+  try {
+    stompClient.value.publish({
+      destination: `/app/room/${props.roomId}`,
+      body: JSON.stringify(chatMessage),
+    });
+    newMessage.value = '';
+  } catch (error) {
+    console.error('메시지 전송 실패:', error);
+  }
+};
+
+// 스크롤 하단으로 이동
+const scrollToBottom = () => {
+  const chatMessages = document.querySelector('.chat-messages');
+  if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+};
+
+// WebSocket 연결
+const connectWebSocket = () => {
+  const socket = new SockJS(`http://localhost:5000/ws?token=${authStore.accessToken}`);
+  stompClient.value = new Client({
+    webSocketFactory: () => socket,
+    reconnectDelay: 5000,
+    onConnect: () => subscribeToRoom(props.roomId),
   });
+  stompClient.value.activate();
+};
 
-  onUnmounted(() => {
-    if (props.roomId && messagesInRoom.value[props.roomId]) {
-      console.log(`채팅방 ${props.roomId}의 모든 데이터 초기화`);
-      delete messagesInRoom.value[props.roomId];
-      if (subscriptions.value[props.roomId]) {
-        subscriptions.value[props.roomId].unsubscribe();
-        delete subscriptions.value[props.roomId];
-      }
-    } else {
-      console.warn('언: 유효하지 않은 roomId');
-    }
+// 채팅방 구독
+const subscribeToRoom = (roomId) => {
+  stompClient.value.subscribe(`/topic/room/${roomId}`, (message) => {
+    const receivedMessage = JSON.parse(message.body);
+    if (!messagesInRoom.value[roomId]) messagesInRoom.value[roomId] = [];
+    messagesInRoom.value[roomId].push(receivedMessage);
   });
+};
 
+onMounted(() => {
+  fetchMessages();
+  connectWebSocket();
+});
+
+onUnmounted(() => {
+  stompClient.value.deactivate();
+});
 </script>
 
 <style scoped>
@@ -304,8 +166,8 @@ const formatTime = (timeString) => {
 
   .leave-chat {
     position: absolute;
-    margin-top: 1rem;
-    margin-bottom: 1rem;
+    margin-top: 0.3rem;
+    margin-right: 0.5rem;
     top: 15px;
     right: 10px;
     background: none;
@@ -330,8 +192,10 @@ const formatTime = (timeString) => {
   }
 
 h2 {
-  margin: 0 0 20px 0;
-  font-size: 1.3rem;
+  font-size: 1.5rem;
+  color: #535353;
+  margin-left: 0.5rem;
+  margin-top: 0.5rem;
 }
 
 .chat-messages {
@@ -353,7 +217,7 @@ h2 {
 
 /* 스크롤바의 막대 */
 .chat-messages::-webkit-scrollbar-thumb {
-  background-color: #97f3e1; /* 색상 */
+  background-color: #bef1e8 !important; /* 색상 */
   border-radius: 50px; /* 둥근 모서리 */
 }
 
@@ -431,13 +295,13 @@ h2 {
   border-radius: 5px;
 }
 .chat-input button {
-  /* padding: 8px 16px; */
+  padding: 2px 15px ;
   background-color: #20c2a4;
+  font-size: 20px;
   color: #fcfcfc;
   border: none;
-  border-radius: 15px;
+  border-radius: 5px;
   cursor: pointer;
-  font-size: 1rem;
 }
 
 .chat-input button:hover {
@@ -445,17 +309,14 @@ h2 {
 }
 
 .close-button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
     background: none;
     border: none;
-    font-size: 0.8rem;
     cursor: pointer;
-    color: #c7c5c5;
+    padding: 0;
+    margin-top: 0rem;
 }
 
-.close-button:hover {
-    color: #333;
+.a-chat {
+  display: inline-flex;
 }
 </style>
