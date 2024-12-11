@@ -413,7 +413,7 @@
 		background-color: #ffffff;
 		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 		cursor: pointer;
-		z-index: 1;
+		z-index: 10;
 	}
 
 	.assistant-Button-container img {

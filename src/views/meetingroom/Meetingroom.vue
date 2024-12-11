@@ -1,16 +1,20 @@
 <template>
   <div class="calendar-setting">
-    <span>회의실 예약</span>
+    <!-- <span>회의실 예약</span> -->
+    <div class="reservation-button">
+    <Button 
+                label="회의실 예약"  
+                icon="pi pi-user" 
+                rounded 
+                disabled
+                class="team-name-container"
+            />
+          </div>
     <div class="calender-1">
-      <FullCalendar :options="calendarOptions" ref="calendar1" />
+      <FullCalendar v-if="selectedRoomName !==''":options="calendarOptions" ref="calendar1" />
     </div>
     <div class="filter-area">
-      <!-- <select v-model="selectedRoomName" @change="filterRooms">
-        <option value="">----</option>
-        <option v-for="place in uniquePlaces" :key="place" :value="place">
-          {{ place }}
-        </option>
-      </select> -->
+
       <Select
       v-if="uniquePlaces.length > 0"
       v-model="selectedRoomName"
@@ -20,16 +24,11 @@
       @change="filterRooms"
       class="w-full"
     />
-      <!-- <Select v-model="selectedRoomName" :options="uniquePlaces" optionLabel="place"  placeholder="장소를 선택하세요" @change="filterRooms"> -->
-        <!-- <option value="">----</option>
-        <option v-for="place in uniquePlaces" :key="place" :value="place">
-          {{ place }}
-        </option> -->
-      <!-- </Select> -->
+
     </div>
     <div class="calendar-section">
       <p v-if="selectedRoomName === ''" class="select-message"></p>
-      <p v-else class="selected-room">선택된 장소: {{ selectedRoomName }}</p>
+      <!-- <p v-else class="selected-room">선택된 장소: {{ selectedRoomName }}</p> -->
       <p class="selected-date">날짜: {{ selectedDate }}</p>
       <FullCalendar v-if="selectedRoomName !== ''" :options="calendarOptions2" ref="calendar2" />
     </div>
@@ -274,8 +273,10 @@ export default {
       const { start, end, resource, jsEvent } = info;
       // const toast = useToast(); 
       const toast = this.$toast; 
+      const hours = start.getHours();  // 0-23 사이의 숫자
+      const real_start = new Date(this.selectedDate + 'T' + hours + ":00:000");
       const now = new Date();
-      if (start < now) {
+      if (real_start < now) {
         // alert("지난 시간은 예약할 수 없습니다.");
         toast.add({
           severity: "warn",
@@ -472,7 +473,7 @@ async closeReservationDialog() {
 
 .filter-area {
   margin-top: 1rem;
-  margin-bottom: -1rem;
+  margin-bottom: 1rem;
   margin-left: 1rem;
 }
 
@@ -492,6 +493,7 @@ async closeReservationDialog() {
   max-height: 400px; 
   overflow-y: hidden;
   margin-left: 1%; 
+  margin-bottom: 5rem;
 }
 
 .filter-area select {
@@ -509,4 +511,10 @@ async closeReservationDialog() {
   font-size: 1.0rem;
 }
 
+.reservation-button {
+  margin-top: 1rem;
+  margin-left: auto;
+  margin-right: auto;
+  width: 10vw;
+}
 </style>
