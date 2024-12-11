@@ -76,7 +76,7 @@
 										v-if="slotProps.data.participation_status === 'OWNER'"
 										class="status-item">
 										<img
-											src="@/assets/icons/crown.svg"
+											src="@/assets/icons/Crown.svg"
 											alt="Owner Icon"
 											class="status-icon"
 											style="width: 1.3rem" />
