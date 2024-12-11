@@ -99,7 +99,7 @@ const calendarOptions = ref({
     height: '100%', // 캘린더 높이를 부모 컨테이너에 맞춤
     headerToolbar: {
         left: 'today prev next title',
-        right: 'searchMemberSchedule dayGridMonth timeGridWeek addEventButton',
+        right: 'searchMemberSchedule dayGridMonth,timeGridWeek addEventButton',
     },
     buttonText: {
         today: '오늘',
@@ -666,8 +666,8 @@ body,
 }
 
 ::v-deep(.fc-button:hover) {
-    background-color: #ff9d85 !important;
-    color: inherit !important;
+    background-color: #15B8A6 !important;
+    color: white !important;
 }
 ::v-deep(.fc-button.fc-button-active) {
     border: none !important;
