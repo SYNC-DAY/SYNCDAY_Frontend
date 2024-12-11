@@ -5,15 +5,30 @@
       <FullCalendar :options="calendarOptions" ref="calendar1" />
     </div>
     <div class="filter-area">
-      <select v-model="selectedRoomName" @change="filterRooms">
+      <!-- <select v-model="selectedRoomName" @change="filterRooms">
         <option value="">----</option>
         <option v-for="place in uniquePlaces" :key="place" :value="place">
           {{ place }}
         </option>
-      </select>
+      </select> -->
+      <Select
+      v-if="uniquePlaces.length > 0"
+      v-model="selectedRoomName"
+      :options="uniquePlaces"
+      
+      placeholder="장소를 선택하세요"
+      @change="filterRooms"
+      class="w-full"
+    />
+      <!-- <Select v-model="selectedRoomName" :options="uniquePlaces" optionLabel="place"  placeholder="장소를 선택하세요" @change="filterRooms"> -->
+        <!-- <option value="">----</option>
+        <option v-for="place in uniquePlaces" :key="place" :value="place">
+          {{ place }}
+        </option> -->
+      <!-- </Select> -->
     </div>
     <div class="calendar-section">
-      <p v-if="selectedRoomName === ''" class="select-message">장소를 선택해주세요.</p>
+      <p v-if="selectedRoomName === ''" class="select-message"></p>
       <p v-else class="selected-room">선택된 장소: {{ selectedRoomName }}</p>
       <p class="selected-date">날짜: {{ selectedDate }}</p>
       <FullCalendar v-if="selectedRoomName !== ''" :options="calendarOptions2" ref="calendar2" />
@@ -26,7 +41,7 @@
       @click="navigateToReservation"
     />
     
-        <MeetingroomReservation
+    <MeetingroomReservation
       v-if="isReservationDialogVisible"
       :start="reservationDetails.start"
       :end="reservationDetails.end"
@@ -56,6 +71,7 @@ import MeetingroomReservation from "./MeetingroomReservation.vue";
 import MeetingroomDetails from "./MeetingroomDetails.vue";
 import Button from "primevue/button";
 import { useToast } from "primevue/usetoast";
+import Select from 'primevue/select';
 
 import { ref } from "vue";
 
@@ -121,6 +137,7 @@ export default {
   },
   computed: {
     uniquePlaces() {
+      this.filterRooms();
       return [...new Set(this.rooms.map((room) => room.meetingroom_place))];
     },
   },
@@ -144,7 +161,7 @@ export default {
   },
 
     // 필터링 된 회의실 
-    filterRooms() {
+    async filterRooms() {
       if (this.selectedRoomName === "") {
         this.filteredRooms = [];
         this.reservationData = {};
@@ -386,7 +403,29 @@ async closeReservationDialog() {
 
 <style scoped>
 ::v-deep(.calender-1 .fc) {
-  width: 60%;
+  width: 40%;
+}
+
+::v-deep(.fc-timegrid-slot) {
+  height: 100%; /* 부모 컨테이너 높이를 100%로 설정 */
+}
+
+::v-deep(.fc-timegrid-slot .fc-timegrid-slot-lane) {
+  height: 100%; /* 부모의 자식 슬롯 높이도 100% */
+}
+
+::v-deep(.fc-h-event .fc-event-title-container) {
+  background-color: #15B8A6;
+  flex-grow: 1;
+  flex-shrink: 1;
+  min-width: 0px;
+  background: #15B8A6;
+}
+
+::v-deep(.fc-h-event) {
+  background-color: #15B8A6;
+  border: #15B8A6;
+  height: 100%;
 }
 
 ::v-deep(.fc-toolbar-title) {
@@ -408,6 +447,7 @@ async closeReservationDialog() {
   flex-direction: column;
   height: 100%;
   width: 100%;
+  margin-left: 1rem;
 }
 
 .calendar-setting span {
@@ -430,6 +470,12 @@ async closeReservationDialog() {
   color: #333;
 }
 
+.filter-area {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  margin-left: 1rem;
+}
+
 .selected-room p {
   font-size: 1.0rem;
 }
@@ -446,6 +492,7 @@ async closeReservationDialog() {
   max-height: 400px; 
   overflow-y: hidden;
   margin-left: 1%; 
+  margin-bottom: 5rem;
 }
 
 .filter-area select {

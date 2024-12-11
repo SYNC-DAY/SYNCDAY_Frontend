@@ -200,7 +200,10 @@ const formatKoreanDate = (date) => {
   
   <style scoped>
   .button-group {
+    display: flex;
     margin-top: 20px;
+    justify-content: flex-end;
+    align-items: flex-end;
   }
   
   .delete-btn {

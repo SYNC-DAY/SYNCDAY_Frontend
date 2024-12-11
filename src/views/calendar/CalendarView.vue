@@ -63,6 +63,7 @@ import CalendarViewModal from './component/CalendarViewModal.vue';
 import CalendarModal from './component/CalendarModal.vue';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
+import InputText from 'primevue/inputtext';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc'; // UTC 플러그인
 import timezone from 'dayjs/plugin/timezone'; // 타임존 플러그인
@@ -98,7 +99,7 @@ const calendarOptions = ref({
     height: '100%', // 캘린더 높이를 부모 컨테이너에 맞춤
     headerToolbar: {
         left: 'today prev next title',
-        right: 'searchMemberSchedule dayGridMonth timeGridWeek addEventButton',
+        right: 'searchMemberSchedule dayGridMonth,timeGridWeek addEventButton',
     },
     buttonText: {
         today: '오늘',
@@ -236,28 +237,28 @@ const fetchSchedules = async () => {
                 }
             }
 
-            const backgroundColor = ref('#FF9D85');
-            const borderColor = ref('#FF9D85');
+            const backgroundColor = ref('#76818D');
+            const borderColor = ref('#76818D');
             const textColor = ref('white');
 
             if (schedule.status === 'ATTEND') {
                 if (schedule.meeting_status === 'ACTIVE') {
-                    backgroundColor.value = '#FE5D86';
-                    borderColor.value = '#FE5D86';
+                    backgroundColor.value = '#15B8A6';
+                    borderColor.value = '#15B8A6';
                     textColor.value = 'white';
                 } else {
-                    backgroundColor.value = '#FF9D85';
-                    borderColor.value = '#FF9D85';
+                    backgroundColor.value = '#76818D';
+                    borderColor.value = '#76818D';
                     textColor.value = 'white';
                 }
             } else if (schedule.status === 'PENDING') {
                 if (schedule.meeting_status === 'ACTIVE') {
                     backgroundColor.value = 'white';
-                    borderColor.value = '#FE5D86';
+                    borderColor.value = '#15B8A6';
                     textColor.value = 'black';
                 } else {
                     backgroundColor.value = 'white';
-                    borderColor.value = '#FF9D85';
+                    borderColor.value = '#76818D';
                     textColor.value = 'black';
                 }
             } else {
@@ -665,8 +666,8 @@ body,
 }
 
 ::v-deep(.fc-button:hover) {
-    background-color: #ff9d85 !important;
-    color: inherit !important;
+    background-color: #15B8A6 !important;
+    color: white !important;
 }
 ::v-deep(.fc-button.fc-button-active) {
     border: none !important;

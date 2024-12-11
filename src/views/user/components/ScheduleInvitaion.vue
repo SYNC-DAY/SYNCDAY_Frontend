@@ -49,10 +49,12 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useToast } from 'primevue/usetoast';
 
 const authStore = useAuthStore();
 const router = useRouter();
 const invitationList = ref([]);
+const toast = useToast();
 
 // 초대된 일정 가져오기
 const getInvitationList = async () => {
@@ -97,6 +99,13 @@ const updateAttendance = async (invitation, status) => {
             participation_status: status,
         });
         invitation.status = status; // 상태 업데이트
+        // toast.add({
+        //     severity: "success",
+        //     summary: "일정 초대",
+        //     detail: "일정에 참석하셨습니다!",
+        //     life: 3000,
+        // });
+
     } catch (error) {
         console.error("Failed to update attendance:", error);
     }

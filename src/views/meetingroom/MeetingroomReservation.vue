@@ -138,6 +138,7 @@ const { start, end, resourceId, resourceName, resourcePlace, resourceCapacity } 
 
 const isVisible = ref(true);
 const value1 = ref("");
+const selectedUser = ref("");
 const searchResults = ref([]);
 const selectedAttendees = ref([]);
 const authStore = useAuthStore();
@@ -375,7 +376,8 @@ form textarea {
 }
 
 form button {
-  background-color: #007bff;
+  /* background-color: #007bff; */
+  background-color: #15B8A6;
   color: white;
   border: none;
   padding: 10px 15px;
@@ -384,7 +386,8 @@ form button {
 }
 
 form button:hover {
-  background-color: #0056b3;
+  /* background-color: #0056b3; */
+  background-color: #15B8A6;
 }
 
 .reservation-button {
