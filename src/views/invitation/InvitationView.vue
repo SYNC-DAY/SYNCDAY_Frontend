@@ -114,9 +114,9 @@ onMounted(async() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  border: 1px solid #FF9D85;
+  border: 1px solid #009688;
   border-radius: 2.5rem;
-  box-shadow: 0 4px 8px rgba(255, 157, 133, 0.5);
+  box-shadow: 0 1.5px 3px rgba(59, 122, 63, 0.5);   
   width: 100%;
   height: auto;
 }
@@ -128,7 +128,7 @@ onMounted(async() => {
 }
 
 .selected{
-  background-color: #FE5D86;
+  background-color: #009688;
   color: white;
 }
 

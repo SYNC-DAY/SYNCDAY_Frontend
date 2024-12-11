@@ -17,7 +17,7 @@
                 />- 
                 <Button 
                     :label="teamStore.boardTitle"  
-                    icon="pi pi-user" 
+                    icon="pi pi-align-justify" 
                     disabled 
                     rounded 
                     class="board-name-container"
@@ -77,7 +77,7 @@ import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import PostComment from './components/PostComment.vue'; 
 import Editor from 'primevue/editor';
-
+import { useToast } from 'primevue/usetoast';
 
 const teamStore = useTeamStore();
 const authStore = useAuthStore();
@@ -85,6 +85,7 @@ const router = useRouter();
 const route = useRoute();
 const searchType = route.query.searchType;
 const searchQuery = route.query.searchQuery;
+const toast = useToast();
 
 const post = ref({}); // 게시글 정보
 const isMyPost = ref(false); // 내가 작성한 글 여부
@@ -131,13 +132,25 @@ const updatePost = async () => {
         });
 
         if (response.data.success) {
-            alert('게시글이 수정되었습니다.');
+            // alert('게시글이 수정되었습니다.');
+            toast.add({
+                severity: "success",
+                summary: "게시글 수정",
+                detail: "게시글이 수정되었습니다.",
+                life: 3000,
+            });
             post.value = { ...editedPost.value }; // 게시글 업데이트
             isEditMode.value = false; // 수정 모드 종료
         }
     } catch (error) {
         console.error('게시글 수정 중 오류 발생:', error);
-        alert('게시글 수정에 실패했습니다.');
+        // alert('게시글 수정에 실패했습니다.');
+        toast.add({
+            severity: "error",
+            summary: "게시글 수정 중 오류 발생",
+            detail: "게시글 수정에 실패했습니다.",
+            life: 3000,
+        });
     }
 };
 
@@ -149,17 +162,29 @@ const cancelEdit = () => {
 
 // 게시글 삭제
 const deletePost = async () => {
-    if (!confirm('정말로 이 게시글을 삭제하시겠습니까?')) return;
+    // if (!confirm('정말로 이 게시글을 삭제하시겠습니까?')) return;
 
     try {
         const response = await axios.delete(`/teampost/${teamStore.postId}`);
         if (response.data.success) {
-            alert('게시글이 삭제되었습니다.');
+            // alert('게시글이 삭제되었습니다.');
+            toast.add({
+                severity: "success",
+                summary: "게시글이 삭제",
+                detail: "게시글이 삭제되었습니다.",
+                life: 3000,
+            });
             router.push('/team/post/view'); // 목록으로 이동
         }
     } catch (error) {
         console.error('게시글 삭제 중 오류 발생:', error);
-        alert('게시글 삭제에 실패했습니다.');
+        // alert('게시글 삭제에 실패했습니다.');
+        toast.add({
+            severity: "error",
+            summary: "게시글 삭제 중 오류 발생",
+            detail: "게시글 삭제에 실패했습니다.",
+            life: 3000,
+        });
     }
 };
 
@@ -189,7 +214,7 @@ onMounted(async () => {
 
 /* 수정 모드 스타일 */
 .detail-header{
-    margin-bottom: 0.5rem;
+    margin-bottom: 3rem;
 }
 .post-detail-container{
     display:flex;
@@ -226,9 +251,9 @@ onMounted(async () => {
 }
 
 .detail-body{
-    border: 1px solid #FF9D85;
+    border: 1px solid #009688;
     border-radius: 2.5rem;
-    box-shadow: 0 4px 8px rgba(255, 157, 133, 0.5);
+    box-shadow: 0 1.5px 3px rgba(59, 122, 63, 0.5);   
     padding: 2rem;
     width: 70vw;
 }
@@ -240,8 +265,8 @@ onMounted(async () => {
 .team-name-container {
     margin-top: 1rem;
     margin-right: 1rem;
-    background-color: #FDC387;
-    border-color: #FDC387;
+    background-color: #4DB6AC;
+    border-color: #4DB6AC;
     cursor: default;
     color: black;
     opacity:1;
@@ -249,8 +274,8 @@ onMounted(async () => {
 .board-name-container {
     margin-top: 1rem;
     margin-right: 1rem;
-    background-color: #FDC387;
-    border-color: #FDC387;
+    background-color: #4DB6AC;
+    border-color: #4DB6AC;
     cursor: default;
     color: black;
     opacity:1;
@@ -264,7 +289,7 @@ onMounted(async () => {
 }
 
 .content{
-    border-top: #FDC387 solid 1px;
+    border-top: #009688 solid 1px;
     margin-top: 2rem;
     padding: 2rem;
     font-size: 1.2rem;

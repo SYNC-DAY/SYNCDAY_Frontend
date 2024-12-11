@@ -69,7 +69,8 @@
     height: 100%;
     display: flex;
     flex-wrap: wrap;
-    justify-content: flex-start;
+    /* justify-content: flex-start; */
+    justify-content: space-around;
     gap: 1rem; /* 위젯 간 간격 */
     overflow-y: auto;
 }
@@ -87,9 +88,9 @@
 .content-container {
     width: 100%;
     height: 100%;
-    border: 1px solid #FF9D85;
+    border: 1px solid #009688;
     border-radius: 2.5rem;
-    box-shadow: 0 4px 8px rgba(255, 157, 133, 0.5);
+    box-shadow: 0 1.5px 3px rgba(59, 122, 63, 0.5);
     overflow-y: auto; /* 스크롤 가능 */
     display: flex;
     flex-direction: column; /* 제목과 내용을 세로로 정렬 */
@@ -101,7 +102,7 @@
     background-color: #ffffff;
     font-size: 1.2rem;
     font-weight: bold;
-    border-bottom: 1px solid #FF9D85; /* 주황색 경계선 추가 */
+    border-bottom: 1px solid #009688; /* 주황색 경계선 추가 */
     border-radius: 2rem 2rem 0 0; /* 상단 둥근 모서리 */
     margin-bottom: 1rem; /* 제목과 내용 간 여백 */
 }

@@ -17,7 +17,6 @@
                   <img :src="userProfileImg" alt="프로필 이미지" class="profile-img"/>
                   <div class="profile-content">
                   <span class="roomName-time">{{ chat.chatRoomName }}</span>
-                  <span class="time">{{ chat.sentTime }}</span>
                   <div class="content">
                   <span class="lastMessage">{{ chat.lastMessage }}</span>
                   </div>
@@ -30,7 +29,7 @@
         <NewChatRoom v-if="isPopupVisible" @close="closeNewChatRoom" @chatCreated="addNewChat"/>
         <ChatRoom  v-if="selectedRoom" :roomId="selectedRoom.roomId"
         :chatRoomName="selectedRoom.chatRoomName"  
-        @close="closeChatRoom" :removeChatFromList="removeChatFromList"/>
+        @close="closeChatRoom" :removeChatFromList="removeChatFromList" @updateLastMessage="updateLastMessage"/>
     </div>
   </template>
   
@@ -90,6 +89,14 @@ const closeChatRoom = () => {
   selectedRoom.value = null;
 };
 
+// 새 채팅 메세지 업데이트
+const updateLastMessage = ({ roomId, lastMessage, sentTime }) => {
+  const room = chatList.value.find((chat) => chat.roomId === roomId);
+  if (room) {
+    room.lastMessage = lastMessage;
+  }
+};
+
 // 채팅방 목록 데이터 가져오기
 const fetchChatRooms = async () => {
   try {
@@ -118,10 +125,11 @@ const filterChatList = computed(() => {
   
   return chatList.value.map((chat) => {
     const userName = authStore.user.userName; // 로그인한 유저 이름
-    const filteredName = chat.chatRoomName.replace(userName, '').trim(); // 유저 이름을 제거(,(쉼표)도 제거 필요(수정 예정) )
+    console.log('회원 이름: ',userName)
+    console.log('채팅방 이름: ', chat.chatRoomName)
     return {
       ...chat,
-      chatRoomName: filteredName
+      chatRoomName: chat.chatRoomName
     };
   }).filter((chat) =>
     chat.chatRoomName?.toLowerCase().includes(searchQuery.value.toLowerCase())
@@ -221,7 +229,7 @@ onUnmounted(() => {
   border-radius: 4px; /* 둥근 모서리 */
 }
   .new-chat {
-  background-color: #fd8eaa;
+  background-color: #20c2a4;
   border-radius: 13px;
   font-size: 1rem;
   color: #fff2f2;
@@ -232,7 +240,7 @@ onUnmounted(() => {
 }
 
 .new-chat:hover {
-  background-color: #fc7294;
+  background-color: #10c2a1;
 }
 
   .chat-room {

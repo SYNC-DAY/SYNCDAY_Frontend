@@ -27,11 +27,11 @@
 }
 
 .gradient-vertical {
-	background: linear-gradient(180deg, var(--pink-color) 50%, var(--apricot-color));
+	background: linear-gradient(180deg, var(--p-primary-500) 50%, var(--p-primary-900));
 }
 
 .gradient-horizontal {
-	background: linear-gradient(90deg, var(--pink-color) 50%, var(--apricot-color));
+	background: linear-gradient(90deg, var(--p-primary-500) 50%, var(--p-primary-900));
 }
 
 .underline-gray {

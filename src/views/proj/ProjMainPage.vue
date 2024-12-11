@@ -46,7 +46,7 @@
 </template>
 
 <script setup>
-  import { ref, onMounted, onUnmounted } from 'vue';
+  import { ref, onMounted, onUnmounted, provide } from 'vue';
   import { useRouter } from 'vue-router';
   import axios from 'axios';
   import { useToast } from 'primevue/usetoast';
@@ -84,7 +84,7 @@
 
   const handleProjectSubmit = async (projectData) => {
     try {
-      const response = await axios.post("/projs/", {
+      const response = await axios.post("/proj-members/projs", {
         user_id: authStore.user.userId,
         proj_name: projectData.name,
         start_time: projectData.startDate ? new Date(projectData.startDate).toISOString() : null,

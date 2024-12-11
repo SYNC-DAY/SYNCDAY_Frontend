@@ -87,48 +87,12 @@ const props = defineProps({
 
 .title-section h3 {
     margin: 0;
-    color: #FE5D86;
-    font-size: 1.125rem;
+    /* color: #FE5D86; */
+    color: #15B8A6;
+    font-size: large;
+    margin-bottom: 0.3rem;
 }
 
-.vcs-link {
-    text-decoration: none;
-    color: inherit;
-}
-
-.vcs-info {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background-color: #ffffff;
-    border-radius: 0.25rem;
-    color: #666;
-    font-size: 1rem;
-    transition: background-color 0.2s;
-}
-
-.vcs-info:hover {
-    color: #ffffff;
-    background-color: #000;
-}
-
-.result-meta-wrapper {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    margin-top: 0.5rem;
-    width: 100%;
-    overflow: hidden; /* 내용이 넘치지 않도록 */
-}
-
-.result-meta-left, .result-meta-right {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    width: 100%; /* 컨테이너 전체 너비 사용 */
-    overflow: hidden; /* 내용이 넘치지 않도록 */
-}
 
 .meta-item {
     display: flex;

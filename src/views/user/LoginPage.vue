@@ -16,7 +16,7 @@
             <input
                 type="email"
                 v-model="email"
-                placeholder="example@hanhwa.com"
+                placeholder="example@hanwha.com"
                 required
             >
           </div>
@@ -30,9 +30,10 @@
             >
           </div>
           <div class="forgot-password">
-            <a href="#" @click.prevent="alert('준비 중인 기능입니다.')">비밀번호 찾기</a>
+            <!-- <a href="#" @click.prevent="alert('준비 중인 기능입니다.')">비밀번호 찾기</a> -->
           </div>
-          <button type="submit" class="login-button">로그인</button>
+          <!-- <button type="submit" class="login-button">로그인</button> -->
+          <Button label="로그인" class="login-button" type="submit" />
         </form>
       </div>
     </div>
@@ -118,12 +119,14 @@ const handleLogin = async () => {
 
 .login-welcome {
   flex: 1;
-  padding: 2rem 0 0 5rem;
+  /* padding: 5rem 5rem 5rem 5rem; */
+  padding: 5rem;
   background-color: white;
 }
 
 .login-welcome h1 {
-  font-size: 2.5rem;
+  font-size: 2.3rem;
+  /* font-size: 2rem; */
   font-weight: bold;
   color: #333;
   margin-bottom: 30px;
@@ -132,21 +135,24 @@ const handleLogin = async () => {
 
 .logo {
   max-width: 300px;
-  margin-top: -40px;
+  /* margin-top: -40px; */
 }
 
 .login-form-container {
   flex: 1;
-  padding:  1rem 0 5rem;
+  /* padding:  5rem 0 5rem; */
+  padding: 5rem;
   border-left: 1px solid #eee;
   text-align: center;
+  /* margin-top: 5rem; */
 }
 
 .login-form-container h2 {
-  font-size: 2rem;
+  /* font-size: 2rem; */
+  font-size: 2.3rem;
   font-weight: bold;
   color: #333;
-  margin-right: 18rem;
+  /* margin-right: 23rem; */
   margin-bottom: 3rem;
 }
 
@@ -177,17 +183,18 @@ const handleLogin = async () => {
 .login-button {
   width: 80%;
   padding: 1rem;
-  background-color: #1a237e;
+  /* background-color: #1a237e; */
   color: white;
   border: none;
   border-radius: 1rem;
   font-size: 1.5rem;
   font-weight: 500;
-  cursor: pointer;}
-
-.login-button:hover {
-  background-color: #0d1b60;
+  cursor: pointer;
 }
+
+/* .login-button:hover {
+  background-color: #0d1b60;
+} */
 
 .forgot-password {
   width: 80%;

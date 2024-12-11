@@ -15,7 +15,7 @@
             />
           </div>
           <h2 class="username">{{ authStore.user.userName }}</h2>
-          <p class="role">인사 1팀</p>
+          <!-- <p class="role">{{ teamResponse.teamName }}</p> -->
           <button @click="goToPasswordChange" class="edit-button">
             비밀번호 변경
           </button>
@@ -23,24 +23,9 @@
 
         <!-- 우측 상세 정보 -->
         <div class="right-section">
-          <div class="github-section">
-            <div class="github-info">
-              <img src="@/assets/images/github-icon.svg" alt="GitHub" class="github-icon" />
-              <span class="github-id">mojeeeong</span>
-              <button class="edit-btn">계정 교체</button>
-            </div>
-          </div>
           <div class="contact-info">회선 번호 : {{ userInfo.phoneNumber || '031-1111-1111' }}</div>
           <div class="contact-info">Email : {{ authStore.user.email || 'momo94@threeping.co.kr' }}</div>
           <div class="contact-info">입사연도 : {{ userInfo.joinYear || '2023' }}</div>
-        </div>
-        <!-- 직책 정보 -->
-        <div class="role-tag">
-          <div class="tag">
-          <img src="@/assets/images/job.svg" alt="Role-tag" class="role-img" />
-          <span class="job-title-label">직책</span>
-          </div>
-          <span class="job-title">Web Designer</span>
         </div>
       </div>
     </div>
@@ -61,6 +46,8 @@ const goToPasswordChange = () => {
 const fetchUserInfo = async () => {
   try {
     const response = await axios.get('/user/profile')
+    const teamResponse = await axios.get('/team/my', { params: `${userInfo.value.userId}` })
+    console.log("team name: ", teamResponse)
     userInfo.value = response.data.data
   } catch (error) {
     console.log("유저정보 fetch 실패" ,error)
@@ -74,187 +61,113 @@ onMounted(() => {
 </script>
 
 <style scoped>
-
 .profile-page {
   max-width: 80rem;
   margin: 0 auto;
-  padding: 0rem 2rem;
-  min-height: 200vh;
-  display: flex;          /* 추가 */
-  flex-direction: column; /* 추가 */
+  padding: 2rem 0rem;
+  display: flex;
+  flex-direction: column;
   align-items: center;
 }
 
 .my-page-title {
   margin: 1rem 0;
-  font-size: 3rem;
+  font-size: 2.5rem;
   font-weight: bold;
   color: #333;
-  width: 100%;          /* 추가 */
-  max-width: 100rem;     /* password-card와 동일한 max-width */
+  text-align: center;
 }
 
 .profile-card {
-  max-width: 65rem;
-  height: 70rem;
-  width: 100%;
-  background: white;
-  border-radius: 3rem;
+  width: 55rem;
+  background-color: var(--surface-card);
+  border-radius: 1.5rem;
+  box-shadow: var(--shadow-2);
+  padding: 0 0 2rem 0;
   overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow:2px 4px 8px 0 rgba(0, 0, 0, 0.2);
+  height: 45rem;
 }
 
 .gradient-banner {
-  height: 25rem;
-  background: linear-gradient(to right, #FFD5B8, #FF8FB3);
+  height: 15rem;
+  background: linear-gradient(to right, #FFD5B8, #14B8A6);
+  border-top-left-radius: 1.5rem;
+  border-top-right-radius: 1.5rem;
 }
 
 .profile-content {
-  position: relative;
-  margin-top: -13rem;
+  margin-top: -8rem;
   display: flex;
-  padding: 0 4rem;
+  flex-wrap: wrap;
+  gap: 2rem;
+  padding: 2rem;
+  background: var(--surface-card);
+  border-radius: 1rem;
+  box-shadow: var(--shadow-1);
 }
 
 .left-section {
   flex: 1;
-  max-width: 30rem;
+  max-width: 20rem;
   text-align: center;
-  margin-top: 4rem;
+  margin: 0 auto;
 }
 
 .right-section {
-  width: 50rem;
   flex: 2;
-  padding-top: 16rem;
-  place-items: center;
-}
-
-.role-tag {
-  max-width: 18rem;
-  width: 100%;
+  max-width: 30rem;
   display: flex;
-  align-items: center;
   flex-direction: column;
-  gap: 2rem;
-  padding-top: 16rem;
+  gap: 1rem;
+  margin-top: 8rem;
 }
 
 .profile-photo {
-  width: 18rem;
-  height: 18rem;
-  border: solid #D1D1D1 0.3rem;
+  width: 12rem;
+  height: 12rem;
   border-radius: 50%;
-  border: 0.7rem solid white;
+  border: 0.5rem solid var(--surface-border);
   object-fit: cover;
+  box-shadow: var(--shadow-1);
+  margin-bottom: 1rem;
 }
 
 .username {
-  font-size: 2.3rem;
+  font-size: 1.8rem;
   font-weight: bold;
-  margin-bottom: 2rem;
-  margin-top: 1rem;
-}
-
-.tag {
-  display: flex;
-  gap: 0.7rem;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
 }
 
 .role {
-  color: #A7A7A7;
-  font-size: 2rem;
-  font-weight: bold;
-  margin-bottom: 1.7rem;
-}
-
-.role-img {
-  width: 2rem;
-  height: 2rem;
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: var(--text-secondary-color);
+  margin-bottom: 1.5rem;
 }
 
 .edit-button {
-  border: 0.3rem solid #000;
+  background: var(--primary-color);
+  color: var(--primary-color-text);
+  border: none;
   border-radius: 2rem;
-  padding: 1rem 1.5rem;
-  background: white;
-  cursor: pointer;
-  font-size: 1.8rem;
+  padding: 0.7rem 1.5rem;
+  font-size: 1.2rem;
   font-weight: bold;
-  transition: all 0.2s;
+  cursor: pointer;
+  transition: background-color 0.3s;
 }
 
 .edit-button:hover {
-  background: #000;
-  color: white;
-}
-
-.github-section {
-  border: 0.2rem solid #D1D1D1;
-  max-width: 53rem;
-  width: 85%;
-  height: 7rem;
-  border-radius: 2rem;
-  display: flex;
-  justify-content: center;
-  margin-bottom: 1rem;
-}
-
-.github-info {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.github-icon {
-  width: 5rem;
-  height: 5rem;
-}
-
-.github-id {
-  font-size: x-large;
-  font-weight: bold;
-}
-
-.edit-btn {
-  display: flex;
-  padding: 1rem 2rem;
-  background: #000;
-  color: white;
-  border: none;
-  border-radius: 1.3rem;
-  font-size: 1.5rem;
-  cursor: pointer;
-  margin-left: 7rem;
+  background: var(--primary-color-dark);
 }
 
 .contact-info {
-  display: flex;
-  align-items: center;
-  font-size: 1.8rem;
-  border: 0.2rem solid #D1D1D1;
-  font-weight: bold;
-  max-width: 53rem;
-  height: 7rem;
-  width: 85%;
-  border-radius: 2rem;
-  margin-bottom: 1rem;
-  padding-left: 2rem;
+  font-size: 1.4rem;
+  color: var(--text-color-secondary);
+  border-bottom: 1px solid var(--surface-border);
+  padding: 0.5rem 0;
 }
 
-.job-title-label {
-  font-weight: normal;
-  color: #666;
-  margin-top: 0.3rem;
-  font-size: 1.3rem;
-}
-
-.job-title {
-  color: #666;
-  font-size: 1.5rem;
-  background: #F5F5F5;
-  padding: 1rem 2rem;
-  border-radius: 5rem;
-  font-weight: bold;
-}
 </style>

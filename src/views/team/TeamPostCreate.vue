@@ -1,6 +1,7 @@
 <template>
     <div class="post-detail-container">
         <!-- Header -->
+   
         <div class="detail-header">
             <div class="team-container">
                 <Button icon="pi pi-angle-double-left" 
@@ -14,7 +15,7 @@
                     disabled 
                     rounded 
                     class="team-name-container"
-                />- 
+                />
                 <Button 
                     :label="teamStore.boardTitle"  
                     icon="pi pi-user" 
@@ -29,16 +30,18 @@
             <div class="detail-up">
                 <InputText class="title-input" v-model="newPost.title"/>
                 <div class="button-container">
+                    <!-- <Toast/> -->
                     <Button outlined @click="goToList">취소</Button>
+                    <!-- <Toast/> -->
                     <Button outlined @click="submitPost">작성</Button>
                 </div>
             </div>
             <Editor v-model="newPost.content" editorStyle="height: 30rem">
-                    <template v-slot:toolbar>
-                        <span class="ql-formats">
-                        </span>
-                    </template>
-                </Editor>
+                <template v-slot:toolbar>
+                    <span class="ql-formats">
+                    </span>
+                </template>
+            </Editor>
         </div>
 
     </div>
@@ -52,10 +55,12 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { InputText } from 'primevue';
 import Editor from 'primevue/editor';
+import { useToast } from 'primevue/usetoast';
 
 const teamStore = useTeamStore();
 const authStore = useAuthStore();
 const router = useRouter();
+const toast = useToast();
 
 const newPost = ref({
     title: '',
@@ -71,7 +76,13 @@ const removeHtmlTags = (html) => {
 // 게시글 작성 완료
 const submitPost = async () => {
     if (!newPost.value.title.trim() || !newPost.value.content.trim()) {
-        alert('제목과 내용을 입력해주세요!');
+        // alert('제목과 내용을 입력해주세요!');
+        toast.add({
+        severity: "warn",
+        summary: "제목 및 내용",
+        detail: "제목과 내용을 입력해주세요!",
+        life: 3000,
+        });
         return;
     }
 
@@ -85,12 +96,24 @@ const submitPost = async () => {
         });
 
         if (response.data.success) {
-            alert('게시글이 작성되었습니다.');
+            // alert('게시글이 작성되었습니다.');
+            toast.add({
+            severity: "success",
+            summary: "게시글 작성",
+            detail: "게시글이 작성되었습니다.",
+            life: 3000,
+            });
             router.push('/team/post/view'); // 목록 페이지로 이동
         }
     } catch (error) {
         console.error('게시글 작성 중 오류 발생:', error);
-        alert('게시글 작성에 실패했습니다.');
+        // alert('게시글 작성에 실패했습니다.');
+        toast.add({
+            severity: "error",
+            summary: "게시글 작성 실패",
+            detail: "게시글 작성 중 오류가 발생하였습니다.",
+            life: 3000,
+        });
     }
 };
 
@@ -113,8 +136,9 @@ const goToList = () => {
     display: flex;
     justify-content: space-between;
 }
+
 .detail-header{
-    margin-bottom: 0.5rem;
+    margin-bottom: 3rem;
 }
 .post-detail-container{
     display:flex;
@@ -151,29 +175,28 @@ const goToList = () => {
 }
 
 .detail-body{
-    border: 1px solid #FF9D85;
+    border: 1px solid #009688;
     border-radius: 2.5rem;
-    box-shadow: 0 4px 8px rgba(255, 157, 133, 0.5);
+    box-shadow: 0 1.5px 3px rgba(59, 122, 63, 0.5);   
     padding: 2rem;
     width: 70vw;
 }
 
-
-
 .team-name-container {
     margin-top: 1rem;
     margin-right: 1rem;
-    background-color: #FDC387;
-    border-color: #FDC387;
+    background-color: #4DB6AC;
+    border-color: #4DB6AC;
     cursor: default;
     color: black;
     opacity:1;
 }
+
 .board-name-container {
     margin-top: 1rem;
     margin-right: 1rem;
-    background-color: #FDC387;
-    border-color: #FDC387;
+    background-color: #4DB6AC;
+    border-color: #4DB6AC;
     cursor: default;
     color: black;
     opacity:1;
@@ -187,10 +210,15 @@ const goToList = () => {
 }
 
 .content{
-    border-top: #FDC387 solid 1px;
+    border-top: #009688 solid 1px;
     margin-top: 2rem;
     padding: 2rem;
     font-size: 1.2rem;
     line-height: 2; /* 줄 간격을 1.5배로 설정 */
+}
+
+.button-container {
+    display: flex;
+    gap: 3px;
 }
 </style>

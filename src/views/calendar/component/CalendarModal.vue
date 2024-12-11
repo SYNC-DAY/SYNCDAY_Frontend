@@ -27,6 +27,7 @@
                         dateFormat="mm월 dd일 (D)"
                         size="large"
                         @change="onStartDateChange"
+                        :disabled="props.isEditMode ? props.schedule.meetingStatus === 'ACTIVE' : selectedRoomName && selectedRoomTitle"
                     />
                     <Select
                         v-if="isAllDay == false"
@@ -36,9 +37,10 @@
                         option-value="value"
                         placeholder="Select a time"
                         size="large"
+                        :disabled="props.isEditMode ? props.schedule.meetingStatus === 'ACTIVE' : selectedRoomName && selectedRoomTitle"
                     ></Select>
                     <span style="margin-left: 0.5rem; margin-right: 0.5rem">ㅡ</span>
-                    <DatePicker v-model="endDate" :minDate="startDate" dateFormat="mm월 dd일 (D)" size="large" />
+                    <DatePicker v-model="endDate" :minDate="startDate" dateFormat="mm월 dd일 (D)" size="large" :disabled="props.isEditMode ? props.schedule.meetingStatus === 'ACTIVE' : selectedRoomName && selectedRoomTitle" />
                     <Select
                         v-if="isAllDay == false"
                         v-model="endDateTime"
@@ -47,13 +49,14 @@
                         option-value="value"
                         placeholder="Select a time"
                         size="large"
+                        :disabled="props.isEditMode ? props.schedule.meetingStatus === 'ACTIVE' : selectedRoomName && selectedRoomTitle"
                     ></Select>
                 </div>
 
                 <!-- 종일 체크 -->
                 <div style="margin-left: 3.5rem; margin-top: 0.7rem">
                     <label>
-                        <Checkbox v-model="isAllDay" binary />
+                        <Checkbox v-model="isAllDay" binary :disabled="props.isEditMode ? props.schedule.meetingStatus === 'ACTIVE' : selectedRoomName && selectedRoomTitle"/>
                         종일
                     </label>
                 </div>
@@ -62,7 +65,7 @@
 
                 <!-- 내용 -->
                 <div class="text">
-                    <Textarea v-model="content" placeholder="내용을 입력해주세요." />
+                    <Textarea v-model="content" placeholder="내용을 입력해주세요."></Textarea>
                 </div>
 
                 <!-- 회의 토글 -->
@@ -71,7 +74,8 @@
                         <div class="toggle-label">
                             <img src="@/assets/images/meeting.svg" alt="meeting" class="icon" />
                             <span class="title-name">회의</span>
-                            <ToggleSwitch v-model="isMeeting" />
+                            <!-- <ToggleSwitch v-model="isMeeting" :disabled="selectedRoomName && selectedRoomTitle && props.isEditMode" /> -->
+                            <ToggleSwitch v-model="isMeeting" :disabled="props.isEditMode ? props.schedule.meetingStatus === 'ACTIVE' : selectedRoomName && selectedRoomTitle" />
                         </div>
                     </div>
                 </div>
@@ -80,7 +84,64 @@
                 <div v-if="isMeeting">
                     <div class="description">
                         <!-- 회의실 조회해서 회의실 id 가져오게 해야한다. 이때 시간을 넘겨서 조회 -->
-                        <span>회의실 추가</span>
+                        <!-- <span v-if="selectedRoomId === null" @click="visible = true" style="cursor: pointer" -->
+                        <span v-if="props.isEditMode ? props.schedule.meetingStatus !== 'ACTIVE' : selectedRoomId === null" @click="visible = true" style="cursor: pointer"
+                            >회의실 추가</span
+                        >
+                        <div v-if="selectedRoomId !== null" class="room-box" style="color: black;">
+                            <div>
+                                <div>장소 : {{ selectedRoomName }}</div>
+                                <div>회의실 명 : {{ selectedRoomTitle }}</div>
+                            </div>
+                            <span
+                                v-if="!props.isEditMode"
+                                class="pi pi-times meeting-close"
+                                style="cursor: pointer"
+                                @click="clearRoomSelection"
+                            ></span>
+                        </div>
+                        <Dialog
+                            v-model:visible="visible"
+                            maximizable
+                            modal
+                            header="회의실 예약"
+                            :style="{ width: '60rem' }"
+                        >
+                            <Tabs value="0">
+                                <TabList>
+                                    <Tab
+                                        v-for="(place, index) in uniquePlaces"
+                                        :key="index"
+                                        @click="selectTab(place)"
+                                        :value="place"
+                                    >
+                                        {{ place }}
+                                    </Tab>
+                                </TabList>
+                                <TabPanels>
+                                    <TabPanel v-for="place in uniquePlaces" :value="place"> </TabPanel>
+                                    <FullCalendar
+                                        v-if="selectedRoomName != ''"
+                                        :options="calendarOptions"
+                                        style="height: 100%"
+                                    />
+
+                                    <!-- 예약 확인 Dialog -->
+                                    <Dialog header="예약 확인" v-model:visible="isDialogVisible">
+                                        <p>
+                                            {{ dayjs(startMeeting).format('YYYY-MM-DD (dddd)') }}
+                                            {{ dayjs(startMeeting).format('A hh:mm') }} ~
+                                            {{ dayjs(endMeeting).format('A hh:mm') }}
+                                        </p>
+                                        <p>이 시간으로 예약하시겠습니까?</p>
+                                        <template #footer>
+                                            <Button label="취소" icon="pi pi-times" @click="cancelReservation" />
+                                            <Button label="확인" icon="pi pi-check" @click="confirmReservation" />
+                                        </template>
+                                    </Dialog>
+                                </TabPanels>
+                            </Tabs>
+                        </Dialog>
                     </div>
                 </div>
 
@@ -90,7 +151,7 @@
                         <div class="toggle-label">
                             <span class="pi pi-exclamation-circle"></span>
                             <span class="title-name">공개</span>
-                            <ToggleSwitch v-model="isPublic" :readonly="isMeeting" />
+                            <ToggleSwitch v-model="isPublic" :readonly="isMeeting" :disabled="isMeeting" />
                         </div>
                     </div>
                 </div>
@@ -133,7 +194,7 @@
                             :key="participant.userId"
                             class="participant-chip"
                         >
-                            {{ props.isEditMode? participant.username : participant.name }}
+                            {{ props.isEditMode ? participant.username || participant.name : participant.name }}
                             <span class="remove-participant" @click="removeParticipant(participant)">x</span>
                         </div>
 
@@ -158,11 +219,11 @@
                         </div>
                     </div>
                     <div>
-                        <div class="indent" v-if="showSelectAlarm == false">
+                        <div class="indent" v-if="!showSelectAlarm">
                             <span style="cursor: pointer" @click="showSelectAlarm = !showSelectAlarm">추가</span>
                         </div>
                         <!-- 알람 시간 선택 드롭다운 -->
-                        <div v-if="showSelectAlarm" class="indent dropdown-container">
+                        <div v-if="showSelectAlarm " class="indent dropdown-container">
                             <Select
                                 v-model="notificationTime"
                                 :options="alarmOptions"
@@ -195,18 +256,29 @@ import timezone from 'dayjs/plugin/timezone'; // 타임존 플러그인
 import duration from 'dayjs/plugin/duration';
 import axios from 'axios';
 import 'dayjs/locale/ko';
+import FullCalendar from '@fullcalendar/vue3';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
 import DatePicker from 'primevue/datepicker';
 import Select from 'primevue/select';
 import Checkbox from 'primevue/checkbox';
 import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
 import ToggleSwitch from 'primevue/toggleswitch';
+import Dialog from 'primevue/dialog';
+import Tabs from 'primevue/tabs';
+import TabList from 'primevue/tablist';
+import Tab from 'primevue/tab';
+import TabPanels from 'primevue/tabpanels';
+import TabPanel from 'primevue/tabpanel';
 import 'primeicons/primeicons.css';
 import InputText from 'primevue/inputtext';
 import { usePrimeVue } from 'primevue/config';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import SearchResult from '@/views/search/SearchResult.vue';
+import { FastForward } from 'lucide-vue-next';
 
 dayjs.extend(utc); // UTC 플러그인 사용
 dayjs.extend(timezone); // 타임존 플러그인 사용
@@ -215,6 +287,7 @@ dayjs.locale('ko');
 
 const authStore = useAuthStore();
 const router = useRouter();
+const route = useRoute();
 
 const props = defineProps({
     schedule: {
@@ -271,7 +344,9 @@ const searchKeyword = ref('');
 const searchResults = ref([]);
 
 // 선택된 참석자 목록
-const selectedParticipants = ref(props.isEditMode? props.schedule.userInfo.filter(user => user.userId !== authStore.user.userId) : []);
+const selectedParticipants = ref(
+    props.isEditMode ? props.schedule.userInfo.filter((user) => user.userId !== authStore.user.userId) : []
+);
 
 const showAllParticipants = ref(false);
 
@@ -332,6 +407,10 @@ const removeParticipant = (user) => {
     }
 };
 
+watch(selectedParticipants, () => {
+    console.log('selectedParticipants', selectedParticipants.value);
+})
+
 // Main
 // DatePicker와 v-binding
 // 날짜 (YYYY-MM-DD) => Date 객체
@@ -362,13 +441,24 @@ watch(isAllDay, (newVal) => {
 
         showSelectAlarm.value = false;
     } else {
-        // False: 시간 설정 -> 현재 시간 기준으로 다음 정시와 다다음 정시
-        const now = dayjs();
-        const nextHour = now.add(1, 'hour').startOf('hour'); // 가장 가까운 다음 정시
-        const twoHoursLater = nextHour.add(1, 'hour'); // 다다음 정시
+        if (!selectedRoomId.value) {
 
-        startDateTime.value = nextHour.format('HH:mm'); // 다음 정시
-        endDateTime.value = twoHoursLater.format('HH:mm'); // 다다음 정시
+            // False: 시간 설정 -> 현재 시간 기준으로 다음 정시와 다다음 정시
+            const now = dayjs();
+            const nextHour = now.add(1, 'hour').startOf('hour'); // 가장 가까운 다음 정시
+            const twoHoursLater = nextHour.add(1, 'hour'); // 다다음 정시
+            
+            startDateTime.value = nextHour.format('HH:mm'); // 다음 정시
+            endDateTime.value = twoHoursLater.format('HH:mm'); // 다다음 정시
+        }
+    }
+});
+
+watch(isMeeting, (newVal) => {
+    if (!newVal) {
+        selectedRoomName.value = null;
+        selectedRoomTitle.value = null;
+        selectedRoomId.value = null;
     }
 });
 
@@ -392,7 +482,7 @@ const formData = computed(() => ({
     scheduleRepeatId: null,
     repeatOrder: null,
     meetingStatus: isMeeting.value ? 'ACTIVE' : 'INACTIVE',
-    meetingRoomId: null,
+    meetingroomId: null,
     attendeeIds: selectedParticipants.value.map((p) => p.userId),
     notificationTime: null,
 }));
@@ -481,7 +571,7 @@ const submitSchedule = async () => {
             end_time: formData.value.endTime,
             public_status: formData.value.publicStatus,
             meeting_status: formData.value.meetingStatus,
-            meetingroom_id: formData.value.meetingRoomId,
+            meetingroom_id: formData.value.meetingroomId,
             attendee_ids: formData.value.attendeeIds,
             // attendee_ids: [1, 3, 5, 12],
         };
@@ -490,21 +580,19 @@ const submitSchedule = async () => {
         const schedule_id = props.schedule.scheduleId;
         let response;
 
-        // 요청 보내기
+        // 수정 시 회의든 일반이든 일반 일정 수정하듯!
         if (props.isEditMode) {
-            // 첫 번째 요청: 기본 데이터 수정
             response = await axios.put(`/schedule/${schedule_id}`, dataToSend, {
                 headers: {
                     'Content-Type': 'application/json',
                 },
             });
 
-            // 두 번째 요청: notification_time 수정
             if (formData.value.notificationTime) {
                 const notificationData = {
                     schedule_id: schedule_id,
                     notification_time: formData.value.notificationTime,
-                    user_id: props.schedule.userId,
+                    user_id: authStore.user.userId,
                 };
 
                 await axios.put(`/userschedule/notification`, notificationData, {
@@ -514,19 +602,35 @@ const submitSchedule = async () => {
                 });
             }
         } else {
-            // 등록 요청
-            response = await axios.post(
-                '/schedule',
-                {
-                    ...dataToSend,
-                    notification_time: formData.value.notificationTime,
-                },
-                {
+            // 여기부터는 등록! 회의냐 일반이냐?
+            // 회의 일정 등록
+            if (selectedRoomId.value !== null) {
+                response = await axios.post(`/meetingroom_reservation`,{
+                    title: formData.value.title,
+                    content: formData.value.content,
+                    startTime: formData.value.startTime,
+                    endTime: formData.value.endTime,
+                    meetingroomId: selectedRoomId.value,
+                    userId: authStore.user.userId,
+                    attendeeIds: formData.value.attendeeIds,
+                }, {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                }
-            );
+                });
+                selectedRoomId.value = null;
+                selectedRoomTitle.value = null;
+            } else {
+                // 일반 일정 등록
+                response = await axios.post('/schedule', {
+                    ...dataToSend,
+                    notification_time: formData.value.notificationTime,
+                }, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+            }
         }
 
         if (response.status === 200) {
@@ -582,7 +686,7 @@ const changeToKorean = () => {
 };
 
 /* 알람 관련!!! */
-const showSelectAlarm = ref(props.isEditMode ? (props.schedule.notificationTime ? true : false) : false);
+const showSelectAlarm = ref(props.isEditMode ? (props.schedule.myNotificationTime ? true : false) : false);
 
 // 알람 시간 옵션 배열
 const alarmOptions = [
@@ -596,18 +700,22 @@ const alarmOptions = [
 
 const notificationTime = ref(
     props.isEditMode
-        ? props.schedule.notificationTime
+        ? props.schedule.myNotificationTime
             ? String(
-                  ((dayjs(props.schedule.startTime).diff(dayjs(props.schedule.notificationTime)) % 60000) / 1000 / 60) *
+                  ((dayjs(props.schedule.startTime).diff(dayjs(props.schedule.myNotificationTime)) % 60000) / 1000 / 60) *
                       60
               ).padStart(2, '0') +
               ':' +
               String(
-                  Math.floor(dayjs(props.schedule.startTime).diff(dayjs(props.schedule.notificationTime)) / 1000 / 60)
+                  Math.floor(dayjs(props.schedule.startTime).diff(dayjs(props.schedule.myNotificationTime)) / 1000 / 60)
               ).padStart(2, '0')
             : '00:10'
         : '00:10'
 );
+
+watch(notificationTime, () => {
+    console.log('notificationTime', notificationTime.value);
+})
 
 watch(
     [notificationTime, startDateTime, showSelectAlarm],
@@ -631,6 +739,158 @@ watch(
     { immediate: true }
 );
 
+const visible = ref(false);
+const selectedRoomName = ref(null); // 선택된 탭
+const rooms = ref([]); // 회의실 전체 객체
+const filteredRooms = ref([]);
+
+const isDialogVisible = ref(false);
+
+const startMeeting = ref(null);
+const endMeeting = ref(null);
+
+const selectedRoomTitle = ref(props.isEditMode ? props.schedule.meetingroomName : null);
+const selectedRoomId = ref(props.isEditMode ? props.schedule.meetingroomId : null);
+
+const uniquePlaces = computed(() => {
+    // 중복 제거
+    return [...new Set(rooms.value.map((room) => room.meetingroom_place))];
+});
+
+watch([startMeeting, endMeeting], ([newStart, newEnd]) => {
+    startDate.value = newStart;
+    startDateTime.value = dayjs(newStart).format('HH:mm');
+    endDate.value = newEnd;
+    endDateTime.value = dayjs(newEnd).format('HH:mm');
+});
+
+const calendarOptions = ref({
+    schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
+    plugins: [resourceTimelinePlugin, interactionPlugin],
+    initialView: 'resourceTimelineDay',
+    initialDate: dayjs(startDate.value).format('YYYY-MM-DD'),
+    locale: 'ko',
+    height: 'auto',
+    // headerToolbar: false,
+    slotDuration: '00:10:00',
+    slotLabelInterval: '01:00:00',
+    slotLabelFormat: {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: false,
+    },
+    selectable: true,
+    select: (info) => {
+        console.log('info!', info);
+        if (info.start < new Date()) {
+            alert('지난 시간은 예약할 수 없습니다.');
+            return;
+        }
+        startMeeting.value = info.start;
+        endMeeting.value = info.end;
+
+        selectedRoomTitle.value = info.resource.title;
+        selectedRoomId.value = info.resource.id;
+
+        console.log('selectedRoomTitle', selectedRoomTitle.value);
+        console.log('selectedRoomId', selectedRoomId.value);
+
+        // 예약 확인 Dialog 표시
+        isDialogVisible.value = true;
+        isAllDay.value = false;
+    },
+    eventClick: false,
+    slotMinTime: '0:00:00',
+    slotMaxTime: '24:00:00',
+    resources: [],
+    events: [],
+});
+
+// 취소 버튼 클릭 시 다이얼로그 닫기
+const cancelReservation = () => {
+    isDialogVisible.value = false;
+    // 추가적으로 선택한 시간 초기화 가능
+    //   startMeeting.value = null;
+    //   endMeeting.value = null;
+};
+
+// 확인 버튼 클릭 시 예약 처리 및 다이얼로그 닫기
+const confirmReservation = () => {
+    isDialogVisible.value = false;
+    visible.value = false;
+    // 예약 처리를 위한 로직을 여기에 추가
+};
+
+// x 버튼 클릭 시 선택된 회의실 정보 초기화하는 함수
+const clearRoomSelection = () => {
+    selectedRoomId.value = null;
+    selectedRoomTitle.value = null;
+    selectedRoomName.value = null;
+};
+
+// 회의실 불러오기
+const fetchRooms = async () => {
+    try {
+        const response = await axios.get('/meetingroom');
+        rooms.value = response.data.data || [];
+
+        console.log('rooms', rooms.value);
+        console.log('uniquePlaces', uniquePlaces.value);
+    } catch (error) {
+        console.error('Error fetching rooms:', error);
+    }
+};
+
+// 탭 선택 시 호출되는 함수
+const selectTab = async (place) => {
+    selectedRoomName.value = place;
+    filteredRooms.value = rooms.value.filter((room) => room.meetingroom_place === selectedRoomName.value);
+    updateResources();
+    await fetchReservations(place); // 선택된 장소의 예약 정보 가져오기
+};
+
+// 예약 정보 가져오기
+const fetchReservations = async (place) => {
+    try {
+        const response = await axios.get(`/meetingroom_reservation/by-place?meetingroom_place=${place}`);
+        console.log('가져와?', response.data.data);
+        const scheduleMap = {};
+
+        response.data.data.forEach((reservation) => {
+            const { schedule_id, meeting_time, meetingroom_id } = reservation;
+            if (!scheduleMap[schedule_id]) {
+                scheduleMap[schedule_id] = {
+                    id: schedule_id,
+                    title: `마감`,
+                    start: new Date(meeting_time),
+                    end: new Date(meeting_time),
+                    resourceId: meetingroom_id,
+                };
+            } else {
+                if (new Date(meeting_time) > new Date(scheduleMap[schedule_id].end)) {
+                    scheduleMap[schedule_id].end = meeting_time;
+                }
+            }
+        });
+
+        // 예약 정보를 events에 업데이트
+        calendarOptions.value.events = Object.values(scheduleMap).map((schedule) => ({
+            ...schedule,
+            end: new Date(new Date(schedule.end).getTime() + 10 * 60 * 1000), // 10분 연장
+        }));
+    } catch (error) {
+        console.error('Error fetching reservations:', error);
+    }
+};
+
+// updateResources 함수 정의
+const updateResources = () => {
+    calendarOptions.value.resources = filteredRooms.value.map((room) => ({
+        id: room.meetingroom_id,
+        title: room.meetingroom_name,
+    }));
+};
+
 // 'Esc' 키를 눌렀을 때 모달을 닫는 함수
 const handleEscKey = (event) => {
     if (event.key === 'Escape') {
@@ -638,9 +898,10 @@ const handleEscKey = (event) => {
     }
 };
 
-onMounted(() => {
+onMounted(async () => {
     changeToKorean(); // 한국어 설정 함수 호출
     window.addEventListener('keydown', handleEscKey);
+    await fetchRooms();
 });
 
 onBeforeUnmount(() => {
@@ -881,6 +1142,7 @@ onBeforeUnmount(() => {
     flex-wrap: wrap;
     gap: 5px;
     position: relative;
+    margin-top: 1rem;
 }
 
 .participant-chip {
@@ -905,5 +1167,18 @@ onBeforeUnmount(() => {
     cursor: pointer;
     margin-left: 10px;
     align-self: center;
+}
+
+.room-box {
+    display: flex;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    justify-content: space-between; /* 왼쪽 텍스트와 오른쪽 아이콘을 양 끝으로 배치 */
+    align-items: center; /* 수직 중앙 정렬 */
+}
+
+.meeting-close {
+    margin-left: auto;
 }
 </style>

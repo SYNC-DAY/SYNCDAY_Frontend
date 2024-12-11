@@ -12,10 +12,10 @@
                 disabled 
                 rounded 
                 class="team-name-container"
-            />- 
+            />
             <Button 
                 :label="teamStore.boardTitle"  
-                icon="pi pi-user" 
+                icon="pi pi-align-justify" 
                 disabled 
                 rounded 
                 class="board-name-container"
@@ -28,10 +28,11 @@
                 :options="searchTypes" 
                 optionLabel="name" 
                 placeholder="---"
-                class="w-full md:w-56" />
+                class="w-full md:w-56" 
+                />
                 <IconField>
                     <InputIcon class="pi pi-search" />
-                    <InputText v-model="searchQuery" placeholder="검색어를 입력하세요"
+                    <InputText v-model="searchQuery" placeholder="검색어를 입력하세요" style="width: 20vw; height: 5vh"
                     @keyup.enter="search" />
                 </IconField>
                 <Button @click="search" outlined class="search-Button" :disabled="!searchQuery.trim()">검색</Button>
@@ -214,8 +215,8 @@ onMounted(async () => {
 .team-name-container {
     margin-top: 1rem;
     margin-right: 1rem;
-    background-color: #FDC387;
-    border-color: #FDC387;
+    background-color: #4DB6AC;
+    border-color: #4DB6AC;
     cursor: default;
     color: black;
     opacity:1;
@@ -223,8 +224,8 @@ onMounted(async () => {
 .board-name-container {
     margin-top: 1rem;
     margin-right: 1rem;
-    background-color: #FDC387;
-    border-color: #FDC387;
+    background-color: #4DB6AC;
+    border-color: #4DB6AC;
     cursor: default;
     color: black;
     opacity:1;
@@ -245,9 +246,10 @@ onMounted(async () => {
 }
 
 .create-Button {
-
     padding: 10px 20px;
     cursor: pointer;
+    /* gap: 10px; */
+    margin-left:3px;
 }
 
 .search-bar {
@@ -297,7 +299,7 @@ onMounted(async () => {
 }
 
 .pagination Button.active {
-    background-color:#FE5D86;
+    background-color:#009688;
     color: white;
     font-weight: bold;
 }
@@ -308,9 +310,9 @@ onMounted(async () => {
 
 .board{
     width: 70vw;
-    border: 1px solid #FF9D85;
+    border: 1px solid #009688;
     border-radius: 2.5rem;
-    box-shadow: 0 4px 8px rgba(255, 157, 133, 0.5);
+    box-shadow: 0 1.5px 3px rgba(59, 122, 63, 0.5);   
     padding: 2rem;
 }
 
