@@ -219,11 +219,11 @@
                         </div>
                     </div>
                     <div>
-                        <div class="indent" v-if="showSelectAlarm == false">
+                        <div class="indent" v-if="!showSelectAlarm">
                             <span style="cursor: pointer" @click="showSelectAlarm = !showSelectAlarm">추가</span>
                         </div>
                         <!-- 알람 시간 선택 드롭다운 -->
-                        <div v-if="showSelectAlarm" class="indent dropdown-container">
+                        <div v-if="showSelectAlarm " class="indent dropdown-container">
                             <Select
                                 v-model="notificationTime"
                                 :options="alarmOptions"
@@ -588,7 +588,7 @@ const submitSchedule = async () => {
                 const notificationData = {
                     schedule_id: schedule_id,
                     notification_time: formData.value.notificationTime,
-                    user_id: props.schedule.userId,
+                    user_id: authStore.user.userId,
                 };
 
                 await axios.put(`/userschedule/notification`, notificationData, {
@@ -682,7 +682,7 @@ const changeToKorean = () => {
 };
 
 /* 알람 관련!!! */
-const showSelectAlarm = ref(props.isEditMode ? (props.schedule.notificationTime ? true : false) : false);
+const showSelectAlarm = ref(props.isEditMode ? (props.schedule.myNotificationTime ? true : false) : false);
 
 // 알람 시간 옵션 배열
 const alarmOptions = [
@@ -696,18 +696,22 @@ const alarmOptions = [
 
 const notificationTime = ref(
     props.isEditMode
-        ? props.schedule.notificationTime
+        ? props.schedule.myNotificationTime
             ? String(
-                  ((dayjs(props.schedule.startTime).diff(dayjs(props.schedule.notificationTime)) % 60000) / 1000 / 60) *
+                  ((dayjs(props.schedule.startTime).diff(dayjs(props.schedule.myNotificationTime)) % 60000) / 1000 / 60) *
                       60
               ).padStart(2, '0') +
               ':' +
               String(
-                  Math.floor(dayjs(props.schedule.startTime).diff(dayjs(props.schedule.notificationTime)) / 1000 / 60)
+                  Math.floor(dayjs(props.schedule.startTime).diff(dayjs(props.schedule.myNotificationTime)) / 1000 / 60)
               ).padStart(2, '0')
             : '00:10'
         : '00:10'
 );
+
+watch(notificationTime, () => {
+    console.log('notificationTime', notificationTime.value);
+})
 
 watch(
     [notificationTime, startDateTime, showSelectAlarm],
