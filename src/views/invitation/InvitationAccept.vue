@@ -1,9 +1,9 @@
 <template>
-    <div>
+    <div class="container">
         <div class="assistant-container">
             <div class="baloon">
-                <h4>성공적으로 일정 참여 여부가 등록되었습니다.</h4>
-                <p>일정초대 탭에서도 참여 여부를 수정하실 수 있습니다.</p>
+                <h4>성공적으로 일정 참여 여부가 <br>등록되었습니다.</h4>
+                <p>일정초대 탭에서도 참여 여부를<br> 수정하실 수 있습니다.</p>
             </div>
             <div class="assistant">
                 <img src="@/assets/images/assistant.png" alt="Assistant" />
@@ -60,7 +60,16 @@ onMounted(async ()=>{
 </script>
 
 <style scoped>
+.container {
+    height: 100%;
+    margin: auto; 
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
 .assistant-container {
+
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -68,7 +77,6 @@ onMounted(async ()=>{
     position: relative;
     height: 50vh; /* 화면 전체 높이 */
     text-align: center;
-    background-color: #f9f9f9; /* 배경색 추가 */
 }
 
 .baloon {
