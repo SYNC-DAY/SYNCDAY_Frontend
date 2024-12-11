@@ -1,6 +1,15 @@
 <template>
     <div class="card p-4">
-        <h1 class="text-3xl font-bold mb-4">일정 관리</h1>
+        <!-- <h1 class="text-3xl font-bold mb-4"></h1> -->
+        <div>
+            <span> 직원 검색 </span>
+            <IconField class="flex-1">
+                <InputIcon>
+                    <i class="pi pi-search" />
+                </InputIcon>
+                <InputText placeholder="Search" />
+            </IconField>
+        </div>
         <div class="calendar-container">
             <Calendar v-model="selectedDate" :inline="true" showWeek :locale="locale" selectionMode="single" class="w-full" @date-select="onDateSelect" />
         </div>
