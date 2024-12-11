@@ -16,7 +16,7 @@
             <input
                 type="email"
                 v-model="email"
-                placeholder="example@hanhwa.com"
+                placeholder="example@hanwha.com"
                 required
             >
           </div>
