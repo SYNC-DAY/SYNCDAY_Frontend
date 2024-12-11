@@ -19,14 +19,14 @@
 
 				<div class="organizations-list">
 					<div
-						v-for="(installation, id) in githubAppStore.installations"
-						:key="id"
+						v-for="installation in githubAppStore.installations"
+						:key="installation.id"
 						class="org-item">
 						<div class="org-select">
 							<RadioButton
 								:value="installation.id"
 								v-model="selectedInstallationId"
-								:inputId="'installation_' + installation.id" />
+								:inputId="'org_' + installation.id" />
 						</div>
 						<div class="org-info">
 							<Avatar
@@ -107,20 +107,21 @@
 				:model="currentMenuItems"
 				:popup="true" />
 		</div>
-		<ConfirmDialog></ConfirmDialog>
 	</Dialog>
+	<!-- Add ConfirmDialog component here -->
+	<ConfirmDialog />
 </template>
+
 <script setup>
 	import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 	import { useToast } from "primevue/usetoast";
 	import { useAuthStore } from "@/stores/auth";
-
 	import { useGithubAppStore } from "@/stores/github/useGithubAppStore";
 	import { useGithubAuthStore } from "@/stores/github/useGithubAuthStore";
 	import { useGithubProjectsStore } from "@/stores/github/useGithubProjectsStore";
-
+	import RadioButton from "primevue/radiobutton";
 	import { useConfirm } from "primevue/useconfirm";
-
+	import ConfirmDialog from "primevue/confirmdialog";
 	import { useProjectStore } from "@/stores/proj/useProjectStore";
 
 	// Props
@@ -156,10 +157,10 @@
 	const currentInstallationId = ref(null);
 	const loading = ref(false);
 	const error = ref(null);
-	// Add this with other refs
 	const selectedInstallationId = ref(null);
 	const selectedGithubProjectId = ref(null);
-	const githubProjects = ref(null);
+	const githubProjects = ref([]); // Initialize as empty array instead of null
+
 	// Open menu with correct items
 	const openMenu = (event, installationId) => {
 		event.stopPropagation();
@@ -177,6 +178,7 @@
 								message: "Are you sure you want to disable this GitHub installation?",
 								header: "Confirm Disable",
 								icon: "pi pi-exclamation-triangle",
+								acceptClass: "p-button-danger",
 								accept: async () => {
 									try {
 										loading.value = true;
@@ -199,6 +201,9 @@
 										loading.value = false;
 									}
 								},
+								reject: () => {
+									// Optional: Handle rejection
+								},
 							});
 						},
 					},
@@ -211,12 +216,6 @@
 
 	// Methods
 	const handleVisibilityChange = newValue => {
-		if (!newValue) {
-			// Reset state when dialog closes
-			selectedInstallationId.value = null;
-			selectedGithubProjectId.value = null;
-			githubProjects.value = null;
-		}
 		emit("update:visible", newValue);
 	};
 
@@ -239,8 +238,8 @@
 
 	const addOrganization = () => {
 		githubAppStore.openInstallationWindow();
-		// Implement organization addition logic
 	};
+
 	const handleInstallationSelect = id => {
 		selectedInstallationId.value = id;
 	};
@@ -248,15 +247,7 @@
 	const handleProjectSelect = id => {
 		selectedGithubProjectId.value = id;
 	};
-	watch(
-		() => props.visible,
-		async (newVal, oldVal) => {
-			if (newVal && !oldVal) {
-				await initializeDialog();
-			}
-		},
-		{ immediate: true }
-	);
+
 	watch(selectedInstallationId, async newVal => {
 		if (newVal) {
 			try {
@@ -264,8 +255,7 @@
 				const installation = githubAppStore.installations[newVal];
 
 				if (installation) {
-					const projects = await githubProjectStore.fetchOrgProjects(newVal, installation.accountName);
-					githubProjects.value = projects;
+					githubProjects.value = await githubProjectStore.fetchOrgProjects(newVal, installation.accountName);
 				}
 			} catch (error) {
 				toast.add({
@@ -280,25 +270,34 @@
 		}
 	});
 
-	const initializeDialog = async () => {
-		try {
-			loading.value = true;
-			await githubAppStore.fetchInstallations();
-
-			// If there's a previous installation, select it
-			if (props.projectData?.github_installation_id) {
-				selectedInstallationId.value = props.projectData.github_installation_id;
-			}
-		} catch (error) {
-			toast.add({
-				severity: "error",
-				summary: "Error",
-				detail: "Failed to fetch GitHub installations: " + error.message,
-				life: 3000,
-			});
-		} finally {
-			loading.value = false;
-		}
+	const confirmRevokeAccess = () => {
+		confirm.require({
+			message: "Are you sure you want to revoke GitHub access?",
+			header: "Revoke Access",
+			icon: "pi pi-exclamation-triangle",
+			acceptClass: "p-button-danger",
+			accept: async () => {
+				try {
+					await githubAuthStore.revokeAccess();
+					toast.add({
+						severity: "success",
+						summary: "Success",
+						detail: "GitHub access has been revoked",
+						life: 3000,
+					});
+				} catch (error) {
+					toast.add({
+						severity: "error",
+						summary: "Error",
+						detail: "Failed to revoke access",
+						life: 3000,
+					});
+				}
+			},
+			reject: () => {
+				// Optional: Handle rejection
+			},
+		});
 	};
 
 	const handleAuthMessage = async event => {
@@ -335,11 +334,13 @@
 			});
 		}
 	};
+
 	const handleSave = async () => {
 		if (!selectedInstallationId.value) return;
 
 		const selectedInstallation = githubAppStore.installations[selectedInstallationId.value];
 		const selectedProject = githubProjects.value?.find(p => p.id === selectedGithubProjectId.value);
+
 		if (selectedInstallation) {
 			loading.value = true;
 			error.value = null;
@@ -366,8 +367,7 @@
 
 	// Lifecycle hooks
 	onMounted(() => {
-		// githubAppStore.fetchInstallations();
-
+		githubAppStore.fetchInstallations();
 		window.addEventListener("message", handleAuthMessage);
 	});
 
@@ -376,7 +376,6 @@
 		githubAppStore.cleanup();
 	});
 </script>
-
 <style scoped>
 	.content-section {
 		padding: 1rem 2rem;
