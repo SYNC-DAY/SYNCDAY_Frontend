@@ -132,7 +132,7 @@ const scrollToBottom = () => {
 
 // WebSocket 연결
 const connectWebSocket = () => {
-  const socket = new SockJS(`http://localhost:5000/ws?token=${authStore.accessToken}`);
+  const socket = new SockJS(`https://api.syncday.me/ws?token=${authStore.accessToken}`);
   stompClient.value = new Client({
     webSocketFactory: () => socket,
     reconnectDelay: 5000,

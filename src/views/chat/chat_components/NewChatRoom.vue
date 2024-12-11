@@ -65,7 +65,7 @@ const emit = defineEmits(["chatCreated","close"]);
 async function loadUsers() {
   console.log("유저 목록 불러오기")
   try {
-    const response = await axios.get("http://localhost:5000/api/user/select"); // API 주소 확인
+    const response = await axios.get("/user/select"); // API 주소 확인
     console.log("api 응답",response.data )
     users.value = response.data.data.filter(user => user.userId !== currentUserId.value);
     console.log("필터링된 사용자 목록: ", users.value)
@@ -101,7 +101,7 @@ async function createNewChat() {
       return;
     }
 
-    const response = await axios.post("http://localhost:5000/api/chat/room/create", {
+    const response = await axios.post("/chat/room/create", {
       chatRoomName: chatRoomName.value,
       memberIds: selectedMembers.value,
     });
