@@ -194,7 +194,7 @@
                             :key="participant.userId"
                             class="participant-chip"
                         >
-                            {{ props.isEditMode ? participant.username : participant.name }}
+                            {{ props.isEditMode ? participant.username || participant.name : participant.name }}
                             <span class="remove-participant" @click="removeParticipant(participant)">x</span>
                         </div>
 
@@ -406,6 +406,10 @@ const removeParticipant = (user) => {
         showAllParticipants.value = false;
     }
 };
+
+watch(selectedParticipants, () => {
+    console.log('selectedParticipants', selectedParticipants.value);
+})
 
 // Main
 // DatePicker와 v-binding
@@ -1138,6 +1142,7 @@ onBeforeUnmount(() => {
     flex-wrap: wrap;
     gap: 5px;
     position: relative;
+    margin-top: 1rem;
 }
 
 .participant-chip {
