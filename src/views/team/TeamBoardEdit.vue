@@ -201,8 +201,8 @@ const addBoard = async () => {
             // alert('게시판이 추가되었습니다.');
             toast.add({
                 severity: "success",
-                summary: "멤버 추가",
-                detail: "멤버가 성공적으로 추가되었습니다.",
+                summary: "게시판 추가",
+                detail: "게시판이 성공적으로 추가되었습니다.",
                 life: 3000,
             });
             boardList.value.push({
