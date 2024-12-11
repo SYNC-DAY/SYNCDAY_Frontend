@@ -1,19 +1,21 @@
 <template>
-    <div class="card p-4">
-        <div>
-            <span> 직원 검색 </span>
-            <IconField class="flex-1">
-                <InputIcon>
-                    <i class="pi pi-search" />
-                </InputIcon>
-                <InputText placeholder="Search" />
-            </IconField>
+    <div class="card p-6">
+        <div class="mb-6 p-3">
+            <div class="flex flex-col">
+                <span class="text-lg font-semibold mb-2">직원 검색</span>
+                <IconField class="">
+                    <InputIcon>
+                        <i class="pi pi-search" />
+                    </InputIcon>
+                    <InputText class="w-full" placeholder="직원 이름을 입력하세요" />
+                </IconField>
+            </div>
         </div>
-        <div class="calendar-container">
+
+        <div class="calendar-container mt-4">
             <Calendar v-model="selectedDate" :inline="true" showWeek :locale="locale" selectionMode="single" class="w-full" @date-select="onDateSelect" />
         </div>
 
-        <!-- 일정 생성 모달 컴포넌트 -->
         <ScheduleModal v-model:visible="showModal" :selected-date="selectedDate" @close="closeModal" @save="saveSchedule" />
     </div>
 </template>
@@ -23,11 +25,9 @@
     import { ref } from 'vue';
     import ScheduleModal from './components/ScheduleModal.vue';
 
-    // 선택된 날짜 상태 관리
     const selectedDate = ref(new Date());
     const showModal = ref(false);
 
-    // 한국어 로케일 설정
     const locale = {
         firstDayOfWeek: 0,
         dayNames: ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'],
@@ -41,20 +41,16 @@
         weekHeader: '주'
     };
 
-    // 날짜 선택 이벤트 핸들러
     const onDateSelect = (value) => {
         selectedDate.value = value;
         showModal.value = true;
     };
 
-    // 모달 닫기
     const closeModal = () => {
         showModal.value = false;
     };
 
-    // 일정 저장
     const saveSchedule = (scheduleData) => {
-        // TODO: 일정 저장 로직 구현
         console.log('저장된 일정:', scheduleData);
         closeModal();
     };
@@ -66,27 +62,50 @@
         margin: 0 auto;
     }
 
+    :deep(.p-inputtext) {
+        padding: 0.75rem 1rem;
+    }
+
     :deep(.p-datepicker) {
         width: 100%;
         min-width: 100%;
-        padding: 0.5rem;
+        padding: 1rem;
     }
 
     :deep(.p-datepicker table) {
-        margin: 0.5rem 0;
+        margin: 0.75rem 0;
     }
 
     :deep(.p-datepicker table td) {
-        padding: 0.5rem;
+        padding: 0.75rem;
     }
 
     :deep(.p-datepicker table td > span) {
         width: 2.5rem;
         height: 2.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     :deep(.p-datepicker .p-datepicker-header) {
-        padding: 0.5rem;
-        margin-bottom: 0.5rem;
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    :deep(.p-datepicker table td.p-datepicker-today > span) {
+        background-color: #e3f2fd;
+        color: #2196f3;
+        font-weight: bold;
+    }
+
+    :deep(.p-datepicker table td > span:hover) {
+        background-color: #f5f5f5;
+    }
+
+    :deep(.p-datepicker table td.p-highlight > span) {
+        background-color: #2196f3;
+        color: #ffffff;
     }
 </style>
