@@ -196,7 +196,7 @@ const props = defineProps({
 
 // props로 받는 값!
 const schedule = props.schedule;
-console.log('schedule!!!', schedule);
+console.log('schedule???', schedule);
 
 const scheduleId = props.schedule.scheduleId;
 const title = props.schedule.title ? props.schedule.title : '(제목 없음)';
@@ -214,7 +214,7 @@ const ownerUsername = props.schedule.ownerUsername;
 const userInfo = props.schedule.userInfo; // 이걸로 참석자 확인!!
 const myNotificationTime = ref(props.schedule.myNotificationTime);
 // const myNotificationTime = props.schedule.myNotificationTime;
-console.log('userInfo', userInfo);
+console.log('userInfo???', userInfo);
 
 const userInfoLength = props.schedule.userInfo.length;
 const userInfoAttend = props.schedule.userInfo.filter((user) => ['ATTEND'].includes(user.participationStatus)).length;
