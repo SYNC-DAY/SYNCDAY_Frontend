@@ -37,6 +37,7 @@ import Avatar from "primevue/avatar";
 import InputText from "primevue/inputtext";
 import Tooltip from 'primevue/tooltip';
 import Listbox from "primevue/listbox";
+import Select from "primevue/select";
 
 import Checkbox from "primevue/checkbox";
 
@@ -134,5 +135,6 @@ app.component("Menu", Menu);
 app.component("Listbox", Listbox);
 app.component("Checkbox", Checkbox);
 app.component("MultiSelect", MultiSelect);
+app.component("Select", Select);
 /* mount */
 app.mount("#app");

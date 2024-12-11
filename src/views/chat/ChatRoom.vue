@@ -155,7 +155,7 @@ const subscribeToRoom = (roomId) => {
 };
 
 const leaveChat = async () => {
-    const confirmLeave = window.confirm(' 정말 나가시겠습니까? ')
+    const confirmLeave = window.confirm(' 채팅방을 나가시겠습니까? ')
     if(!confirmLeave) {
       console.log('사용자가 채팅방 나가기를 원하지 않습니다.');
       return
