@@ -65,7 +65,7 @@
 
                 <!-- 내용 -->
                 <div class="text">
-                    <Textarea v-model="content" placeholder="내용을 입력해주세요." />
+                    <Textarea v-model="content" placeholder="내용을 입력해주세요."></Textarea>
                 </div>
 
                 <!-- 회의 토글 -->
@@ -74,12 +74,8 @@
                         <div class="toggle-label">
                             <img src="@/assets/images/meeting.svg" alt="meeting" class="icon" />
                             <span class="title-name">회의</span>
-<<<<<<< HEAD
                             <!-- <ToggleSwitch v-model="isMeeting" :disabled="selectedRoomName && selectedRoomTitle && props.isEditMode" /> -->
                             <ToggleSwitch v-model="isMeeting" :disabled="props.isEditMode ? props.schedule.meetingStatus === 'ACTIVE' : selectedRoomName && selectedRoomTitle" />
-=======
-                            <ToggleSwitch v-model="isMeeting" />
->>>>>>> develop
                         </div>
                     </div>
                 </div>
@@ -98,6 +94,7 @@
                                 <div>회의실 명 : {{ selectedRoomTitle }}</div>
                             </div>
                             <span
+                                v-if="!props.isEditMode"
                                 class="pi pi-times meeting-close"
                                 style="cursor: pointer"
                                 @click="clearRoomSelection"
@@ -154,7 +151,7 @@
                         <div class="toggle-label">
                             <span class="pi pi-exclamation-circle"></span>
                             <span class="title-name">공개</span>
-                            <ToggleSwitch v-model="isPublic" :readonly="isMeeting" />
+                            <ToggleSwitch v-model="isPublic" :readonly="isMeeting" :disabled="isMeeting" />
                         </div>
                     </div>
                 </div>
@@ -281,6 +278,7 @@ import { usePrimeVue } from 'primevue/config';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import SearchResult from '@/views/search/SearchResult.vue';
+import { FastForward } from 'lucide-vue-next';
 
 dayjs.extend(utc); // UTC 플러그인 사용
 dayjs.extend(timezone); // 타임존 플러그인 사용
@@ -439,13 +437,16 @@ watch(isAllDay, (newVal) => {
 
         showSelectAlarm.value = false;
     } else {
-        // False: 시간 설정 -> 현재 시간 기준으로 다음 정시와 다다음 정시
-        const now = dayjs();
-        const nextHour = now.add(1, 'hour').startOf('hour'); // 가장 가까운 다음 정시
-        const twoHoursLater = nextHour.add(1, 'hour'); // 다다음 정시
+        if (!selectedRoomId.value) {
 
-        startDateTime.value = nextHour.format('HH:mm'); // 다음 정시
-        endDateTime.value = twoHoursLater.format('HH:mm'); // 다다음 정시
+            // False: 시간 설정 -> 현재 시간 기준으로 다음 정시와 다다음 정시
+            const now = dayjs();
+            const nextHour = now.add(1, 'hour').startOf('hour'); // 가장 가까운 다음 정시
+            const twoHoursLater = nextHour.add(1, 'hour'); // 다다음 정시
+            
+            startDateTime.value = nextHour.format('HH:mm'); // 다음 정시
+            endDateTime.value = twoHoursLater.format('HH:mm'); // 다다음 정시
+        }
     }
 });
 
@@ -731,7 +732,7 @@ watch(
 );
 
 const visible = ref(false);
-const selectedRoomName = ref('7층'); // 선택된 탭
+const selectedRoomName = ref(null); // 선택된 탭
 const rooms = ref([]); // 회의실 전체 객체
 const filteredRooms = ref([]);
 
@@ -761,6 +762,7 @@ const calendarOptions = ref({
     initialView: 'resourceTimelineDay',
     initialDate: dayjs(startDate.value).format('YYYY-MM-DD'),
     locale: 'ko',
+    height: 'auto',
     // headerToolbar: false,
     slotDuration: '00:10:00',
     slotLabelInterval: '01:00:00',
@@ -787,6 +789,7 @@ const calendarOptions = ref({
 
         // 예약 확인 Dialog 표시
         isDialogVisible.value = true;
+        isAllDay.value = false;
     },
     eventClick: false,
     slotMinTime: '0:00:00',
@@ -815,17 +818,6 @@ const clearRoomSelection = () => {
     selectedRoomId.value = null;
     selectedRoomTitle.value = null;
     selectedRoomName.value = null;
-
-    // if (props.isEditMode) {
-    //     try {
-    //         const response = await axios.delete(`/meetingroom_reservation/${props.schedule.scheduleId}`);
-
-    //         // await submitSchedule();
-            
-    //     } catch (error) {
-    //         console.error('삭제 실패:', error.response?.data || error.message);
-    //     }
-    // }
 };
 
 // 회의실 불러오기
