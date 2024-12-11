@@ -1,7 +1,9 @@
 import AppLayout from '@/layout/AppLayout.vue';
 import { createRouter, createWebHistory } from 'vue-router';
+import { useAuthStore } from '../stores/auth.js';
 import userRoutes from './user.js';
 
+import calendar from './calendar.js';
 import projectRoutes from './project';
 const router = createRouter({
     history: createWebHistory(),
@@ -107,7 +109,8 @@ const router = createRouter({
                     component: () => import('@/views/pages/Documentation.vue')
                 },
                 ...projectRoutes,
-                ...userRoutes
+                ...userRoutes,
+                ...calendar
             ]
         },
         {
@@ -138,5 +141,34 @@ const router = createRouter({
         }
     ]
 });
+router.beforeEach((to, from, next) => {
+    const authStore = useAuthStore();
 
+    // 로그인 페이지로의 이동 처리
+    if (to.path === '/login') {
+        // 이미 인증된 사용자는 메인 페이지로
+        if (authStore.isAuthenticated) {
+            next('/');
+            return;
+        }
+        // 인증되지 않은 사용자는 로그인 페이지로
+        next();
+        return;
+    }
+
+    // 인증이 필요한 페이지 접근 처리
+    if (to.meta.requiresAuth) {
+        if (!authStore.isAuthenticated) {
+            // 인증되지 않은 경우 로그인 페이지로 리다이렉트
+            next({
+                path: '/login',
+                query: { redirect: to.fullPath }
+            });
+            return;
+        }
+    }
+
+    // 그 외의 경우는 정상적으로 라우팅
+    next();
+});
 export default router;

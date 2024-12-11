@@ -1,8 +1,7 @@
 export default [
     {
         path: '/calendar',
-        component: () => {
-            import('@/views/calendar/component/Calendar.vue');
-        }
+        name: 'calendar',
+        component: () => import('@/views/calendar/component/Calendar.vue')
     }
 ];

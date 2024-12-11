@@ -20,7 +20,7 @@
         </div>
 
         <div class="flex justify-center gap-x-4">
-            <RouterLink to="/project">Calendar</RouterLink>
+            <RouterLink to="/calendar">Calendar</RouterLink>
             <RouterLink to="/project">Team</RouterLink>
             <RouterLink to="/project">Projects</RouterLink>
         </div>
