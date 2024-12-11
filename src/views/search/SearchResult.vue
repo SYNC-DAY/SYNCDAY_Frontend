@@ -247,7 +247,8 @@ button {
 
 .highlight {
   font-size: clamp(1.2rem, 2.5vw, 2rem);
-  color: #FE5D86;
+  /* color: #FE5D86; */
+  color: #15B8A6;
 }
 
 /* 도메인 필터 버튼 컨테이너는 전체 너비 사용 */
@@ -283,12 +284,14 @@ button {
 }
 
 .filter-btn.active {
-  background-color: #FE5D86;
+  /* background-color: #FE5D86; */
+  background-color: #15B8A6;
   color: white;
 }
 
 .filter-btn.active:hover {
-  background-color: #FE5D86;
+  /* background-color: #FE5D86; */
+  background-color: #15B8A6;
   color: white;
 }
 
@@ -346,7 +349,7 @@ button {
 }
 
 .filter-options .filter-btn.active {
-  background-color: #FE5D86;
+  background-color: #15B8A6;
   color: white;
 }
 
@@ -385,7 +388,8 @@ button {
 }
 
 .filter-reset:hover {
-  color: #FE5D86;
+  /* color: #FE5D86; */
+  color: #15B8A6;
 }
 
 /* 결과 패널 */
@@ -421,7 +425,8 @@ button {
 }
 
 .domain-count {
-  color: #FE5D86;
+  /* color: #FE5D86; */
+  color: #15B8A6;
   font-size: clamp(1.1rem, 2vw, 1.4rem);
   margin-left: 0.2rem;
 }
@@ -438,7 +443,8 @@ button {
 
 .result-header h3 {
   font-size: clamp(1.1rem, 2vw, 1.4rem);
-  color: #FE5D86;
+  /* color: #FE5D86; */
+  color: #15B8A6;
   margin: 0;
 }
 
@@ -460,7 +466,8 @@ button {
   padding: 0.5rem 1rem;
   border: none;
   background: none;
-  color: #FE5D86;
+  /* color: #FE5D86; */
+  color: #15B8A6;
   cursor: pointer;
   font-weight: 500;
   transition: opacity 0.2s;

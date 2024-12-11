@@ -172,7 +172,13 @@
         const selectedTime = selectedNotificationTimes.value[schedule.schedule_id];
 
         if (!selectedTime) {
-            alert("알림 시간을 선택해주세요.");
+            // alert("알림 시간을 선택해주세요.");
+            toast.add({
+                everity: "warn",
+                summary: "알람 시간 선택",
+                detail: "알람 시간을 선택해주세요!",
+                life: 3000,
+            });
             return;
         }
 
@@ -231,7 +237,7 @@
         }
 
         eventSource.value = new EventSourcePolyfill(
-            `http://localhost:5000/sse/notification/subscribe/${authStore.user.userId}`,
+            `http://localhost:8080/sse/notification/subscribe/${authStore.user.userId}`,
 
             {
                 headers: {

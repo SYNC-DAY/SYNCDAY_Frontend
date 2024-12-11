@@ -14,12 +14,46 @@
                 @close="closeModal"
                 @submit="fetchSchedules"
             />
+            <Dialog v-model:visible="visible" :style="{ width: '25rem' }" position="top" header="직원 일정 검색" @hide="resetSearchData">
+                <!-- 직원 검색 input -->
+                <IconField>
+                    <InputIcon class="pi pi-search" />
+                    <InputText type="text" v-model="searchMember" placeholder="Search" @input="searchUsers" />
+                </IconField>
+                <!-- 검색 결과 목록 -->
+                <div v-if="searchResults.length > 0" class="search-results">
+                    <div v-for="user in searchResults" :key="user.userId" @click="addMemberSchedule(user)">
+                        {{ user.teamName }} {{ user.name }}
+                    </div>
+                </div>
+                <!-- 선택된 참석자 목록 -->
+                <div class="selected-participants">
+                    <div
+                        v-for="participant in displayedParticipants"
+                        :key="participant.userId"
+                        class="participant-chip"
+                        :style="{ backgroundColor: participant.color }"
+                    >
+                        {{ participant.name }}
+                        <span class="remove-participant" @click="removeMemberSchedule(participant)">x</span>
+                    </div>
+
+                    <!-- 더보기 버튼 -->
+                    <div
+                        v-if="selectedParticipants.length > 5"
+                        class="more-participants"
+                        @click="showAllParticipants = !showAllParticipants"
+                    >
+                        {{ showAllParticipants ? '접기' : `+ ${selectedParticipants.length - 5}명 더 보기` }}
+                    </div>
+                </div>
+            </Dialog>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid'; // DayGrid 보기 플러그인
@@ -27,7 +61,9 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction'; // 클릭/드래그 기능
 import CalendarViewModal from './component/CalendarViewModal.vue';
 import CalendarModal from './component/CalendarModal.vue';
-import SideBar from '@/components/SideBar.vue';
+import IconField from 'primevue/iconfield';
+import InputIcon from 'primevue/inputicon';
+import InputText from 'primevue/inputtext';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc'; // UTC 플러그인
 import timezone from 'dayjs/plugin/timezone'; // 타임존 플러그인
@@ -52,6 +88,10 @@ const selectedInfo = ref({});
 // 이벤트 데이터
 const events = ref([]);
 
+const eventsMember = ref([]);
+
+const visible = ref(false);
+
 const calendarOptions = ref({
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
     initialView: 'dayGridMonth',
@@ -59,7 +99,7 @@ const calendarOptions = ref({
     height: '100%', // 캘린더 높이를 부모 컨테이너에 맞춤
     headerToolbar: {
         left: 'today prev next title',
-        right: 'dayGridMonth timeGridWeek addEventButton',
+        right: 'searchMemberSchedule dayGridMonth timeGridWeek addEventButton',
     },
     buttonText: {
         today: '오늘',
@@ -98,6 +138,12 @@ const calendarOptions = ref({
                 isModalVisible.value = true;
 
                 console.log('selectedInfo', selectedInfo.value);
+            },
+        },
+        searchMemberSchedule: {
+            text: '직원 일정 검색',
+            click: () => {
+                visible.value = true;
             },
         },
     },
@@ -191,28 +237,28 @@ const fetchSchedules = async () => {
                 }
             }
 
-            const backgroundColor = ref('#FF9D85');
-            const borderColor = ref('#FF9D85');
+            const backgroundColor = ref('#76818D');
+            const borderColor = ref('#76818D');
             const textColor = ref('white');
 
             if (schedule.status === 'ATTEND') {
                 if (schedule.meeting_status === 'ACTIVE') {
-                    backgroundColor.value = '#FE5D86';
-                    borderColor.value = '#FE5D86';
+                    backgroundColor.value = '#15B8A6';
+                    borderColor.value = '#15B8A6';
                     textColor.value = 'white';
                 } else {
-                    backgroundColor.value = '#FF9D85';
-                    borderColor.value = '#FF9D85';
+                    backgroundColor.value = '#76818D';
+                    borderColor.value = '#76818D';
                     textColor.value = 'white';
                 }
             } else if (schedule.status === 'PENDING') {
                 if (schedule.meeting_status === 'ACTIVE') {
                     backgroundColor.value = 'white';
-                    borderColor.value = '#FE5D86';
+                    borderColor.value = '#15B8A6';
                     textColor.value = 'black';
                 } else {
                     backgroundColor.value = 'white';
-                    borderColor.value = '#FF9D85';
+                    borderColor.value = '#76818D';
                     textColor.value = 'black';
                 }
             } else {
@@ -236,6 +282,7 @@ const fetchSchedules = async () => {
                     status: schedule.status,
                     attendeeIds: schedule.attendee_ids,
                     publicStatus: schedule.public_status,
+                    sortEvents: authStore.user.userId,
                     // 필요하면 더 추가
                 },
             };
@@ -339,6 +386,159 @@ const updateSchedule = async (info) => {
     }
 };
 
+// 검색 키워드
+const searchMember = ref('');
+
+// 검색 결과
+const searchResults = ref([]);
+
+// 선택된 직원 목록
+const selectedParticipants = ref([]);
+
+const showAllParticipants = ref(false);
+
+// 표시할 참석자 계산
+const displayedParticipants = computed(() => {
+    return showAllParticipants.value ? selectedParticipants.value : selectedParticipants.value.slice(0, 5);
+});
+
+// 사용자 검색 함수
+const searchUsers = async () => {
+    try {
+        const sanitizedKeyword = searchMember.value.trim();
+        if (!sanitizedKeyword) {
+            searchResults.value = [];
+            return;
+        }
+
+        const response = await axios.get(`/user/search`, {
+            params: { keyword: sanitizedKeyword },
+        });
+
+        if (response.data.data) {
+            // 본인과 이미 선택된 참석자 제외
+            console.log('response', response.data.data);
+            const currentUserId = authStore.user.userId;
+            searchResults.value = response.data.data.filter(
+                (user) =>
+                    user.userId !== currentUserId && // 본인 제외
+                    user.name.includes(sanitizedKeyword) &&
+                    !selectedParticipants.value.some((p) => p.userId === user.userId)
+            );
+        } else {
+            searchResults.value = [];
+        }
+    } catch (error) {
+        console.error('Error fetching search results:', error);
+        searchResults.value = [];
+    }
+};
+
+// 랜덤 색상
+// const generateRandomColor = () => {
+//     const letters = '0123456789ABCDEF';
+//     let color = '#';
+//     for (let i = 0; i < 6; i++) {
+//         color += letters[Math.floor(Math.random() * 16)];
+//     }
+//     return color;
+// };
+
+const generateRandomColor = () => {
+    const hue = Math.floor(Math.random() * 360); // 색상: 0~360도 (모든 색상 포함)
+    const saturation = Math.floor(Math.random() * 50) + 50; // 채도: 50% ~ 100% (밝고 선명한 색상)
+    const lightness = Math.floor(Math.random() * 40) + 30; // 명도: 30% ~ 70% (너무 어둡거나 밝지 않은 색상)
+    
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+};
+
+// 멤버 일정 조회
+const addMemberSchedule = async (user) => {
+    const color = generateRandomColor();
+
+    // 중복 체크
+    if (!selectedParticipants.value.some((p) => p.userId === user.userId)) {
+        selectedParticipants.value.push({
+            ...user,
+            color,
+        });
+    }
+
+    // 검색 초기화
+    searchMember.value = '';
+    searchResults.value = [];
+
+    try {
+        const response = await axios.get(`/schedule/others?searchUserId=${user.userId}`);
+        let data = response.data.data;
+
+        data = data.map((schedule) => {
+            const startDate = new Date(schedule.start_time); // new Date()를 사용하면 KST로 바뀐다?
+            const endDate = new Date(schedule.end_time);
+
+            // isAllDay를 True로 설정하는 조건
+            let isAllDay = false;
+
+            // startDate와 endDate의 시각이 모두 00:00인지 확인
+            const isStartAtMidnight = startDate.getHours() === 0 && startDate.getMinutes() === 0;
+            const isEndAtMidnight = endDate.getHours() === 0 && endDate.getMinutes() === 0;
+
+            if (isStartAtMidnight && isEndAtMidnight) {
+                // 둘 다 00:00일 경우 isAllDay를 true로 설정
+                isAllDay = true;
+            } else if (!isStartAtMidnight || !isEndAtMidnight) {
+                // 시각이 하나라도 00:00이 아니고, 날짜가 다를 경우 isAllDay는 true
+                if (startDate.toDateString() !== endDate.toDateString()) {
+                    // 날짜가 다르면 endDate에 하루를 추가하고 시간을 00:00으로 설정
+                    endDate.setDate(endDate.getDate() + 1);
+                    endDate.setHours(0, 0, 0, 0);
+                    isAllDay = true;
+                }
+            }
+            return {
+                id: schedule.schedule_id,
+                title: 'BUSY',
+                start: startDate,
+                end: endDate,
+                allDay: isAllDay,
+                backgroundColor: color,
+                borderColor: color,
+                extendedProps: {
+                    sortEvents: user.userId,
+                },
+            };
+        });
+        events.value.push(...data);
+        // searchMember.value = `${teamName} ${userName}`;
+        // searchResults.value = [];
+
+        console.log('Fetched Events:', events.value);
+    } catch (error) {
+        console.error('Error fetching search results:', error);
+    }
+};
+
+// 직원 검색 제거
+const removeMemberSchedule = (user) => {
+    selectedParticipants.value = selectedParticipants.value.filter((p) => p.userId !== user.userId);
+    // 참석자 제거 후 5개 이하면 더보기 숨기기
+    if (selectedParticipants.value.length <= 5) {
+        showAllParticipants.value = false;
+    };
+
+    // events 배열에서 extendedProps.sortEvents가 user.userId인 이벤트 제거
+    events.value = events.value.filter((event) => event.extendedProps.sortEvents !== user.userId);
+};
+
+// 검색 데이터를 초기화하는 함수
+const resetSearchData = async () => {
+    searchMember.value = '';
+    searchResults.value = [];
+    selectedParticipants.value = [];
+    // eventsMember.value = [];
+    await fetchSchedules();
+};
+
 onMounted(async () => {
     await fetchSchedules();
 });
@@ -373,6 +573,42 @@ body,
     overflow: hidden;
     background-color: #fff;
 }
+
+.p-dialog {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    max-height: 800rem;
+}
+
+/* 직원 검색 결과 목록 스타일 */
+.search-results {
+    position: absolute;
+    top: 7rem; /* InputText 아래에 위치하도록 설정 (필요에 따라 조정 가능) */
+    left: 2rem;
+    /* width: 10rem; */
+    max-height: 200px; /* 최대 높이 설정 */
+    overflow-y: auto; /* 결과가 많을 경우 스크롤 */
+    background-color: white;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    margin-top: 0.3rem; /* 입력 필드와 결과 사이의 여백 */
+    padding: 0.1rem;
+}
+
+/* 검색 결과 항목 스타일 */
+.search-results div {
+    padding: 0.8rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.search-results div:hover {
+    background-color: #f0f0f0;
+}
+
 ::v-deep(div .fc-toolbar-chunk) {
     display: flex;
 }
@@ -443,5 +679,34 @@ body,
 }
 ::v-deep(.fc-button.fc-button-disabled) {
     cursor: not-allowed;
+}
+
+.selected-participants {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    position: relative;
+    margin-top: 0.5rem;
+}
+
+.participant-chip {
+    /* background-color: #e0e0e0; */
+    color: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.remove-participant {
+    margin-left: 5px;
+    cursor: pointer;
+    color: rgb(255, 255, 255);
+}
+
+.more-participants {
+    cursor: pointer;
+    margin-left: 10px;
+    align-self: center;
 }
 </style>

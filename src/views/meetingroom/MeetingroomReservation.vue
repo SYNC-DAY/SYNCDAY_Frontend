@@ -122,6 +122,7 @@ import { useAuthStore } from "@/stores/auth";
 import Textarea from "primevue/textarea";
 import Divider from 'primevue/divider';
 import Listbox from 'primevue/listbox';
+import { useToast } from 'primevue/usetoast';
 
 const props = defineProps({
   start: { type: Date, required: true },
@@ -137,10 +138,12 @@ const { start, end, resourceId, resourceName, resourcePlace, resourceCapacity } 
 
 const isVisible = ref(true);
 const value1 = ref("");
+const selectedUser = ref("");
 const searchResults = ref([]);
 const selectedAttendees = ref([]);
 const authStore = useAuthStore();
 const user = ref({});
+const toast= useToast();
 const formData = ref({
   title: "",
   description: "",
@@ -203,13 +206,25 @@ const searchUsers = async (keyword) => {
 const addMember = (user) => {
   // 주관자인 경우 추가 불가
   if (user.userId === authStore.user.userId) {
-    alert("주관자는 참석자로 추가할 수 없습니다.");
+    // alert("주관자는 참석자로 추가할 수 없습니다.");
+    toast.add({
+      severity: "warn",
+      summary: "멤버 추가 실패",
+      detail: "주관자는 참석자로 추가할 수 없습니다!",
+      life: 3000,
+    });
     return;
   }
 
   // 이미 참석자로 추가된 경우 추가 불가
   if (selectedAttendees.value.some((attendee) => attendee.userId === user.userId)) {
-    alert("이미 추가된 사용자입니다.");
+    // alert("이미 추가된 사용자입니다.");
+    toast.add({
+      severity: "warn",
+      summary: "이미 추가된 사용자",
+      detail: "이미 추가된 사용자입니다!",
+      life: 3000,
+    });
     return;
   }
 
@@ -239,12 +254,38 @@ const handleReservation = async () => {
   try {
 
     const response = await axios.post("/meetingroom_reservation", reservationData);
-    console.log("response확인: ", response);
-    alert("회의실이 성공적으로 예약되었습니다!");
+    console.log("response확인: ", response.data);
+    if (response.data.data === null) {
+      // alert("예약 중 오류가 발생했습니다.");
+      toast.add({
+        severity: "warn",
+        summary: "회의실 예약",
+        detail: "이미 예약되어있는 시간입니다!",
+        life: 3000,
+    });
+      emit("closeDialog");
+    }
+    else {
+      // alert("회의실이 성공적으로 예약되었습니다!");
+      toast.add({
+        severity: "success",
+        summary: "회의실 예약",
+        detail: "회의실이 성공적으로 예약되었습니다!",
+        life: 3000,
+    });
     emit("closeDialog");
+    }
+
   } catch (error) {
     console.error("예약 중 오류 발생:", error);
-    alert("예약 중 오류가 발생했습니다.");
+    // alert("예약 중 오류가 발생했습니다.");
+    toast.add({
+        severity: "danger",
+        summary: "회의실 예약",
+        detail: "예약중 오류가 발생했습니다.",
+        life: 3000,
+    });
+    
   }
 };
 
@@ -335,7 +376,8 @@ form textarea {
 }
 
 form button {
-  background-color: #007bff;
+  /* background-color: #007bff; */
+  background-color: #15B8A6;
   color: white;
   border: none;
   padding: 10px 15px;
@@ -344,7 +386,8 @@ form button {
 }
 
 form button:hover {
-  background-color: #0056b3;
+  /* background-color: #0056b3; */
+  background-color: #15B8A6;
 }
 
 .reservation-button {

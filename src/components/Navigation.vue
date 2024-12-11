@@ -114,7 +114,7 @@
 				title: '검색어가 너무 짧습니다',
 				text: '최소 2글자 이상 입력해주세요.',
 				confirmButtonText: '확인',
-				confirmButtonColor: '#FE5D86',  // SYNCDAY의 핑크색 테마
+				confirmButtonColor: '#15B8A6',  // SYNCDAY의 핑크색 테마
 				heightAuto: false,        // 높이 자동조절 비활성화
 				scrollbarPadding: false
 

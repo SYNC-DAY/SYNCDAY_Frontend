@@ -4,7 +4,7 @@
     <button class="leave-chat" @click="leaveChat">채팅방 나가기</button>
     <div class="popup-content">
       <div class="a-chat">
-        <button class="close-button" @click="$emit('close')"><i class="pi pi-angle-double-left" style="font-size: 2rem;"></i></button>
+        <button class="close-button" @click="emit('close')"><i class="pi pi-angle-double-left" style="font-size: 2rem;"></i></button>
         <h2>{{ props.chatRoomName }}</h2>
       </div>
       <div class="chat-messages" ref="chatMessages">
@@ -12,7 +12,7 @@
           <div v-if="shouldShowDate(index)" class="date-divider">
             {{ formatDate(messages[index].sentTime) }}
           </div>
-          <div class="message-line">
+          <div class="message-line" :class="{ 'my-message': message.senderId === authStore.user?.userId }">
             <img :src="message.userProfileImg" alt="프로필 이미지" class="profile-img" />
             <div class="message-content">
               <span class="sender">{{ message.senderName }}</span>
@@ -21,6 +21,7 @@
                 <span class="time-right">{{ formatTime(message.sentTime) }}</span>
               </div>
             </div>
+
           </div>
         </template>
       </div>
@@ -46,6 +47,7 @@ const props = defineProps({
   removeChatFromList: { type: Function, required: true }
 });
 
+const subscriptions = ref({});
 const authStore = useAuthStore();
 const isVisible = ref(true);
 const messagesInRoom = ref({});
@@ -89,6 +91,8 @@ const fetchMessages = async () => {
   }
 };
 
+const emit = defineEmits();
+
 // 메시지 전송
 const sendMessage = () => {
   if (!newMessage.value.trim()) return;
@@ -108,6 +112,12 @@ const sendMessage = () => {
       destination: `/app/room/${props.roomId}`,
       body: JSON.stringify(chatMessage),
     });
+   emit('updateLastMessage', {
+      roomId: props.roomId,
+      lastMessage: chatMessage.content,
+      sentTime: chatMessage.sentTime,
+    });
+   
     newMessage.value = '';
   } catch (error) {
     console.error('메시지 전송 실패:', error);
@@ -137,17 +147,65 @@ const subscribeToRoom = (roomId) => {
     const receivedMessage = JSON.parse(message.body);
     if (!messagesInRoom.value[roomId]) messagesInRoom.value[roomId] = [];
     messagesInRoom.value[roomId].push(receivedMessage);
+
+    nextTick(() => {
+      scrollToBottom();
+    })
   });
 };
 
-onMounted(() => {
-  fetchMessages();
-  connectWebSocket();
-});
+const leaveChat = async () => {
+    const confirmLeave = window.confirm(' 채팅방을 나가시겠습니까? ')
+    if(!confirmLeave) {
+      console.log('사용자가 채팅방 나가기를 원하지 않습니다.');
+      return
+    }
+  try {
+    const response = await axios.post(`/chat/room/${props.roomId}/leave`, null, {
+      params: { userId: authStore.user?.userId },
+    });
+    console.log('채팅방 나가기 응답: ', response.data);
 
-onUnmounted(() => {
-  stompClient.value.deactivate();
-});
+
+    if (response.status === 200) {
+      isVisible.value = false;
+      props.removeChatFromList(props.roomId);
+      console.log('채팅방 나가기 성공: ', props.removeChatFromList);
+
+      if (subscriptions.value[props.roomId]) {
+        subscriptions.value[props.roomId].unsubscribe();
+        delete subscriptions.value[props.roomId];
+      }
+      delete messagesInRoom.value[props.roomId];
+      console.log('해당 채팅방 메세지들 삭제. 구독 취소')
+    } else {
+      console.error('채팅방 나가기 실패: ', response.data.error.message);
+      alert('채팅방 나가기에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    }
+  } catch (error) {
+    console.error('채팅방 나가는 중 오류 발생:', error);
+    alert('오류가 발생했습니다. 다시 시도해주세요.');
+  }
+};
+
+onMounted(() => {
+    console.log('마운트: ', props.roomId)
+    fetchMessages(props.roomId);
+    connectWebSocket(); // WebSocket 연결
+  });
+
+  onUnmounted(() => {
+    if (props.roomId && messagesInRoom.value[props.roomId]) {
+      console.log(`채팅방 ${props.roomId}의 모든 데이터 초기화`);
+      delete messagesInRoom.value[props.roomId];
+      if (subscriptions.value[props.roomId]) {
+        subscriptions.value[props.roomId].unsubscribe();
+        delete subscriptions.value[props.roomId];
+      }
+    } else {
+      console.warn('언: 유효하지 않은 roomId');
+    }
+  });
 </script>
 
 <style scoped>
@@ -156,8 +214,8 @@ onUnmounted(() => {
   top: 50px;
   right: 0%;
   transform: translateX(-50%);
-  width: 500px;
-  height: 70%;
+  width: 600px;
+  height: 1000px;
   background-color: #d6f5ef;
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -218,14 +276,14 @@ h2 {
 
 /* 스크롤바의 막대 */
 .chat-messages::-webkit-scrollbar-thumb {
-  background-color: #bef1e8 !important; /* 색상 */
+  background-color: #d5f5ef !important; /* 색상 */
   border-radius: 50px; /* 둥근 모서리 */
 }
 
 
 .date-divider {
   text-align: center;
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   color: #aaaaaa;
   margin: 10px 100px;
   background-color: #d6f5ef;
@@ -237,7 +295,15 @@ h2 {
   gap: 10px;
   align-items: flex-start;
 }
+.my-message .content {
+  background-color: #d5f5ef;  /* 사용자 메시지의 배경색 */
+  color: #036d59;  /* 사용자 메시지의 글자색 */
+}
 
+.message-line:not(.my-message) .content {
+  background-color: #f8f8f8ee;  /* 다른 사용자 메시지의 배경색 */
+  color: #000;  /* 다른 사용자 메시지의 글자색 */
+}
 .profile-img {
   width: 40px;
   height: 40px;
@@ -270,7 +336,7 @@ h2 {
 }
 
 .time-right {
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   color: #aaaaaa;
   margin-left: 10px;
   align-self: flex-end;
