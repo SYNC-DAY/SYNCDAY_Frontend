@@ -167,7 +167,7 @@
 		:owner="owner"
 		:projectId="projectId"
 		:workspaceId="workspaceId"
-		@close="showModal = false"
+		@close="showMilestoneSelection = false"
 		:repoUrl="workspaceDetails?.vcs_repo_url || null" />
 </template>
 
