@@ -20,9 +20,9 @@
         </div>
 
         <div class="flex justify-center gap-x-4">
-            <RouterLink to="/calendar">Calendar</RouterLink>
-            <RouterLink to="/team">Team</RouterLink>
-            <RouterLink to="/project">Projects</RouterLink>
+            <RouterLink to="/calendar">캘린더</RouterLink>
+            <RouterLink to="/team">팀</RouterLink>
+            <RouterLink to="/project">프로젝트</RouterLink>
         </div>
         <div class="layout-topbar-actions">
             <IconField class="flex-1">
@@ -57,18 +57,18 @@
             <div class="layout-topbar-menu hidden lg:block">
                 <div class="layout-topbar-menu-content">
                     <button type="button" class="layout-topbar-action">
-                        <i class="pi pi-calendar"></i>
-                        <span>Calendar</span>
+                        <i class="pi pi-users"></i>
+                        <span>회의실 예약 </span>
                     </button>
                     <button type="button" class="layout-topbar-action">
-                        <i class="pi pi-inbox"></i>
-                        <span>Messages</span>
+                        <i class="pi pi-send"></i>
+                        <span>메시지</span>
                     </button>
 
                     <RouterLink to="/mypage">
                         <button class="layout-topbar-action">
                             <i class="pi pi-user"></i>
-                            <span>Profile</span>
+                            <span>프로필</span>
                         </button>
                     </RouterLink>
                 </div>
