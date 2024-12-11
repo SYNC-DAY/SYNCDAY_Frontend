@@ -27,6 +27,7 @@
                         dateFormat="mm월 dd일 (D)"
                         size="large"
                         @change="onStartDateChange"
+                        :disabled="props.isEditMode ? props.schedule.meetingStatus === 'ACTIVE' : selectedRoomName && selectedRoomTitle"
                     />
                     <Select
                         v-if="isAllDay == false"
@@ -36,9 +37,10 @@
                         option-value="value"
                         placeholder="Select a time"
                         size="large"
+                        :disabled="props.isEditMode ? props.schedule.meetingStatus === 'ACTIVE' : selectedRoomName && selectedRoomTitle"
                     ></Select>
                     <span style="margin-left: 0.5rem; margin-right: 0.5rem">ㅡ</span>
-                    <DatePicker v-model="endDate" :minDate="startDate" dateFormat="mm월 dd일 (D)" size="large" />
+                    <DatePicker v-model="endDate" :minDate="startDate" dateFormat="mm월 dd일 (D)" size="large" :disabled="props.isEditMode ? props.schedule.meetingStatus === 'ACTIVE' : selectedRoomName && selectedRoomTitle" />
                     <Select
                         v-if="isAllDay == false"
                         v-model="endDateTime"
@@ -47,13 +49,14 @@
                         option-value="value"
                         placeholder="Select a time"
                         size="large"
+                        :disabled="props.isEditMode ? props.schedule.meetingStatus === 'ACTIVE' : selectedRoomName && selectedRoomTitle"
                     ></Select>
                 </div>
 
                 <!-- 종일 체크 -->
                 <div style="margin-left: 3.5rem; margin-top: 0.7rem">
                     <label>
-                        <Checkbox v-model="isAllDay" binary />
+                        <Checkbox v-model="isAllDay" binary :disabled="props.isEditMode ? props.schedule.meetingStatus === 'ACTIVE' : selectedRoomName && selectedRoomTitle"/>
                         종일
                     </label>
                 </div>
@@ -71,7 +74,12 @@
                         <div class="toggle-label">
                             <img src="@/assets/images/meeting.svg" alt="meeting" class="icon" />
                             <span class="title-name">회의</span>
+<<<<<<< HEAD
+                            <!-- <ToggleSwitch v-model="isMeeting" :disabled="selectedRoomName && selectedRoomTitle && props.isEditMode" /> -->
+                            <ToggleSwitch v-model="isMeeting" :disabled="props.isEditMode ? props.schedule.meetingStatus === 'ACTIVE' : selectedRoomName && selectedRoomTitle" />
+=======
                             <ToggleSwitch v-model="isMeeting" />
+>>>>>>> develop
                         </div>
                     </div>
                 </div>
@@ -80,7 +88,8 @@
                 <div v-if="isMeeting">
                     <div class="description">
                         <!-- 회의실 조회해서 회의실 id 가져오게 해야한다. 이때 시간을 넘겨서 조회 -->
-                        <span v-if="selectedRoomId === null" @click="visible = true" style="cursor: pointer"
+                        <!-- <span v-if="selectedRoomId === null" @click="visible = true" style="cursor: pointer" -->
+                        <span v-if="props.isEditMode ? props.schedule.meetingStatus !== 'ACTIVE' : selectedRoomId === null" @click="visible = true" style="cursor: pointer"
                             >회의실 추가</span
                         >
                         <div v-if="selectedRoomId !== null" class="room-box" style="color: black;">
@@ -440,6 +449,14 @@ watch(isAllDay, (newVal) => {
     }
 });
 
+watch(isMeeting, (newVal) => {
+    if (!newVal) {
+        selectedRoomName.value = null;
+        selectedRoomTitle.value = null;
+        selectedRoomId.value = null;
+    }
+});
+
 // DB에 저장할 변수
 // 날짜 (YYYY-MM-DD)
 // 시간 (HH:mm)
@@ -460,7 +477,7 @@ const formData = computed(() => ({
     scheduleRepeatId: null,
     repeatOrder: null,
     meetingStatus: isMeeting.value ? 'ACTIVE' : 'INACTIVE',
-    meetingRoomId: null,
+    meetingroomId: null,
     attendeeIds: selectedParticipants.value.map((p) => p.userId),
     notificationTime: null,
 }));
@@ -549,7 +566,7 @@ const submitSchedule = async () => {
             end_time: formData.value.endTime,
             public_status: formData.value.publicStatus,
             meeting_status: formData.value.meetingStatus,
-            meetingroom_id: formData.value.meetingRoomId,
+            meetingroom_id: formData.value.meetingroomId,
             attendee_ids: formData.value.attendeeIds,
             // attendee_ids: [1, 3, 5, 12],
         };
@@ -558,10 +575,32 @@ const submitSchedule = async () => {
         const schedule_id = props.schedule.scheduleId;
         let response;
 
-        if (selectedRoomId.value !== null) {
-            response = await axios.post(
-                `/meetingroom_reservation`,
-                {
+        // 수정 시 회의든 일반이든 일반 일정 수정하듯!
+        if (props.isEditMode) {
+            response = await axios.put(`/schedule/${schedule_id}`, dataToSend, {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (formData.value.notificationTime) {
+                const notificationData = {
+                    schedule_id: schedule_id,
+                    notification_time: formData.value.notificationTime,
+                    user_id: props.schedule.userId,
+                };
+
+                await axios.put(`/userschedule/notification`, notificationData, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+            }
+        } else {
+            // 여기부터는 등록! 회의냐 일반이냐?
+            // 회의 일정 등록
+            if (selectedRoomId.value !== null) {
+                response = await axios.post(`/meetingroom_reservation`,{
                     title: formData.value.title,
                     content: formData.value.content,
                     startTime: formData.value.startTime,
@@ -569,53 +608,23 @@ const submitSchedule = async () => {
                     meetingroomId: selectedRoomId.value,
                     userId: authStore.user.userId,
                     attendeeIds: formData.value.attendeeIds,
-                },
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                }
-            );
-            selectedRoomId.value = null;
-            selectedRoomTitle.value = null;
-        } else {
-            // 요청 보내기
-            if (props.isEditMode) {
-                // 첫 번째 요청: 기본 데이터 수정
-                response = await axios.put(`/schedule/${schedule_id}`, dataToSend, {
+                }, {
                     headers: {
                         'Content-Type': 'application/json',
                     },
                 });
-
-                // 두 번째 요청: notification_time 수정
-                if (formData.value.notificationTime) {
-                    const notificationData = {
-                        schedule_id: schedule_id,
-                        notification_time: formData.value.notificationTime,
-                        user_id: props.schedule.userId,
-                    };
-
-                    await axios.put(`/userschedule/notification`, notificationData, {
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                    });
-                }
+                selectedRoomId.value = null;
+                selectedRoomTitle.value = null;
             } else {
-                // 등록 요청
-                response = await axios.post(
-                    '/schedule',
-                    {
-                        ...dataToSend,
-                        notification_time: formData.value.notificationTime,
-                    },
-                    {
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
+                // 일반 일정 등록
+                response = await axios.post('/schedule', {
+                    ...dataToSend,
+                    notification_time: formData.value.notificationTime,
+                }, {
+                    headers: {
+                        'Content-Type': 'application/json',
                     }
-                );
+                })
             }
         }
 
@@ -731,8 +740,8 @@ const isDialogVisible = ref(false);
 const startMeeting = ref(null);
 const endMeeting = ref(null);
 
-const selectedRoomTitle = ref(null);
-const selectedRoomId = ref(null);
+const selectedRoomTitle = ref(props.isEditMode ? props.schedule.meetingroomName : null);
+const selectedRoomId = ref(props.isEditMode ? props.schedule.meetingroomId : null);
 
 const uniquePlaces = computed(() => {
     // 중복 제거
@@ -805,6 +814,18 @@ const confirmReservation = () => {
 const clearRoomSelection = () => {
     selectedRoomId.value = null;
     selectedRoomTitle.value = null;
+    selectedRoomName.value = null;
+
+    // if (props.isEditMode) {
+    //     try {
+    //         const response = await axios.delete(`/meetingroom_reservation/${props.schedule.scheduleId}`);
+
+    //         // await submitSchedule();
+            
+    //     } catch (error) {
+    //         console.error('삭제 실패:', error.response?.data || error.message);
+    //     }
+    // }
 };
 
 // 회의실 불러오기
