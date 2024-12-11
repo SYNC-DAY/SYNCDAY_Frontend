@@ -472,7 +472,7 @@ async closeReservationDialog() {
 
 .filter-area {
   margin-top: 1rem;
-  margin-bottom: -1rem;
+  margin-bottom: 1rem;
   margin-left: 1rem;
 }
 
@@ -492,6 +492,7 @@ async closeReservationDialog() {
   max-height: 400px; 
   overflow-y: hidden;
   margin-left: 1%; 
+  margin-bottom: 5rem;
 }
 
 .filter-area select {
