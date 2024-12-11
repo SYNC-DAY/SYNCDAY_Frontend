@@ -1,6 +1,5 @@
 <template>
     <div class="card p-4">
-        <!-- <h1 class="text-3xl font-bold mb-4"></h1> -->
         <div>
             <span> 직원 검색 </span>
             <IconField class="flex-1">
@@ -13,15 +12,20 @@
         <div class="calendar-container">
             <Calendar v-model="selectedDate" :inline="true" showWeek :locale="locale" selectionMode="single" class="w-full" @date-select="onDateSelect" />
         </div>
+
+        <!-- 일정 생성 모달 컴포넌트 -->
+        <ScheduleModal v-model:visible="showModal" :selected-date="selectedDate" @close="closeModal" @save="saveSchedule" />
     </div>
 </template>
 
 <script setup>
     import Calendar from 'primevue/calendar';
     import { ref } from 'vue';
+    import ScheduleModal from './components/ScheduleModal.vue';
 
     // 선택된 날짜 상태 관리
     const selectedDate = ref(new Date());
+    const showModal = ref(false);
 
     // 한국어 로케일 설정
     const locale = {
@@ -39,7 +43,20 @@
 
     // 날짜 선택 이벤트 핸들러
     const onDateSelect = (value) => {
-        console.log('Selected date:', value);
+        selectedDate.value = value;
+        showModal.value = true;
+    };
+
+    // 모달 닫기
+    const closeModal = () => {
+        showModal.value = false;
+    };
+
+    // 일정 저장
+    const saveSchedule = (scheduleData) => {
+        // TODO: 일정 저장 로직 구현
+        console.log('저장된 일정:', scheduleData);
+        closeModal();
     };
 </script>
 
