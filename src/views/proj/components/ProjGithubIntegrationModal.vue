@@ -1,23 +1,40 @@
 <template>
-	<Dialog :visible="visible" @update:visible="handleVisibilityChange" :modal="true" class=""
-		:style="{ width: '70vw' }" header="Github Integration">
+	<Dialog
+		:visible="visible"
+		@update:visible="handleVisibilityChange"
+		:modal="true"
+		class=""
+		:style="{ width: '70vw' }"
+		header="Github Integration">
 		<div class="container-col gap-1rem">
 			<!-- Connected Organizations -->
 			<div class="organizations-section">
 				<div class="section-header">
 					<strong>Connected organizations</strong>
-					<Button icon="pi pi-plus" class="p-button-text" @click="addOrganization" />
+					<Button
+						icon="pi pi-plus"
+						class="p-button-text"
+						@click="addOrganization" />
 				</div>
 
 				<div class="organizations-list">
-					<div v-for="(installation, id) in githubAppStore.installations" :key="id" class="org-item">
+					<div
+						v-for="(installation, id) in githubAppStore.installations"
+						:key="id"
+						class="org-item">
 						<div class="org-select">
-							<RadioButton :value="installation.id" v-model="selectedInstallationId"
+							<RadioButton
+								:value="installation.id"
+								v-model="selectedInstallationId"
 								:inputId="'installation_' + installation.id" />
 						</div>
 						<div class="org-info">
-							<Avatar :image="installation.avatarUrl" :label="getInitials(installation.accountName)"
-								shape="square" size="large" class="org-avatar" />
+							<Avatar
+								:image="installation.avatarUrl"
+								:label="getInitials(installation.accountName)"
+								shape="square"
+								size="large"
+								class="org-avatar" />
 							<div class="org-details">
 								<span class="org-name">{{ installation.accountName }}</span>
 								<span class="org-date">Enabled on {{ formatDate(installation.createdAt) }}</span>
@@ -26,23 +43,34 @@
 						<div class="org-status">
 							<span class="status-dot"></span>
 							<span>Connected</span>
-							<Button icon="pi pi-chevron-down" @click="(event) => openMenu(event, installation.id)"
-								aria-haspopup="true" aria-controls="overlay_menu" class="p-button-text" />
+							<Button
+								icon="pi pi-chevron-down"
+								@click="event => openMenu(event, installation.id)"
+								aria-haspopup="true"
+								aria-controls="overlay_menu"
+								class="p-button-text" />
 						</div>
 					</div>
 				</div>
 
-				<div v-if="selectedInstallationId && githubProjects.length > 0" class="projects-section">
+				<div
+					v-if="selectedInstallationId && githubProjects.length > 0"
+					class="projects-section">
 					<div class="section-header">
 						<strong>Projects</strong>
 						<span class="text-sm text-gray-500">Select a project to connect</span>
 					</div>
 
 					<div class="projects-list">
-						<div v-for="project in githubProjects" :key="project.id" class="project-item"
-							:class="{ 'selected': selectedProjectId === project.id }">
+						<div
+							v-for="project in githubProjects"
+							:key="project.id"
+							class="project-item"
+							:class="{ selected: selectedProjectId === project.id }">
 							<div class="project-select">
-								<RadioButton :value="project.id" :inputId="'project_' + project.id"
+								<RadioButton
+									:value="project.id"
+									:inputId="'project_' + project.id"
 									v-model:model-value="selectedGithubProjectId"
 									@change="handleProjectSelect(project.id)" />
 							</div>
@@ -67,66 +95,71 @@
 				</div>
 			</div>
 			<div class="container-row justify-right">
-				<Button label="Save" :loading="loading" :disabled="!selectedInstallationId" @click="handleSave"
+				<Button
+					label="Save"
+					:loading="loading"
+					:disabled="!selectedInstallationId"
+					@click="handleSave"
 					class="p-button-primary" />
 			</div>
-			<Menu ref="menu" :model="currentMenuItems" :popup="true" />
+			<Menu
+				ref="menu"
+				:model="currentMenuItems"
+				:popup="true" />
 		</div>
 		<ConfirmDialog></ConfirmDialog>
 	</Dialog>
 </template>
 <script setup>
-	import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-	import { useToast } from 'primevue/usetoast'
-	import { useAuthStore } from '@/stores/auth';
+	import { ref, computed, watch, onMounted, onUnmounted } from "vue";
+	import { useToast } from "primevue/usetoast";
+	import { useAuthStore } from "@/stores/auth";
 
-	import { useGithubAppStore } from '@/stores/github/useGithubAppStore';
-	import { useGithubAuthStore } from '@/stores/github/useGithubAuthStore';
-	import { useGithubProjectsStore } from '@/stores/github/useGithubProjectsStore';
+	import { useGithubAppStore } from "@/stores/github/useGithubAppStore";
+	import { useGithubAuthStore } from "@/stores/github/useGithubAuthStore";
+	import { useGithubProjectsStore } from "@/stores/github/useGithubProjectsStore";
 
 	import { useConfirm } from "primevue/useconfirm";
 
-	import { useProjectStore } from '@/stores/proj/useProjectStore';
+	import { useProjectStore } from "@/stores/proj/useProjectStore";
 
 	// Props
 	const props = defineProps({
 		visible: {
 			type: Boolean,
-			required: true
+			required: true,
 		},
 		projectId: {
 			type: Number,
-			required: true
+			required: true,
 		},
 		projectData: {
 			type: Object,
-			required: true
-		}
-	})
+			required: true,
+		},
+	});
 
-	const emit = defineEmits(['update:visible', 'update:project'])
-
+	const emit = defineEmits(["update:visible", "update:project"]);
 
 	/* stores */
 	const authStore = useAuthStore();
 	const projectStore = useProjectStore();
-	const githubAuthStore = useGithubAuthStore()
-	const githubAppStore = useGithubAppStore()
+	const githubAuthStore = useGithubAuthStore();
+	const githubAppStore = useGithubAppStore();
 	const githubProjectStore = useGithubProjectsStore();
-	const toast = useToast()
-	const confirm = useConfirm()
-
+	const toast = useToast();
+	const confirm = useConfirm();
 
 	// State
-	const menu = ref(null)
-	const currentMenuItems = ref([])
-	const currentInstallationId = ref(null)
-	const loading = ref(false)
-	const error = ref(null)
+	const menu = ref(null);
+	const currentMenuItems = ref([]);
+	const currentInstallationId = ref(null);
+	const loading = ref(false);
+	const error = ref(null);
 	// Add this with other refs
-	const selectedInstallationId = ref(null)
-	const selectedGithubProjectId = ref(null)
-	const githubProjects = ref(null)
+	const selectedInstallationId = ref(null);
+	const selectedGithubProjectId = ref(null);
+	const githubProjects = ref(null);
 	// Open menu with correct items
 	const openMenu = (event, installationId) => {
 		event.stopPropagation();
@@ -134,94 +167,97 @@
 
 		currentMenuItems.value = [
 			{
-				label: 'Options',
+				label: "Options",
 				items: [
 					{
-						label: 'Disable',
-						icon: 'pi pi-trash',
+						label: "Disable",
+						icon: "pi pi-trash",
 						command: () => {
 							confirm.require({
-								message: 'Are you sure you want to disable this GitHub installation?',
-								header: 'Confirm Disable',
-								icon: 'pi pi-exclamation-triangle',
+								message: "Are you sure you want to disable this GitHub installation?",
+								header: "Confirm Disable",
+								icon: "pi pi-exclamation-triangle",
 								accept: async () => {
 									try {
 										loading.value = true;
 										await githubAppStore.disableInstallation(installationId);
 										toast.add({
-											severity: 'success',
-											summary: 'Success',
-											detail: 'GitHub installation disabled successfully',
-											life: 3000
+											severity: "success",
+											summary: "Success",
+											detail: "GitHub installation disabled successfully",
+											life: 3000,
 										});
 										await githubAppStore.fetchInstallations();
 									} catch (error) {
 										toast.add({
-											severity: 'error',
-											summary: 'Error',
-											detail: error.message || 'Failed to disable installation',
-											life: 3000
+											severity: "error",
+											summary: "Error",
+											detail: error.message || "Failed to disable installation",
+											life: 3000,
 										});
 									} finally {
 										loading.value = false;
 									}
-								}
+								},
 							});
-						}
+						},
 					},
-
-				]
-			}
+				],
+			},
 		];
 
 		menu.value.show(event);
 	};
 
 	// Methods
-	const handleVisibilityChange = (newValue) => {
+	const handleVisibilityChange = newValue => {
 		if (!newValue) {
 			// Reset state when dialog closes
 			selectedInstallationId.value = null;
 			selectedGithubProjectId.value = null;
 			githubProjects.value = null;
 		}
-		emit('update:visible', newValue);
+		emit("update:visible", newValue);
 	};
 
-	const getInitials = (name) => {
+	const getInitials = name => {
 		return name
-			.split(' ')
+			.split(" ")
 			.map(word => word[0])
-			.join('')
+			.join("")
 			.toUpperCase()
-			.substring(0, 2)
-	}
+			.substring(0, 2);
+	};
 
-	const formatDate = (date) => {
-		return new Date(date).toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric'
-		})
-	}
+	const formatDate = date => {
+		return new Date(date).toLocaleDateString("en-US", {
+			year: "numeric",
+			month: "short",
+			day: "numeric",
+		});
+	};
 
 	const addOrganization = () => {
 		githubAppStore.openInstallationWindow();
 		// Implement organization addition logic
-	}
-	const handleInstallationSelect = (id) => {
+	};
+	const handleInstallationSelect = id => {
 		selectedInstallationId.value = id;
-	}
+	};
 
-	const handleProjectSelect = (id) => {
+	const handleProjectSelect = id => {
 		selectedGithubProjectId.value = id;
-	}
-	watch(() => props.visible, async (newVal, oldVal) => {
-		if (newVal && !oldVal) {
-			await initializeDialog();
-		}
-	}, { immediate: true });
-	watch(selectedInstallationId, async (newVal) => {
+	};
+	watch(
+		() => props.visible,
+		async (newVal, oldVal) => {
+			if (newVal && !oldVal) {
+				await initializeDialog();
+			}
+		},
+		{ immediate: true }
+	);
+	watch(selectedInstallationId, async newVal => {
 		if (newVal) {
 			try {
 				loading.value = true;
@@ -233,17 +269,16 @@
 				}
 			} catch (error) {
 				toast.add({
-					severity: 'error',
-					summary: 'Error',
-					detail: 'Failed to fetch projects: ' + error.message,
-					life: 3000
+					severity: "error",
+					summary: "Error",
+					detail: "Failed to fetch projects: " + error.message,
+					life: 3000,
 				});
 			} finally {
 				loading.value = false;
 			}
 		}
 	});
-
 
 	const initializeDialog = async () => {
 		try {
@@ -256,50 +291,50 @@
 			}
 		} catch (error) {
 			toast.add({
-				severity: 'error',
-				summary: 'Error',
-				detail: 'Failed to fetch GitHub installations: ' + error.message,
-				life: 3000
+				severity: "error",
+				summary: "Error",
+				detail: "Failed to fetch GitHub installations: " + error.message,
+				life: 3000,
 			});
 		} finally {
 			loading.value = false;
 		}
 	};
 
-	const handleAuthMessage = async (event) => {
-		if (event.origin !== window.location.origin) return
+	const handleAuthMessage = async event => {
+		if (event.origin !== window.location.origin) return;
 
-		const { type, data } = event.data
+		const { type, data } = event.data;
 
 		const toastMessages = {
-			'github-auth-success': {
-				severity: 'success',
-				summary: 'Success',
-				detail: 'GitHub account connected successfully'
+			"github-auth-success": {
+				severity: "success",
+				summary: "Success",
+				detail: "GitHub account connected successfully",
 			},
-			'github-installation-success': {
-				severity: 'success',
-				summary: 'Success',
-				detail: 'GitHub app installed successfully'
+			"github-installation-success": {
+				severity: "success",
+				summary: "Success",
+				detail: "GitHub app installed successfully",
 			},
-			'github-error': {
-				severity: 'error',
-				summary: 'Error',
-				detail: data || 'GitHub operation failed'
-			}
-		}
+			"github-error": {
+				severity: "error",
+				summary: "Error",
+				detail: data || "GitHub operation failed",
+			},
+		};
 
 		if (type in toastMessages) {
-			if (['github-auth-success', 'github-installation-success'].includes(type)) {
-				await githubAppStore.fetchInstallations()
+			if (["github-auth-success", "github-installation-success"].includes(type)) {
+				await githubAppStore.fetchInstallations();
 			}
 
 			toast.add({
 				...toastMessages[type],
-				life: 3000
-			})
+				life: 3000,
+			});
 		}
-	}
+	};
 	const handleSave = async () => {
 		if (!selectedInstallationId.value) return;
 
@@ -312,34 +347,34 @@
 			try {
 				const updatedProject = {
 					...props.projectData,
-					vcs_type: 'GITHUB',
-					vcs_proj_url: selectedProject?.url || selectedInstallation.htmlUrl || '',
-					github_installation_id: selectedInstallation.id
+					vcs_type: "GITHUB",
+					vcs_proj_url: selectedProject?.url || selectedInstallation.htmlUrl || "",
+					github_installation_id: selectedInstallation.id,
 				};
 
 				await projectStore.updateProject(updatedProject);
-				emit('update:project', updatedProject);
-				emit('update:visible', false);
+				emit("update:project", updatedProject);
+				emit("update:visible", false);
 			} catch (err) {
-				error.value = err instanceof Error ? err.message : 'Failed to update GitHub integration';
-				console.error('GitHub integration error:', err);
+				error.value = err instanceof Error ? err.message : "Failed to update GitHub integration";
+				console.error("GitHub integration error:", err);
 			} finally {
 				loading.value = false;
 			}
 		}
-	}
+	};
 
 	// Lifecycle hooks
 	onMounted(() => {
 		// githubAppStore.fetchInstallations();
 
-		window.addEventListener('message', handleAuthMessage)
-	})
+		window.addEventListener("message", handleAuthMessage);
+	});
 
 	onUnmounted(() => {
-		window.removeEventListener('message', handleAuthMessage)
-		githubAppStore.cleanup()
-	})
+		window.removeEventListener("message", handleAuthMessage);
+		githubAppStore.cleanup();
+	});
 </script>
 
 <style scoped>
@@ -410,7 +445,7 @@
 		width: 8px;
 		height: 8px;
 		border-radius: 50%;
-		background: #3FB950;
+		background: #3fb950;
 	}
 
 	.repository-section {
@@ -448,14 +483,12 @@
 
 	:deep(.p-dialog-content) {
 		padding: 0;
-		background: #1C1C1F;
+		background: #1c1c1f;
 	}
 
 	:deep(.p-dialog-header) {
 		display: none;
 	}
-
-
 
 	:deep(.p-checkbox) {
 		width: 1.25rem;
@@ -482,7 +515,6 @@
 		border: 1px solid var(--linear-border);
 		cursor: pointer;
 	}
-
 
 	.projects-list {
 		margin-top: 1rem;
