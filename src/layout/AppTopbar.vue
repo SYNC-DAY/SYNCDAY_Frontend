@@ -21,7 +21,7 @@
 
         <div class="flex justify-center gap-x-4">
             <RouterLink to="/calendar">Calendar</RouterLink>
-            <RouterLink to="/project">Team</RouterLink>
+            <RouterLink to="/team">Team</RouterLink>
             <RouterLink to="/project">Projects</RouterLink>
         </div>
         <div class="layout-topbar-actions">

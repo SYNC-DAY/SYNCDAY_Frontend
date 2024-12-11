@@ -1,10 +1,10 @@
 import AppLayout from '@/layout/AppLayout.vue';
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '../stores/auth.js';
-import userRoutes from './user.js';
-
 import calendar from './calendar.js';
 import projectRoutes from './project';
+import teamRoutes from './team.js';
+import userRoutes from './user.js';
 const router = createRouter({
     history: createWebHistory(),
     routes: [
@@ -110,7 +110,8 @@ const router = createRouter({
                 },
                 ...projectRoutes,
                 ...userRoutes,
-                ...calendar
+                ...calendar,
+                ...teamRoutes
             ]
         },
         {
