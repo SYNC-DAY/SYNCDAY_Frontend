@@ -17,7 +17,6 @@
                   <img :src="userProfileImg" alt="프로필 이미지" class="profile-img"/>
                   <div class="profile-content">
                   <span class="roomName-time">{{ chat.chatRoomName }}</span>
-                  <span class="time">{{ chat.sentTime }}</span>
                   <div class="content">
                   <span class="lastMessage">{{ chat.lastMessage }}</span>
                   </div>
@@ -126,10 +125,11 @@ const filterChatList = computed(() => {
   
   return chatList.value.map((chat) => {
     const userName = authStore.user.userName; // 로그인한 유저 이름
-    const filteredName = chat.chatRoomName.replace(userName, '').trim(); // 유저 이름을 제거(,(쉼표)도 제거 필요(수정 예정) )
+    console.log('회원 이름: ',userName)
+    console.log('채팅방 이름: ', chat.chatRoomName)
     return {
       ...chat,
-      chatRoomName: filteredName
+      chatRoomName: chat.chatRoomName
     };
   }).filter((chat) =>
     chat.chatRoomName?.toLowerCase().includes(searchQuery.value.toLowerCase())
