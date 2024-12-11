@@ -11,7 +11,7 @@
             />
           </div>
     <div class="calender-1">
-      <FullCalendar :options="calendarOptions" ref="calendar1" />
+      <FullCalendar v-if="selectedRoomName !==''":options="calendarOptions" ref="calendar1" />
     </div>
     <div class="filter-area">
 
@@ -273,8 +273,10 @@ export default {
       const { start, end, resource, jsEvent } = info;
       // const toast = useToast(); 
       const toast = this.$toast; 
+      const hours = start.getHours();  // 0-23 사이의 숫자
+      const real_start = new Date(this.selectedDate + 'T' + hours + ":00:000");
       const now = new Date();
-      if (start < now) {
+      if (real_start < now) {
         // alert("지난 시간은 예약할 수 없습니다.");
         toast.add({
           severity: "warn",
