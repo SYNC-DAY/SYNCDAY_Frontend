@@ -8,7 +8,8 @@
         <li><strong>수용 인원:</strong> {{ resourceCapacity }}명</li>
       </div>
       <div class="reservation-detail">
-        <li><strong>예약 날짜:</strong> {{ formatKST(start) }} ~ {{ formatKST(end) }}</li>
+        <!-- <li><strong>예약 날짜:</strong> {{ formatKST(start) }} ~ {{ formatKST(end) }}</li> -->
+        <li><strong>예약 날짜:</strong> {{formatKST(start) }} ~ {{ formatKST(end) }}</li>
         <!-- <p>예약 날짜: {{ formatKST(start) }} ~ {{ formatKST(end) }}</p> -->
         <li>
           <strong>참석자 추가: </strong>
@@ -132,9 +133,9 @@ const props = defineProps({
   resourcePlace: { type: String, required: true },
   resourceCapacity: { type: Number, required: true },
 });
-
-const emit = defineEmits(["closeDialog"]);
 const { start, end, resourceId, resourceName, resourcePlace, resourceCapacity } = props;
+const emit = defineEmits(["closeDialog"]);
+
 
 const isVisible = ref(true);
 const value1 = ref("");
