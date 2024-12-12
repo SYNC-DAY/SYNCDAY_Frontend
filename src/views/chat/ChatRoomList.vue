@@ -14,7 +14,7 @@
             <div class= "chatlist">
                <div v-for="chat in filterChatList" :key="chat.roomId" @click="openChatRoom(chat)" class="chat-room">
                 <div class="profile-line">
-                  <img :src="userProfileImg" alt="프로필 이미지" class="profile-img"/>
+                  <img :src="DefaultImg" alt="프로필 이미지" class="profile-img"/>
                   <div class="profile-content">
                   <span class="roomName-time">{{ chat.chatRoomName }}</span>
                   <div class="content">
@@ -39,6 +39,7 @@
   import axios from 'axios';
   import NewChatRoom from '@/views/chat/chat_components/NewChatRoom.vue';
   import ChatRoom from './ChatRoom.vue';
+  import DefaultImg from '@/assets/icons/DefaultImg.svg';
 
   const { isVisible } = defineProps({
     isVisible: {
