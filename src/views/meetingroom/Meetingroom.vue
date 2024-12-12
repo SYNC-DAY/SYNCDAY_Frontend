@@ -276,7 +276,7 @@ export default {
       const hours = start.getHours();  // 0-23 사이의 숫자
       const real_start = new Date(this.selectedDate + 'T' + hours + ":00:000");
       const now = new Date();
-      if (real_start < now) {
+      if (start < now) {
         // alert("지난 시간은 예약할 수 없습니다.");
         toast.add({
           severity: "warn",
@@ -492,7 +492,6 @@ async closeReservationDialog() {
   height: auto;
   max-height: 400px; 
   overflow-y: hidden;
-  margin-left: 1%; 
   margin-bottom: 5rem;
 }
 

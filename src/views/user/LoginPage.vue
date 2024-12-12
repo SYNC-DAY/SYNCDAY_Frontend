@@ -44,7 +44,6 @@
 import { ref } from 'vue'
 import { useAuthStore } from '@/stores/auth.js'
 import { useRouter, useRoute } from 'vue-router'
-import Swal from 'sweetalert2'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -59,7 +58,6 @@ const handleLogin = async () => {
     const success = await authStore.login(email.value, password.value)
     console.log("로그인 결과:", success)
     console.log("현재 인증 상태:", authStore.isAuthenticated)
-    
     if (success) {
       const redirectPath = route.query.redirect || '/'
       console.log("리다이렉트 시도:", redirectPath)
@@ -70,30 +68,9 @@ const handleLogin = async () => {
       } catch (e) {
         console.error("라우터 이동 실패:", e)
       }
-    } else {
-      // 로그인 실패 시 SweetAlert2 표시
-      Swal.fire({
-        icon: 'error',
-        title: '로그인 실패',
-        text: '이메일 또는 비밀번호를 확인해주세요.',
-        confirmButtonText: '확인',
-        confirmButtonColor: '#FE5D86', // SYNCDAY의 핑크색 테마
-        heightAuto: false,             // 높이 자동조절 비활성화
-        scrollbarPadding: false        // 스크롤바 패딩 비활성화
-      })
     }
   } catch (error) {
     console.error('Login failed:', error)
-    // 에러 발생 시 SweetAlert2 표시
-    Swal.fire({
-      icon: 'error',
-      title: '로그인 오류',
-      text: '로그인 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
-      confirmButtonText: '확인',
-      confirmButtonColor: '#FE5D86',
-      heightAuto: false,
-      scrollbarPadding: false
-    })
   }
 }
 </script>

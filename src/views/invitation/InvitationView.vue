@@ -18,7 +18,6 @@
             </td>
             <td class="owner-cell">
               <span class="owner-info">
-                <img alt="Crown Icon" class="crown-icon" />
                 {{ invite.schedule_owner_name }} ({{ invite.team_name }})
               </span>
             </td>
