@@ -59,6 +59,13 @@ jobs:
         cp package*.json deploy/
         cp server.js deploy/
         cp Procfile deploy/
+
+        # .env 파일 복사 (새로 추가된 부분)
+        if [ -f ".env" ]; then
+          cp .env deploy/
+        else
+          echo "Warning: .env file not found"
+        fi
       
         # 빌드된 애플리케이션 파일 복사
         if [ -d "dist" ] && [ "$(ls -A dist)" ]; then
