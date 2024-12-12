@@ -2,7 +2,7 @@ import GithubAppCallback from "@/views/vcs/github/GithubAppCallback.vue";
 
 const routes = [
 	{
-		path: "api/oauth/github/callback",
+		path: "/api/oauth/github/callback",
 		component: GithubAppCallback,
 	},
 ];
