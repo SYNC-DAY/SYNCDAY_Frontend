@@ -29,6 +29,7 @@
 
 			console.log(`urlParamsd:${urlParams}`);
 			if (installationId && setupAction) {
+				console.log("handle Installation Callback");
 				await handleInstallationCallback(installationId, setupAction);
 			} else {
 				throw new Error("Invalid callback parameters");
