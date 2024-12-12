@@ -20,6 +20,7 @@
 	const githubAppStore = useGithubAppStore();
 
 	onMounted(async () => {
+		console.log("Fsdfs");
 		try {
 			const urlParams = new URLSearchParams(window.location.search);
 			const code = urlParams.get("code");
@@ -27,7 +28,7 @@
 			const installationId = urlParams.get("installation_id");
 			const setupAction = urlParams.get("setup_action");
 
-			console.log(`urlParamsd:${urlParams}`);
+			console.log(`urlParams :${urlParams}`);
 			if (installationId && setupAction) {
 				console.log("handle Installation Callback");
 				await handleInstallationCallback(installationId, setupAction);
