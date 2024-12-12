@@ -1,35 +1,29 @@
 <template>
-    <div class="password-change-page">
-        <h1 class="my-page-title">MyPage</h1>
-      <div class="password-card">
-        <!-- 좌우 분할을 위한 컨테이너 -->
-        <div class="split-container">
-          <!-- 왼쪽 디자인 섹션 -->
-          <div class="design-section">
-            <div class="gradient-box">
-              <span class="logo-text">Sync Day</span>
-            </div>
-          </div>
-
-          <!-- 오른쪽 폼 섹션 -->
-          <div class="form-section">
-            <div class="header-container">
-                <h2 class="page-title">
-                <img src="@/assets/images/lock.svg" alt="lock icon"/>
-                    비밀번호 변경하기
-                </h2>
-            </div>
-            <form @submit.prevent="handleSubmit" class="password-form">
-              <div class="form-group">
-                <label class="form-label">현재 비밀번호</label>
-                <div class="password-input-container">
-                  <input
-                    v-model="editForm.currentPwd"
-                    :type="!showCurrentPwd ? 'text' : 'password'"
-                    class="form-input"
-                    required
-                  />
-                  <button
+  <div class="login-container">
+    <div class="login-content">
+      <!-- 왼쪽: 환영 메시지와 로고 -->
+      <div class="login-welcome">
+        <h1>당신의<br>일정을 편리하게<br>관리하세요</h1>
+        <img src="@/assets/images/syncdaylogo.svg" alt="SyncDay Logo" class="logo">
+      </div>
+      <!-- 오른쪽: 로그인 폼 -->
+      <div class="login-form-container">
+        <!-- <h2>로그인</h2> -->
+        <h2 class="page-title">
+          <img src="@/assets/images/lock.svg" alt="lock icon"/>
+          비밀번호 변경하기
+        </h2>
+        <form @submit.prevent="handleSubmit" class="password-form">
+          <div class="form-group">
+            <label class="form-label">현재 비밀번호</label>
+            <div class="password-input-container">
+            <!-- <InputText
+                type="email"
+                v-model="email"
+                required
+            /> -->
+              <InputText v-model="editForm.currentPwd" :type="showCurrentPwd ? 'text' : 'password'" required class="form-input"/>
+              <button
                     type="button"
                     class="password-toggle"
                     @click="togglePasswordVisibility('current')"
@@ -37,20 +31,14 @@
                     <EyeOffIcon v-if="!showCurrentPwd" class="icon" />
                     <EyeIcon v-else class="icon" />
                   </button>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">새 비밀번호</label>
-                <div class="password-input-container">
-                  <input
-                    v-model="editForm.newPwdA"
-                    :type="!showNewPwdA ? 'text' : 'password'"
-                    class="form-input"
-                    required
-                    @input="validatePasswords"
-                  />
-                  <button
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">새 비밀번호</label>
+            <div class="password-input-container">
+              <InputText v-model="editForm.newPwdA" :type="showNewPwdA ? 'text' : 'password'" class="form-input" required @input="validatePasswords"/>
+              <button
                     type="button"
                     class="password-toggle"
                     @click="togglePasswordVisibility('newA')"
@@ -58,20 +46,14 @@
                     <EyeOffIcon v-if="!showNewPwdA" class="icon" />
                     <EyeIcon v-else class="icon" />
                   </button>
-                </div>
-              </div>
+            </div>
+          </div>
 
-              <div class="form-group">
-                <label class="form-label">새 비밀번호 확인</label>
-                <div class="password-input-container">
-                  <input
-                    v-model="editForm.newPwdB"
-                    :type="!showNewPwdB ? 'text' : 'password'"
-                    class="form-input"
-                    required
-                    @input="validatePasswords"
-                  />
-                  <button
+            <div class="form-group">
+              <label class="form-label">새 비밀번호 확인</label>
+              <div class="password-input-container">
+                <InputText v-model="editForm.newPwdB" :type="showNewPwdB ? 'text' : 'password'" class="form-input" required @input="validatePasswords"/>
+                <button
                     type="button"
                     class="password-toggle"
                     @click="togglePasswordVisibility('newB')"
@@ -79,45 +61,44 @@
                     <EyeOffIcon v-if="!showNewPwdB" class="icon" />
                     <EyeIcon v-else class="icon" />
                   </button>
-                </div>
-                <span v-if="passwordError" class="error-message">
-                  {{ passwordError }}
-                </span>
               </div>
-
+              <span v-if="passwordError" class="error-message">
+                {{ passwordError }}
+              </span>
+              </div>
               <div class="button-group">
-                <button
+                <Button
                   type="submit"
                   class="submit-button"
                   :disabled="!isPasswordValid"
                 >
                   비밀번호 변경
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   @click="goToMyPage"
                   class="cancel-button"
                 >
                   취소
-                </button>
+                </Button>
               </div>
-            </form>
-          </div>
-        </div>
+        </form>
       </div>
     </div>
-  </template>
+  </div>
+</template>
 
-  <script setup>
-  import { ref } from 'vue'
-  import { useRouter } from 'vue-router'
-  import { EyeIcon, EyeOffIcon } from 'lucide-vue-next'
-  import { useAuthStore } from '@/stores/auth.js'
-  import {storeToRefs} from "pinia";
-  import axios from 'axios'
-  import Swal from 'sweetalert2'
+<script setup>
+import { ref } from 'vue'
+import { useAuthStore } from '@/stores/auth.js'
+import { useRouter } from 'vue-router'
+import {storeToRefs} from "pinia";
+import { EyeIcon, EyeOffIcon } from 'lucide-vue-next'
+import InputText from 'primevue/inputtext';
+import axios from 'axios'
+import Swal from 'sweetalert2'
 
-  const router = useRouter()
+const router = useRouter()
   const passwordError = ref('')
   const isPasswordValid = ref(false)
 
@@ -235,150 +216,96 @@
         break
     }
   }
-  </script>
+</script>
 
-  <style scoped>
-  @import url('https://fonts.googleapis.com/css2?family=Inspiration&display=swap');
-
-  :root {
-    --swal2-font-size: 2rem;
-  }
-
-  .large-popup {
-    font-size: 2rem !important;
-  }
-
-  .large-title {
-    font-size: 3rem !important;
-    padding: 2rem !important;
-  }
-
-  .large-button {
-    font-size: 2rem !important;
-    padding: 1rem 3rem !important;
-    border-radius: 2.5rem !important;
-  }
-
-  /* 아이콘 크기 조정 */
-  .swal2-icon {
-    width: 8rem !important;
-    height: 8rem !important;
-    margin: 2rem auto !important;
-  }
-
-  .swal2-icon-content {
-    font-size: 4rem !important;
-  }
-
-  .my-page-title {
-    margin: 1rem 0;
-    font-size: 3rem;
-    font-weight: bold;
-    color: #333;
-    width: 100%;          /* 추가 */
-    max-width: 100rem;     /* password-card와 동일한 max-width */
+<style scoped>
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  min-width: 70vw;
+  margin-right: auto;
+  margin-left: auto;
+  background-color: #f5f5f5;
 }
 
-
-  .password-change-page {
-    max-width: 120rem;
-    margin: 0 auto;
-    padding: 0 2rem;
-    min-height:200vh;
-    display: flex;          /* 추가 */
-    flex-direction: column; /* 추가 */
-    align-items: center;
-  }
-
-  .password-card {
-    background: white;
-    border: solid #D9D9D9 0.1rem;
-    border-radius: 3rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    width: 100%;          /* 980px에서 100%로 변경 */
-    max-width: 100rem;     /* 최대 너비 설정 */
-    height: 70rem;
+.login-content {
+  display: flex;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  width: 100%;
+  height: auto;
 }
 
-  .split-container {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-  }
-
-  .design-section {
-    display: flex;
-    align-items: center;
-    padding: 1rem;
-    width: 30rem;
-  }
-
-  .gradient-box {
-    width: 100%;
-    height: 67rem;
-    background: linear-gradient(rgba(254, 93, 134, 1), rgba(254, 119, 134, 1), rgba(255, 157, 133, 1), rgba(255, 157, 133, 1));
-    border-radius: 3rem;
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.login-welcome {
+  flex: 1;
+  /* padding: 5rem 5rem 5rem 5rem; */
+  padding: 5rem;
+  background-color: white;
 }
 
-.logo-text {
-    font-family: 'Inspiration', cursive;
-    font-size: 10rem;
-    color: white;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-    position: absolute;
-    left: 50%;
-    top: 32%;
-    transform: translate(-50%, -50%) rotate(-14deg);
+.login-welcome h1 {
+  font-size: 2.3rem;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 30px;
+  line-height: 1.4;
 }
 
-.header-container {
-  margin-bottom: 4rem;
+.logo {
+  max-width: 300px;
 }
 
-  .form-section {
-    flex: 1;
-    width: auto;
-    padding-left: 5rem;
-    padding-bottom: 5rem;
-  }
+.login-form-container {
+  flex: 1;
+  padding: 5rem;
+  border-left: 1px solid #eee;
+  text-align: center;
+}
 
-  .page-title {
-    font-size: 2.5rem;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 2rem;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-  }
-
-  .password-form {
-    display: flex;
-    flex-direction: column;
-  }
+.login-form-container h2 {
+  font-size: 2.3rem;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 3rem;
+}
 
 .form-group {
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    width: 100%;
-    padding: 0 6rem;
+  text-align: left; 
+  width: 80%; 
+  margin: 0 auto 1rem auto;
 }
 
-.form-label {
-    font-size: 1.3rem;
-    font-weight: normal;
-    color: #666;
-    width: 150px;
-    margin-bottom: 1rem;
+.form-group label {
+  display: block; 
+  margin-bottom: 0.5rem;
+  font-size: large;
+  color: #333;
+  font-weight: 500;
+  text-align: left;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.5rem 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.login-button {
+  width: 80%;
+  padding: 1rem;
+  color: white;
+  border: none;
+  border-radius: 1rem;
+  font-size: 1.5rem;
+  font-weight: 500;
+  cursor: pointer;
 }
 
   .password-input-container {
@@ -388,16 +315,7 @@
     margin-bottom: 1rem;
 }
 
-.form-input {
-    width: 35rem;
-    padding: 1rem 4rem 1rem 1rem;
-    border: 0.3rem solid #ddd;
-    border-radius: 0.5rem;
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-}
-
-  .password-toggle {
+.password-toggle {
     position: absolute;
     right: 0.75rem;
     background: none;
@@ -411,65 +329,15 @@
     top: -8%;
   }
 
-  .icon {
-    width: 2.2rem;
-    height: 2.3rem;
-  }
-
   .password-toggle:hover {
     color: #333;
   }
 
-  .error-message {
-    color: #dc3545;
-    font-size: 1.5rem;
-    font-weight: 740;
-    position: absolute;
-    bottom: -1.5rem;
-  }
 
-  .button-group {
-    display: flex;
-    justify-content: space-evenly;
-    margin-top: 4rem;
-    padding: 0 1rem;
-  }
-
-  .cancel-button {
-    width: 30%;
-    padding: 1rem 2rem;
-    background-color: #aaa8a8;
-    border: solid #aaa8a8 0.5rem;
-    color: white;
-    border-radius: 2.5rem;
-    font-size: 1.5rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .cancel-button:hover {
-    background-color: black;
-    border: solid black 0.5rem;
-    color: white;
-  }
-
-  .submit-button {
-    width: 30%;
-    padding: 1rem;
-    background-color: #ffffff;
-    color: rgb(0, 0, 0);
-    border: solid black 0.5rem;
-    border-radius: 2.5rem;
-    font-size: 1.5rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .submit-button:hover {
-    background-color: #333;
-    color: white;
-  }
-
+.button-group {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+}
 </style>
