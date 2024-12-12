@@ -444,17 +444,20 @@ const searchUsers = async () => {
 //     return color;
 // };
 
-const generateRandomColor = () => {
-    const hue = Math.floor(Math.random() * 360); // 색상: 0~360도 (모든 색상 포함)
-    const saturation = Math.floor(Math.random() * 50) + 50; // 채도: 50% ~ 100% (밝고 선명한 색상)
-    const lightness = Math.floor(Math.random() * 40) + 30; // 명도: 30% ~ 70% (너무 어둡거나 밝지 않은 색상)
+// const generateRandomColor = () => {
+//     const hue = Math.floor(Math.random() * 360); // 색상: 0~360도 (모든 색상 포함)
+//     const saturation = Math.floor(Math.random() * 50) + 50; // 채도: 50% ~ 100% (밝고 선명한 색상)
+//     const lightness = Math.floor(Math.random() * 40) + 30; // 명도: 30% ~ 70% (너무 어둡거나 밝지 않은 색상)
     
-    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-};
+//     return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+// };
+
+const colors = ['#226DF5', '#BE3749', '#C2BB38', '#E8E799', '#A4139E', '#A433CE', '#7B405A',  '#CF1165', '#BDBA8B', '#7F7F33', '#864950', '#A4F8AC', '#91046F', '#E84DA7', '#574B16', '#99A350', '#0A4C10', '#8A57CF', '#CEC6BB', '#CB56CE', '#F6ADAC', '#376C23', '#D306FF', '#F4E7E9', '#7C1234', '#F2B7B3', '#BAE9F5', '#CE76C1', '#39A994', '#DE194A', '#8C5D41', '#81D0A9', '#02D636', '#8D08A5', '#A8FCD1', '#571B64', '#19C89B', '#9E5038', '#0991BD', '#FEA69A', '#DB1D48', '#1F5F9B', '#3C612D', '#7EF10C', '#E9A805', '#D9D653', '#231AB9', '#2CCF38', '#48C9DC', '#B08BCF', '#BEEA79', '#9684C0', '#FB0F7F', '#ADFD85', '#539F52', '#7A11AE', '#4F0511', '#3DA30A', '#3B3E0E', '#101C04', '#3D9F0C', '#99C380', '#EF8D2E', '#E1594D', '#EBFA1A', '#95444F', '#EE240B', '#9BC943', '#254AD5', '#8E2C14', '#220588', '#36D24E', '#8E2C58', '#5E5202', '#EDACA5', '#A94CA6', '#F2D99D', '#CD4A09', '#9CE22B', '#15DF4D', '#D007C7', '#A60049', '#B6FB78', '#4D685F', '#6F6F4E', '#2A9A6F', '#D484CE', '#8E938E', '#0BF575', '#16ED3A', '#E912AD', '#76E15B', '#BB2456', '#5D75C7', '#35738E', '#FFC0A7', '#F12404', '#B1D877', '#91098B', '#BA2906']
 
 // 멤버 일정 조회
 const addMemberSchedule = async (user) => {
-    const color = generateRandomColor();
+    // const color = generateRandomColor();
+    const color = colors[user.userId%100]
 
     // 중복 체크
     if (!selectedParticipants.value.some((p) => p.userId === user.userId)) {
@@ -496,7 +499,7 @@ const addMemberSchedule = async (user) => {
                 }
             }
             return {
-                id: schedule.schedule_id,
+                id: `${user.userId}_${schedule.schedule_id}`,
                 title: 'BUSY',
                 start: startDate,
                 end: endDate,
@@ -535,7 +538,6 @@ const resetSearchData = async () => {
     searchMember.value = '';
     searchResults.value = [];
     selectedParticipants.value = [];
-    // eventsMember.value = [];
     await fetchSchedules();
 };
 
