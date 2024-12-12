@@ -630,6 +630,8 @@ onBeforeUnmount(() => {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     white-space: nowrap;
     z-index: 100;
+    max-height: 10rem; /* 원하는 최대 높이 설정 */
+    overflow-y: auto; /* 세로 스크롤바 활성화 */
 }
 
 .tooltip ul {
