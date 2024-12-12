@@ -492,7 +492,6 @@ async closeReservationDialog() {
   height: auto;
   max-height: 400px; 
   overflow-y: hidden;
-  margin-left: 1%; 
   margin-bottom: 5rem;
 }
 
