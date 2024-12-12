@@ -4,7 +4,7 @@
       <!-- 왼쪽: 환영 메시지와 로고 -->
       <div class="login-welcome">
         <h1>당신의<br>일정을 편리하게<br>관리하세요</h1>
-        <img src="@/assets/images/syncdaylogo.svg" alt="SyncDay Logo" class="logo">
+        <img src="@/assets/images/syncdaylogo.png" alt="SyncDay Logo" class="logo">
       </div>
 
       <!-- 오른쪽: 로그인 폼 -->
