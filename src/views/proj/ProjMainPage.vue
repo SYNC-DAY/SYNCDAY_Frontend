@@ -1,50 +1,62 @@
 <template>
-    <div>프로젝트</div>
-    <div class="flex flex-row">
-        <Drawer v-model:visible="visibleLeft" header="Projects">
-            <ProjSidebar :projs="projs" />
-        </Drawer>
-        <div>
-            <!-- <span>{{ user.userId }}</span> -->
-            <RouterView />
+    <div class="grid">
+        <div class="col-12">
+            <div class="card">
+                <Drawer v-model:visible="visibleLeft" :closeOnEscape="false" position="left" class="w-full md:w-20rem">
+                    <template #header>
+                        <h2>Projects</h2>
+                    </template>
+                    <ProjSidebar :projs="projs" />
+                </Drawer>
+
+                <div class="flex flex-column">
+                    <Button icon="pi pi-bars" @click="visibleLeft = true" severity="secondary"
+                        class="fixed-button p-button-rounded" />
+                    <div class="p-4">
+                        <RouterView />
+                    </div>
+                </div>
+            </div>
         </div>
-        <Button icon="pi pi-arrow-right" @click="visibleLeft = true" class="fixed-button" />
     </div>
 </template>
 
 <script setup>
     import { useProjectStore } from '@/stores/proj/useProjectStore';
     import { inject, onMounted, ref } from 'vue';
-
-
-    /* import sidebar items */
     import ProjSidebar from './sidebar/ProjSidebar.vue';
-    /* provide, inject */
+
     const projStore = useProjectStore()
     const projs = ref(null)
     const user = inject('user');
-
-    /* refs */
     const visibleLeft = ref(false);
 
     onMounted(async () => {
         projs.value = await projStore.getProjects(user.userId);
     })
-
 </script>
 
 <style scoped>
-    /* div {
-        background-color: black;
-    } */
-
     .fixed-button {
         position: fixed;
         left: 20px;
-        /* 왼쪽에서 20px 떨어짐 */
         bottom: 20px;
-        /* 아래에서 20px 떨어짐 */
         z-index: 1000;
-        /* drawer보다 위에 표시되도록 z-index 설정 */
+    }
+
+    :deep(.p-drawer-header) {
+        padding: 1rem;
+        background-color: var(--surface-section);
+        border-bottom: 1px solid var(--surface-border);
+    }
+
+    :deep(.p-drawer-header h2) {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    :deep(.p-drawer-content) {
+        padding: 0;
     }
 </style>
