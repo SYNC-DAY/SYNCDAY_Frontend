@@ -1,12 +1,17 @@
 <script setup>
     import { useLayout } from '@/layout/composables/layout';
-    import { computed, ref, watch } from 'vue';
+    import { computed, provide, ref, watch } from 'vue';
     import AppTopbar from './AppTopbar.vue';
 
     const { layoutConfig, layoutState, isSidebarActive } = useLayout();
 
     const outsideClickListener = ref(null);
 
+    import { useAuthStore } from '@/stores/auth';
+    import { storeToRefs } from 'pinia';
+    const authStore = useAuthStore();
+    const { user } = storeToRefs(authStore);
+    provide('user', user.value);
     watch(isSidebarActive, (newVal) => {
         if (newVal) {
             bindOutsideClickListener();
