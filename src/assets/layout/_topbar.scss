@@ -53,8 +53,9 @@
         gap: 1rem;
 
         .topbar-tab {
+            font-size: 1rem;
             position: relative;
-            padding: 0.5rem;
+            padding: 0.3rem;
             color: var(--text-color-secondary);
             text-decoration: none;
             transition: color var(--element-transition-duration);
