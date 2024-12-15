@@ -10,9 +10,9 @@
 <template>
     <div class="layout-topbar gap-x-4">
         <div class="layout-topbar-logo-container">
-            <button class="layout-menu-button layout-topbar-action" @click="toggleMenu">
+            <!-- <button class="layout-menu-button layout-topbar-action" @click="toggleMenu">
                 <i class="pi pi-bars"></i>
-            </button>
+            </button> -->
             <router-link to="/" class="layout-topbar-logo">
                 <img src="/src/assets/img/SyncDay_SVG.svg" alt="" />
                 <span class="logo-text">SYNCDAY</span>
