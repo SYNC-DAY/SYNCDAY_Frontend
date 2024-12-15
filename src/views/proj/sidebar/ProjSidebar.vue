@@ -149,6 +149,11 @@
         box-shadow: none;
     }
 
+    /* .sidebar :deep(.p-panelmenu .p-panelmenu-panel) {
+        height: 2rem;
+
+    } */
+
     .sidebar :deep(.p-panelmenu .p-panelmenu-content .p-menuitem .p-menuitem-link:not(.p-disabled):hover) {
         background: var(--surface-50) !important;
     }
