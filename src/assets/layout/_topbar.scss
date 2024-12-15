@@ -43,6 +43,20 @@
         }
     }
 
+    .layout-topbar-tabs {
+        flex: 1;
+        display: inline-flex;
+        justify-content: space-around;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .layout-topbar-search {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+    }
+
     .layout-topbar-action {
         display: inline-flex;
         justify-content: center;

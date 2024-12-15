@@ -8,7 +8,7 @@
 </script>
 
 <template>
-    <div class="layout-topbar container-row gap-x-4">
+    <div class="layout-topbar gap-x-4">
         <div class="layout-topbar-logo-container">
             <button class="layout-menu-button layout-topbar-action" @click="toggleMenu">
                 <i class="pi pi-bars"></i>
@@ -19,18 +19,21 @@
             </router-link>
         </div>
 
-        <div class="flex justify-center gap-x-4">
+        <div class="layout-topbar-tabs">
             <RouterLink to="/calendar">캘린더</RouterLink>
             <RouterLink to="/team">팀</RouterLink>
             <RouterLink to="/project">프로젝트</RouterLink>
         </div>
-        <div class="layout-topbar-actions">
-            <IconField class="flex-1">
+
+        <div class="layout-topbar-search">
+            <IconField class="flex flex-1">
                 <InputIcon>
                     <i class="pi pi-search" />
                 </InputIcon>
                 <InputText placeholder="Search" />
             </IconField>
+        </div>
+        <div class="layout-topbar-actions">
             <div class="layout-config-menu">
                 <button type="button" class="layout-topbar-action" @click="toggleDarkMode">
                     <i :class="['pi', { 'pi-moon': isDarkTheme, 'pi-sun': !isDarkTheme }]"></i>
