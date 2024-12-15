@@ -15,7 +15,7 @@
                         <i v-if="item.command" :class="item.icon"></i>
                         <!-- Custom chevron icon for project items -->
                         <span v-if="!item.command" class="chevron-container">
-                            <i class="pi" :class="expandedKeys[item.key] ? 'pi-chevron-down' : 'pi-chevron-up'"></i>
+                            <i class="pi" :class="expandedKeys[item.key] ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
                         </span>
                     </div>
                 </div>
@@ -138,6 +138,7 @@
         display: none;
     }
 
+    .sidebar :deep(.p-panelmenu .p-panelmenu-panel),
     .sidebar :deep(.p-panelmenu .p-panelmenu-header),
     .sidebar :deep(.p-panelmenu .p-panelmenu-content),
     .sidebar :deep(.p-menuitem) {
