@@ -18,6 +18,10 @@ module.exports = {
             {
                 order: ['script', 'template', 'style']
             }
-        ]
+        ],
+        '@typescript-eslint/no-unused-vars': 'off', // TypeScript를 사용하는 경우
+        'no-unused-imports': 'off',
+        'unused-imports/no-unused-imports': 'off',
+        'unused-imports/no-unused-vars': 'off'
     }
 };
