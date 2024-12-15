@@ -7,17 +7,17 @@ import ToastService from 'primevue/toastservice';
 const SyncDayPreset = definePreset(Aura, {
     semantic: {
         primary: {
-            50: '{pink.50}',
-            100: '{pink.100}',
-            200: '{pink.200}',
-            300: '{pink.300}',
-            400: '{pink.400}',
-            500: '{pink.500}',
-            600: '{pink.600}',
-            700: '{pink.700}',
-            800: '{pink.800}',
-            900: '{pink.900}',
-            950: '{pink.950}'
+            50: '#fff1f4', // 더 밝은 색조들
+            100: '#ffe4ea',
+            200: '#ffc8d6',
+            300: '#ff9db5',
+            400: '#fe7a94',
+            500: '#FE5D86', // 기본 primary 색상
+            600: '#e54d77', // 더 어두운 색조들
+            700: '#bf3c60',
+            800: '#9c314d',
+            900: '#802b42',
+            950: '#4c1525'
         }
     }
 });
