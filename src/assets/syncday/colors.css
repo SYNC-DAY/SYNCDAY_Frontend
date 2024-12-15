@@ -23,3 +23,7 @@ body {
 .gradient-horizontal {
     background: linear-gradient(90deg, var(--pink-color) 50%, var(--apricot-color));
 }
+
+.underline-gray {
+    border-bottom: 1px solid var(--outline-gray)
+}

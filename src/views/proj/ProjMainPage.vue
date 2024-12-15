@@ -2,7 +2,7 @@
     <div>프로젝트</div>
     <div class="flex flex-row">
         <Drawer v-model:visible="visibleLeft" header="Projects">
-            <ProjSidebar />
+            <ProjSidebar :projs="projs" />
         </Drawer>
         <div>
             <!-- <span>{{ user.userId }}</span> -->
