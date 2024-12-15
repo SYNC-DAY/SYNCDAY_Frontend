@@ -55,6 +55,10 @@
         flex: 1;
         display: inline-flex;
         align-items: center;
+
+        input {
+            width: 100%;
+        }
     }
 
     .layout-topbar-action {
