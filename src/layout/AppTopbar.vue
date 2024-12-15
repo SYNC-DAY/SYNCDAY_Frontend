@@ -20,9 +20,9 @@
         </div>
 
         <div class="layout-topbar-tabs">
-            <RouterLink to="/calendar">캘린더</RouterLink>
-            <RouterLink to="/team">팀</RouterLink>
-            <RouterLink to="/project">프로젝트</RouterLink>
+            <RouterLink to="/calendar" class="topbar-tab">캘린더</RouterLink>
+            <RouterLink to="/team" class="topbar-tab">팀</RouterLink>
+            <RouterLink to="/project" class="topbar-tab">프로젝트</RouterLink>
         </div>
 
         <div class="layout-topbar-search">
