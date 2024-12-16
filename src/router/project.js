@@ -10,7 +10,7 @@ export default [
                 component: import('@/views/proj/components/ProjectView.vue')
             },
             {
-                path: '/workspace/:workspaceId',
+                path: ':projectId/workspace/:workspaceId',
                 name: 'Workspace',
                 component: import('@/views/workspace/WorkspaceView.vue')
             }

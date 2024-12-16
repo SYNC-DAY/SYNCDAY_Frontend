@@ -63,7 +63,7 @@
                 label: workspace.workspace_name,
                 icon: 'pi pi-star',
                 command: () => {
-                    router.push(`/workspace/${workspace.workspace_id}`);
+                    router.push(`project/${project.proj_id}/workspace/${workspace.workspace_id}`);
                 }
             })) || []
         }));
