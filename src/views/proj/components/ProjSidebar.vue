@@ -4,16 +4,9 @@
             <PanelMenu :model="menuItems" class="w-full border-none" @item-toggle="handleToggle"
                 v-model:expandedKeys="expandedKeysValue">
                 <template #item="{ item }">
-
-                    <!-- ProjItem Container -->
-                    <div class="flex flex-row items-center justify-between w-full h-16 px-4">
-
-                        <!-- Left -->
-                        <div class="">
-                            <!-- Label -->
-                            <span class="menu-label truncate">{{ item.label }}</span>
-
-                        </div>
+                    <div class="flex flex-row items-center justify-between w-full h-16 px-4 project-item"
+                        :class="{ 'is-active': isActiveProject(item) }">
+                        <span class="menu-label truncate">{{ item.label }}</span>
                         <div class="flex items-center gap-2">
                             <div v-if="!item.command" class="bookmark-container">
                                 <i class="bookmark-icon pi pi-bookmark" :class="{ 'active': item.isActive }"
@@ -36,9 +29,10 @@
     import PanelMenu from 'primevue/panelmenu';
     import ScrollPanel from 'primevue/scrollpanel';
     import { computed, ref } from 'vue';
-    import { useRouter } from 'vue-router';
+    import { useRoute, useRouter } from 'vue-router';
 
     const router = useRouter();
+    const route = useRoute();
     const expandedKeysValue = ref({});
 
     const props = defineProps({
@@ -62,6 +56,20 @@
         emit('update:bookmarks', item);
     };
 
+    const isActiveProject = (item) => {
+        if (!item || !route.params.projectId) return false;
+
+        // Check if this is a project item (not a workspace)
+        if (!item.command) {
+            const projectKey = item.key.split('-')[1];
+            return projectKey === route.params.projectId;
+        }
+
+        // For workspace items, check if they belong to the active project
+        const [, projectKey] = item.key.split('-');
+        return projectKey === route.params.projectId;
+    };
+
     const menuItems = computed(() => {
         if (!props.projs) return [];
 
@@ -70,18 +78,20 @@
             label: project.proj_name,
             bookmarkIcon: 'pi pi-bookmark',
             isActive: project.isActive || false,
-            items: project.workspaces?.map((workspace, index) => ({
-                key: `workspace-${key}-${index}`,
+            items: project.workspaces?.map((workspace) => ({
+                key: `workspace-${key}-${workspace.workspace_id}`,
                 label: workspace.workspace_name,
                 icon: 'pi pi-star',
                 command: () => {
-                    router.push(`${project.proj_id}/workspace/${workspace.workspace_id}`);
+                    // Fixed router navigation
+                    router.push(`/project/${project.proj_id}/workspace/${workspace.workspace_id}`);
                 }
             })) || []
         }));
     });
 </script>
 
+<!-- Style section remains unchanged -->
 <style scoped>
     .sidebar {
         position: relative;
@@ -122,12 +132,30 @@
     }
 
     :deep(.p-panelmenu-header-link) {
-        padding: 0 !important;
-        height: 100%;
-        background: transparent !important;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
+        position: relative;
+        /* Enable positioning for ::before */
+    }
+
+    .project-item.is-active::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: auto;
+        width: 4px;
+        background: linear-gradient(to bottom, #FF8FAB, #FFB156);
+        border-radius: 0 2px 2px 0;
+    }
+
+    /* Optional: Add a subtle background for active items */
+    .project-item.is-active {
+        background-color: var(--surface-50);
+    }
+
+    /* Ensure proper positioning of the indicator */
+    :deep(.p-panelmenu-header) {
+        position: relative;
+        overflow: visible;
     }
 
     :deep(.p-panelmenu-header-link:hover) {
