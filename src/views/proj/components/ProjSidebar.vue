@@ -58,12 +58,15 @@
             label: project.proj_name,
             bookmarkIcon: 'pi pi-bookmark',
             isActive: project.isActive || false,
+            command: () => {
+                router.push(`/project/${project.proj_id}`)
+            },
             items: project.workspaces?.map((workspace, index) => ({
                 key: `workspace-${key}-${index}`,  // 고유 키 추가
                 label: workspace.workspace_name,
                 icon: 'pi pi-star',
                 command: () => {
-                    router.push(`project/${project.proj_id}/workspace/${workspace.workspace_id}`);
+                    router.push(`${project.proj_id}/workspace/${workspace.workspace_id}`);
                 }
             })) || []
         }));
