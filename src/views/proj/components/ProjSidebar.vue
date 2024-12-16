@@ -7,18 +7,16 @@
                     <div class="flex flex-row items-center justify-between w-full h-16 project-item"
                         :class="{ 'is-active': isActiveProject(item) }">
                         <div>
-
-                            <span class="menu-label truncate"
-                                :class="{ 'font-semibold': item.key.includes('project') }">{{ item.label
-                                }}</span>
+                            <span class="menu-label truncate" :class="{ 'font-semibold': isProjectItem(item) }">{{
+                                item.label }}</span>
                         </div>
                         <div class="flex items-center gap-2">
-                            <div v-if="!item.command" class="bookmark-container">
+                            <div v-if="isProjectItem(item)" class="bookmark-container">
                                 <i class="bookmark-icon pi pi-bookmark" :class="{ 'active': item.isActive }"
                                     @click.stop="toggleBookmark(item)"></i>
                             </div>
-                            <i v-if="item.command" :class="item.icon"></i>
-                            <span v-if="!item.command" class="chevron-container">
+                            <i v-if="isWorkspaceItem(item)" :class="item.icon"></i>
+                            <span v-if="isProjectItem(item)" class="chevron-container">
                                 <i class="pi"
                                     :class="expandedKeysValue[item.key] ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
                             </span>
@@ -49,6 +47,9 @@
 
     const emit = defineEmits(['update:bookmarks']);
 
+    const isProjectItem = (item) => item?.key?.startsWith('project-');
+    const isWorkspaceItem = (item) => item?.key?.startsWith('workspace-');
+
     const handleToggle = (event) => {
         expandedKeysValue.value = {
             ...expandedKeysValue.value,
@@ -64,8 +65,7 @@
     const isActiveProject = (item) => {
         if (!item || !route.params.projectId) return false;
 
-        // Check if this is a project item (not a workspace)
-        if (!item.command) {
+        if (isProjectItem(item)) {
             const projectKey = item.key.split('-')[1];
             return projectKey === route.params.projectId;
         }
@@ -88,14 +88,12 @@
                 label: workspace.workspace_name,
                 icon: 'pi pi-star',
                 command: () => {
-                    // Fixed router navigation
                     router.push(`/project/${project.proj_id}/workspace/${workspace.workspace_id}`);
                 }
             })) || []
         }));
     });
 </script>
-
 <!-- Style section remains unchanged -->
 <style scoped>
     .sidebar {
