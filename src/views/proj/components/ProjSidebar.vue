@@ -4,9 +4,14 @@
             <PanelMenu :model="menuItems" class="w-full border-none" @item-toggle="handleToggle"
                 v-model:expandedKeys="expandedKeysValue">
                 <template #item="{ item }">
-                    <div class="flex flex-row items-center justify-between w-full h-16 px-4 project-item"
+                    <div class="flex flex-row items-center justify-between w-full h-16 project-item"
                         :class="{ 'is-active': isActiveProject(item) }">
-                        <span class="menu-label truncate">{{ item.label }}</span>
+                        <div>
+
+                            <span class="menu-label truncate"
+                                :class="{ 'font-semibold': item.key.includes('project') }">{{ item.label
+                                }}</span>
+                        </div>
                         <div class="flex items-center gap-2">
                             <div v-if="!item.command" class="bookmark-container">
                                 <i class="bookmark-icon pi pi-bookmark" :class="{ 'active': item.isActive }"
@@ -115,12 +120,13 @@
     }
 
     :deep(.p-scrollpanel-content) {
-        padding-right: 8px;
+        /* padding-right: 8px; */
     }
 
     /* PanelMenu styling */
     :deep(.p-panelmenu) {
         border: none;
+        padding: 0 0.5rem;
     }
 
     :deep(.p-panelmenu-panel) {
@@ -177,10 +183,10 @@
     }
 
     .menu-label {
-        font-weight: 500;
+        /* font-weight: 500; */
         color: var(--p-text-color);
         font-size: 1rem;
-        font-weight: 700;
+
     }
 
     .bookmark-container {
