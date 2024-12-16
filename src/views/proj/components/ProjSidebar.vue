@@ -4,8 +4,16 @@
             <PanelMenu :model="menuItems" class="w-full border-none" @item-toggle="handleToggle"
                 v-model:expandedKeys="expandedKeysValue">
                 <template #item="{ item }">
+
+                    <!-- ProjItem Container -->
                     <div class="flex flex-row items-center justify-between w-full h-16 px-4">
-                        <span class="menu-label truncate">{{ item.label }}</span>
+
+                        <!-- Left -->
+                        <div class="">
+                            <!-- Label -->
+                            <span class="menu-label truncate">{{ item.label }}</span>
+
+                        </div>
                         <div class="flex items-center gap-2">
                             <div v-if="!item.command" class="bookmark-container">
                                 <i class="bookmark-icon pi pi-bookmark" :class="{ 'active': item.isActive }"
@@ -142,8 +150,9 @@
 
     .menu-label {
         font-weight: 500;
-        color: #333;
-        font-size: 0.95rem;
+        color: var(--p-text-color);
+        font-size: 1rem;
+        font-weight: 700;
     }
 
     .bookmark-container {

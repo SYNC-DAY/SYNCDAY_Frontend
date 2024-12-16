@@ -19,6 +19,7 @@ const SyncDayPreset = definePreset(Aura, {
             900: '#802b42',
             950: '#4c1525'
         }
+        // secondary: {}
     }
 });
 
