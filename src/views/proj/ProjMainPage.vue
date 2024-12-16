@@ -25,7 +25,7 @@
 <script setup>
     import { useProjectStore } from '@/stores/proj/useProjectStore';
     import { inject, onMounted, ref } from 'vue';
-    import ProjSidebar from './sidebar/ProjSidebar.vue';
+    import ProjSidebar from './components/ProjSidebar.vue';
 
     const projStore = useProjectStore();
     const projs = ref(null);

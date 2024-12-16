@@ -72,7 +72,7 @@
 
 <style scoped>
     .sidebar {
-        padding: 0.5rem;
+        /* padding: 0.5rem; */
     }
 
     .sidebar :deep(.p-panelmenu) {
