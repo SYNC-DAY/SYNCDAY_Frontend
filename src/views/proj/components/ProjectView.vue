@@ -5,8 +5,9 @@
         <!-- title -->
         <h1 class="text-2xl text-center">{{ project?.proj_name }}</h1>
         <div class="flex flex-row items-center justify-between">
+            <Button severity="contrast" text icon="pi pi-cog"></Button>
             <Button severity="contrast" text>
-                <GitBranch></GitBranch>
+                <GitBranch class="h-4"></GitBranch>
             </Button>
 
         </div>

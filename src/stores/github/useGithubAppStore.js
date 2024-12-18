@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { defineStore } from 'pinia';
-import { useAuthStore } from '../auth';
 
 export const useGithubAppStore = defineStore('githubApp', {
     state: () => ({
@@ -24,20 +23,19 @@ export const useGithubAppStore = defineStore('githubApp', {
     },
 
     actions: {
-        async handleInstallationCallback(installationId, setupAction) {
+        async handleInstallationCallback(installationId, setupAction, userId) {
             this.isLoading = true;
             this.error = null;
-            const authStore = useAuthStore();
 
             try {
                 console.log('Installation callback payload:', {
-                    user_id: authStore.user.userId,
+                    user_id: userId,
                     installation_id: installationId,
                     setup_action: setupAction
                 });
 
                 const response = await axios.post('/github/install', {
-                    user_id: authStore.user.userId,
+                    user_id: userId,
                     installation_id: installationId,
                     setup_action: setupAction
                 });
@@ -64,13 +62,12 @@ export const useGithubAppStore = defineStore('githubApp', {
             }
         },
 
-        async fetchInstallations() {
+        async fetchInstallations(userId) {
             this.isLoading = true;
             this.error = null;
 
             try {
-                const authStore = useAuthStore();
-                const response = await axios.get(`/github/install/users/${authStore.user.userId}`);
+                const response = await axios.get(`/github/install/users/${userId}`);
 
                 if (response.data.success) {
                     const resData = response.data.data;
@@ -87,9 +84,7 @@ export const useGithubAppStore = defineStore('githubApp', {
             }
         },
 
-        async requestInstallationToken(installationId) {
-            const authStore = useAuthStore();
-            const userId = authStore.user.userId;
+        async requestInstallationToken(installationId, userId) {
             const response = await axios.get(`/github/install/users/${userId}/installs/${installationId}/access_token`);
             if (response.data.success) {
                 const resData = response.data.data;
@@ -120,33 +115,6 @@ export const useGithubAppStore = defineStore('githubApp', {
             } catch (error) {
                 console.error('Error disabling installation:', error);
                 this.error = error.response?.data?.message || 'Failed to disable installation';
-                throw error;
-            } finally {
-                this.isLoading = false;
-            }
-        },
-
-        async updateInstallation(installationId, updateData) {
-            this.isLoading = true;
-            this.error = null;
-
-            try {
-                const authStore = useAuthStore();
-                const response = await axios.patch(`/github/install/users/${authStore.user.userId}/installs/${installationId}`, updateData);
-
-                if (response.data.success) {
-                    const resData = response.data.data;
-                    // Update the installation in local state
-                    this.installations[installationId] = {
-                        ...this.installations[installationId],
-                        ...resData
-                    };
-                    return true;
-                }
-                throw new Error('Failed to update installation');
-            } catch (error) {
-                console.error('Error updating installation:', error);
-                this.error = error.response?.data?.message || 'Failed to update installation';
                 throw error;
             } finally {
                 this.isLoading = false;
