@@ -1,6 +1,6 @@
 <template>
 
-    <div class="h-12 flex flex-row items-center justify-between underline-gray">
+    <div class="h-20 flex flex-row items-center justify-between underline-gray">
 
         <!-- title -->
         <h1 class="text-2xl text-center">{{ project?.proj_name }}</h1>
@@ -22,8 +22,11 @@
     import { useRoute } from 'vue-router';
     import VcsTypeMenu from './utils/VcsTypeMenu.vue';
 
+    import { useToast } from 'primevue/usetoast';
+
     const vcsMenu = ref(null);
     const route = useRoute();
+    const toast = useToast();
     const projectStore = useProjectStore();
     const workspaceStore = useWorkspaceStore();
 
