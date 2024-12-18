@@ -5,7 +5,7 @@
                 v-model:expandedKeys="expandedKeysValue">
                 <template #item="{ item }">
                     <div class="flex flex-row items-center justify-between w-full h-16 project-item"
-                        :class="{ 'is-active': isActiveProject(item) }">
+                        :class="{ 'is-active': isActiveProject(item) }" @click="handleItemClick(item)">
                         <div>
                             <span class="menu-label truncate" :class="{ 'font-semibold': isProjectItem(item) }">
                                 {{ item.label }}
@@ -17,7 +17,8 @@
                                     @click.stop="toggleProjectBookmark(item)"></i>
                             </div>
                             <i v-if="isWorkspaceItem(item)" :class="item.icon"></i>
-                            <span v-if="isProjectItem(item)" class="chevron-container">
+                            <span v-if="isProjectItem(item)" class="chevron-container"
+                                @click.stop="handleToggle({ item })">
                                 <i class="pi"
                                     :class="expandedKeysValue[item.key] ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
                             </span>
@@ -42,19 +43,16 @@
     const route = useRoute();
     const expandedKeysValue = ref({});
 
-    // Store 초기화
     const projectStore = useProjectStore();
     const workspaceStore = useWorkspaceStore();
     const { projectsArray } = storeToRefs(projectStore);
 
-    // 컴포넌트 마운트 시 데이터 로드
     onMounted(async () => {
         if (projectStore.shouldRefetch) {
             await projectStore.getProjects(userId);
         }
     });
 
-    // 프로젝트 데이터가 로드되면 워크스페이스 로드
     watch(() => projectStore.hasProjects, async (hasProjects) => {
         if (hasProjects) {
             await workspaceStore.loadWorkspacesForProjects();
@@ -95,6 +93,14 @@
         }
     };
 
+    const handleItemClick = (item) => {
+        if (isProjectItem(item)) {
+            const projectId = getProjectIdFromItem(item);
+            router.push(`/project/${projectId}`);
+        }
+        // Workspace navigation is handled by the command property in menuItems
+    };
+
     const isActiveProject = (item) => {
         if (!item || !route.params.projectId) return false;
 
@@ -125,7 +131,6 @@
         }));
     });
 </script>
-
 
 <style scoped>
     .sidebar {
