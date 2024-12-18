@@ -1,22 +1,18 @@
 <template>
 
-    <div class="relative w-full h-full">
-
-        <Drawer v-model:visible="visibleLeft" :closeOnEscape="false" position="left" class="w-full" id="proj-sidebar">
-            <template #header>
-                <h2>Projects</h2>
-            </template>
-            <ProjSidebar :projs="projs" />
-        </Drawer>
+    <Drawer v-model:visible="visibleLeft" :closeOnEscape="false" position="left" class="w-full" id="proj-sidebar">
+        <template #header>
+            <h2>Projects</h2>
+        </template>
+        <ProjSidebar :projs="projs" />
+    </Drawer>
 
 
 
 
-        <Button icon="pi pi-bars" @click="visibleLeft = true" severity="secondary"
-            class="fixed-button p-button-rounded" />
+    <Button icon="pi pi-bars" @click="visibleLeft = true" severity="secondary" class="fixed-button p-button-rounded" />
 
-        <RouterView />
-    </div>
+    <RouterView />
 
 
 
@@ -38,9 +34,9 @@
 </script>
 <style>
     .fixed-button {
-        position: fixed;
-        left: 20px;
-        bottom: 20px;
+        position: fixed !important;
+        left: 20px !important;
+        bottom: 20px !important;
         z-index: 1000;
     }
 
@@ -51,12 +47,7 @@
         padding: 0 !important;
     }
 
-    .fixed-button {
-        position: fixed;
-        left: 20px;
-        bottom: 20px;
-        z-index: 1000;
-    }
+
 
     .p-drawer-header {
         padding: 1rem;
