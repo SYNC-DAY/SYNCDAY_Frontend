@@ -1,18 +1,21 @@
+import { workspaceApi } from '@/api/proj/workspace';
+import { useProjectStore } from '@/stores/proj/useProjectStore';
 import { defineStore } from 'pinia';
 
 export const useWorkspaceStore = defineStore('workspace', {
     state: () => ({
         workspaces: {},
-        activeWorkspaceId: null,
         isLoading: false,
         error: null,
         lastFetchTime: null
     }),
 
     getters: {
-        activeWorkspace: (state) => state.workspaces[state.activeWorkspaceId] || null,
+        getWorkspacesByProjectId: (state) => (projId) => {
+            return Object.values(state.workspaces).filter((workspace) => workspace.proj_id === projId);
+        },
 
-        projectWorkspaces: (state) => (projectId) => Object.values(state.workspaces).filter((workspace) => workspace.projectId === projectId),
+        allWorkspaces: (state) => Object.values(state.workspaces),
 
         shouldRefetch: (state) => {
             if (!state.lastFetchTime) return true;
@@ -22,22 +25,31 @@ export const useWorkspaceStore = defineStore('workspace', {
     },
 
     actions: {
-        async getWorkspaces(projectId) {
-            if (this.lastFetchTime && !this.shouldRefetch) {
-                return this.projectWorkspaces(projectId);
+        async loadWorkspacesForProjects() {
+            const projectStore = useProjectStore();
+            if (!projectStore.hasProjects) {
+                return;
             }
-            return this.fetchWorkspaces(projectId);
+
+            this.isLoading = true;
+            try {
+                const projIds = projectStore.projectsArray.map((proj) => proj.proj_id);
+                const workspaces = await workspaceApi.getWorkspacesByProjectIds(projIds);
+                this.processWorkspaces(workspaces);
+                this.lastFetchTime = Date.now();
+            } catch (error) {
+                this.error = error.message;
+                throw error;
+            } finally {
+                this.isLoading = false;
+            }
         },
 
-        setActiveWorkspace(workspaceId) {
-            this.activeWorkspaceId = workspaceId;
-        },
-
-        clearStore() {
-            this.workspaces = {};
-            this.activeWorkspaceId = null;
-            this.lastFetchTime = null;
-            this.error = null;
+        processWorkspaces(workspaces) {
+            this.workspaces = workspaces.reduce((acc, workspace) => {
+                acc[workspace.workspace_id] = workspace;
+                return acc;
+            }, {});
         }
     }
 });

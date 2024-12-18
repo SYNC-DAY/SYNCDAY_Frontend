@@ -7,13 +7,14 @@
                     <div class="flex flex-row items-center justify-between w-full h-16 project-item"
                         :class="{ 'is-active': isActiveProject(item) }">
                         <div>
-                            <span class="menu-label truncate" :class="{ 'font-semibold': isProjectItem(item) }">{{
-                                item.label }}</span>
+                            <span class="menu-label truncate" :class="{ 'font-semibold': isProjectItem(item) }">
+                                {{ item.label }}
+                            </span>
                         </div>
                         <div class="flex items-center gap-2">
                             <div v-if="isProjectItem(item)" class="bookmark-container">
-                                <i class="bookmark-icon pi pi-bookmark" :class="{ 'active': item.isActive }"
-                                    @click.stop="toggleBookmark(item)"></i>
+                                <i class="bookmark-icon pi pi-bookmark" :class="{ 'active': isBookmarked(item) }"
+                                    @click.stop="toggleProjectBookmark(item)"></i>
                             </div>
                             <i v-if="isWorkspaceItem(item)" :class="item.icon"></i>
                             <span v-if="isProjectItem(item)" class="chevron-container">
@@ -29,23 +30,36 @@
 </template>
 
 <script setup>
+    import { useProjectStore } from '@/stores/proj/useProjectStore';
+    import { useWorkspaceStore } from '@/stores/proj/useWorkspaceStore';
+    import { storeToRefs } from 'pinia';
     import PanelMenu from 'primevue/panelmenu';
     import ScrollPanel from 'primevue/scrollpanel';
-    import { computed, ref } from 'vue';
+    import { computed, onMounted, ref, watch } from 'vue';
     import { useRoute, useRouter } from 'vue-router';
 
     const router = useRouter();
     const route = useRoute();
     const expandedKeysValue = ref({});
 
-    const props = defineProps({
-        projs: {
-            type: Object,
-            required: true
+    // Store 초기화
+    const projectStore = useProjectStore();
+    const workspaceStore = useWorkspaceStore();
+    const { projectsArray } = storeToRefs(projectStore);
+
+    // 컴포넌트 마운트 시 데이터 로드
+    onMounted(async () => {
+        if (projectStore.shouldRefetch) {
+            await projectStore.getProjects(userId);
         }
     });
 
-    const emit = defineEmits(['update:bookmarks']);
+    // 프로젝트 데이터가 로드되면 워크스페이스 로드
+    watch(() => projectStore.hasProjects, async (hasProjects) => {
+        if (hasProjects) {
+            await workspaceStore.loadWorkspacesForProjects();
+        }
+    }, { immediate: true });
 
     const isProjectItem = (item) => item?.key?.startsWith('project-');
     const isWorkspaceItem = (item) => item?.key?.startsWith('workspace-');
@@ -57,44 +71,62 @@
         };
     };
 
-    const toggleBookmark = (item) => {
-        item.isActive = !item.isActive;
-        emit('update:bookmarks', item);
+    const getProjectIdFromItem = (item) => {
+        if (isProjectItem(item)) {
+            return item.key.split('-')[1];
+        }
+        return item.key.split('-')[1];
+    };
+
+    const isBookmarked = (item) => {
+        if (!isProjectItem(item)) return false;
+        const projectId = getProjectIdFromItem(item);
+        const project = projectStore.getProjectById(projectId);
+        return project?.bookmark_status === 'BOOKMARKED';
+    };
+
+    const toggleProjectBookmark = async (item) => {
+        const projectId = getProjectIdFromItem(item);
+        const projMemberId = projectStore.getProjectById(projectId)?.proj_member_id;
+        if (projMemberId) {
+            await projectStore.updateProjectMemberStatus(projMemberId, {
+                bookmark_status: isBookmarked(item) ? 'NONE' : 'BOOKMARKED'
+            });
+        }
     };
 
     const isActiveProject = (item) => {
         if (!item || !route.params.projectId) return false;
 
         if (isProjectItem(item)) {
-            const projectKey = item.key.split('-')[1];
-            return projectKey === route.params.projectId;
+            const projectId = getProjectIdFromItem(item);
+            return projectId === route.params.projectId;
         }
 
-        // For workspace items, check if they belong to the active project
-        const [, projectKey] = item.key.split('-');
-        return projectKey === route.params.projectId;
+        const [, projectId] = item.key.split('-');
+        return projectId === route.params.projectId;
     };
 
     const menuItems = computed(() => {
-        if (!props.projs) return [];
+        if (!projectStore.hasProjects) return [];
 
-        return Object.entries(props.projs).map(([key, project]) => ({
-            key: `project-${key}`,
+        return projectsArray.value.map(project => ({
+            key: `project-${project.proj_id}`,
             label: project.proj_name,
             bookmarkIcon: 'pi pi-bookmark',
-            isActive: project.isActive || false,
-            items: project.workspaces?.map((workspace) => ({
-                key: `workspace-${key}-${workspace.workspace_id}`,
+            items: workspaceStore.getWorkspacesByProjectId(project.proj_id).map(workspace => ({
+                key: `workspace-${project.proj_id}-${workspace.workspace_id}`,
                 label: workspace.workspace_name,
                 icon: 'pi pi-star',
                 command: () => {
                     router.push(`/project/${project.proj_id}/workspace/${workspace.workspace_id}`);
                 }
-            })) || []
+            }))
         }));
     });
 </script>
-<!-- Style section remains unchanged -->
+
+
 <style scoped>
     .sidebar {
         position: relative;
