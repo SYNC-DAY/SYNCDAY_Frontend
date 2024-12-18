@@ -11,6 +11,9 @@
             </Button>
             <VcsTypeMenu ref="vcsMenu" @vcs-selected="handleVcsSelection" />
         </div>
+
+        <ProjGithubIntegrationModal v-model:visible="showProjVcsSettings" :project-id="projectId" :project="project"
+            @update:project="updateProjectInfo" />
     </div>
 </template>
 
@@ -18,21 +21,26 @@
     import { useProjectStore } from '@/stores/proj/useProjectStore';
     import { useWorkspaceStore } from '@/stores/proj/useWorkspaceStore';
     import { GitBranch } from 'lucide-vue-next';
+    import { useToast } from 'primevue/usetoast';
     import { computed, ref } from 'vue';
     import { useRoute } from 'vue-router';
+    import ProjGithubIntegrationModal from './utils/ProjGithubIntegrationModal.vue';
     import VcsTypeMenu from './utils/VcsTypeMenu.vue';
-
-    import { useToast } from 'primevue/usetoast';
-
-    const vcsMenu = ref(null);
-    const route = useRoute();
-    const toast = useToast();
+    /* stores */
     const projectStore = useProjectStore();
     const workspaceStore = useWorkspaceStore();
 
-    // Compute active project ID from route
+    /* utils */
+    const route = useRoute();
+    const toast = useToast();
+
+    /* components */
+    const vcsMenu = ref(null);
+    const showProjVcsSettings = ref(false);
+    /* computed */
     const activeProjectId = computed(() => route.params.projectId);
 
+    /* methods */
     const toggleVcsMenu = event => {
         vcsMenu.value?.toggle(event);
     }
