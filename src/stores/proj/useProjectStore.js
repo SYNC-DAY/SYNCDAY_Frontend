@@ -6,7 +6,7 @@ export const useProjectStore = defineStore('project', {
         projects: {},
         isLoading: false,
         error: null,
-        activeProjectId: null,
+        activeId: null,
         isInitialized: false,
         lastFetchTime: null
     }),
@@ -16,7 +16,7 @@ export const useProjectStore = defineStore('project', {
 
         getProjectById: (state) => (id) => state.projects[id] || null,
 
-        activeProject: (state) => (state.activeProjectId ? state.projects[state.activeProjectId] : null),
+        activeProject: (state) => (state.activeId ? state.projects[state.activeId] : null),
 
         projectsArray: (state) => Object.values(state.projects),
 
@@ -104,13 +104,13 @@ export const useProjectStore = defineStore('project', {
             }
         },
 
-        setActiveProjectId(projectId) {
-            this.activeProjectId = projectId;
+        setActive(projectId) {
+            this.activeId = projectId;
         },
 
         clearStore() {
             this.projects = {};
-            this.activeProjectId = null;
+            this.activeId = null;
             this.isInitialized = false;
             this.lastFetchTime = null;
             this.error = null;

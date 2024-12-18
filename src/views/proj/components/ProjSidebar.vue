@@ -139,10 +139,11 @@
     });
 
     watch(
-        () => route.params.projectId,
-        (newProjectId) => {
-            if (newProjectId) {
-                projectStore.setActiveProjectId(newProjectId);
+        () => route.params,
+        (params) => {
+            if (params.projectId) {
+                projectStore.setActive(params.projectId);
+                workspaceStore.setActive(params.workspaceId || null);
             }
         },
         { immediate: true }

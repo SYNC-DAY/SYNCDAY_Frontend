@@ -7,7 +7,8 @@ export const useWorkspaceStore = defineStore('workspace', {
         workspaces: {},
         isLoading: false,
         error: null,
-        lastFetchTime: null
+        lastFetchTime: null,
+        activeId: null
     }),
 
     getters: {
@@ -21,7 +22,8 @@ export const useWorkspaceStore = defineStore('workspace', {
             if (!state.lastFetchTime) return true;
             const FIVE_MINUTES = 5 * 60 * 1000;
             return Date.now() - state.lastFetchTime > FIVE_MINUTES;
-        }
+        },
+        active: (state) => state.workspaces[state.activeId] || null
     },
 
     actions: {
@@ -50,6 +52,9 @@ export const useWorkspaceStore = defineStore('workspace', {
                 acc[workspace.workspace_id] = workspace;
                 return acc;
             }, {});
+        },
+        setActive(id) {
+            this.activeId = id;
         }
     }
 });
