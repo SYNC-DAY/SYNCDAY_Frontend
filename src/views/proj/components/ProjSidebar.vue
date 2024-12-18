@@ -1,11 +1,11 @@
 <template>
     <div class="sidebar custom-scrollpanel">
         <ScrollPanel class="w-full h-full">
-            <PanelMenu :model="menuItems" class="w-full border-none" @item-toggle="handleToggle"
-                v-model:expandedKeys="expandedKeysValue">
+            <PanelMenu :model="menuItems" class="w-full border-none" v-model:expandedKeys="expandedKeysValue"
+                @item-toggle="preventDefault">
                 <template #item="{ item }">
                     <div class="flex flex-row items-center justify-between w-full h-16 project-item"
-                        :class="{ 'is-active': isActiveProject(item) }" @click="handleItemClick(item)">
+                        :class="{ 'is-active': isActiveProject(item) }" @click.stop="handleItemClick(item)">
                         <div>
                             <span class="menu-label truncate" :class="{ 'font-semibold': isProjectItem(item) }">
                                 {{ item.label }}
@@ -18,7 +18,7 @@
                             </div>
                             <i v-if="isWorkspaceItem(item)" :class="item.icon"></i>
                             <span v-if="isProjectItem(item)" class="chevron-container"
-                                @click.stop="handleToggle({ item })">
+                                @click.stop="handleChevronClick(item)">
                                 <i class="pi"
                                     :class="expandedKeysValue[item.key] ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
                             </span>
@@ -62,10 +62,16 @@
     const isProjectItem = (item) => item?.key?.startsWith('project-');
     const isWorkspaceItem = (item) => item?.key?.startsWith('workspace-');
 
-    const handleToggle = (event) => {
+    // PanelMenu의 기본 토글 이벤트 방지
+    const preventDefault = (event) => {
+        event.preventDefault?.();
+    };
+
+    // Chevron 클릭 시에만 토글되도록 처리
+    const handleChevronClick = (item) => {
         expandedKeysValue.value = {
             ...expandedKeysValue.value,
-            [event.item.key]: !expandedKeysValue.value[event.item.key]
+            [item.key]: !expandedKeysValue.value[item.key]
         };
     };
 
@@ -98,9 +104,11 @@
             const projectId = getProjectIdFromItem(item);
             router.push(`/project/${projectId}`);
         }
-        // Workspace navigation is handled by the command property in menuItems
+        else if (isWorkspaceItem(item)) {
+            const [, projectId, workspaceId] = item.key.split('-');
+            router.push(`/project/${projectId}/workspace/${workspaceId}`);
+        }
     };
-
     const isActiveProject = (item) => {
         if (!item || !route.params.projectId) return false;
 
@@ -124,9 +132,7 @@
                 key: `workspace-${project.proj_id}-${workspace.workspace_id}`,
                 label: workspace.workspace_name,
                 icon: 'pi pi-star',
-                command: () => {
-                    router.push(`/project/${project.proj_id}/workspace/${workspace.workspace_id}`);
-                }
+
             }))
         }));
     });
