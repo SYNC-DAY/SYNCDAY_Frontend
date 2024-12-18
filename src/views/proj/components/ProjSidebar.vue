@@ -103,6 +103,8 @@
         if (isProjectItem(item)) {
             const projectId = getProjectIdFromItem(item);
             router.push(`/project/${projectId}`);
+            projectStore.activeProjectId.value = projectId;
+
         }
         else if (isWorkspaceItem(item)) {
             const [, projectId, workspaceId] = item.key.split('-');
