@@ -104,8 +104,9 @@ export const useProjectStore = defineStore('project', {
             }
         },
 
-        setActive(projectId) {
-            this.activeId = projectId;
+        setActive(id) {
+            this.activeId = id;
+            localStorage.setItem('activeProjId', id);
         },
 
         clearStore() {
