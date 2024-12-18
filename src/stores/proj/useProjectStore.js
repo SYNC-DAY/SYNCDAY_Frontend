@@ -104,7 +104,7 @@ export const useProjectStore = defineStore('project', {
             }
         },
 
-        setActiveProject(projectId) {
+        setActiveProjectId(projectId) {
             this.activeProjectId = projectId;
         },
 

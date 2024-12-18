@@ -103,7 +103,6 @@
         if (isProjectItem(item)) {
             const projectId = getProjectIdFromItem(item);
             router.push(`/project/${projectId}`);
-            projectStore.activeProjectId.value = projectId;
 
         }
         else if (isWorkspaceItem(item)) {
@@ -138,6 +137,16 @@
             }))
         }));
     });
+
+    watch(
+        () => route.params.projectId,
+        (newProjectId) => {
+            if (newProjectId) {
+                projectStore.setActiveProjectId(newProjectId);
+            }
+        },
+        { immediate: true }
+    );
 </script>
 
 <style scoped>
