@@ -4,11 +4,11 @@
 
     const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
 
-    const navigateToMyPage = () => {};
+    const navigateToMyPage = () => { };
 </script>
 
 <template>
-    <div class="layout-topbar gap-x-4">
+    <div class="layout-topbar gap-x-4 underline-gray">
         <div class="layout-topbar-logo-container">
             <!-- <button class="layout-menu-button layout-topbar-action" @click="toggleMenu">
                 <i class="pi pi-bars"></i>
@@ -50,10 +50,8 @@
                 </div>
             </div>
 
-            <button
-                class="layout-topbar-menu-button layout-topbar-action"
-                v-styleclass="{ selector: '@next', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: true }"
-            >
+            <button class="layout-topbar-menu-button layout-topbar-action"
+                v-styleclass="{ selector: '@next', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: true }">
                 <i class="pi pi-ellipsis-v"></i>
             </button>
 
