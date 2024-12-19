@@ -85,7 +85,7 @@
     import RadioButton from "primevue/radiobutton";
     import { useConfirm } from "primevue/useconfirm";
     import { useToast } from "primevue/usetoast";
-    import { onMounted, onUnmounted, ref, watch } from "vue";
+    import { inject, onMounted, onUnmounted, ref, watch } from "vue";
 
     // Props
     const props = defineProps({
@@ -122,6 +122,7 @@
     const selectedGithubProjectId = ref(null);
     const githubProjects = ref([]); // Initialize as empty array instead of null
 
+    const user = inject('user')
     // Open menu with correct items
     const openMenu = (event, installationId) => {
         event.stopPropagation();
@@ -328,7 +329,7 @@
 
     // Lifecycle hooks
     onMounted(() => {
-        githubAppStore.fetchInstallations();
+        githubAppStore.fetchInstallations(user.userId);
         window.addEventListener("message", handleAuthMessage);
     });
 

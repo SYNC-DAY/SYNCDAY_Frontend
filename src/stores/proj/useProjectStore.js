@@ -115,6 +115,7 @@ export const useProjectStore = defineStore('project', {
             this.isInitialized = false;
             this.lastFetchTime = null;
             this.error = null;
-        }
+        },
+        fetchProject(projId) {}
     }
 });

@@ -1,15 +1,21 @@
-import { fileURLToPath, URL } from 'node:url';
-
 import { PrimeVueResolver } from '@primevue/auto-import-resolver';
 import vue from '@vitejs/plugin-vue';
+import { fileURLToPath, URL } from 'node:url';
 import Components from 'unplugin-vue-components/vite';
 import { defineConfig } from 'vite';
 import vueDevTools from 'vite-plugin-vue-devtools';
 
-// https://vitejs.dev/config/
 export default defineConfig({
+    define: {
+        'process.env': {
+            NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development')
+        },
+        global: {},
+        module: {}
+    },
     optimizeDeps: {
-        noDiscovery: true
+        noDiscovery: true,
+        include: ['@excalidraw/excalidraw', 'react', 'react-dom']
     },
     plugins: [
         vue(),
@@ -20,7 +26,8 @@ export default defineConfig({
     ],
     resolve: {
         alias: {
-            '@': fileURLToPath(new URL('./src', import.meta.url))
+            '@': fileURLToPath(new URL('./src', import.meta.url)),
+            process: 'process/browser'
         }
     },
     server: {
@@ -29,9 +36,8 @@ export default defineConfig({
                 target: 'http://localhost:5000',
                 changeOrigin: true,
                 rewrite: (path) => path.replace('/^/api/', ''),
-                secure: false, // SSL 관련 검증 비활성화
+                secure: false,
                 configure: (proxy, options) => {
-                    // proxy 동작 로깅
                     proxy.on('proxyReq', (proxyReq, req, res) => {
                         console.log('Proxy Request:', req.method, req.url);
                     });
